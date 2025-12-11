@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TARA Analysis Tool</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <div class="header-nav">
+            <h1>TARA Tool</h1>
+            
+            <div class="action-nav">
+                <button id="btnNewAnalysis"><i class="fas fa-plus"></i> Neue Analyse</button>
+                <select id="analysisSelector" style="width: 250px;">
+                    </select>
+            </div>
+            
+            <div class="utility-actions">
+                <button id="btnImportAnalysis" class="action-button-header"><i class="fas fa-file-import"></i> Import</button>
+                <button id="btnExportAnalysis" class="action-button-header"><i class="fas fa-file-export"></i> Export</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            
+            <header class="main-header">
+                <div>
+                    <h2 id="analysisNameDisplay">Analyse wählen oder neu starten</h2>
+                    <div class="metadata" id="analysisMetadata">
+                        </div>
+                </div>
+                <div class="header-actions">
+                    <button id="btnSave" class="primary-button" disabled><i class="fas fa-save"></i> Speichern</button>
+                    <button id="btnShowVersionControl" class="action-button" disabled><i class="fas fa-history"></i> Versionen</button>
+                </div>
+            </header>
+
+            <div class="status-bar">
+                <span id="statusBarMessage">Bereit.</span>
+            </div>
+
+            <nav class="tab-navigation">
+                <button class="tab-button active" data-tab="tabGeneral">Allgemein</button>
+                <button class="tab-button" data-tab="tabAssets">Assets (Schutzobjekte)</button>
+                <button class="tab-button" data-tab="tabRisk" disabled>Risikoanalyse</button>
+                <button class="tab-button" data-tab="tabConclusion" disabled>Fazit</button>
+            </nav>
+
+            <div class="tab-content-container">
+
+                <div id="tabGeneral" class="tab-content" style="display: block;">
+                    <section class="analysis-section">
+                        <h3>Allgemeine Informationen</h3>
+                        
+                        <div class="form-group">
+                            <label for="inputAnalysisName">Name der Analyse</label>
+                            <input type="text" id="inputAnalysisName" required disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inputAuthorName">Autor / Bearbeiter</label>
+                            <input type="text" id="inputAuthorName" required disabled>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="inputDescription">Produkt/System Beschreibung</label>
+                            <textarea id="inputDescription" rows="5" disabled></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="inputIntendedUse">Vorgesehener Einsatzzweck/Kontext</label>
+                            <textarea id="inputIntendedUse" rows="3" disabled></textarea>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="tabAssets" class="tab-content" style="display: none;">
+                    <section class="analysis-section">
+                        <h3>Assets (Schutzobjekte)</h3>
+                        <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
+
+                        <table class="data-table" style="margin-top: 15px;">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Typ</th>
+                                    <th>Schutzbedarf</th>
+                                    <th>Aktionen</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assetsTableBody">
+                                </tbody>
+                        </table>
+                    </section>
+                </div>
+
+                <div id="tabRisk" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Risikoanalyse</h3><p>Logik wird später implementiert.</p></section></div>
+                <div id="tabConclusion" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Fazit und Zusammenfassung</h3><p>In Entwicklung.</p></section></div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="newAnalysisModal" class="modal" style="display: none;">
+        <div class="modal-content small">
+            <span class="close-button" id="closeNewAnalysisModal">&times;</span>
+            <h2>Neue TARA-Analyse</h2>
+            <form id="newAnalysisForm">
+                <div class="form-group">
+                    <label for="newAnalysisName">Name der Analyse</label>
+                    <input type="text" id="newAnalysisName" placeholder="Z.B. TARA Produkt X Version 1.1" required>
+                </div>
+                <button type="submit" class="primary-button">Erstellen</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="assetModal" class="modal" style="display: none;">
+        <div class="modal-content small">
+            <span class="close-button" id="closeAssetModal">&times;</span>
+            <h2 id="assetModalTitle">Asset erfassen</h2>
+            <form id="assetForm">
+                <input type="hidden" id="assetIdField">
+                <div class="form-group">
+                    <label for="assetName">Name</label>
+                    <input type="text" id="assetName" required>
+                </div>
+                <div class="form-group">
+                    <label for="assetType">Typ (z.B. Hardware, Software, Daten)</label>
+                    <input type="text" id="assetType" required>
+                </div>
+                <div class="form-group">
+                    <label for="assetSchutzbedarf">Schutzbedarf (V/I/V - Vertraulichkeit/Integrität/Verfügbarkeit)</label>
+                    <select id="assetSchutzbedarf" required>
+                        <option value="">Wählen Sie...</option>
+                        <option value="V">V: Vertraulichkeit</option>
+                        <option value="I">I: Integrität</option>
+                        <option value="A">A: Verfügbarkeit</option>
+                    </select>
+                </div>
+                <button type="submit" class="primary-button">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="importAnalysisModal" class="modal" style="display: none;">
+        <div class="modal-content small">
+            <span class="close-button" id="closeImportAnalysisModal">&times;</span>
+            <h2>Analyse importieren</h2>
+            <p>Die Import-Funktion ist in diesem stabilen Zustand deaktiviert, um Instabilität zu vermeiden.</p>
+            <form id="importForm">
+                <div class="form-group">
+                    <label for="importFileInput">JSON-Datei auswählen:</label>
+                    <input type="file" id="importFileInput" accept=".json" required disabled>
+                </div>
+                <button type="submit" class="primary-button" disabled>Import starten</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="versionControlModal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <span class="close-button" id="closeVersionControlModal">&times;</span>
+            <h2>Versionskontrolle & Historie</h2>
+            
+            <div class="version-controls">
+                <button id="btnCreateNewVersion" class="primary-button"><i class="fas fa-code-branch"></i> Neue Version speichern</button>
+            </div>
+            
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Version</th>
+                        <th>Autor</th>
+                        <th>Datum</th>
+                        <th>Kommentar</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="modal" style="display: none;">
+        <div class="modal-content small">
+            <span class="close-button" id="closeConfirmationModal">&times;</span>
+            <h2 id="confirmationTitle">Bestätigung erforderlich</h2>
+            <p id="confirmationMessage" style="margin-bottom: 20px;">Sind Sie sicher?</p>
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button class="secondary-button" id="btnCancelConfirmation">Abbrechen</button>
+                <button class="primary-button dangerous" id="btnConfirmAction">Ja, wiederherstellen</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="versionCommentModal" class="modal" style="display: none;">
+    <div class="modal-content small">
+        <span class="close-button" id="closeVersionCommentModal">&times;</span>
+        <h2>Neue Version speichern</h2>
+        <form id="versionCommentForm">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Versionstyp:</label>
+                <div style="display: flex; gap: 15px;">
+                    <label>
+                        <input type="radio" name="versionType" value="minor" checked> Minor Change (z.B. 0.1 &rarr; 0.2)
+                    </label>
+                    <label>
+                        <input type="radio" name="versionType" value="major"> Major Change (z.B. 0.x &rarr; 1.0)
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="inputVersionComment">Versionskommentar (Kurzbeschreibung):</label>
+                <textarea id="inputVersionComment" required rows="3"></textarea>
+            </div>
+            <button type="submit" class="primary-button">Speichern und Version erstellen</button>
+        </form>
+    </div>
+</div>
+
+
+    <div id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

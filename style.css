@@ -1,0 +1,380 @@
+/* =============================================================
+   --- TARA ANALYSIS TOOL: GLOBALES STYLING ---
+   --- KORRIGIERT: FLAY LAYOUT (KEINE SIDEBAR) MIT SCHUNK BLAU AKZENT & FIXIERTER STATUS-BAR ---
+   ============================================================= */
+
+/* Globale Einstellungen */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6; /* Heller Hintergrund */
+    color: #333;
+}
+
+/* KRITISCH: Haupt-Layout Container (Zentriert den Inhalt) */
+.app-container {
+    display: flex; 
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%; 
+}
+
+/* =============================================================
+   --- HEADER NAVIGATION (Oben, ersetzt die Sidebar) ---
+   ============================================================= */
+
+.header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff; /* Weißer Header */
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    gap: 20px;
+}
+
+.header-nav h1 {
+    font-size: 1.5em;
+    color: #2c3e50;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Selektor und "Neue Analyse" Button */
+.action-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-grow: 1;
+}
+
+.action-nav select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 0.95em;
+}
+
+/* Import/Export Buttons */
+.utility-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-button-header {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    background-color: #ecf0f1; /* Hellgrau */
+    color: #34495e;
+    transition: background-color 0.2s;
+}
+
+.action-button-header:hover {
+    background-color: #bdc3c7;
+}
+
+/* =============================================================
+   --- HAUPTINHALTSBEREICH (RECHTS) ---
+   ============================================================= */
+
+/* KRITISCH: Hauptinhalt, der sich unterhalb des Headers befindet */
+.main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column; 
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto; /* Zentrierung des Hauptinhalts */
+    width: 100%;
+}
+
+/* Header/Topframe */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.main-header h2 {
+    margin: 0;
+    font-weight: 400;
+    font-size: 1.5em;
+    color: #2c3e50;
+}
+
+/* Metadaten Block (Version, Autor, Datum) */
+.metadata span {
+    margin-right: 15px;
+    font-size: 0.85em;
+    color: #7f8c8d;
+}
+
+/* --- KRITISCH: STATUSZEILE (JETZT FIXED BOTTOM RIGHT) --- */
+.status-bar {
+    position: fixed; /* Fixiert die Position relativ zum Viewport */
+    bottom: 20px;   /* 20px Abstand vom unteren Rand */
+    right: 20px;    /* 20px Abstand vom rechten Rand */
+    z-index: 100;   /* Stellt sicher, dass sie über dem Inhalt liegt */
+    
+    /* Visuelles Styling */
+    background-color: #ecf0f1;
+    padding: 8px 15px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #34495e;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    min-width: 150px;
+    text-align: center;
+}
+/* ----------------------------------------------------------------- */
+
+/* --- Buttons --- */
+.action-button, .primary-button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+}
+
+.action-button {
+    background-color: #95a5a6; /* Grau für Sekundär-Aktion */
+    color: #fff;
+}
+.action-button:hover {
+    background-color: #7f8c8d;
+}
+.action-button.dangerous {
+    background-color: #e74c3c; /* Rot für Lösch-Aktionen */
+}
+
+/* Primäre Aktion (Speichern, Asset hinzufügen) */
+.primary-button {
+    background-color: #0059B3; /* Schunk Blau */
+    color: #fff;
+    font-weight: 600;
+}
+
+.primary-button:hover {
+    background-color: #00478f; /* Dunkleres Blau für Hover */
+}
+
+/* --- Tab Navigation --- */
+.tab-navigation {
+    display: flex;
+    border-bottom: 2px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    padding: 10px 15px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 1em;
+    color: #7f8c8d;
+    transition: color 0.2s, border-bottom-color 0.2s;
+}
+
+.tab-button.active {
+    color: #2c3e50;
+    border-bottom-color: #0059B3; /* Schunk Blau Akzent */
+    font-weight: 600;
+}
+
+/* --- Tab Content --- */
+.analysis-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.analysis-section h3 {
+    border-bottom: 1px dashed #eee;
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #34495e;
+}
+
+/* --- Formular Elemente --- */
+.form-group {
+    margin-bottom: 15px;
+}
+
+textarea {
+    resize: vertical; /* Erlaubt nur die vertikale Größenanpassung */
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #2c3e50;
+    font-size: 0.95em;
+}
+
+input[type="text"], textarea, select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; 
+    font-size: 1em;
+    transition: border-color 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: #0059B3; /* Schunk Blau Akzent */
+    outline: none;
+}
+
+input:disabled, textarea:disabled, select:disabled, button:disabled {
+    background-color: #ecf0f1;
+    cursor: not-allowed;
+    color: #7f8c8d;
+}
+
+/* --- Tabellen Styling --- */
+.data-table, .history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+}
+
+.data-table th, .history-table th {
+    background-color: #f1f1f1;
+    color: #34495e;
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 2px solid #ccc;
+}
+
+.data-table td, .history-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.history-table tr:hover {
+    background-color: #f9f9f9;
+}
+
+.history-table .is-current-version {
+    background-color: #ecf0f1; 
+    font-weight: bold;
+}
+
+/* --- Modal Styling --- */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4); 
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto; 
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 50%;
+    position: relative;
+}
+
+.modal-content.small {
+    width: 400px;
+    margin: 15% auto;
+}
+
+.modal-content.large {
+    width: 70%;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+/* --- Utility und Toast --- */
+.small {
+    font-size: 0.8em;
+    padding: 5px 10px !important;
+    margin-left: 5px;
+}
+
+/* Toast Container */
+#toastContainer {
+    position: fixed;
+    bottom: 70px; /* Hochgesetzt, damit es nicht mit der Status-Bar kollidiert */
+    right: 20px;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-toast {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 16px;
+    z-index: 1;
+    box-shadow: 0 6px 10px 0 rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s, visibility 0.3s, transform 0.3s;
+    transform: translateY(100%);
+}
+
+.custom-toast.show {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-toast.success {
+    background-color: #0059B3; /* Schunk Blau */
+}
+
+.custom-toast.error {
+    background-color: #e74c3c; /* Rot */
+}
+
+.custom-toast.info {
+    background-color: #3498db; /* Hellblau */
+}
