@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TARA Analysis Tool</title>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -84,18 +84,9 @@
                         <h3>Assets (Schutzobjekte)</h3>
                         <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
 
-                        <table class="data-table" style="margin-top: 15px;">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Typ</th>
-                                    <th>Schutzbedarf</th>
-                                    <th>Aktionen</th>
-                                </tr>
-                            </thead>
-                            <tbody id="assetsTableBody">
-                                </tbody>
-                        </table>
+                        <div id="assetsCardContainer" style="margin-top: 15px;">
+                            </div>
+
                     </section>
                 </div>
 
@@ -126,28 +117,57 @@
             <h2 id="assetModalTitle">Asset erfassen</h2>
             <form id="assetForm">
                 <input type="hidden" id="assetIdField">
+                
+                <h3>Asset Details</h3>
                 <div class="form-group">
-                    <label for="assetName">Name</label>
+                    <label for="assetName">Asset Name</label>
                     <input type="text" id="assetName" required>
                 </div>
                 <div class="form-group">
-                    <label for="assetType">Typ (z.B. Hardware, Software, Daten)</label>
+                    <label for="assetType">Asset Type (e.g., Hardware, Software, Data)</label>
                     <input type="text" id="assetType" required>
                 </div>
                 <div class="form-group">
-                    <label for="assetSchutzbedarf">Schutzbedarf (V/I/V - Vertraulichkeit/Integrität/Verfügbarkeit)</label>
-                    <select id="assetSchutzbedarf" required>
-                        <option value="">Wählen Sie...</option>
-                        <option value="V">V: Vertraulichkeit</option>
-                        <option value="I">I: Integrität</option>
-                        <option value="A">A: Verfügbarkeit</option>
-                    </select>
+                    <label for="assetDescription">Description</label>
+                    <textarea id="assetDescription" rows="3"></textarea>
                 </div>
-                <button type="submit" class="primary-button">Speichern</button>
+
+                <h3>Protection Requirements (CIA)</h3>
+                <p style="font-size: 0.9em; color: #7f8c8d;">Define the required protection level for each objective separately (I=Low, III=High).</p>
+
+                <div style="display: flex; gap: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="radioConfidentiality">Confidentiality</label>
+                        <div class="radio-group" id="radioConfidentiality">
+                            <input type="radio" id="confidentialityI" name="confidentiality" value="I" required><label for="confidentialityI">I</label>
+                            <input type="radio" id="confidentialityII" name="confidentiality" value="II"><label for="confidentialityII">II</label>
+                            <input type="radio" id="confidentialityIII" name="confidentiality" value="III"><label for="confidentialityIII">III</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="flex: 1;">
+                        <label for="radioIntegrity">Integrity</label>
+                        <div class="radio-group" id="radioIntegrity">
+                            <input type="radio" id="integrityI" name="integrity" value="I" required><label for="integrityI">I</label>
+                            <input type="radio" id="integrityII" name="integrity" value="II"><label for="integrityII">II</label>
+                            <input type="radio" id="integrityIII" name="integrity" value="III"><label for="integrityIII">III</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="flex: 1;">
+                        <label for="radioAuthenticity">Authenticity</label>
+                        <div class="radio-group" id="radioAuthenticity">
+                            <input type="radio" id="authenticityI" name="authenticity" value="I" required><label for="authenticityI">I</label>
+                            <input type="radio" id="authenticityII" name="authenticity" value="II"><label for="authenticityII">II</label>
+                            <input type="radio" id="authenticityIII" name="authenticity" value="III"><label for="authenticityIII">III</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="primary-button" style="width: 100%; margin-top: 15px;">Asset speichern</button>
             </form>
         </div>
     </div>
-
     <div id="importAnalysisModal" class="modal" style="display: none;">
         <div class="modal-content small">
             <span class="close-button" id="closeImportAnalysisModal">&times;</span>
@@ -187,44 +207,39 @@
             </table>
         </div>
     </div>
+    
+    <div id="versionCommentModal" class="modal" style="display: none;">
+        <div class="modal-content small">
+            <span class="close-button" id="closeVersionCommentModal">&times;</span>
+            <h2>Neue Version erstellen</h2>
+            <form id="versionCommentForm">
+                <div class="form-group">
+                    <label for="inputVersionComment">Versionskommentar (Kurzbeschreibung der Änderungen)</label>
+                    <input type="text" id="inputVersionComment" required>
+                </div>
+                <div class="form-group">
+                    <label>Versionstyp:</label>
+                    <div style="display: flex; gap: 20px;">
+                        <input type="radio" id="versionMinor" name="versionType" value="minor" checked><label for="versionMinor">Minor Change (z.B. 1.0 &rarr; 1.1)</label>
+                        <input type="radio" id="versionMajor" name="versionType" value="major"><label for="versionMajor">Major Change (z.B. 1.9 &rarr; 2.0)</label>
+                    </div>
+                </div>
+                <button type="submit" class="primary-button">Version speichern</button>
+            </form>
+        </div>
+    </div>
 
     <div id="confirmationModal" class="modal" style="display: none;">
         <div class="modal-content small">
             <span class="close-button" id="closeConfirmationModal">&times;</span>
-            <h2 id="confirmationTitle">Bestätigung erforderlich</h2>
-            <p id="confirmationMessage" style="margin-bottom: 20px;">Sind Sie sicher?</p>
-            <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button class="secondary-button" id="btnCancelConfirmation">Abbrechen</button>
-                <button class="primary-button dangerous" id="btnConfirmAction">Ja, wiederherstellen</button>
+            <h2 id="confirmationTitle"></h2>
+            <p id="confirmationMessage"></p>
+            <div class="modal-actions">
+                <button id="btnCancelConfirmation" class="action-button">Abbrechen</button>
+                <button id="btnConfirmAction" class="primary-button">Bestätigen</button>
             </div>
         </div>
     </div>
-    
-    <div id="versionCommentModal" class="modal" style="display: none;">
-    <div class="modal-content small">
-        <span class="close-button" id="closeVersionCommentModal">&times;</span>
-        <h2>Neue Version speichern</h2>
-        <form id="versionCommentForm">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label>Versionstyp:</label>
-                <div style="display: flex; gap: 15px;">
-                    <label>
-                        <input type="radio" name="versionType" value="minor" checked> Minor Change (z.B. 0.1 &rarr; 0.2)
-                    </label>
-                    <label>
-                        <input type="radio" name="versionType" value="major"> Major Change (z.B. 0.x &rarr; 1.0)
-                    </label>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="inputVersionComment">Versionskommentar (Kurzbeschreibung):</label>
-                <textarea id="inputVersionComment" required rows="3"></textarea>
-            </div>
-            <button type="submit" class="primary-button">Speichern und Version erstellen</button>
-        </form>
-    </div>
-</div>
-
 
     <div id="toastContainer"></div>
 

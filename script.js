@@ -22,7 +22,7 @@ const btnSave = document.getElementById('btnSave');
 const btnExportAnalysis = document.getElementById('btnExportAnalysis');
 
 // Asset Tab Elements
-const assetsTableBody = document.getElementById('assetsTableBody');
+const assetsCardContainer = document.getElementById('assetsCardContainer'); 
 const btnAddAsset = document.getElementById('btnAddAsset');
 const assetModal = document.getElementById('assetModal');
 const closeAssetModal = document.getElementById('closeAssetModal');
@@ -76,19 +76,28 @@ const defaultAnalysis = {
     metadata: {
         author: 'Max Mustermann',
         date: todayISO,
-        version: INITIAL_VERSION // Verwendet 0.1
+        version: INITIAL_VERSION 
     },
     description: 'Dies ist die Standardbeschreibung.',
     intendedUse: 'Der vorgesehene Einsatzzweck.',
     
     assets: [
-         { id: 'a-001', name: 'Steuereinheit', type: 'Hardware', schutzbedarf: 'I' }
+         { 
+             id: 'a-001', 
+             name: 'Steuereinheit', 
+             type: 'Hardware', 
+             description: 'Steuert die Hauptfunktion des Produkts.', 
+             confidentiality: 'I', 
+             integrity: 'II',
+             authenticity: 'III', // KORRIGIERT: Authenticity
+             schutzbedarf: 'III' // Höchster Wert von C, I, A
+         }
     ],
     riskEntries: [], 
     
     history: [
         {
-            version: INITIAL_VERSION, // Verwendet 0.1
+            version: INITIAL_VERSION, 
             author: 'Max Mustermann',
             date: todayISO,
             comment: 'Erstanlage der Analyse.',
@@ -97,7 +106,16 @@ const defaultAnalysis = {
                 metadata: { author: 'Max Mustermann', date: todayISO, version: INITIAL_VERSION },
                 description: 'Dies ist die Standardbeschreibung.',
                 intendedUse: 'Der vorgesehene Einsatzzweck.',
-                assets: [{ id: 'a-001', name: 'Steuereinheit', type: 'Hardware', schutzbedarf: 'I' }],
+                assets: [{ 
+                    id: 'a-001', 
+                    name: 'Steuereinheit', 
+                    type: 'Hardware', 
+                    description: 'Steuert die Hauptfunktion des Produkts.', 
+                    confidentiality: 'I', 
+                    integrity: 'II',
+                    authenticity: 'III', // KORRIGIERT
+                    schutzbedarf: 'III'
+                }],
                 riskEntries: []
             }
         }
@@ -140,11 +158,11 @@ function saveCurrentAnalysisState() {
 
 
 // =============================================================
-// --- EXPORT FUNKTION (ULTRA-ROBUST: Exportiert ALLE Analysen) ---
+// --- EXPORT FUNKTION ---
 // =============================================================
 
 function handleExport() {
-    // 1. Speichere den aktuellen Zustand der aktiven Analyse, bevor der Export beginnt.
+    // 1. Speichere den aktuellen Zustand der aktiven Analyse
     saveCurrentAnalysisState();
     
     // 2. Datenquelle ist nun der GESAMTE Array.
@@ -155,28 +173,24 @@ function handleExport() {
         return;
     }
 
-    // Erzeugen des Dateinamens (enthält das Datum für Eindeutigkeit)
     const filename = `TARA_Alle_Analysen_Backup_${todayISO}.json`;
-    
     const dataStr = JSON.stringify(dataToExport, null, 2);
     
-    // WICHTIG: Erstellung eines temporären Links OHNE ihn dem DOM hinzuzufügen.
     const tempLink = document.createElement('a');
     tempLink.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(dataStr);
     tempLink.download = filename;
     
-    // Klick auslösen
     tempLink.click();
     
     showToast(`Alle ${dataToExport.length} Analysen in "${filename}" exportiert.`, 'success');
 }
 
 // =============================================================
-// --- IMPORT FUNKTIONEN (NEU) ---
+// --- IMPORT FUNKTIONEN ---
 // =============================================================
 
 function handleImportWarningConfirmed() {
-    // Setzt das Feld zurück, um sicherzustellen, dass keine alte Datei mehr ausgewählt ist
+    // Setzt das Feld zurück
     if (importForm) importForm.reset();
     
     // 1. Das Haupt-Import-Modal öffnen
@@ -186,7 +200,7 @@ function handleImportWarningConfirmed() {
     if (importFileInput) importFileInput.disabled = false;
     if (btnImportStart) btnImportStart.disabled = false;
 
-    // 3. Listener für den eigentlichen Import hinzufügen (wird nur einmal registriert)
+    // 3. Listener für den eigentlichen Import hinzufügen
     if (importForm) {
         importForm.onsubmit = handleImportFile;
     }
@@ -206,7 +220,7 @@ function handleImportFile(e) {
         try {
             const importedData = JSON.parse(event.target.result);
             
-            // WICHTIG: Prüfen, ob die Datenstruktur plausibel ist (muss ein Array von Analysen sein)
+            // Plausibilitätsprüfung
             if (Array.isArray(importedData) && importedData.every(item => item.id && item.name)) {
                 // Daten ersetzen und speichern
                 analysisData = importedData;
@@ -217,7 +231,6 @@ function handleImportFile(e) {
                 if (firstId) {
                     activateAnalysis(firstId);
                 } else {
-                    // Fallback: Lade Standard, falls die importierte Datei leer war
                     loadAnalyses(); 
                 }
                 
@@ -309,11 +322,11 @@ function activateAnalysis(id) {
 
     if (analysis) {
         fillAnalysisForm(analysis);
-        renderAnalysisSelector(); // Aktualisiert den Selektor, um die korrekte Analyse anzuzeigen
+        renderAnalysisSelector(); 
         saveAnalyses();
         statusBarMessage.textContent = `Analyse "${analysis.name}" geladen.`;
         showToast(`Analyse "${analysis.name}" geladen.`, 'info');
-        // Initial auf den General Tab schalten und rendern
+        
         const firstTabButton = document.querySelector('.tab-navigation .tab-button');
         if(firstTabButton) firstTabButton.click();
     } else {
@@ -341,15 +354,12 @@ function showToast(message, type = 'info') {
     
     setTimeout(() => {
         toast.classList.remove('show');
-        // Sicherstellen, dass das Element existiert und noch im DOM ist, bevor entfernt wird.
         const parent = toast.parentElement; 
         if (parent && parent.contains(toast)) {
-             // Kurze Verzögerung, um der CSS-Transition Zeit zu geben
              setTimeout(() => {
                  try {
                      parent.removeChild(toast);
                  } catch (e) {
-                     // Wird nur protokolliert, wenn der Fehler doch auftritt
                      // console.warn('Toast removeChild abgefangen:', e);
                  }
              }, 500);
@@ -362,29 +372,52 @@ function showToast(message, type = 'info') {
 // --- ASSET LOGIK (CRUD) ---
 // =============================================================
 
-// Rendert die Asset-Tabelle
+// Rendert die Asset-Tabelle (JETZT ALS KARTEN)
 function renderAssets(analysis) {
-    if (!assetsTableBody) return;
-    assetsTableBody.innerHTML = '';
+    if (!assetsCardContainer) return; // Verwende den neuen Container
+    assetsCardContainer.innerHTML = '';
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        assetsTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #7f8c8d;">Noch keine Assets erfasst.</td></tr>';
+        assetsCardContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Noch keine Assets erfasst.</p>';
         return;
     }
 
     analysis.assets.forEach(asset => {
-        const row = document.createElement('tr');
-        row.dataset.id = asset.id;
-        row.innerHTML = `
-            <td>${asset.name}</td>
-            <td>${asset.type}</td>
-            <td>${asset.schutzbedarf}</td>
-            <td>
-                <button onclick="window.editAsset('${asset.id}')" class="action-button small">Bearbeiten</button>
-                <button onclick="window.deleteAsset('${asset.id}')" class="action-button small dangerous">Löschen</button>
-            </td>
+        const card = document.createElement('div');
+        card.classList.add('asset-card');
+        card.dataset.id = asset.id;
+        
+        // Anzeige des höchsten Schutzziel-Scores im Header (zum schnellen Überblick)
+        const highestCIA = asset.schutzbedarf;
+
+        // Logik: Name oben, Beschreibung, Typ und CIA-Werte im Body, Gesamtschutzbedarf und Buttons im Footer
+        card.innerHTML = `
+            <div class="asset-card-header">
+                ${asset.name} 
+            </div>
+            <div class="asset-card-body">
+                <p class="type">Typ: ${asset.type}</p>
+                <p style="margin-top: 10px; font-weight: 600;">Beschreibung:</p>
+                <p>${asset.description || '— Keine Beschreibung erfasst —'}</p>
+                
+                <hr style="border: 0; border-top: 1px dashed #eee; margin: 10px 0;">
+
+                <p style="font-weight: 600;">CIA-Anforderungen:</p>
+                <ul style="list-style: none; padding: 0; margin: 5px 0 0 0;">
+                    <li><strong title="Confidentiality">C (Confidentiality):</strong> ${asset.confidentiality}</li>
+                    <li><strong title="Integrity">I (Integrity):</strong> ${asset.integrity}</li>
+                    <li><strong title="Authenticity">A (Authenticity):</strong> ${asset.authenticity}</li> 
+                </ul>
+            </div>
+            <div class="asset-card-footer">
+                <span class="protection-level" title="Höchster Wert von C, I, A">Gesamtschutzbedarf: ${highestCIA}</span>
+                <div class="asset-card-actions">
+                    <button onclick="window.editAsset('${asset.id}')" class="action-button small">Bearbeiten</button>
+                    <button onclick="window.deleteAsset('${asset.id}')" class="action-button small dangerous">Löschen</button>
+                </div>
+            </div>
         `;
-        assetsTableBody.appendChild(row);
+        assetsCardContainer.appendChild(card);
     });
 }
 
@@ -398,6 +431,13 @@ if (btnAddAsset) {
         if (assetForm) assetForm.reset();
         document.getElementById('assetIdField').value = '';
         assetModalTitle.textContent = 'Neues Asset erfassen';
+        
+        // Setze Standardwerte für CIA (WICHTIG: Ersten Radio-Button 'I' vorselektieren)
+        // Verwende querySelector, um die Radio-Buttons zu selektieren
+        document.querySelector('input[name="confidentiality"][value="I"]').checked = true;
+        document.querySelector('input[name="integrity"][value="I"]').checked = true;
+        document.querySelector('input[name="authenticity"][value="I"]').checked = true;
+        
         if (assetModal) assetModal.style.display = 'block';
     };
 }
@@ -421,10 +461,34 @@ function saveAsset() {
     const idField = document.getElementById('assetIdField');
     const assetId = idField ? idField.value : '';
 
+    // NEUE WERTE auslesen (Ausgewählter Radio-Button)
+    // Überprüfe, ob Radio-Buttons ausgewählt sind, bevor .value aufgerufen wird
+    const cEl = document.querySelector('input[name="confidentiality"]:checked');
+    const iEl = document.querySelector('input[name="integrity"]:checked');
+    const aEl = document.querySelector('input[name="authenticity"]:checked');
+
+    if (!cEl || !iEl || !aEl) {
+        showToast('Fehler: Bitte wählen Sie einen Schutzbedarf für alle drei CIA-Ziele aus.', 'error');
+        return;
+    }
+    
+    const cVal = cEl.value;
+    const iVal = iEl.value;
+    const aVal = aEl.value;
+    
+    // Gesamtschutzbedarf als Maximum der CIA-Werte berechnen
+    const scoreMap = { 'I': 1, 'II': 2, 'III': 3 };
+    const maxScore = Math.max(scoreMap[cVal], scoreMap[iVal], scoreMap[aVal]);
+    const overallSchutzbedarf = Object.keys(scoreMap).find(key => scoreMap[key] === maxScore);
+
     const newAssetData = {
         name: document.getElementById('assetName').value.trim(),
         type: document.getElementById('assetType').value.trim(),
-        schutzbedarf: document.getElementById('assetSchutzbedarf').value
+        description: document.getElementById('assetDescription').value.trim(), 
+        confidentiality: cVal, 
+        integrity: iVal, 
+        authenticity: aVal, 
+        schutzbedarf: overallSchutzbedarf 
     };
 
     if (assetId) {
@@ -462,9 +526,22 @@ window.editAsset = (assetId) => {
 
     document.getElementById('assetIdField').value = asset.id;
     assetModalTitle.textContent = 'Asset bearbeiten';
+    
+    // Allgemeine Details
     document.getElementById('assetName').value = asset.name;
     document.getElementById('assetType').value = asset.type;
-    document.getElementById('assetSchutzbedarf').value = asset.schutzbedarf;
+    document.getElementById('assetDescription').value = asset.description || ''; 
+
+    // CIA-Werte laden (Auswahl der Radio-Buttons)
+    // C
+    const cRadio = document.querySelector(`input[name="confidentiality"][value="${asset.confidentiality}"]`);
+    if(cRadio) cRadio.checked = true;
+    // I
+    const iRadio = document.querySelector(`input[name="integrity"][value="${asset.integrity}"]`);
+    if(iRadio) iRadio.checked = true;
+    // A
+    const aRadio = document.querySelector(`input[name="authenticity"][value="${asset.authenticity}"]`);
+    if(aRadio) aRadio.checked = true;
 
     if (assetModal) assetModal.style.display = 'block';
 };
@@ -507,7 +584,6 @@ function renderHistoryTable(analysis) {
 
     const currentVersionIndex = history.findIndex(entry => entry.version === currentVersion);
     
-    // Temporäre Liste für die Minor-Versionen
     let tempMinorVersions = []; 
     let finalBaseline = null;
     
@@ -515,18 +591,17 @@ function renderHistoryTable(analysis) {
     for (let i = currentVersionIndex - 1; i >= 0; i--) {
         const entry = history[i];
         
-        // Definition Baseline: Version X.0 (z.B. 1.0, 2.0). 0.1 wird im Minor-Pfad gesammelt.
+        // Definition Baseline: Version X.0 (z.B. 1.0, 2.0).
         const isX0Baseline = entry.version.endsWith('.0') && entry.version !== INITIAL_VERSION;
 
         if (isX0Baseline) {
-            // REGEL 2: Baseline gefunden. Discarde alle gesammelten Minor-Versionen
-            // und nimm nur die Baseline.
+            // Baseline gefunden: Nimm nur die Baseline und breche ab.
             finalBaseline = entry.version;
-            tempMinorVersions = []; // Discard
-            break; // Suche beenden, da wir die letzte restorable Baseline gefunden haben.
+            tempMinorVersions = []; 
+            break; 
         }
         
-        // REGEL 3: Nur die letzten 3 Minor-Versionen sammeln
+        // Nur die letzten 3 Minor-Versionen sammeln
         if (tempMinorVersions.length < 3) {
             tempMinorVersions.push(entry.version);
         } else {
@@ -541,7 +616,6 @@ function renderHistoryTable(analysis) {
     if (finalBaseline) {
         restorable.add(finalBaseline);
     } else {
-        // Keine X.0 Baseline gefunden (Kette ist 0.x). 
         // Füge die gesammelten Minor-Versionen (max. 3) hinzu.
         tempMinorVersions.forEach(v => restorable.add(v));
     }
@@ -551,7 +625,6 @@ function renderHistoryTable(analysis) {
     
     // 4. Filtern und Rendern der Tabelle
     history
-        // Filtern: Zeige nur die aktuelle Version ODER eine der restorable Versionen
         .filter(entry => versionsToRender.has(entry.version))
         // Sortieren, damit die aktuelle Version immer oben ist, gefolgt von der Historie (neueste zuerst)
         .sort((a, b) => {
@@ -572,7 +645,6 @@ function renderHistoryTable(analysis) {
                 row.classList.add('is-current-version');
             }
 
-            // Der Button ist nur aktiv, wenn es nicht die aktuelle Version und in unserem restorable Set ist.
             const isActiveRollbackButton = !isCurrent && restorable.has(entry.version);
             
             row.innerHTML = `
@@ -618,7 +690,6 @@ window.revertToVersion = (analysisId, version) => {
     
     // 4. Bestätigungs-Listener hinzufügen
     btnConfirmAction.onclick = () => {
-        // Bestätigungscode ausführen
         
         analysis.name = entry.state.name;
         analysis.description = entry.state.description;
@@ -667,15 +738,13 @@ function createNewVersion(comment) {
     saveCurrentAnalysisState();
     saveAnalyses(); 
 
-    // Prüfen, ob der Kommentar über das Modal übergeben wurde
     if (!comment || comment.trim() === "") {
         showToast('Abgebrochen. Versionskommentar ist notwendig.', 'info');
         return;
     }
     
-    // NEU: Auslesen des gewählten Versionstyps
     const versionTypeElement = document.querySelector('input[name="versionType"]:checked');
-    const versionType = versionTypeElement ? versionTypeElement.value : 'minor'; // Standard: minor
+    const versionType = versionTypeElement ? versionTypeElement.value : 'minor'; 
 
     const currentVersion = analysis.metadata.version;
     let [major, minor] = currentVersion.split('.').map(Number);
@@ -683,8 +752,8 @@ function createNewVersion(comment) {
     
     if (versionType === 'major') {
         major++;
-        minor = 0; // Zurücksetzen auf 0 für die neue Baseline (X.0)
-        newVersion = `${major}.0`; // Explizit .0 verwenden (z.B. 1.0)
+        minor = 0; 
+        newVersion = `${major}.0`; 
     } else { // 'minor'
         minor++;
         newVersion = `${major}.${minor}`;
@@ -694,7 +763,7 @@ function createNewVersion(comment) {
         version: newVersion,
         author: analysis.metadata.author, 
         date: todayISO,
-        comment: comment.trim(), // Verwenden des Modal-Kommentars
+        comment: comment.trim(), 
         state: {
             name: analysis.name,
             metadata: { ...analysis.metadata, version: newVersion, date: todayISO },
@@ -716,7 +785,6 @@ function createNewVersion(comment) {
     showToast(`Neue Version ${newVersion} erstellt.`, 'success');
     statusBarMessage.textContent = `Neue Version ${newVersion} erstellt.`;
 
-    // Das Haupt-Versionskontroll-Modal nach erfolgreicher Erstellung schließen
     if (versionControlModal) versionControlModal.style.display = 'none';
 }
 
