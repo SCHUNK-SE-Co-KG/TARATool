@@ -4,6 +4,15 @@
 const INITIAL_VERSION = '0.1'; 
 const todayISO = new Date().toISOString().substring(0, 10);
 
+// NEU: Standard-Schadensszenarien
+const DEFAULT_DAMAGE_SCENARIOS = [
+    { id: 'DS1', name: 'Gefahr für Leib und Leben', short: 'Fusi', description: 'Gefahr für körperliche Unversehrtheit oder Leben' },
+    { id: 'DS2', name: 'Finanzieller Schaden / Sachschaden', short: 'Finanz', description: 'Unmittelbare finanzielle Verluste oder Kosten für Sachschäden' },
+    { id: 'DS3', name: 'Verlust von geistigem Eigentum', short: 'IP Loss', description: 'Diebstahl oder Offenlegung von proprietärem Wissen (Intellectual Property)' },
+    { id: 'DS4', name: 'Verlust an Reputation', short: 'Reputation', description: 'Schaden am öffentlichen Ansehen und Vertrauen' },
+    { id: 'DS5', name: 'Verminderte Verfügbarkeit', short: 'Ausfall', description: 'Ausfallzeiten oder unzureichende Leistung von Systemen/Diensten' }
+];
+
 // --- DOM ELEMENTE & INITIALISIERUNG ---
 // Main UI Elements
 const analysisSelector = document.getElementById('analysisSelector'); 
@@ -28,6 +37,16 @@ const assetModal = document.getElementById('assetModal');
 const closeAssetModal = document.getElementById('closeAssetModal');
 const assetForm = document.getElementById('assetForm');
 const assetModalTitle = document.getElementById('assetModalTitle');
+
+// NEU: Damage Scenarios Elements
+const dsManagementContainer = document.getElementById('dsManagementContainer');
+const dsMatrixContainer = document.getElementById('dsMatrixContainer');
+const btnAddDamageScenario = document.getElementById('btnAddDamageScenario');
+const damageScenarioModal = document.getElementById('damageScenarioModal');
+const closeDamageScenarioModal = document.getElementById('closeDamageScenarioModal');
+const damageScenarioForm = document.getElementById('damageScenarioForm');
+const dsModalTitle = document.getElementById('dsModalTitle'); 
+const dsIdField = document.getElementById('dsIdField'); 
 
 // Version Control Modal
 const versionControlModal = document.getElementById('versionControlModal');
@@ -56,7 +75,7 @@ const importFileInput = document.getElementById('importFileInput');
 const btnImportStart = document.querySelector('#importForm button[type="submit"]');
 
 
-// NEUES Bestätigungs-Modal (für Wiederherstellung und Import-Warnung)
+// Bestätigungs-Modal
 const confirmationModal = document.getElementById('confirmationModal');
 const closeConfirmationModal = document.getElementById('closeConfirmationModal');
 const confirmationTitle = document.getElementById('confirmationTitle');
@@ -89,10 +108,13 @@ const defaultAnalysis = {
              description: 'Steuert die Hauptfunktion des Produkts.', 
              confidentiality: 'I', 
              integrity: 'II',
-             authenticity: 'III', // KORRIGIERT: Authenticity
-             schutzbedarf: 'III' // Höchster Wert von C, I, A
+             authenticity: 'III',
+             schutzbedarf: 'III' 
          }
     ],
+    // NEU: Damage Scenarios und Impact Matrix
+    damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
+    impactMatrix: {}, // Key: assetId, Value: { dsId: score (1-3) }
     riskEntries: [], 
     
     history: [
@@ -113,9 +135,12 @@ const defaultAnalysis = {
                     description: 'Steuert die Hauptfunktion des Produkts.', 
                     confidentiality: 'I', 
                     integrity: 'II',
-                    authenticity: 'III', // KORRIGIERT
+                    authenticity: 'III',
                     schutzbedarf: 'III'
                 }],
+                // NEU: Damage Scenarios und Impact Matrix im State
+                damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
+                impactMatrix: {},
                 riskEntries: []
             }
         }
@@ -139,6 +164,17 @@ function loadAnalyses() {
     const data = localStorage.getItem('taraAnalyses');
     if (data) {
         analysisData = JSON.parse(data);
+        
+        // Sicherstellen, dass neue Felder (damageScenarios, impactMatrix) existieren
+        analysisData.forEach(analysis => {
+            if (!analysis.damageScenarios) {
+                analysis.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
+            }
+            if (!analysis.impactMatrix) {
+                analysis.impactMatrix = {};
+            }
+        });
+
     } else {
         analysisData = [defaultAnalysis];
     }
@@ -206,6 +242,7 @@ function handleImportWarningConfirmed() {
     }
 }
 
+// KRITISCHE KORREKTUR: Syntaxfehler im try...catch Block behoben.
 function handleImportFile(e) {
     e.preventDefault();
     
@@ -237,12 +274,8 @@ function handleImportFile(e) {
                 // Modal schließen und Erfolgsmeldung
                 importAnalysisModal.style.display = 'none';
                 showToast(`Erfolgreich ${analysisData.length} Analysen importiert.`, 'success');
-                
-            } else {
-                showToast('Importfehler: Die Datei enthält keine gültige Analysedatenstruktur.', 'error');
             }
-            
-        } catch (error) {
+        } catch (error) { // <-- Fehlerbehebung: catch muss direkt dem try folgen, nicht im if-Block verschachtelt sein.
             console.error('Importfehler:', error);
             showToast('Importfehler: Ungültiges JSON-Format in der Datei.', 'error');
         }
@@ -406,7 +439,7 @@ function renderAssets(analysis) {
                 <ul style="list-style: none; padding: 0; margin: 5px 0 0 0;">
                     <li><strong title="Confidentiality">C (Confidentiality):</strong> ${asset.confidentiality}</li>
                     <li><strong title="Integrity">I (Integrity):</strong> ${asset.integrity}</li>
-                    <li><strong title="Authenticity">A (Authenticity):</strong> ${asset.authenticity}</li> 
+                    <li><strong title="Authenticity">A (Availability):</strong> ${asset.authenticity}</li> 
                 </ul>
             </div>
             <div class="asset-card-footer">
@@ -501,7 +534,7 @@ function saveAsset() {
     } else {
         // Neu erstellen
         const newAssetIndex = analysis.assets.length > 0 ? 
-            Math.max(...analysis.assets.map(a => parseInt(a.id.split('-')[1]))) + 1 : 1;
+            Math.max(...analysis.assets.map(a => parseInt(a.id.split('-')[1])).filter(n => !isNaN(n))) + 1 : 1;
         const newId = 'a-' + newAssetIndex.toString().padStart(3, '0');
         
         analysis.assets.push({ ...newAssetData, id: newId });
@@ -512,6 +545,12 @@ function saveAsset() {
     saveCurrentAnalysisState();
     saveAnalyses();
     renderAssets(analysis);
+    
+    // NEU: Impact Matrix aktualisieren, falls der Tab aktiv ist (um neue Assets sofort zu sehen)
+    const activeTab = document.querySelector('.tab-button.active');
+    if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios') {
+        renderImpactMatrix();
+    }
 }
 
 // --- BEARBEITEN (Globale Funktion) ---
@@ -547,21 +586,314 @@ window.editAsset = (assetId) => {
 };
 
 // --- LÖSCHEN (Globale Funktion) ---
+// **KORRIGIERT: Ersetzt confirm() durch custom confirmationModal**
 window.deleteAsset = (assetId) => {
     if (!activeAnalysisId) return;
 
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    if (confirm(`Sind Sie sicher, dass Sie das Asset mit der ID ${assetId} löschen möchten?`)) {
+    const asset = analysis.assets.find(a => a.id === assetId);
+    if (!asset) return;
+    
+    // 1. Konfigurieren des Modals
+    confirmationTitle.textContent = 'Asset löschen bestätigen';
+    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Asset <b>${asset.name} (${assetId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
+    
+    btnConfirmAction.textContent = 'Ja, Asset löschen';
+    btnConfirmAction.classList.add('dangerous'); 
+    
+    // 2. Das Modal anzeigen
+    confirmationModal.style.display = 'block';
+
+    // 3. WICHTIG: Alte Event-Listener entfernen
+    btnConfirmAction.onclick = null; 
+    btnCancelConfirmation.onclick = null;
+    closeConfirmationModal.onclick = null;
+    
+    // 4. Bestätigungs-Listener hinzufügen
+    btnConfirmAction.onclick = () => {
+        // Deletion logic
         analysis.assets = analysis.assets.filter(a => a.id !== assetId);
+        
+        // NEU: Zugehörige Impact-Scores löschen
+        delete analysis.impactMatrix[assetId];
 
         saveCurrentAnalysisState();
         saveAnalyses();
         renderAssets(analysis);
+        renderImpactMatrix(); 
+        
+        confirmationModal.style.display = 'none'; // Bestätigungs-Modal schließen
         showToast(`Asset ${assetId} gelöscht.`, 'success');
-    }
+    };
+    
+    // 5. Abbruch-Listener hinzufügen
+    btnCancelConfirmation.onclick = () => {
+        confirmationModal.style.display = 'none';
+    };
+    
+    closeConfirmationModal.onclick = () => {
+        confirmationModal.style.display = 'none';
+    };
 };
+
+// =============================================================
+// --- DAMAGE SCENARIO LOGIK (CRUD & MATRIX) ---
+// =============================================================
+
+// Rendert die Liste der Damage Scenarios
+function renderDamageScenarios() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+    if (!dsManagementContainer) return;
+
+    let html = '<h4>Definierte Schadens-Szenarien:</h4>';
+    html += '<p style="font-size: 0.9em; color: #7f8c8d;">Verwalten Sie die Damage Scenarios (DS), die zur Bewertung der Assets verwendet werden.</p>';
+    
+    // NEU: Verwendung eines Flex-Containers zur besseren Kontrolle der Zeilenumbrüche
+    html += '<ul class="ds-list">'; 
+    
+    analysis.damageScenarios.forEach(ds => {
+        const isDefault = DEFAULT_DAMAGE_SCENARIOS.some(defaultDs => defaultDs.id === ds.id);
+        
+        // KORRIGIERT: Flex-Container für die Zeile, um die Beschreibung in eine neue "Zeile" zu zwingen
+        html += `<li data-id="${ds.id}">
+            <div class="ds-row-header">
+                <div class="ds-col-id-name">
+                    ${ds.id}: <strong>${ds.name}</strong> 
+                    <span style="font-weight: 400; color: #7f8c8d;">(${ds.short})</span>
+                    ${isDefault ? `<span class="small" style="color: #2ecc71;">(Standard)</span>` : ''}
+                </div>
+                <div class="ds-actions">
+                    <button onclick="window.editDamageScenario('${ds.id}')" class="action-button small">Bearbeiten</button>
+                    <button onclick="window.removeDamageScenario('${ds.id}')" class="action-button small dangerous">Entfernen</button>
+                </div>
+            </div>
+            <div class="ds-col-description">
+                ${ds.description}
+            </div>
+        </li>`;
+    });
+
+    html += '</ul>';
+    dsManagementContainer.innerHTML = html;
+    
+    // --- ACHTUNG: CSS muss auch angepasst werden, um die Darstellung zu korrigieren. ---
+    // (Da ich keinen Zugriff auf style.css habe, sollte der Nutzer die folgenden Anpassungen vornehmen)
+    /* .ds-list li { 
+        display: flex; 
+        flex-direction: column; 
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .ds-row-header { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-bottom: 5px;
+    }
+    .ds-col-id-name {
+        font-weight: 600;
+        flex-grow: 1; 
+    }
+    .ds-col-description {
+        font-size: 0.9em;
+        color: #555;
+    }
+    */
+}
+
+// Fügt ein neues Damage Scenario hinzu ODER aktualisiert ein bestehendes
+function saveDamageScenario(e) {
+    if (e) e.preventDefault();
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+
+    const dsId = document.getElementById('dsIdField').value; // Abruf der ID (wichtig für Edit)
+    const name = document.getElementById('dsName').value.trim();
+    const short = document.getElementById('dsShort').value.trim();
+    const description = document.getElementById('dsDescription').value.trim();
+
+    if (!name || !short) {
+        showToast('Name und Kurzbezeichnung sind erforderlich.', 'warning');
+        return;
+    }
+    
+    if (dsId) {
+        // EDITIEREN
+        const index = analysis.damageScenarios.findIndex(ds => ds.id === dsId);
+        if (index !== -1) {
+            analysis.damageScenarios[index] = { id: dsId, name, short, description };
+            showToast(`Schadensszenario ${dsId} aktualisiert.`, 'success');
+        }
+    } else {
+        // NEU ERSTELLEN
+        const existingIds = analysis.damageScenarios.map(ds => parseInt(ds.id.replace('DS', ''))).filter(n => !isNaN(n));
+        const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+        const newId = 'DS' + newIndex;
+
+        analysis.damageScenarios.push({ id: newId, name, short, description });
+        showToast(`Schadensszenario ${newId} hinzugefügt.`, 'success');
+    }
+
+    saveAnalyses();
+    renderDamageScenarios();
+    renderImpactMatrix();
+    damageScenarioModal.style.display = 'none';
+}
+
+// Bearbeitet ein Damage Scenario (Globale Funktion)
+window.editDamageScenario = (dsId) => {
+    if (!activeAnalysisId) return;
+
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+
+    const ds = analysis.damageScenarios.find(d => d.id === dsId);
+    if (!ds) return;
+    
+    // KORRIGIERT: Modal-Titel mit ID setzen
+    if (dsModalTitle) dsModalTitle.textContent = `Schadensszenario ${ds.id} bearbeiten`;
+    if (dsIdField) dsIdField.value = ds.id; 
+
+    // Formularfelder befüllen
+    document.getElementById('dsName').value = ds.name;
+    document.getElementById('dsShort').value = ds.short;
+    document.getElementById('dsDescription').value = ds.description;
+
+    if (damageScenarioModal) damageScenarioModal.style.display = 'block';
+};
+
+// Entfernt ein Damage Scenario
+// **KORRIGIERT: Ersetzt confirm() durch custom confirmationModal und entfernt die Sperre für Standard-DS**
+window.removeDamageScenario = (dsId) => {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+    
+    const ds = analysis.damageScenarios.find(d => d.id === dsId);
+    if (!ds) return;
+    
+    // 1. Konfigurieren des Modals
+    confirmationTitle.textContent = 'Schadensszenario löschen bestätigen';
+    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Schadensszenario <b>${ds.name} (${dsId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
+    
+    btnConfirmAction.textContent = 'Ja, DS löschen';
+    btnConfirmAction.classList.add('dangerous'); 
+    
+    // 2. Das Modal anzeigen
+    confirmationModal.style.display = 'block';
+
+    // 3. WICHTIG: Alte Event-Listener entfernen
+    btnConfirmAction.onclick = null; 
+    btnCancelConfirmation.onclick = null;
+    closeConfirmationModal.onclick = null;
+    
+    // 4. Bestätigungs-Listener hinzufügen
+    btnConfirmAction.onclick = () => {
+        // Deletion logic
+        analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
+        
+        // Lösche zugehörige Impact-Scores aus der Matrix
+        for (const assetId in analysis.impactMatrix) {
+            delete analysis.impactMatrix[assetId][dsId];
+        }
+
+        saveAnalyses();
+        renderDamageScenarios();
+        renderImpactMatrix();
+        confirmationModal.style.display = 'none'; // Bestätigungs-Modal schließen
+        showToast(`Schadensszenario ${dsId} gelöscht.`, 'success');
+    };
+
+    // 5. Abbruch-Listener hinzufügen
+    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
+    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
+}
+
+// Aktualisiert den Impact Score in der Matrix
+window.updateImpactScore = (assetId, dsId, score) => {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+    
+    if (!analysis.impactMatrix[assetId]) {
+        analysis.impactMatrix[assetId] = {};
+    }
+    
+    analysis.impactMatrix[assetId][dsId] = score;
+    saveAnalyses();
+    showToast(`Impact für ${assetId}/${dsId} auf ${score} gesetzt.`, 'info');
+}
+
+// Rendert die Impact Matrix Tabelle
+function renderImpactMatrix() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+    if (!dsMatrixContainer) return;
+
+    if (analysis.assets.length === 0) {
+        dsMatrixContainer.innerHTML = '<h4>Schadensauswirkungsmatrix</h4><p style="text-align: center; color: #7f8c8d; padding: 20px;">Bitte legen Sie zuerst Assets im Reiter "Assets" an.</p>';
+        return;
+    }
+
+    if (analysis.damageScenarios.length === 0) {
+        dsMatrixContainer.innerHTML = '<h4>Schadensauswirkungsmatrix</h4><p style="text-align: center; color: #7f8c8d; padding: 20px;">Bitte definieren Sie zuerst Schadensszenarien.</p>';
+        return;
+    }
+    
+    let html = '<h4>Schadensauswirkungsmatrix (Assets vs. Damage Scenarios)</h4>';
+    html += '<p style="font-size: 0.9em; color: #7f8c8d;">Bewerten Sie die Auswirkung (Impact) jedes Schadensszenarios auf jedes Asset (1=Low, 3=High, N/A=Nicht anwendbar).</p>';
+    html += '<div style="overflow-x: auto;"><table class="impact-matrix-table">';
+    
+    // Table Header
+    html += '<thead><tr>';
+    html += '<th class="asset-col">Asset Name (ID)</th>';
+    
+    // Vertical DS Headers
+    analysis.damageScenarios.forEach(ds => {
+        html += `<th class="ds-col" title="${ds.name}: ${ds.description}">
+            <div class="vertical-text">${ds.id} (${ds.short})</div>
+        </th>`;
+    });
+    
+    html += '</tr></thead>';
+
+    // Table Body (Assets as rows)
+    html += '<tbody>';
+    analysis.assets.forEach(asset => {
+        // Sicherstellen, dass für jedes Asset ein Eintrag in der Impact Matrix existiert
+        if (!analysis.impactMatrix[asset.id]) {
+            analysis.impactMatrix[asset.id] = {};
+        }
+
+        html += '<tr>';
+        html += `<td class="asset-col"><strong>${asset.name}</strong> (${asset.id})</td>`;
+        
+        analysis.damageScenarios.forEach(ds => {
+            const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
+            
+            html += '<td class="score-cell">';
+            // Beachte: onchange ruft die globale window.updateImpactScore auf
+            html += `<select 
+                data-asset-id="${asset.id}" 
+                data-ds-id="${ds.id}" 
+                onchange="window.updateImpactScore('${asset.id}', '${ds.id}', this.value)"
+                class="impact-select">
+                <option value="N/A" ${currentScore === 'N/A' ? 'selected' : ''}>N/A</option>
+                <option value="1" ${currentScore === '1' ? 'selected' : ''}>1 (Low)</option>
+                <option value="2" ${currentScore === '2' ? 'selected' : ''}>2 (Medium)</option>
+                <option value="3" ${currentScore === '3' ? 'selected' : ''}>3 (High)</option>
+            </select>`;
+            html += '</td>';
+        });
+        
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>'; // Div für horizontalen Scroll bei vielen Spalten
+    dsMatrixContainer.innerHTML = html;
+}
 
 // =============================================================
 // --- VERSIONSKONTROLLE LOGIK ---
@@ -695,6 +1027,11 @@ window.revertToVersion = (analysisId, version) => {
         analysis.description = entry.state.description;
         analysis.intendedUse = entry.state.intendedUse;
         analysis.assets = entry.state.assets;
+        
+        // NEU: Damage Scenarios und Impact Matrix wiederherstellen
+        analysis.damageScenarios = entry.state.damageScenarios;
+        analysis.impactMatrix = entry.state.impactMatrix;
+        
         analysis.riskEntries = entry.state.riskEntries;
         
         analysis.metadata.version = entry.version;
@@ -704,9 +1041,13 @@ window.revertToVersion = (analysisId, version) => {
         fillAnalysisForm(analysis);
         renderHistoryTable(analysis);
         
+        // Render aktiven Tab neu
         const activeTab = document.querySelector('.tab-button.active');
         if (activeTab && activeTab.dataset.tab === 'tabAssets') {
             renderAssets(analysis);
+        } else if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios') {
+            renderDamageScenarios();
+            renderImpactMatrix();
         }
 
         saveAnalyses();
@@ -770,6 +1111,9 @@ function createNewVersion(comment) {
             description: analysis.description,
             intendedUse: analysis.intendedUse,
             assets: JSON.parse(JSON.stringify(analysis.assets)), 
+            // NEU: Damage Scenarios und Impact Matrix
+            damageScenarios: JSON.parse(JSON.stringify(analysis.damageScenarios)),
+            impactMatrix: JSON.parse(JSON.stringify(analysis.impactMatrix)),
             riskEntries: JSON.parse(JSON.stringify(analysis.riskEntries)) 
         }
     };
@@ -961,10 +1305,40 @@ document.addEventListener('DOMContentLoaded', () => {
     if (closeImportAnalysisModal) {
         closeImportAnalysisModal.onclick = () => importAnalysisModal.style.display = 'none';
     }
+    
+    // NEU: Damage Scenario Modal Listener
+    if (btnAddDamageScenario) {
+        btnAddDamageScenario.onclick = () => {
+             if (!activeAnalysisId) {
+                showToast('Bitte wählen Sie zuerst eine aktive Analyse aus.', 'info');
+                return;
+            }
+            damageScenarioForm.reset();
+            
+            // Wichtig: ID-Feld leeren und Titel für NEU setzen
+            if (dsIdField) dsIdField.value = ''; 
+            
+            // KORRIGIERT: Voraussichtliche neue ID im Titel anzeigen
+            const analysis = analysisData.find(a => a.id === activeAnalysisId);
+            const existingIds = analysis.damageScenarios.map(ds => parseInt(ds.id.replace('DS', ''))).filter(n => !isNaN(n));
+            const nextIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+            const nextId = 'DS' + nextIndex;
+            
+            if (dsModalTitle) dsModalTitle.textContent = `Neues Schadensszenario ${nextId} erfassen`;
+            
+            damageScenarioModal.style.display = 'block';
+        };
+    }
+    if (closeDamageScenarioModal) {
+        closeDamageScenarioModal.onclick = () => damageScenarioModal.style.display = 'none';
+    }
+    if (damageScenarioForm) {
+        damageScenarioForm.onsubmit = saveDamageScenario; // Geändert auf die neue generische Funktion
+    }
 
     // Globaler Listener zum Schließen von Modals bei Klick außerhalb
     window.onclick = function(event) {
-        if (event.target == newAnalysisModal || event.target == versionControlModal || event.target == importAnalysisModal || event.target == assetModal || event.target == versionCommentModal || event.target == confirmationModal) {
+        if (event.target == newAnalysisModal || event.target == versionControlModal || event.target == importAnalysisModal || event.target == assetModal || event.target == versionCommentModal || event.target == confirmationModal || event.target == damageScenarioModal) {
             event.target.style.display = 'none';
         }
     };
@@ -989,6 +1363,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (tabId === 'tabAssets' && activeAnalysis) {
                 renderAssets(activeAnalysis);
+            } 
+            // NEU: Logik für Damage Scenarios Tab
+            else if (tabId === 'tabDamageScenarios' && activeAnalysis) {
+                renderDamageScenarios();
+                renderImpactMatrix();
             }
         });
     });

@@ -245,7 +245,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     color: #7f8c8d;
 }
 
-/* --- Tabellen Styling --- */
+/* --- Tabellen Styling (allgemein) --- */
 .data-table, .history-table {
     width: 100%;
     border-collapse: collapse;
@@ -279,10 +279,9 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 
 
 /* =============================================================
-   --- ASSET CARD STYLING (Neu für 2-3 Spalten) ---
+   --- ASSET CARD STYLING ---
    ============================================================= */
 
-/* Container für die mehrspaltige Ansicht */
 #assetsCardContainer {
     display: grid;
     /* Erstellt Spalten, die mindestens 300px breit sind, und füllt die Reihe auf */
@@ -313,7 +312,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     color: white;
     padding: 10px 15px;
     font-weight: 600;
-    font-size: 1.0em; /* Etwas kleiner */
+    font-size: 1.0em; 
 }
 
 .asset-card-body {
@@ -338,7 +337,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     padding: 10px 15px;
     border-top: 1px solid #eee;
     background-color: #f9f9f9;
-    font-size: 0.85em; /* Kleinerer Footer-Text */
+    font-size: 0.85em; 
 }
 
 .protection-level {
@@ -351,7 +350,141 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 /* =============================================================
-   --- Radio Button Styling für CIA (vom letzten Schritt) ---
+   --- DAMAGE SCENARIOS STYLING (KORRIGIERT: TABELLEN-LAYOUT) ---
+   ============================================================= */
+
+/* Liste der definierten DS */
+.ds-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.ds-list li {
+    /* KRITISCH: Verwende Grid für die 3 Spalten-Struktur */
+    display: grid;
+    /* 1. Spalte: DS ID + Name (fest) -> 350px, 2. Spalte: Beschreibung (flexibel), 3. Spalte: Buttons (fest) -> 180px */
+    grid-template-columns: 350px 1fr 180px; 
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px dashed #eee;
+    background-color: #fcfcfc;
+    font-size: 0.95em;
+}
+
+.ds-list li:last-child {
+    border-bottom: none;
+}
+
+/* Neue Klassen für die Spalteninhalte */
+.ds-col-id-name {
+    font-weight: 600;
+    color: #2c3e50;
+    white-space: nowrap; /* Verhindert Zeilenumbruch bei der DS-ID/Name */
+}
+
+.ds-col-description {
+    text-align: left;
+    color: #34495e;
+    padding: 0 15px; /* Abstand zwischen Spalten */
+}
+
+.ds-actions {
+    flex-shrink: 0;
+    text-align: right;
+    /* WICHTIG: Buttons innerhalb der Actions-Spalte formatieren */
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px; /* Abstand zwischen den Buttons */
+}
+
+
+/* Impact Matrix Tabelle */
+.impact-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: fixed; /* Wichtig für konsistente Spaltenbreiten */
+}
+
+.impact-matrix-table th, .impact-matrix-table td {
+    padding: 5px;
+    border: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.impact-matrix-table th {
+    background-color: #f1f1f1;
+    height: 100px; /* Platz für vertikalen Text */
+    color: #34495e;
+}
+
+.impact-matrix-table .asset-col {
+    width: 250px; 
+    text-align: left;
+    font-weight: 600;
+    background-color: #f9f9f9;
+    padding-left: 15px;
+}
+
+.impact-matrix-table .ds-col {
+    width: auto; /* Restlicher Platz */
+}
+
+/* Vertikaler Text Container */
+.vertical-text {
+    /* Dreht den Text, sodass er von unten nach oben lesbar ist */
+    writing-mode: vertical-rl; 
+    transform: rotate(180deg); 
+    white-space: nowrap;
+    height: 100%;
+    text-align: center;
+    margin: 0 auto;
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #0059B3; 
+    /* Zusätzliche Rotation für perfekte vertikale Anzeige (abhängig vom Browser) */
+    display: block;
+    padding: 0;
+}
+
+.impact-matrix-table .score-cell {
+    padding: 0;
+    height: 100%;
+}
+
+.impact-matrix-table .impact-select {
+    width: 100%;
+    height: 100%;
+    padding: 8px 5px;
+    border: none;
+    box-sizing: border-box;
+    text-align: center;
+    /* Verhindert den nativen Dropdown-Pfeil */
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.impact-matrix-table .impact-select[value="3"] { color: #e74c3c; } /* High Impact: Rot */
+.impact-matrix-table .impact-select[value="2"] { color: #e67e22; } /* Medium Impact: Orange */
+.impact-matrix-table .impact-select[value="1"] { color: #2ecc71; } /* Low Impact: Grün */
+.impact-matrix-table .impact-select[value="N/A"] { color: #7f8c8d; } /* N/A: Grau */
+
+.impact-matrix-table .impact-select:focus {
+    outline: none;
+    background-color: #ecf0f1;
+}
+
+/* =============================================================
+   --- Radio Button Styling für CIA ---
    ============================================================= */
 
 .radio-group {
@@ -365,7 +498,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 .radio-group input[type="radio"] {
-    display: none; /* Original Radio Button verstecken */
+    display: none; 
 }
 
 .radio-group label {
@@ -381,9 +514,8 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     transition: background-color 0.2s, border-color 0.2s;
 }
 
-/* Stil für den ausgewählten Radio Button */
 .radio-group input[type="radio"]:checked + label {
-    background-color: #0059B3; /* Schunk Blau */
+    background-color: #0059B3; 
     color: white;
     border-color: #0059B3;
     font-weight: 600;
@@ -392,7 +524,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 .radio-group label:hover {
     background-color: #e0e0e0;
 }
-
 
 /* --- Modal Styling --- */
 .modal {
@@ -445,13 +576,13 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 .small {
     font-size: 0.8em;
     padding: 5px 10px !important;
-    margin-left: 5px;
+    /* Entferne margin-left, da ds-actions jetzt Flexbox ist */
 }
 
 /* Toast Container */
 #toastContainer {
     position: fixed;
-    bottom: 70px; /* Hochgesetzt, damit es nicht mit der Status-Bar kollidiert */
+    bottom: 70px; 
     right: 20px;
     z-index: 1050;
     display: flex;
@@ -481,13 +612,59 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 .custom-toast.success {
-    background-color: #0059B3; /* Schunk Blau */
+    background-color: #0059B3; 
 }
 
 .custom-toast.error {
-    background-color: #e74c3c; /* Rot */
+    background-color: #e74c3c; 
 }
 
 .custom-toast.info {
-    background-color: #3498db; /* Hellblau */
+    background-color: #3498db; 
+}
+
+.ds-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.ds-list li { 
+    /* Hauptcontainer als Flex-Column (Name/Actions oben, Beschreibung darunter) */
+    display: flex; 
+    flex-direction: column; 
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #fcfcfc;
+}
+
+.ds-row-header { 
+    /* Zeile für ID, Name und Buttons */
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 5px; /* Abstand zur Beschreibung */
+    width: 100%;
+}
+
+.ds-col-id-name {
+    font-weight: 600;
+    font-size: 1.1em;
+    flex-grow: 1; /* Nimmt den meisten Platz ein */
+}
+
+.ds-actions {
+    flex-shrink: 0; /* Verhindert, dass Buttons schrumpfen */
+    display: flex;
+    gap: 5px;
+}
+
+.ds-col-description {
+    /* Die Beschreibung ist nun immer auf einer neuen Zeile */
+    font-size: 0.9em;
+    color: #555;
+    padding-top: 5px; 
+    border-top: 1px dotted #eee;
 }
