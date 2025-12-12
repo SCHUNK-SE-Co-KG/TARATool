@@ -38,7 +38,7 @@ const closeAssetModal = document.getElementById('closeAssetModal');
 const assetForm = document.getElementById('assetForm');
 const assetModalTitle = document.getElementById('assetModalTitle');
 
-// NEU: Damage Scenarios Elements
+// Damage Scenarios Elements
 const dsManagementContainer = document.getElementById('dsManagementContainer');
 const dsMatrixContainer = document.getElementById('dsMatrixContainer');
 const btnAddDamageScenario = document.getElementById('btnAddDamageScenario');
@@ -102,7 +102,7 @@ const defaultAnalysis = {
     
     assets: [
          { 
-             id: 'a-001', 
+             id: 'A01', 
              name: 'Steuereinheit', 
              type: 'Hardware', 
              description: 'Steuert die Hauptfunktion des Produkts.', 
@@ -112,9 +112,8 @@ const defaultAnalysis = {
              schutzbedarf: 'III' 
          }
     ],
-    // NEU: Damage Scenarios und Impact Matrix
     damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
-    impactMatrix: {}, // Key: assetId, Value: { dsId: score (1-3) }
+    impactMatrix: {}, 
     riskEntries: [], 
     
     history: [
@@ -129,7 +128,7 @@ const defaultAnalysis = {
                 description: 'Dies ist die Standardbeschreibung.',
                 intendedUse: 'Der vorgesehene Einsatzzweck.',
                 assets: [{ 
-                    id: 'a-001', 
+                    id: 'A01', 
                     name: 'Steuereinheit', 
                     type: 'Hardware', 
                     description: 'Steuert die Hauptfunktion des Produkts.', 
@@ -138,7 +137,6 @@ const defaultAnalysis = {
                     authenticity: 'III',
                     schutzbedarf: 'III'
                 }],
-                // NEU: Damage Scenarios und Impact Matrix im State
                 damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
                 impactMatrix: {},
                 riskEntries: []
@@ -165,7 +163,7 @@ function loadAnalyses() {
     if (data) {
         analysisData = JSON.parse(data);
         
-        // Sicherstellen, dass neue Felder (damageScenarios, impactMatrix) existieren
+        // Migration/Sicherstellung neuer Felder
         analysisData.forEach(analysis => {
             if (!analysis.damageScenarios) {
                 analysis.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
@@ -198,10 +196,7 @@ function saveCurrentAnalysisState() {
 // =============================================================
 
 function handleExport() {
-    // 1. Speichere den aktuellen Zustand der aktiven Analyse
     saveCurrentAnalysisState();
-    
-    // 2. Datenquelle ist nun der GESAMTE Array.
     const dataToExport = analysisData; 
     
     if (dataToExport.length === 0) {
@@ -217,7 +212,6 @@ function handleExport() {
     tempLink.download = filename;
     
     tempLink.click();
-    
     showToast(`Alle ${dataToExport.length} Analysen in "${filename}" exportiert.`, 'success');
 }
 
@@ -226,26 +220,17 @@ function handleExport() {
 // =============================================================
 
 function handleImportWarningConfirmed() {
-    // Setzt das Feld zurück
     if (importForm) importForm.reset();
-    
-    // 1. Das Haupt-Import-Modal öffnen
     importAnalysisModal.style.display = 'block';
-    
-    // 2. Das Formular aktivieren
     if (importFileInput) importFileInput.disabled = false;
     if (btnImportStart) btnImportStart.disabled = false;
-
-    // 3. Listener für den eigentlichen Import hinzufügen
     if (importForm) {
         importForm.onsubmit = handleImportFile;
     }
 }
 
-// KRITISCHE KORREKTUR: Syntaxfehler im try...catch Block behoben.
 function handleImportFile(e) {
     e.preventDefault();
-    
     const file = importFileInput.files[0];
     if (!file) {
         showToast('Bitte wählen Sie eine Datei aus.', 'warning');
@@ -256,34 +241,25 @@ function handleImportFile(e) {
     reader.onload = (event) => {
         try {
             const importedData = JSON.parse(event.target.result);
-            
-            // Plausibilitätsprüfung
             if (Array.isArray(importedData) && importedData.every(item => item.id && item.name)) {
-                // Daten ersetzen und speichern
                 analysisData = importedData;
                 saveAnalyses();
-                
-                // UI neu laden
                 const firstId = analysisData.length > 0 ? analysisData[0].id : null;
                 if (firstId) {
                     activateAnalysis(firstId);
                 } else {
                     loadAnalyses(); 
                 }
-                
-                // Modal schließen und Erfolgsmeldung
                 importAnalysisModal.style.display = 'none';
                 showToast(`Erfolgreich ${analysisData.length} Analysen importiert.`, 'success');
+            } else {
+                showToast('Importfehler: Ungültige Datenstruktur.', 'error');
             }
-        } catch (error) { // <-- Fehlerbehebung: catch muss direkt dem try folgen, nicht im if-Block verschachtelt sein.
+        } catch (error) {
             console.error('Importfehler:', error);
-            showToast('Importfehler: Ungültiges JSON-Format in der Datei.', 'error');
+            showToast('Importfehler: Ungültiges JSON.', 'error');
         }
     };
-    reader.onerror = () => {
-        showToast('Fehler beim Lesen der Datei.', 'error');
-    };
-
     reader.readAsText(file);
 }
 
@@ -292,7 +268,6 @@ function handleImportFile(e) {
 // --- UI UPDATES & ALLGEMEINE FUNKTIONEN ---
 // =============================================================
 
-// Aktualisiert den Dropdown-Selektor
 function renderAnalysisSelector() {
     if (!analysisSelector) return;
     analysisSelector.innerHTML = '';
@@ -309,7 +284,6 @@ function renderAnalysisSelector() {
         const option = document.createElement('option');
         option.textContent = analysis.name;
         option.value = analysis.id;
-
         if (analysis.id === activeAnalysisId) {
             option.selected = true;
         }
@@ -317,34 +291,26 @@ function renderAnalysisSelector() {
     });
 }
 
-// Befüllt die Formularfelder mit den Daten der aktiven Analyse
 function fillAnalysisForm(analysis) {
     analysisNameDisplay.textContent = analysis.name;
-    
     inputAnalysisName.value = analysis.name;
     inputDescription.value = analysis.description;
     inputIntendedUse.value = analysis.intendedUse;
     inputAuthorName.value = analysis.metadata.author; 
     
-    // Metadaten im Header aktualisieren
     analysisMetadata.innerHTML = `
         <span>Version: ${analysis.metadata.version}</span> | 
         <span>Autor: ${analysis.metadata.author}</span> | 
         <span>Datum: ${analysis.metadata.date}</span>
     `;
 
-    // Felder aktivieren/deaktivieren
     const disable = !analysis || !activeAnalysisId;
     document.querySelectorAll('.main-content input, .main-content textarea, .main-content select, #btnSave, #btnShowVersionControl').forEach(el => {
         el.disabled = disable;
     });
-    // Export Button aktivieren
-    if (btnExportAnalysis) {
-        btnExportAnalysis.disabled = disable;
-    }
+    if (btnExportAnalysis) btnExportAnalysis.disabled = disable;
 }
 
-// Wechselt zur aktiven Analyse
 function activateAnalysis(id) {
     if (activeAnalysisId) {
         saveCurrentAnalysisState();
@@ -370,7 +336,6 @@ function activateAnalysis(id) {
     }
 }
 
-// Statusmeldung anzeigen
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -392,9 +357,7 @@ function showToast(message, type = 'info') {
              setTimeout(() => {
                  try {
                      parent.removeChild(toast);
-                 } catch (e) {
-                     // console.warn('Toast removeChild abgefangen:', e);
-                 }
+                 } catch (e) {}
              }, 500);
         }
     }, 4000);
@@ -405,9 +368,8 @@ function showToast(message, type = 'info') {
 // --- ASSET LOGIK (CRUD) ---
 // =============================================================
 
-// Rendert die Asset-Tabelle (JETZT ALS KARTEN)
 function renderAssets(analysis) {
-    if (!assetsCardContainer) return; // Verwende den neuen Container
+    if (!assetsCardContainer) return; 
     assetsCardContainer.innerHTML = '';
 
     if (!analysis.assets || analysis.assets.length === 0) {
@@ -420,13 +382,11 @@ function renderAssets(analysis) {
         card.classList.add('asset-card');
         card.dataset.id = asset.id;
         
-        // Anzeige des höchsten Schutzziel-Scores im Header (zum schnellen Überblick)
         const highestCIA = asset.schutzbedarf;
 
-        // Logik: Name oben, Beschreibung, Typ und CIA-Werte im Body, Gesamtschutzbedarf und Buttons im Footer
         card.innerHTML = `
             <div class="asset-card-header">
-                ${asset.name} 
+                ${asset.id}: ${asset.name} 
             </div>
             <div class="asset-card-body">
                 <p class="type">Typ: ${asset.type}</p>
@@ -439,7 +399,7 @@ function renderAssets(analysis) {
                 <ul style="list-style: none; padding: 0; margin: 5px 0 0 0;">
                     <li><strong title="Confidentiality">C (Confidentiality):</strong> ${asset.confidentiality}</li>
                     <li><strong title="Integrity">I (Integrity):</strong> ${asset.integrity}</li>
-                    <li><strong title="Authenticity">A (Availability):</strong> ${asset.authenticity}</li> 
+                    <li><strong title="Authenticity">A (Authenticity):</strong> ${asset.authenticity}</li> 
                 </ul>
             </div>
             <div class="asset-card-footer">
@@ -454,7 +414,6 @@ function renderAssets(analysis) {
     });
 }
 
-// --- MODAL & FORMULAR LOGIK ---
 if (btnAddAsset) {
     btnAddAsset.onclick = () => {
         if (!activeAnalysisId) {
@@ -465,8 +424,6 @@ if (btnAddAsset) {
         document.getElementById('assetIdField').value = '';
         assetModalTitle.textContent = 'Neues Asset erfassen';
         
-        // Setze Standardwerte für CIA (WICHTIG: Ersten Radio-Button 'I' vorselektieren)
-        // Verwende querySelector, um die Radio-Buttons zu selektieren
         document.querySelector('input[name="confidentiality"][value="I"]').checked = true;
         document.querySelector('input[name="integrity"][value="I"]').checked = true;
         document.querySelector('input[name="authenticity"][value="I"]').checked = true;
@@ -486,7 +443,6 @@ if (assetForm) {
     };
 }
 
-// --- SPEICHERN ---
 function saveAsset() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -494,8 +450,6 @@ function saveAsset() {
     const idField = document.getElementById('assetIdField');
     const assetId = idField ? idField.value : '';
 
-    // NEUE WERTE auslesen (Ausgewählter Radio-Button)
-    // Überprüfe, ob Radio-Buttons ausgewählt sind, bevor .value aufgerufen wird
     const cEl = document.querySelector('input[name="confidentiality"]:checked');
     const iEl = document.querySelector('input[name="integrity"]:checked');
     const aEl = document.querySelector('input[name="authenticity"]:checked');
@@ -509,7 +463,6 @@ function saveAsset() {
     const iVal = iEl.value;
     const aVal = aEl.value;
     
-    // Gesamtschutzbedarf als Maximum der CIA-Werte berechnen
     const scoreMap = { 'I': 1, 'II': 2, 'III': 3 };
     const maxScore = Math.max(scoreMap[cVal], scoreMap[iVal], scoreMap[aVal]);
     const overallSchutzbedarf = Object.keys(scoreMap).find(key => scoreMap[key] === maxScore);
@@ -532,13 +485,16 @@ function saveAsset() {
             showToast('Asset aktualisiert.', 'success');
         }
     } else {
-        // Neu erstellen
-        const newAssetIndex = analysis.assets.length > 0 ? 
-            Math.max(...analysis.assets.map(a => parseInt(a.id.split('-')[1])).filter(n => !isNaN(n))) + 1 : 1;
-        const newId = 'a-' + newAssetIndex.toString().padStart(3, '0');
+        // Neu erstellen mit A01 Format
+        const existingIds = analysis.assets
+            .map(a => parseInt(a.id.replace('A', ''), 10))
+            .filter(n => !isNaN(n));
+        
+        const nextNum = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+        const newId = `A${nextNum.toString().padStart(2, '0')}`;
         
         analysis.assets.push({ ...newAssetData, id: newId });
-        showToast('Neues Asset hinzugefügt.', 'success');
+        showToast(`Neues Asset ${newId} hinzugefügt.`, 'success');
     }
 
     if (assetModal) assetModal.style.display = 'none';
@@ -546,14 +502,12 @@ function saveAsset() {
     saveAnalyses();
     renderAssets(analysis);
     
-    // NEU: Impact Matrix aktualisieren, falls der Tab aktiv ist (um neue Assets sofort zu sehen)
     const activeTab = document.querySelector('.tab-button.active');
     if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios') {
         renderImpactMatrix();
     }
 }
 
-// --- BEARBEITEN (Globale Funktion) ---
 window.editAsset = (assetId) => {
     if (!activeAnalysisId) return;
 
@@ -564,29 +518,22 @@ window.editAsset = (assetId) => {
     if (!asset) return;
 
     document.getElementById('assetIdField').value = asset.id;
-    assetModalTitle.textContent = 'Asset bearbeiten';
+    assetModalTitle.textContent = `Asset ${asset.id} bearbeiten`;
     
-    // Allgemeine Details
     document.getElementById('assetName').value = asset.name;
     document.getElementById('assetType').value = asset.type;
     document.getElementById('assetDescription').value = asset.description || ''; 
 
-    // CIA-Werte laden (Auswahl der Radio-Buttons)
-    // C
     const cRadio = document.querySelector(`input[name="confidentiality"][value="${asset.confidentiality}"]`);
     if(cRadio) cRadio.checked = true;
-    // I
     const iRadio = document.querySelector(`input[name="integrity"][value="${asset.integrity}"]`);
     if(iRadio) iRadio.checked = true;
-    // A
     const aRadio = document.querySelector(`input[name="authenticity"][value="${asset.authenticity}"]`);
     if(aRadio) aRadio.checked = true;
 
     if (assetModal) assetModal.style.display = 'block';
 };
 
-// --- LÖSCHEN (Globale Funktion) ---
-// **KORRIGIERT: Ersetzt confirm() durch custom confirmationModal**
 window.deleteAsset = (assetId) => {
     if (!activeAnalysisId) return;
 
@@ -596,27 +543,20 @@ window.deleteAsset = (assetId) => {
     const asset = analysis.assets.find(a => a.id === assetId);
     if (!asset) return;
     
-    // 1. Konfigurieren des Modals
     confirmationTitle.textContent = 'Asset löschen bestätigen';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Asset <b>${asset.name} (${assetId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
+    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Asset <b>${asset.id}: ${asset.name}</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
     
     btnConfirmAction.textContent = 'Ja, Asset löschen';
     btnConfirmAction.classList.add('dangerous'); 
     
-    // 2. Das Modal anzeigen
     confirmationModal.style.display = 'block';
 
-    // 3. WICHTIG: Alte Event-Listener entfernen
     btnConfirmAction.onclick = null; 
     btnCancelConfirmation.onclick = null;
     closeConfirmationModal.onclick = null;
     
-    // 4. Bestätigungs-Listener hinzufügen
     btnConfirmAction.onclick = () => {
-        // Deletion logic
         analysis.assets = analysis.assets.filter(a => a.id !== assetId);
-        
-        // NEU: Zugehörige Impact-Scores löschen
         delete analysis.impactMatrix[assetId];
 
         saveCurrentAnalysisState();
@@ -624,25 +564,18 @@ window.deleteAsset = (assetId) => {
         renderAssets(analysis);
         renderImpactMatrix(); 
         
-        confirmationModal.style.display = 'none'; // Bestätigungs-Modal schließen
+        confirmationModal.style.display = 'none'; 
         showToast(`Asset ${assetId} gelöscht.`, 'success');
     };
     
-    // 5. Abbruch-Listener hinzufügen
-    btnCancelConfirmation.onclick = () => {
-        confirmationModal.style.display = 'none';
-    };
-    
-    closeConfirmationModal.onclick = () => {
-        confirmationModal.style.display = 'none';
-    };
+    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
+    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
 };
 
 // =============================================================
 // --- DAMAGE SCENARIO LOGIK (CRUD & MATRIX) ---
 // =============================================================
 
-// Rendert die Liste der Damage Scenarios
 function renderDamageScenarios() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -650,20 +583,18 @@ function renderDamageScenarios() {
 
     let html = '<h4>Definierte Schadens-Szenarien:</h4>';
     html += '<p style="font-size: 0.9em; color: #7f8c8d;">Verwalten Sie die Damage Scenarios (DS), die zur Bewertung der Assets verwendet werden.</p>';
-    
-    // NEU: Verwendung eines Flex-Containers zur besseren Kontrolle der Zeilenumbrüche
-    html += '<ul class="ds-list">'; 
+    html += '<ul class="ds-list">';
     
     analysis.damageScenarios.forEach(ds => {
         const isDefault = DEFAULT_DAMAGE_SCENARIOS.some(defaultDs => defaultDs.id === ds.id);
         
-        // KORRIGIERT: Flex-Container für die Zeile, um die Beschreibung in eine neue "Zeile" zu zwingen
+        // KORRIGIERT: 2-Zeilen-Layout (Header + Body)
         html += `<li data-id="${ds.id}">
             <div class="ds-row-header">
                 <div class="ds-col-id-name">
-                    ${ds.id}: <strong>${ds.name}</strong> 
-                    <span style="font-weight: 400; color: #7f8c8d;">(${ds.short})</span>
-                    ${isDefault ? `<span class="small" style="color: #2ecc71;">(Standard)</span>` : ''}
+                    <strong>${ds.id}:</strong> ${ds.name} 
+                    <span style="font-weight: 400; color: #7f8c8d; margin-left: 5px;">(${ds.short})</span>
+                    ${isDefault ? `<span class="small" style="color: #2ecc71; margin-left: 10px;">(Standard)</span>` : ''}
                 </div>
                 <div class="ds-actions">
                     <button onclick="window.editDamageScenario('${ds.id}')" class="action-button small">Bearbeiten</button>
@@ -671,47 +602,21 @@ function renderDamageScenarios() {
                 </div>
             </div>
             <div class="ds-col-description">
-                ${ds.description}
+                ${ds.description || '— Keine Beschreibung —'}
             </div>
         </li>`;
     });
 
     html += '</ul>';
     dsManagementContainer.innerHTML = html;
-    
-    // --- ACHTUNG: CSS muss auch angepasst werden, um die Darstellung zu korrigieren. ---
-    // (Da ich keinen Zugriff auf style.css habe, sollte der Nutzer die folgenden Anpassungen vornehmen)
-    /* .ds-list li { 
-        display: flex; 
-        flex-direction: column; 
-        border: 1px solid #ddd;
-        padding: 10px;
-        margin-bottom: 10px;
-    }
-    .ds-row-header { 
-        display: flex; 
-        justify-content: space-between; 
-        align-items: center; 
-        margin-bottom: 5px;
-    }
-    .ds-col-id-name {
-        font-weight: 600;
-        flex-grow: 1; 
-    }
-    .ds-col-description {
-        font-size: 0.9em;
-        color: #555;
-    }
-    */
 }
 
-// Fügt ein neues Damage Scenario hinzu ODER aktualisiert ein bestehendes
 function saveDamageScenario(e) {
     if (e) e.preventDefault();
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    const dsId = document.getElementById('dsIdField').value; // Abruf der ID (wichtig für Edit)
+    const dsId = document.getElementById('dsIdField').value; 
     const name = document.getElementById('dsName').value.trim();
     const short = document.getElementById('dsShort').value.trim();
     const description = document.getElementById('dsDescription').value.trim();
@@ -744,7 +649,6 @@ function saveDamageScenario(e) {
     damageScenarioModal.style.display = 'none';
 }
 
-// Bearbeitet ein Damage Scenario (Globale Funktion)
 window.editDamageScenario = (dsId) => {
     if (!activeAnalysisId) return;
 
@@ -754,11 +658,9 @@ window.editDamageScenario = (dsId) => {
     const ds = analysis.damageScenarios.find(d => d.id === dsId);
     if (!ds) return;
     
-    // KORRIGIERT: Modal-Titel mit ID setzen
     if (dsModalTitle) dsModalTitle.textContent = `Schadensszenario ${ds.id} bearbeiten`;
     if (dsIdField) dsIdField.value = ds.id; 
 
-    // Formularfelder befüllen
     document.getElementById('dsName').value = ds.name;
     document.getElementById('dsShort').value = ds.short;
     document.getElementById('dsDescription').value = ds.description;
@@ -766,8 +668,6 @@ window.editDamageScenario = (dsId) => {
     if (damageScenarioModal) damageScenarioModal.style.display = 'block';
 };
 
-// Entfernt ein Damage Scenario
-// **KORRIGIERT: Ersetzt confirm() durch custom confirmationModal und entfernt die Sperre für Standard-DS**
 window.removeDamageScenario = (dsId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -775,27 +675,21 @@ window.removeDamageScenario = (dsId) => {
     const ds = analysis.damageScenarios.find(d => d.id === dsId);
     if (!ds) return;
     
-    // 1. Konfigurieren des Modals
     confirmationTitle.textContent = 'Schadensszenario löschen bestätigen';
     confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Schadensszenario <b>${ds.name} (${dsId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
     
     btnConfirmAction.textContent = 'Ja, DS löschen';
     btnConfirmAction.classList.add('dangerous'); 
     
-    // 2. Das Modal anzeigen
     confirmationModal.style.display = 'block';
 
-    // 3. WICHTIG: Alte Event-Listener entfernen
     btnConfirmAction.onclick = null; 
     btnCancelConfirmation.onclick = null;
     closeConfirmationModal.onclick = null;
     
-    // 4. Bestätigungs-Listener hinzufügen
     btnConfirmAction.onclick = () => {
-        // Deletion logic
         analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
         
-        // Lösche zugehörige Impact-Scores aus der Matrix
         for (const assetId in analysis.impactMatrix) {
             delete analysis.impactMatrix[assetId][dsId];
         }
@@ -803,16 +697,14 @@ window.removeDamageScenario = (dsId) => {
         saveAnalyses();
         renderDamageScenarios();
         renderImpactMatrix();
-        confirmationModal.style.display = 'none'; // Bestätigungs-Modal schließen
+        confirmationModal.style.display = 'none'; 
         showToast(`Schadensszenario ${dsId} gelöscht.`, 'success');
     };
 
-    // 5. Abbruch-Listener hinzufügen
     btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
     closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
 }
 
-// Aktualisiert den Impact Score in der Matrix
 window.updateImpactScore = (assetId, dsId, score) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -826,7 +718,6 @@ window.updateImpactScore = (assetId, dsId, score) => {
     showToast(`Impact für ${assetId}/${dsId} auf ${score} gesetzt.`, 'info');
 }
 
-// Rendert die Impact Matrix Tabelle
 function renderImpactMatrix() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -846,11 +737,9 @@ function renderImpactMatrix() {
     html += '<p style="font-size: 0.9em; color: #7f8c8d;">Bewerten Sie die Auswirkung (Impact) jedes Schadensszenarios auf jedes Asset (1=Low, 3=High, N/A=Nicht anwendbar).</p>';
     html += '<div style="overflow-x: auto;"><table class="impact-matrix-table">';
     
-    // Table Header
     html += '<thead><tr>';
-    html += '<th class="asset-col">Asset Name (ID)</th>';
+    html += '<th class="asset-col">Asset (ID: Name)</th>';
     
-    // Vertical DS Headers
     analysis.damageScenarios.forEach(ds => {
         html += `<th class="ds-col" title="${ds.name}: ${ds.description}">
             <div class="vertical-text">${ds.id} (${ds.short})</div>
@@ -859,22 +748,19 @@ function renderImpactMatrix() {
     
     html += '</tr></thead>';
 
-    // Table Body (Assets as rows)
     html += '<tbody>';
     analysis.assets.forEach(asset => {
-        // Sicherstellen, dass für jedes Asset ein Eintrag in der Impact Matrix existiert
         if (!analysis.impactMatrix[asset.id]) {
             analysis.impactMatrix[asset.id] = {};
         }
 
         html += '<tr>';
-        html += `<td class="asset-col"><strong>${asset.name}</strong> (${asset.id})</td>`;
+        html += `<td class="asset-col"><strong>${asset.id}: ${asset.name}</strong></td>`;
         
         analysis.damageScenarios.forEach(ds => {
             const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
             
             html += '<td class="score-cell">';
-            // Beachte: onchange ruft die globale window.updateImpactScore auf
             html += `<select 
                 data-asset-id="${asset.id}" 
                 data-ds-id="${ds.id}" 
@@ -891,7 +777,7 @@ function renderImpactMatrix() {
         html += '</tr>';
     });
     
-    html += '</tbody></table></div>'; // Div für horizontalen Scroll bei vielen Spalten
+    html += '</tbody></table></div>';
     dsMatrixContainer.innerHTML = html;
 }
 
@@ -906,7 +792,6 @@ function renderHistoryTable(analysis) {
     const currentVersion = analysis.metadata.version;
     const history = analysis.history;
     
-    // 1. Historie chronologisch sortieren, um Indexierung zu gewährleisten
     history.sort((a, b) => {
         const [aMajor, aMinor] = a.version.split('.').map(Number);
         const [bMajor, bMinor] = b.version.split('.').map(Number);
@@ -919,51 +804,40 @@ function renderHistoryTable(analysis) {
     let tempMinorVersions = []; 
     let finalBaseline = null;
     
-    // 2. Iteriere von der Version VOR der aktuellen rückwärts
     for (let i = currentVersionIndex - 1; i >= 0; i--) {
         const entry = history[i];
         
-        // Definition Baseline: Version X.0 (z.B. 1.0, 2.0).
         const isX0Baseline = entry.version.endsWith('.0') && entry.version !== INITIAL_VERSION;
 
         if (isX0Baseline) {
-            // Baseline gefunden: Nimm nur die Baseline und breche ab.
             finalBaseline = entry.version;
             tempMinorVersions = []; 
             break; 
         }
         
-        // Nur die letzten 3 Minor-Versionen sammeln
         if (tempMinorVersions.length < 3) {
             tempMinorVersions.push(entry.version);
         } else {
-            // 3 Minor-Versionen ohne Baseline-Unterbrechung gesammelt. Abbrechen.
             break; 
         }
     }
     
-    // 3. Set der wiederherstellbaren Versionen zusammenstellen
     const restorable = new Set();
     
     if (finalBaseline) {
         restorable.add(finalBaseline);
     } else {
-        // Füge die gesammelten Minor-Versionen (max. 3) hinzu.
         tempMinorVersions.forEach(v => restorable.add(v));
     }
     
-    // Das Set der zu rendernden Versionen
     const versionsToRender = new Set([...restorable, currentVersion]);
     
-    // 4. Filtern und Rendern der Tabelle
     history
         .filter(entry => versionsToRender.has(entry.version))
-        // Sortieren, damit die aktuelle Version immer oben ist, gefolgt von der Historie (neueste zuerst)
         .sort((a, b) => {
             if (a.version === currentVersion) return -1;
             if (b.version === currentVersion) return 1;
             
-            // Absteigend sortieren
             const [aMajor, aMinor] = a.version.split('.').map(Number);
             const [bMajor, bMinor] = b.version.split('.').map(Number);
             if (aMajor !== bMajor) return bMajor - aMajor;
@@ -996,7 +870,6 @@ function renderHistoryTable(analysis) {
         });
 }
 
-// Verwendet das Custom-Modal anstelle von confirm()
 window.revertToVersion = (analysisId, version) => {
     const analysis = analysisData.find(a => a.id === analysisId);
     if (!analysis) return;
@@ -1004,23 +877,18 @@ window.revertToVersion = (analysisId, version) => {
     const entry = analysis.history.find(h => h.version === version);
     if (!entry) return;
     
-    // 1. Konfigurieren des Modals
     confirmationTitle.textContent = 'Versionswiederherstellung';
     confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie zur Version <b>${version}</b> (${entry.comment}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`;
     
-    // Texte für Wiederherstellung setzen
     btnConfirmAction.textContent = 'Ja, wiederherstellen';
     btnConfirmAction.classList.add('dangerous'); 
     
-    // 2. Das Modal anzeigen
     confirmationModal.style.display = 'block';
 
-    // 3. WICHTIG: Alte Event-Listener entfernen
     btnConfirmAction.onclick = null; 
     btnCancelConfirmation.onclick = null;
     closeConfirmationModal.onclick = null;
     
-    // 4. Bestätigungs-Listener hinzufügen
     btnConfirmAction.onclick = () => {
         
         analysis.name = entry.state.name;
@@ -1028,7 +896,6 @@ window.revertToVersion = (analysisId, version) => {
         analysis.intendedUse = entry.state.intendedUse;
         analysis.assets = entry.state.assets;
         
-        // NEU: Damage Scenarios und Impact Matrix wiederherstellen
         analysis.damageScenarios = entry.state.damageScenarios;
         analysis.impactMatrix = entry.state.impactMatrix;
         
@@ -1041,7 +908,6 @@ window.revertToVersion = (analysisId, version) => {
         fillAnalysisForm(analysis);
         renderHistoryTable(analysis);
         
-        // Render aktiven Tab neu
         const activeTab = document.querySelector('.tab-button.active');
         if (activeTab && activeTab.dataset.tab === 'tabAssets') {
             renderAssets(analysis);
@@ -1052,13 +918,12 @@ window.revertToVersion = (analysisId, version) => {
 
         saveAnalyses();
         versionControlModal.style.display = 'none';
-        confirmationModal.style.display = 'none'; // Bestätigungs-Modal schließen
+        confirmationModal.style.display = 'none'; 
         
         showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
         statusBarMessage.textContent = `Version ${version} wiederhergestellt.`;
     };
     
-    // 5. Abbruch-Listener hinzufügen
     btnCancelConfirmation.onclick = () => {
         confirmationModal.style.display = 'none';
     };

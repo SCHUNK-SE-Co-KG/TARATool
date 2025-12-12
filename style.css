@@ -1,6 +1,5 @@
 /* =============================================================
    --- TARA ANALYSIS TOOL: GLOBALES STYLING ---
-   --- KORRIGIERT: FLAY LAYOUT (KEINE SIDEBAR) MIT SCHUNK BLAU AKZENT & FIXIERTER STATUS-BAR ---
    ============================================================= */
 
 /* Globale Einstellungen */
@@ -8,11 +7,10 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f7f6; /* Heller Hintergrund */
+    background-color: #f4f7f6;
     color: #333;
 }
 
-/* KRITISCH: Haupt-Layout Container (Zentriert den Inhalt) */
 .app-container {
     display: flex; 
     flex-direction: column;
@@ -21,14 +19,14 @@ body {
 }
 
 /* =============================================================
-   --- HEADER NAVIGATION (Oben, ersetzt die Sidebar) ---
+   --- HEADER NAVIGATION ---
    ============================================================= */
 
 .header-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #ffffff; /* Weißer Header */
+    background-color: #ffffff;
     padding: 10px 20px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     z-index: 50;
@@ -42,7 +40,6 @@ body {
     flex-shrink: 0;
 }
 
-/* Selektor und "Neue Analyse" Button */
 .action-nav {
     display: flex;
     align-items: center;
@@ -59,7 +56,6 @@ body {
     font-size: 0.95em;
 }
 
-/* Import/Export Buttons */
 .utility-actions {
     display: flex;
     gap: 10px;
@@ -71,7 +67,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 0.9em;
-    background-color: #ecf0f1; /* Hellgrau */
+    background-color: #ecf0f1;
     color: #34495e;
     transition: background-color 0.2s;
 }
@@ -81,21 +77,19 @@ body {
 }
 
 /* =============================================================
-   --- HAUPTINHALTSBEREICH (RECHTS) ---
+   --- HAUPTINHALTSBEREICH ---
    ============================================================= */
 
-/* KRITISCH: Hauptinhalt, der sich unterhalb des Headers befindet */
 .main-content {
     flex-grow: 1;
     display: flex;
     flex-direction: column; 
     padding: 20px;
     max-width: 1200px;
-    margin: 0 auto; /* Zentrierung des Hauptinhalts */
+    margin: 0 auto;
     width: 100%;
 }
 
-/* Header/Topframe */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -112,21 +106,18 @@ body {
     color: #2c3e50;
 }
 
-/* Metadaten Block (Version, Autor, Datum) */
 .metadata span {
     margin-right: 15px;
     font-size: 0.85em;
     color: #7f8c8d;
 }
 
-/* --- KRITISCH: STATUSZEILE (JETZT FIXED BOTTOM RIGHT) --- */
+/* Status Bar (Fixed Bottom Right) */
 .status-bar {
-    position: fixed; /* Fixiert die Position relativ zum Viewport */
-    bottom: 20px;   /* 20px Abstand vom unteren Rand */
-    right: 20px;    /* 20px Abstand vom rechten Rand */
-    z-index: 100;   /* Stellt sicher, dass sie über dem Inhalt liegt */
-    
-    /* Visuelles Styling */
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
     background-color: #ecf0f1;
     padding: 8px 15px;
     border-radius: 4px;
@@ -136,9 +127,8 @@ body {
     min-width: 150px;
     text-align: center;
 }
-/* ----------------------------------------------------------------- */
 
-/* --- Buttons --- */
+/* Buttons */
 .action-button, .primary-button {
     padding: 8px 15px;
     border: none;
@@ -149,17 +139,16 @@ body {
 }
 
 .action-button {
-    background-color: #95a5a6; /* Grau für Sekundär-Aktion */
+    background-color: #95a5a6;
     color: #fff;
 }
 .action-button:hover {
     background-color: #7f8c8d;
 }
 .action-button.dangerous {
-    background-color: #e74c3c; /* Rot für Lösch-Aktionen */
+    background-color: #e74c3c;
 }
 
-/* Primäre Aktion (Speichern, Asset hinzufügen) */
 .primary-button {
     background-color: #0059B3; /* Schunk Blau */
     color: #fff;
@@ -167,10 +156,10 @@ body {
 }
 
 .primary-button:hover {
-    background-color: #00478f; /* Dunkleres Blau für Hover */
+    background-color: #00478f;
 }
 
-/* --- Tab Navigation --- */
+/* Tab Navigation */
 .tab-navigation {
     display: flex;
     border-bottom: 2px solid #ccc;
@@ -190,11 +179,11 @@ body {
 
 .tab-button.active {
     color: #2c3e50;
-    border-bottom-color: #0059B3; /* Schunk Blau Akzent */
+    border-bottom-color: #0059B3;
     font-weight: 600;
 }
 
-/* --- Tab Content --- */
+/* Tab Content */
 .analysis-section {
     background-color: #fff;
     padding: 20px;
@@ -211,7 +200,7 @@ body {
     color: #34495e;
 }
 
-/* --- Formular Elemente --- */
+/* Formular Elemente */
 .form-group {
     margin-bottom: 15px;
 }
@@ -235,17 +224,11 @@ input[type="text"], textarea, select {
 }
 
 input:focus, textarea:focus, select:focus {
-    border-color: #0059B3; /* Schunk Blau Akzent */
+    border-color: #0059B3;
     outline: none;
 }
 
-input:disabled, textarea:disabled, select:disabled, button:disabled {
-    background-color: #ecf0f1;
-    cursor: not-allowed;
-    color: #7f8c8d;
-}
-
-/* --- Tabellen Styling (allgemein) --- */
+/* Tabellen Styling */
 .data-table, .history-table {
     width: 100%;
     border-collapse: collapse;
@@ -272,19 +255,9 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     background-color: #f9f9f9;
 }
 
-.history-table .is-current-version {
-    background-color: #ecf0f1; 
-    font-weight: bold;
-}
-
-
-/* =============================================================
-   --- ASSET CARD STYLING ---
-   ============================================================= */
-
+/* ASSET CARD STYLING */
 #assetsCardContainer {
     display: grid;
-    /* Erstellt Spalten, die mindestens 300px breit sind, und füllt die Reihe auf */
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
     gap: 20px;
     margin-top: 15px;
@@ -308,7 +281,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 .asset-card-header {
-    background-color: #0059B3; /* Schunk Blau */
+    background-color: #0059B3;
     color: white;
     padding: 10px 15px;
     font-weight: 600;
@@ -319,15 +292,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     padding: 15px;
     flex-grow: 1;
     font-size: 0.9em; 
-}
-
-.asset-card-body p {
-    margin: 5px 0;
-}
-
-.asset-card-body .type {
-    font-style: italic;
-    color: #7f8c8d;
 }
 
 .asset-card-footer {
@@ -342,7 +306,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 
 .protection-level {
     font-weight: 600;
-    color: #e67e22; /* Akzentfarbe für Schutzbedarf */
+    color: #e67e22;
 }
 
 .asset-card-actions button {
@@ -350,55 +314,64 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 /* =============================================================
-   --- DAMAGE SCENARIOS STYLING (KORRIGIERT: TABELLEN-LAYOUT) ---
+   --- DAMAGE SCENARIOS STYLING (HARMONIERTES 2-ZEILEN LAYOUT) ---
    ============================================================= */
 
-/* Liste der definierten DS */
 .ds-list {
     list-style: none;
     padding: 0;
-    margin-top: 10px;
-    border: 1px solid #eee;
-    border-radius: 4px;
-    overflow: hidden;
+    margin-top: 15px;
 }
 
+/* Container für jedes DS Element */
 .ds-list li {
-    /* KRITISCH: Verwende Grid für die 3 Spalten-Struktur */
-    display: grid;
-    /* 1. Spalte: DS ID + Name (fest) -> 350px, 2. Spalte: Beschreibung (flexibel), 3. Spalte: Buttons (fest) -> 180px */
-    grid-template-columns: 350px 1fr 180px; 
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #0059B3; /* Farbiger Akzent links für bessere Unterscheidung */
+    border-radius: 4px;
+    margin-bottom: 12px;
+    padding: 12px 15px;
+    display: flex;
+    flex-direction: column; /* Stapelt Header und Body vertikal */
+    gap: 8px; /* Abstand zwischen Header und Beschreibung */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+}
+
+.ds-list li:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+/* Zeile 1: Header (ID, Name, Kurzbez. + Buttons) */
+.ds-row-header {
+    display: flex;
+    justify-content: space-between; /* Inhalte links, Buttons rechts */
     align-items: center;
-    padding: 10px 15px;
-    border-bottom: 1px dashed #eee;
-    background-color: #fcfcfc;
-    font-size: 0.95em;
+    width: 100%;
 }
 
-.ds-list li:last-child {
-    border-bottom: none;
-}
-
-/* Neue Klassen für die Spalteninhalte */
 .ds-col-id-name {
-    font-weight: 600;
+    font-size: 1.05em;
     color: #2c3e50;
-    white-space: nowrap; /* Verhindert Zeilenumbruch bei der DS-ID/Name */
 }
 
-.ds-col-description {
-    text-align: left;
-    color: #34495e;
-    padding: 0 15px; /* Abstand zwischen Spalten */
+.ds-col-id-name strong {
+    font-weight: 700;
+    color: #0059B3;
 }
 
 .ds-actions {
-    flex-shrink: 0;
-    text-align: right;
-    /* WICHTIG: Buttons innerhalb der Actions-Spalte formatieren */
     display: flex;
-    justify-content: flex-end;
-    gap: 8px; /* Abstand zwischen den Buttons */
+    gap: 8px;
+}
+
+/* Zeile 2: Beschreibung */
+.ds-col-description {
+    font-size: 0.95em;
+    color: #555;
+    line-height: 1.4;
+    padding-top: 8px;
+    border-top: 1px dashed #eee; /* Trennlinie zur optischen Ruhe */
 }
 
 
@@ -407,7 +380,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    table-layout: fixed; /* Wichtig für konsistente Spaltenbreiten */
+    table-layout: fixed;
 }
 
 .impact-matrix-table th, .impact-matrix-table td {
@@ -419,12 +392,12 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 
 .impact-matrix-table th {
     background-color: #f1f1f1;
-    height: 100px; /* Platz für vertikalen Text */
+    height: 120px; /* Mehr Platz für vertikalen Text */
     color: #34495e;
 }
 
 .impact-matrix-table .asset-col {
-    width: 250px; 
+    width: 280px; 
     text-align: left;
     font-weight: 600;
     background-color: #f9f9f9;
@@ -432,12 +405,10 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
 }
 
 .impact-matrix-table .ds-col {
-    width: auto; /* Restlicher Platz */
+    width: auto;
 }
 
-/* Vertikaler Text Container */
 .vertical-text {
-    /* Dreht den Text, sodass er von unten nach oben lesbar ist */
     writing-mode: vertical-rl; 
     transform: rotate(180deg); 
     white-space: nowrap;
@@ -447,7 +418,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     font-size: 0.9em;
     font-weight: 600;
     color: #0059B3; 
-    /* Zusätzliche Rotation für perfekte vertikale Anzeige (abhängig vom Browser) */
     display: block;
     padding: 0;
 }
@@ -464,7 +434,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     border: none;
     box-sizing: border-box;
     text-align: center;
-    /* Verhindert den nativen Dropdown-Pfeil */
     -moz-appearance: none;
     -webkit-appearance: none;
     appearance: none;
@@ -473,20 +442,12 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     font-weight: 600;
 }
 
-.impact-matrix-table .impact-select[value="3"] { color: #e74c3c; } /* High Impact: Rot */
-.impact-matrix-table .impact-select[value="2"] { color: #e67e22; } /* Medium Impact: Orange */
-.impact-matrix-table .impact-select[value="1"] { color: #2ecc71; } /* Low Impact: Grün */
-.impact-matrix-table .impact-select[value="N/A"] { color: #7f8c8d; } /* N/A: Grau */
+.impact-matrix-table .impact-select[value="3"] { color: #e74c3c; background-color: rgba(231, 76, 60, 0.1); }
+.impact-matrix-table .impact-select[value="2"] { color: #e67e22; background-color: rgba(230, 126, 34, 0.1); }
+.impact-matrix-table .impact-select[value="1"] { color: #2ecc71; background-color: rgba(46, 204, 113, 0.1); }
+.impact-matrix-table .impact-select[value="N/A"] { color: #95a5a6; }
 
-.impact-matrix-table .impact-select:focus {
-    outline: none;
-    background-color: #ecf0f1;
-}
-
-/* =============================================================
-   --- Radio Button Styling für CIA ---
-   ============================================================= */
-
+/* Radio Buttons CIA */
 .radio-group {
     display: flex;
     justify-content: space-between;
@@ -497,9 +458,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     background-color: #fcfcfc;
 }
 
-.radio-group input[type="radio"] {
-    display: none; 
-}
+.radio-group input[type="radio"] { display: none; }
 
 .radio-group label {
     flex-grow: 1;
@@ -521,11 +480,7 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     font-weight: 600;
 }
 
-.radio-group label:hover {
-    background-color: #e0e0e0;
-}
-
-/* --- Modal Styling --- */
+/* Modal */
 .modal {
     display: none; 
     position: fixed;
@@ -548,14 +503,8 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     position: relative;
 }
 
-.modal-content.small {
-    width: 400px;
-    margin: 15% auto;
-}
-
-.modal-content.large {
-    width: 70%;
-}
+.modal-content.small { width: 400px; margin: 15% auto; }
+.modal-content.large { width: 70%; }
 
 .close-button {
     color: #aaa;
@@ -566,20 +515,9 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     line-height: 1;
 }
 
-.close-button:hover,
-.close-button:focus {
-    color: #333;
-    text-decoration: none;
-}
+.close-button:hover { color: #333; }
 
-/* --- Utility und Toast --- */
-.small {
-    font-size: 0.8em;
-    padding: 5px 10px !important;
-    /* Entferne margin-left, da ds-actions jetzt Flexbox ist */
-}
-
-/* Toast Container */
+/* Toast */
 #toastContainer {
     position: fixed;
     bottom: 70px; 
@@ -611,60 +549,6 @@ input:disabled, textarea:disabled, select:disabled, button:disabled {
     transform: translateY(0);
 }
 
-.custom-toast.success {
-    background-color: #0059B3; 
-}
-
-.custom-toast.error {
-    background-color: #e74c3c; 
-}
-
-.custom-toast.info {
-    background-color: #3498db; 
-}
-
-.ds-list {
-    list-style: none;
-    padding: 0;
-    margin-top: 20px;
-}
-
-.ds-list li { 
-    /* Hauptcontainer als Flex-Column (Name/Actions oben, Beschreibung darunter) */
-    display: flex; 
-    flex-direction: column; 
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-    background-color: #fcfcfc;
-}
-
-.ds-row-header { 
-    /* Zeile für ID, Name und Buttons */
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    margin-bottom: 5px; /* Abstand zur Beschreibung */
-    width: 100%;
-}
-
-.ds-col-id-name {
-    font-weight: 600;
-    font-size: 1.1em;
-    flex-grow: 1; /* Nimmt den meisten Platz ein */
-}
-
-.ds-actions {
-    flex-shrink: 0; /* Verhindert, dass Buttons schrumpfen */
-    display: flex;
-    gap: 5px;
-}
-
-.ds-col-description {
-    /* Die Beschreibung ist nun immer auf einer neuen Zeile */
-    font-size: 0.9em;
-    color: #555;
-    padding-top: 5px; 
-    border-top: 1px dotted #eee;
-}
+.custom-toast.success { background-color: #0059B3; }
+.custom-toast.error { background-color: #e74c3c; }
+.custom-toast.info { background-color: #3498db; }
