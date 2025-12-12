@@ -1,3 +1,4 @@
+
 // =============================================================
 // --- ASSET LOGIK (CRUD) ---
 // =============================================================
@@ -33,7 +34,7 @@ function renderAssets(analysis) {
                 <ul style="list-style: none; padding: 0; margin: 5px 0 0 0;">
                     <li><strong title="Confidentiality">C (Confidentiality):</strong> ${asset.confidentiality}</li>
                     <li><strong title="Integrity">I (Integrity):</strong> ${asset.integrity}</li>
-                    <li><strong title="Authenticity">A (Authenticity):</strong> ${asset.authenticity}</li> 
+                    <li><strong title="Authenticity">A (Availability):</strong> ${asset.authenticity}</li> 
                 </ul>
             </div>
             <div class="asset-card-footer">
