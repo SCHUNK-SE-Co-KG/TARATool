@@ -46,9 +46,11 @@
 
             <nav class="tab-navigation">
                 <button class="tab-button active" data-tab="tabGeneral">Allgemein</button>
-                <button class="tab-button" data-tab="tabAssets">Assets (Schutzobjekte)</button>
+                <button class="tab-button" data-tab="tabAssets">Assets</button>
                 <button class="tab-button" data-tab="tabDamageScenarios">Schadensszenarien</button>
-                <button class="tab-button" data-tab="tabRisk" disabled>Risikoanalyse</button>
+                
+                <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button> 
+                
                 <button class="tab-button" data-tab="tabConclusion" disabled>Fazit</button>
             </nav>
 
@@ -102,7 +104,14 @@
                             </div>
                     </section>
                 </div>
-                <div id="tabRisk" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Risikoanalyse</h3><p>Logik wird später implementiert.</p></section></div>
+                
+                <div id="tabRiskAnalysis" class="tab-content" style="display: none;">
+                    <h3>Risikoanalyse</h3>
+                    <p class="description-text">Hier wird das Risiko durch die Kombination von Schutzbedarf der Assets und dem potentiellen Schaden der Szenarien ermittelt und dargestellt.</p>
+                    <div id="riskAnalysisContainer" class="card-container" style="display: block; margin-top: 20px;">
+                    </div>
+                </div>
+                
                 <div id="tabConclusion" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Fazit und Zusammenfassung</h3><p>In Entwicklung.</p></section></div>
 
             </div>
@@ -279,6 +288,12 @@
     
     <div id="toastContainer"></div>
 
-    <script src="script.js"></script>
+    <script src="globals.js"></script>
+    <script src="utils.js"></script>
+    <script src="analysis_core.js"></script>
+    <script src="assets.js"></script>
+    <script src="damage_risk.js"></script>
+    <script src="versioning.js"></script>
+    <script src="init.js"></script>
 </body>
 </html>
