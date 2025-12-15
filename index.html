@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -212,6 +211,127 @@
             </form>
         </div>
     </div>
+    
+    <div id="attackTreeModal" class="modal" style="display: none;">
+        <div class="modal-content large">
+            <span class="close-button" id="closeAttackTreeModal">&times;</span>
+            <h2>Neuen Angriffsbaum erstellen</h2>
+            <form id="attackTreeForm">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="atTargetAsset">Betroffenes Asset wählen:</label>
+                    <select id="atTargetAsset" required style="width: 100%; padding: 10px; font-size: 1em;"></select>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="attack-tree-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 20%;">Angriffspfad / Schnittstelle<br><span style="font-weight:normal; font-size:0.8em;">(Max. 20 Zeichen)</span></th>
+                                <th style="width: 25%;">Angriff ermöglicht:<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen)</span></th>
+                                <th style="width: 55%;">Auswirkung des Angriffs<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen + DS Checkboxen + K/S/T/U)</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="4" style="vertical-align: middle;">
+                                    <input type="text" name="at_root" placeholder="Root Pfad" maxlength="20" required style="width: 90%;">
+                                </td>
+                                <td rowspan="2" style="vertical-align: middle;">
+                                    <input type="text" name="at_branch_1" placeholder="Pfad 1" maxlength="30" required style="width: 90%;">
+                                </td>
+                                <td>
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_1_text" placeholder="Konsequenz 1.1" maxlength="30" class="leaf-input">
+                                        <div class="ds-checks" id="ds_checks_1">
+                                            <label><input type="checkbox" name="at_leaf_1_ds1"> DS1</label>
+                                            <label><input type="checkbox" name="at_leaf_1_ds2"> DS2</label>
+                                            <label><input type="checkbox" name="at_leaf_1_ds3"> DS3</label>
+                                            <label><input type="checkbox" name="at_leaf_1_ds4"> DS4</label>
+                                            <label><input type="checkbox" name="at_leaf_1_ds5"> DS5</label>
+                                        </div>
+                                        <div class="kstu-inputs">
+                                            <input type="text" name="at_leaf_1_k" placeholder="K">
+                                            <input type="text" name="at_leaf_1_s" placeholder="S">
+                                            <input type="text" name="at_leaf_1_t" placeholder="T">
+                                            <input type="text" name="at_leaf_1_u" placeholder="U">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_2_text" placeholder="Konsequenz 1.2" maxlength="30" class="leaf-input">
+                                        <div class="ds-checks">
+                                            <label><input type="checkbox" name="at_leaf_2_ds1"> DS1</label>
+                                            <label><input type="checkbox" name="at_leaf_2_ds2"> DS2</label>
+                                            <label><input type="checkbox" name="at_leaf_2_ds3"> DS3</label>
+                                            <label><input type="checkbox" name="at_leaf_2_ds4"> DS4</label>
+                                            <label><input type="checkbox" name="at_leaf_2_ds5"> DS5</label>
+                                        </div>
+                                        <div class="kstu-inputs">
+                                            <input type="text" name="at_leaf_2_k" placeholder="K">
+                                            <input type="text" name="at_leaf_2_s" placeholder="S">
+                                            <input type="text" name="at_leaf_2_t" placeholder="T">
+                                            <input type="text" name="at_leaf_2_u" placeholder="U">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td rowspan="2" style="vertical-align: middle;">
+                                    <input type="text" name="at_branch_2" placeholder="Pfad 2" maxlength="30" style="width: 90%;">
+                                </td>
+                                <td>
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_3_text" placeholder="Konsequenz 2.1" maxlength="30" class="leaf-input">
+                                        <div class="ds-checks">
+                                            <label><input type="checkbox" name="at_leaf_3_ds1"> DS1</label>
+                                            <label><input type="checkbox" name="at_leaf_3_ds2"> DS2</label>
+                                            <label><input type="checkbox" name="at_leaf_3_ds3"> DS3</label>
+                                            <label><input type="checkbox" name="at_leaf_3_ds4"> DS4</label>
+                                            <label><input type="checkbox" name="at_leaf_3_ds5"> DS5</label>
+                                        </div>
+                                        <div class="kstu-inputs">
+                                            <input type="text" name="at_leaf_3_k" placeholder="K">
+                                            <input type="text" name="at_leaf_3_s" placeholder="S">
+                                            <input type="text" name="at_leaf_3_t" placeholder="T">
+                                            <input type="text" name="at_leaf_3_u" placeholder="U">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_4_text" placeholder="Konsequenz 2.2" maxlength="30" class="leaf-input">
+                                        <div class="ds-checks">
+                                            <label><input type="checkbox" name="at_leaf_4_ds1"> DS1</label>
+                                            <label><input type="checkbox" name="at_leaf_4_ds2"> DS2</label>
+                                            <label><input type="checkbox" name="at_leaf_4_ds3"> DS3</label>
+                                            <label><input type="checkbox" name="at_leaf_4_ds4"> DS4</label>
+                                            <label><input type="checkbox" name="at_leaf_4_ds5"> DS5</label>
+                                        </div>
+                                        <div class="kstu-inputs">
+                                            <input type="text" name="at_leaf_4_k" placeholder="K">
+                                            <input type="text" name="at_leaf_4_s" placeholder="S">
+                                            <input type="text" name="at_leaf_4_t" placeholder="T">
+                                            <input type="text" name="at_leaf_4_u" placeholder="U">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: right;">
+                    <button type="submit" class="primary-button">Angriffsbaum Speichern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="importAnalysisModal" class="modal" style="display: none;">
         <div class="modal-content small">
             <span class="close-button" id="closeImportAnalysisModal">&times;</span>

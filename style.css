@@ -583,3 +583,59 @@ input:focus, textarea:focus, select:focus {
     color: #27ae60;
     margin-top: 0;
 }
+
+/* =============================================================
+   --- ATTACK TREE STYLING (NEU) ---
+   ============================================================= */
+.attack-tree-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    background-color: #fff;
+}
+
+.attack-tree-table th, .attack-tree-table td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.attack-tree-table th {
+    background-color: #ecf0f1;
+    font-weight: 600;
+    text-align: center;
+    color: #2c3e50;
+}
+
+/* Container innerhalb der Blatt-Zelle */
+.leaf-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.leaf-input {
+    width: 90%; 
+    padding: 5px;
+    font-weight: 600;
+}
+
+.ds-checks {
+    display: flex;
+    gap: 8px;
+    font-size: 0.8em;
+    flex-wrap: wrap;
+}
+
+.kstu-inputs {
+    display: flex;
+    gap: 5px;
+}
+
+.kstu-inputs input {
+    width: 22%;
+    padding: 3px;
+    font-size: 0.8em;
+    text-align: center;
+}

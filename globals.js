@@ -48,8 +48,13 @@ const damageScenarioForm = document.getElementById('damageScenarioForm');
 const dsModalTitle = document.getElementById('dsModalTitle'); 
 const dsIdField = document.getElementById('dsIdField'); 
 
-// Risk Analysis Elements (NEU)
+// Risk Analysis Elements
 const riskAnalysisContainer = document.getElementById('riskAnalysisContainer');
+// NEU: Elemente für Angriffsbaum
+const attackTreeModal = document.getElementById('attackTreeModal');
+const closeAttackTreeModal = document.getElementById('closeAttackTreeModal');
+const attackTreeForm = document.getElementById('attackTreeForm');
+const atTargetAsset = document.getElementById('atTargetAsset');
 
 // Version Control Modal
 const versionControlModal = document.getElementById('versionControlModal');
