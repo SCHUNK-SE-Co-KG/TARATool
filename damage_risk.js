@@ -2,11 +2,6 @@
 // --- DAMAGE SCENARIO LOGIK (CRUD & MATRIX) ---
 // =============================================================
 
-/**
- * Rendert die Liste der Damage Scenarios (DS) im Management-Bereich.
- * Diese Funktion sichert ab, dass DEFAULT_DAMAGE_SCENARIOS immer angezeigt werden, 
- * falls analysis.damageScenarios aus irgendeinem Grund leer ist.
- */
 function renderDamageScenarios() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -75,7 +70,6 @@ function saveDamageScenario(e) {
         return;
     }
     
-    // Sicherstellen, dass das Array existiert
     if (!analysis.damageScenarios) analysis.damageScenarios = [];
 
     if (dsId) {
@@ -87,7 +81,6 @@ function saveDamageScenario(e) {
         }
     } else {
         // NEU ERSTELLEN
-        // Berücksichtige sowohl Defaults als auch eigene für die ID Generierung
         const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...analysis.damageScenarios];
         const existingIds = allDS.map(ds => parseInt(ds.id.replace('DS', ''))).filter(n => !isNaN(n));
         const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
@@ -109,7 +102,6 @@ window.editDamageScenario = (dsId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    // Suche zuerst in der Analyse, dann in Defaults
     let ds = analysis.damageScenarios ? analysis.damageScenarios.find(d => d.id === dsId) : null;
     if (!ds) ds = DEFAULT_DAMAGE_SCENARIOS.find(d => d.id === dsId);
 
@@ -129,7 +121,6 @@ window.removeDamageScenario = (dsId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
     
-    // Prüfen ob Standard
     if (DEFAULT_DAMAGE_SCENARIOS.some(d => d.id === dsId)) {
         showToast('Standard-Szenarien können nicht gelöscht werden.', 'error');
         return;
@@ -183,7 +174,6 @@ window.updateImpactScore = (assetId, dsId, score) => {
     saveAnalyses();
     showToast(`Impact für ${assetId}/${dsId} auf ${score} gesetzt.`, 'info');
     
-    // Optional: Refresh Risk Analysis if open
     if (document.getElementById('tabRiskAnalysis').classList.contains('active')) {
          renderRiskAnalysis();
     }
@@ -199,7 +189,6 @@ function renderImpactMatrix() {
         return;
     }
 
-    // Kombiniere Defaults und Custom DS für die Anzeige
     let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
     const defaultIds = new Set(displayDS.map(d => d.id));
     
@@ -232,7 +221,6 @@ function renderImpactMatrix() {
 
     html += '<tbody>';
     
-    // Impact Matrix sicherstellen
     if (!analysis.impactMatrix) analysis.impactMatrix = {};
 
     analysis.assets.forEach(asset => {
@@ -267,7 +255,7 @@ function renderImpactMatrix() {
     dsMatrixContainer.innerHTML = html;
 }
 
-// Event Listener für DS Modals (Vorhandene Logic)
+// Event Listener für DS Modals
 if (btnAddDamageScenario) {
     btnAddDamageScenario.onclick = () => {
          if (!activeAnalysisId) {
@@ -278,7 +266,6 @@ if (btnAddDamageScenario) {
         if (dsIdField) dsIdField.value = ''; 
         
         const analysis = analysisData.find(a => a.id === activeAnalysisId);
-        // ID Berechnung
         let maxNum = 0;
         const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...(analysis.damageScenarios || [])];
         allDS.forEach(ds => {
@@ -300,7 +287,7 @@ if (damageScenarioForm) {
 
 
 // =============================================================
-// --- RISIKOANALYSE & ANGRIFFSBAUM LOGIK (NEU) ---
+// --- RISIKOANALYSE & ANGRIFFSBAUM LOGIK ---
 // =============================================================
 
 function renderRiskAnalysis() {
@@ -319,7 +306,7 @@ function renderRiskAnalysis() {
         return;
     }
 
-    // 2. Prüfen auf Schadensszenarien (Defaults sind immer da, also Check ist eher formal)
+    // 2. Prüfen auf Schadensszenarien
     const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...(analysis.damageScenarios || [])];
     if (allDS.length === 0) {
         riskAnalysisContainer.innerHTML = `
@@ -364,7 +351,7 @@ function renderRiskAnalysis() {
         return;
     }
 
-    // Wenn alle Daten vorhanden sind -> Button anzeigen
+    // Wenn alle Daten vorhanden sind
     riskAnalysisContainer.innerHTML = `
         <div class="success-box">
             <h4>Datenprüfung abgeschlossen</h4>
@@ -377,26 +364,89 @@ function renderRiskAnalysis() {
         </div>
     `;
 
-    // Event Listener für den Button
     const btn = document.getElementById('btnOpenAttackTreeModal');
-    if (btn) btn.onclick = openAttackTreeModal;
+    if (btn) btn.onclick = () => openAttackTreeModal(); // Neuer Aufruf ohne ID -> Erstellt neu
 }
 
 function renderExistingRiskEntries(analysis) {
     if (!analysis.riskEntries || analysis.riskEntries.length === 0) {
         return '<p style="color: #7f8c8d;">Noch keine Angriffs-Bäume angelegt.</p>';
     }
-    // Einfache Liste zur Anzeige, dass etwas gespeichert wurde
-    let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul>';
+
+    let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
     analysis.riskEntries.forEach(entry => {
         const assetName = analysis.assets.find(a => a.id === entry.assetId)?.name || entry.assetId;
-        html += `<li><strong>${entry.id}</strong> für Asset: ${assetName} (Root: ${entry.rootName})</li>`;
+        // Button hinzugefügt, der editAttackTree aufruft
+        html += `
+            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>${entry.id}</strong>: ${entry.rootName} <br> 
+                    <span style="color:#666; font-size:0.9em;">Asset: ${assetName}</span>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button onclick="editAttackTree('${entry.id}')" class="action-button small">
+                        <i class="fas fa-edit"></i> Bearbeiten / Anzeigen
+                    </button>
+                    <button onclick="deleteAttackTree('${entry.id}')" class="action-button small dangerous">
+                        <i class="fas fa-trash"></i> Löschen
+                    </button>
+                </div>
+            </li>
+        `;
     });
     html += '</ul>';
     return html;
 }
 
-function openAttackTreeModal() {
+// Global verfügbar machen für onclick im HTML
+window.editAttackTree = (riskId) => {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+
+    const entry = analysis.riskEntries.find(r => r.id === riskId);
+    if (!entry) return;
+
+    // Modal öffnen im "Edit" Modus (Daten laden)
+    openAttackTreeModal(entry);
+};
+
+window.deleteAttackTree = (riskId) => {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis || !analysis.riskEntries) return;
+
+    const entry = analysis.riskEntries.find(r => r.id === riskId);
+    if (!entry) return;
+
+    const assetName = (analysis.assets || []).find(a => a.id === entry.assetId)?.name || entry.assetId;
+
+    confirmationTitle.textContent = 'Angriffsbaum löschen bestätigen';
+    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> (Asset: ${assetName}) löschen möchten?`;
+
+    btnConfirmAction.textContent = 'Ja, Angriffsbaum löschen';
+    btnConfirmAction.classList.add('dangerous');
+
+    confirmationModal.style.display = 'block';
+
+    // Handler zurücksetzen (sonst stapeln sich Aktionen)
+    btnConfirmAction.onclick = null;
+    btnCancelConfirmation.onclick = null;
+    closeConfirmationModal.onclick = null;
+
+    btnConfirmAction.onclick = () => {
+        analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
+        saveAnalyses();
+        if (attackTreeModal) attackTreeModal.style.display = 'none';
+        confirmationModal.style.display = 'none';
+        renderRiskAnalysis();
+        showToast(`Angriffsbaum ${riskId} gelöscht.`, 'success');
+    };
+
+    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
+    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
+};
+
+
+function openAttackTreeModal(existingEntry = null) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
@@ -411,8 +461,90 @@ function openAttackTreeModal() {
         });
     }
 
-    // Formular resetten
     if (attackTreeForm) attackTreeForm.reset();
+
+    // Verstecktes ID Feld setzen oder löschen
+    const hiddenIdField = document.getElementById('at_id');
+    
+    if (existingEntry) {
+        // --- DATEN LADEN (Mapping JSON -> Form) ---
+        if (hiddenIdField) hiddenIdField.value = existingEntry.id;
+        
+        // Asset setzen
+        atTargetAsset.value = existingEntry.assetId;
+        
+        // Root Pfad
+        const rootInput = document.querySelector('input[name="at_root"]');
+        if (rootInput) rootInput.value = existingEntry.rootName;
+
+        // Hilfsfunktion zum Laden eines Blattes
+        const loadLeaf = (leafData, leafIndex) => {
+            if (!leafData) return;
+            const prefix = `at_leaf_${leafIndex}`;
+            
+            // Text
+            const txt = document.querySelector(`input[name="${prefix}_text"]`);
+            if (txt) txt.value = leafData.text || '';
+            
+            // K, S, T, U Selects
+            ['k', 's', 't', 'u'].forEach(param => {
+                const sel = document.querySelector(`select[name="${prefix}_${param}"]`);
+                if (sel) sel.value = leafData[param] || '';
+            });
+
+            // DS Checkboxes
+            document.querySelectorAll(`input[type="checkbox"][name^="${prefix}_ds"]`).forEach(c => { if (c) c.checked = false; });
+            if (leafData.ds && Array.isArray(leafData.ds)) {
+                leafData.ds.forEach(dsVal => {
+                    // dsVal ist z.B. "DS1", "DS3"
+                    // Checkbox Name z.B. at_leaf_1_ds1
+                    const num = dsVal.replace('DS', '');
+                    const chk = document.querySelector(`input[name="${prefix}_ds${num}"]`);
+                    if (chk) chk.checked = true;
+                });
+            }
+        };
+
+        // Branch 1 (Index 0) -> Leaf 1 & 2
+        if (existingEntry.branches[0]) {
+            const b1 = existingEntry.branches[0];
+            const b1Input = document.querySelector('input[name="at_branch_1"]');
+            if (b1Input) b1Input.value = b1.name;
+            
+            loadLeaf(b1.leaves[0], 1);
+            loadLeaf(b1.leaves[1], 2);
+        }
+
+        // Branch 2 (Index 1) -> Leaf 3 & 4
+        if (existingEntry.branches[1]) {
+            const b2 = existingEntry.branches[1];
+            const b2Input = document.querySelector('input[name="at_branch_2"]');
+            if (b2Input) b2Input.value = b2.name;
+
+            loadLeaf(b2.leaves[0], 3);
+            loadLeaf(b2.leaves[1], 4);
+        }
+        
+    } else {
+        // --- NEU ERSTELLEN ---
+        if (hiddenIdField) hiddenIdField.value = ''; // ID leer -> Neues Element
+    }
+
+
+    // Delete-Button im Modal: nur bei bestehenden Bäumen anzeigen
+    const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
+    if (delBtn) {
+        if (existingEntry && existingEntry.id) {
+            delBtn.style.display = 'inline-flex';
+            delBtn.onclick = () => window.deleteAttackTree(existingEntry.id);
+        } else {
+            delBtn.style.display = 'none';
+            delBtn.onclick = null;
+        }
+    }
+
+    // Read-only Summaries (Worst-Case) für K/S/T/U + I(norm) aktualisieren
+    updateAttackTreeKSTUSummariesFromForm();
 
     if (attackTreeModal) attackTreeModal.style.display = 'block';
 }
@@ -423,10 +555,11 @@ function saveAttackTree(e) {
     if (!analysis) return;
 
     const fd = new FormData(attackTreeForm);
+    const editingId = fd.get('at_id'); // Prüfen, ob wir bearbeiten
     
-    // Datenstruktur aufbauen (1 Root -> 2 Branches -> 4 Leaves)
+    // Datenstruktur aufbauen
     const treeData = {
-        id: generateNextRiskID(analysis),
+        id: editingId || generateNextRiskID(analysis), // Alte ID behalten oder neue generieren
         assetId: atTargetAsset.value,
         rootName: fd.get('at_root'),
         branches: [
@@ -438,7 +571,7 @@ function saveAttackTree(e) {
                 ]
             },
             {
-                name: fd.get('at_branch_2'), // Branch 2 für Blatt 3 und 4
+                name: fd.get('at_branch_2'),
                 leaves: [
                     extractLeafData(fd, 3),
                     extractLeafData(fd, 4)
@@ -447,23 +580,69 @@ function saveAttackTree(e) {
         ]
     };
 
+    // Worst-Case Vererbung:
+    //  - I(norm): max(ImpactMatrix[assetId][DS...] ) je Leaf, dann max nach oben
+    //  - K/S/T/U: max je Aspekt nach oben
+    applyImpactInheritance(treeData, analysis);
+    applyWorstCaseInheritance(treeData);
+
+
     if (!analysis.riskEntries) analysis.riskEntries = [];
-    analysis.riskEntries.push(treeData);
+
+    if (editingId) {
+        // Update existierenden Eintrag
+        const index = analysis.riskEntries.findIndex(r => r.id === editingId);
+        if (index > -1) {
+            analysis.riskEntries[index] = treeData;
+            showToast(`Angriffsbaum ${editingId} aktualisiert.`, 'success');
+        } else {
+            // Fallback, falls ID nicht gefunden (sollte nicht passieren)
+            analysis.riskEntries.push(treeData);
+        }
+    } else {
+        // Neuer Eintrag
+        analysis.riskEntries.push(treeData);
+        showToast(`Angriffsbaum ${treeData.id} gespeichert.`, 'success');
+    }
     
     saveAnalyses();
-    showToast(`Angriffsbaum ${treeData.id} gespeichert.`, 'success');
     
     if (attackTreeModal) attackTreeModal.style.display = 'none';
-    renderRiskAnalysis(); // Liste aktualisieren
+    renderRiskAnalysis(); 
 }
 
+
+// Liest DS-Checkboxen eines Leafs direkt aus dem DOM (robust, unabhängig von FormData).
+function readLeafDsFromDOM(leafIndex) {
+    const ds = [];
+    const boxes = document.querySelectorAll(`input[type="checkbox"][name^="at_leaf_${leafIndex}_ds"]`);
+    boxes.forEach(chk => {
+        if (!chk || !chk.checked) return;
+        const nm = chk.getAttribute('name') || '';
+        const m = nm.match(/_ds(\d+)$/i);
+        if (m) ds.push(`DS${m[1]}`);
+    });
+    return [...new Set(ds)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
+
 function extractLeafData(formData, index) {
-    // DS Checkboxes sammeln
-    const checkedDS = [];
-    for(let i=1; i<=5; i++) {
-        if (formData.get(`at_leaf_${index}_ds${i}`)) {
-            checkedDS.push(`DS${i}`);
+    let checkedDS = [];
+    try {
+        checkedDS = readLeafDsFromDOM(index);
+    } catch (e) {
+        checkedDS = [];
+    }
+
+    // Fallback: falls DOM-Query nichts liefert (z.B. falls Checkboxen dynamisch anders benannt sind)
+    if (!checkedDS || checkedDS.length === 0) {
+        for (const [key, val] of formData.entries()) {
+            if (!key) continue;
+            if (!key.startsWith(`at_leaf_${index}_ds`)) continue;
+            const m = key.match(/_ds(\d+)$/i);
+            if (m) checkedDS.push(`DS${m[1]}`);
         }
+        checkedDS = [...new Set(checkedDS)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     }
 
     return {
@@ -472,10 +651,218 @@ function extractLeafData(formData, index) {
         k: formData.get(`at_leaf_${index}_k`),
         s: formData.get(`at_leaf_${index}_s`),
         t: formData.get(`at_leaf_${index}_t`),
-        u: formData.get(`at_leaf_${index}_u`)
+        u: formData.get(`at_leaf_${index}_u`),
+        // Read-only Feld im UI; wird beim Speichern zusätzlich aus der Impact-Matrix neu berechnet
+        i_norm: formData.get(`at_leaf_${index}_i`) || ''
     };
 }
 
+
+// =============================================================
+// --- WORST-CASE VERERBUNG K/S/T/U (Anzeige + Speicherung) ---
+
+function _parseKSTUValue(val) {
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+}
+
+function _kstuWorstCase(items) {
+    const res = { k: null, s: null, t: null, u: null };
+    ['k', 's', 't', 'u'].forEach(key => {
+        let max = null;
+        if (!items || items.length === 0) {
+            res[key] = null;
+            return;
+        }
+        items.forEach(it => {
+            if (!it) return;
+            const v = _parseKSTUValue(it[key]);
+            if (v === null) return;
+            if (max === null || v > max) max = v;
+        });
+        res[key] = (max === null) ? null : String(max);
+    });
+    return res;
+}
+
+// NEU: Hilfsfunktion zur Umwandlung der Matrix-Werte in SCHASAM I(norm)
+function getSchasamImpactValue(matrixValue) {
+    // matrixValue ist der Wert aus dem Select ("1", "2", "3", "N/A" oder undefined)
+    if (matrixValue === '3') return 1.0; // High
+    if (matrixValue === '2') return 0.6; // Medium
+    if (matrixValue === '1') return 0.3; // Low
+    return 0.0; // N/A oder undefiniert
+}
+
+function _parseImpactValue(val) {
+    const num = parseFloat(val);
+    return isNaN(num) ? null : num;
+}
+
+/**
+ * Konsolidierter Impact-Vektor -> Maximum (Worst Case) nach SCHASAM.
+ * - assetId: Asset des Angriffsbaums
+ * - dsList: Array wie ["DS1","DS3"]
+ * - analysis: aktive Analyse (enthält impactMatrix)
+ * Ergebnis: Zahl als String (z.B. "1.0", "0.6") oder "" wenn nicht bestimmbar
+ */
+function computeLeafImpactNorm(assetId, dsList, analysis) {
+    if (!analysis || !analysis.impactMatrix || !assetId) return '';
+    if (!dsList || dsList.length === 0) return '';
+    const row = analysis.impactMatrix[assetId]; // Objekt z.B. { DS1: "3", DS2: "1" }
+    if (!row) return '';
+
+    let maxNorm = 0.0;
+    let foundAny = false;
+
+    dsList.forEach(dsId => {
+        const rawVal = row[dsId]; // "1", "2", "3", "N/A"
+        const normVal = getSchasamImpactValue(rawVal);
+        
+        // Da N/A = 0.0, prüfen wir auf > maxNorm
+        if (normVal > maxNorm) {
+            maxNorm = normVal;
+        }
+        // Wir markieren, dass wir zumindest einen Eintrag geprüft haben
+        foundAny = true; 
+    });
+
+    if (!foundAny) return '';
+    
+    // Ausgabe formatieren (z.B. "1" -> "1.0", "0.6")
+    if (maxNorm === 0.0) return '0.0';
+    return maxNorm.toFixed(1); 
+}
+
+/**
+ * Übernimmt beim Speichern die Worst-Case Werte (max) der K/S/T/U aus den Blättern
+ * in die nächsthöheren Knoten (Branch -> Root).
+ */
+function applyWorstCaseInheritance(treeData) {
+    if (!treeData || !treeData.branches) return treeData;
+
+    treeData.branches.forEach(branch => {
+        branch.kstu = _kstuWorstCase(branch.leaves || []);
+    });
+
+    treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
+    return treeData;
+}
+
+/**
+ * Impact-Vererbung:
+ * - Leaf: I(norm) = max(ImpactMatrix[assetId][DS...] ) über die selektierten DS (SCHASAM gemappt)
+ * - Branch: I(norm) = max(Leaf I(norm))
+ * - Root: I(norm) = max(Branch I(norm))
+ */
+function applyImpactInheritance(treeData, analysis) {
+    if (!treeData || !treeData.branches) return treeData;
+    const assetId = treeData.assetId;
+
+    treeData.branches.forEach(branch => {
+        (branch.leaves || []).forEach(leaf => {
+            const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
+            // Hier wird jetzt die neue Logik verwendet:
+            leaf.i_norm = computeLeafImpactNorm(assetId, dsList, analysis);
+        });
+
+        let bMax = 0.0;
+        let bFound = false;
+
+        (branch.leaves || []).forEach(leaf => {
+            const v = _parseImpactValue(leaf?.i_norm);
+            if (v === null) return;
+            if (v > bMax) bMax = v;
+            bFound = true;
+        });
+        branch.i_norm = bFound ? bMax.toFixed(1) : '';
+    });
+
+    let rMax = 0.0;
+    let rFound = false;
+    
+    treeData.branches.forEach(branch => {
+        const v = _parseImpactValue(branch?.i_norm);
+        if (v === null) return;
+        if (v > rMax) rMax = v;
+        rFound = true;
+    });
+    treeData.i_norm = rFound ? rMax.toFixed(1) : '';
+
+    return treeData;
+}
+
+function _renderNodeSummaryHTML(kstu, iNorm) {
+    const fmt = (v) => (v === null || v === undefined || v === '') ? '-' : v;
+    const iTxt = fmt(iNorm);
+    return `Worst-Case: 
+        <span><strong>I(norm)</strong>: ${iTxt}</span>
+        <span><strong>K</strong>: ${fmt(kstu ? kstu.k : null)}</span>
+        <span><strong>S</strong>: ${fmt(kstu ? kstu.s : null)}</span>
+        <span><strong>T</strong>: ${fmt(kstu ? kstu.t : null)}</span>
+        <span><strong>U</strong>: ${fmt(kstu ? kstu.u : null)}</span>`;
+}
+
+/**
+ * Aktualisiert:
+ * - I(norm) Read-only Textfelder in den Blättern
+ * - Read-only Anzeige der vererbten Worst-Case Werte in Root/Branches
+ */
+function updateAttackTreeKSTUSummariesFromForm() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const assetId = document.getElementById('atTargetAsset')?.value || '';
+
+    const getLeaf = (idx) => ({
+        k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
+        s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
+        t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
+        u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
+    });
+
+    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
+
+    const leafImp = {};
+    [1,2,3,4].forEach(idx => {
+        const iVal = computeLeafImpactNorm(assetId, getLeafDs(idx), analysis);
+        leafImp[idx] = iVal;
+        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
+        if (inp) inp.value = iVal;
+    });
+
+    const b1 = _kstuWorstCase([getLeaf(1), getLeaf(2)]);
+    const b2 = _kstuWorstCase([getLeaf(3), getLeaf(4)]);
+    const root = _kstuWorstCase([b1, b2]);
+
+    const b1I = (() => {
+        const v1 = _parseImpactValue(leafImp[1]);
+        const v2 = _parseImpactValue(leafImp[2]);
+        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
+        return (max === null || max === undefined) ? '' : max.toFixed(1);
+    })();
+
+    const b2I = (() => {
+        const v1 = _parseImpactValue(leafImp[3]);
+        const v2 = _parseImpactValue(leafImp[4]);
+        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
+        return (max === null || max === undefined) ? '' : max.toFixed(1);
+    })();
+
+    const rootI = (() => {
+        const v1 = _parseImpactValue(b1I);
+        const v2 = _parseImpactValue(b2I);
+        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
+        return (max === null || max === undefined) ? '' : max.toFixed(1);
+    })();
+
+    const elRoot = document.getElementById('at_root_kstu_summary');
+    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(root, rootI);
+
+    const elB1 = document.getElementById('at_branch_1_kstu_summary');
+    if (elB1) elB1.innerHTML = _renderNodeSummaryHTML(b1, b1I);
+
+    const elB2 = document.getElementById('at_branch_2_kstu_summary');
+    if (elB2) elB2.innerHTML = _renderNodeSummaryHTML(b2, b2I);
+}
 function generateNextRiskID(analysis) {
     if (!analysis.riskEntries || analysis.riskEntries.length === 0) return 'R01';
     
@@ -493,4 +880,23 @@ if (closeAttackTreeModal) {
 }
 if (attackTreeForm) {
     attackTreeForm.onsubmit = saveAttackTree;
+
+    
+// Live-Update: sobald K/S/T/U, DS-Checkboxen oder Asset geändert wird
+const _atShouldUpdate = (t) => {
+    if (!t) return false;
+    if ((t.classList && t.classList.contains('kstu-select')) || t.id === 'atTargetAsset') return true;
+    if (t.type === 'checkbox') return true;
+    if (t.closest && t.closest('.ds-checks')) return true; // Klick auf Label/Container
+    return false;
+};
+
+['change','input','click'].forEach(evtName => {
+    attackTreeForm.addEventListener(evtName, (ev) => {
+        const t = ev && ev.target ? ev.target : null;
+        if (!_atShouldUpdate(t)) return;
+        updateAttackTreeKSTUSummariesFromForm();
+    });
+});
+
 }

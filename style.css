@@ -630,12 +630,114 @@ input:focus, textarea:focus, select:focus {
 
 .kstu-inputs {
     display: flex;
-    gap: 5px;
+    justify-content: space-between;
+    gap: 2%;
 }
 
-.kstu-inputs input {
-    width: 22%;
-    padding: 3px;
-    font-size: 0.8em;
-    text-align: center;
+.kstu-select {
+    width: 23%;
+    padding: 4px;
+    font-size: 0.85em;
+    text-align: left;
+}
+
+/* -------------------------------------------------------------
+   Attack-Tree: Read-only Anzeige (Worst-Case) für K/S/T/U + I(norm)
+------------------------------------------------------------- */
+.kstu-summary {
+    margin-top: 8px;
+    padding: 6px 8px;
+    border: 1px dashed #d0d0d0;
+    background: #f7f7f7;
+    border-radius: 6px;
+    font-size: 0.85em;
+    color: #555;
+    line-height: 1.4;
+}
+.kstu-summary span {
+    display: inline-block;
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.inorm-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+.inorm-display label {
+    margin: 0;
+    width: auto;
+    font-weight: bold;
+    font-size: 0.85em;
+    color: #2c3e50;
+}
+.inorm-field {
+    width: 120px;
+    max-width: 140px;
+    padding: 6px 8px;
+    border: 1px solid #dfe6e9;
+    border-radius: 6px;
+    background: #f7f7f7;
+    color: #2c3e50;
+    font-size: 0.9em;
+}
+
+/* =============================================================
+   --- NODE SUMMARY BOX (ASCII-STYLE LAYOUT) ---
+   ============================================================= */
+
+.node-stats-box {
+    margin-top: 10px;
+    background-color: #fdfdfd;
+    border: 1px solid #333; /* Dunkler Rahmen für ASCII-Look */
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Monospace für Tabellen-Look */
+    font-size: 0.85em;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+}
+
+.ns-row {
+    display: flex;
+    border-bottom: 1px solid #999; /* Trennlinien */
+    padding: 4px 8px;
+    align-items: center;
+}
+
+.ns-row:last-child {
+    border-bottom: none;
+}
+
+.ns-label {
+    font-weight: bold;
+    margin-right: 8px;
+    min-width: 60px;
+    color: #555;
+}
+
+.ns-value {
+    font-weight: bold;
+    color: #000;
+}
+
+/* Spezifische Farben für Risiko-Werte */
+.risk-val-low { color: #27ae60; }     /* Grün (R < 0.8) */
+.risk-val-medium { color: #f39c12; }  /* Gelb/Orange (0.8 <= R < 1.6) */
+.risk-val-high { color: #e67e22; }    /* Orange (1.6 <= R < 2.0) */
+.risk-val-critical { color: #c0392b; } /* Rot (R >= 2.0) */
+
+/* KSTU Zeile */
+.ns-kstu {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 0.9em;
+}
+.ns-kstu span {
+    margin-right: 4px;
 }

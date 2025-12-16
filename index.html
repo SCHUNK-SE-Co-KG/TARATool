@@ -215,11 +215,13 @@
     <div id="attackTreeModal" class="modal" style="display: none;">
         <div class="modal-content large">
             <span class="close-button" id="closeAttackTreeModal">&times;</span>
-            <h2>Neuen Angriffsbaum erstellen</h2>
+            <h2>Angriffsbaum bearbeiten</h2>
             <form id="attackTreeForm">
+                <input type="hidden" name="at_id" id="at_id">
+
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="atTargetAsset">Betroffenes Asset wählen:</label>
-                    <select id="atTargetAsset" required style="width: 100%; padding: 10px; font-size: 1em;"></select>
+                    <select id="atTargetAsset" name="assetId" required style="width: 100%; padding: 10px; font-size: 1em;"></select>
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -235,9 +237,11 @@
                             <tr>
                                 <td rowspan="4" style="vertical-align: middle;">
                                     <input type="text" name="at_root" placeholder="Root Pfad" maxlength="20" required style="width: 90%;">
+                                    <div class="kstu-summary" id="at_root_kstu_summary"></div>
                                 </td>
                                 <td rowspan="2" style="vertical-align: middle;">
                                     <input type="text" name="at_branch_1" placeholder="Pfad 1" maxlength="30" required style="width: 90%;">
+                                    <div class="kstu-summary" id="at_branch_1_kstu_summary"></div>
                                 </td>
                                 <td>
                                     <div class="leaf-container">
@@ -250,11 +254,12 @@
                                             <label><input type="checkbox" name="at_leaf_1_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <input type="text" name="at_leaf_1_k" placeholder="K">
-                                            <input type="text" name="at_leaf_1_s" placeholder="S">
-                                            <input type="text" name="at_leaf_1_t" placeholder="T">
-                                            <input type="text" name="at_leaf_1_u" placeholder="U">
+                                            <select name="at_leaf_1_k" class="kstu-select" title="Komplexität (K)"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_1_s" class="kstu-select" title="Skalierung (S)"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_1_t" class="kstu-select" title="Zeit (T)"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_1_u" class="kstu-select" title="Nutzen (U)"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
                                         </div>
+                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_1_i" class="inorm-field" readonly></div>
                                     </div>
                                 </td>
                             </tr>
@@ -270,17 +275,19 @@
                                             <label><input type="checkbox" name="at_leaf_2_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <input type="text" name="at_leaf_2_k" placeholder="K">
-                                            <input type="text" name="at_leaf_2_s" placeholder="S">
-                                            <input type="text" name="at_leaf_2_t" placeholder="T">
-                                            <input type="text" name="at_leaf_2_u" placeholder="U">
+                                            <select name="at_leaf_2_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_2_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_2_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_2_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
                                         </div>
+                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_2_i" class="inorm-field" readonly></div>
                                     </div>
                                 </td>
                             </tr>
                             <tr>
                                 <td rowspan="2" style="vertical-align: middle;">
                                     <input type="text" name="at_branch_2" placeholder="Pfad 2" maxlength="30" style="width: 90%;">
+                                    <div class="kstu-summary" id="at_branch_2_kstu_summary"></div>
                                 </td>
                                 <td>
                                     <div class="leaf-container">
@@ -293,11 +300,12 @@
                                             <label><input type="checkbox" name="at_leaf_3_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <input type="text" name="at_leaf_3_k" placeholder="K">
-                                            <input type="text" name="at_leaf_3_s" placeholder="S">
-                                            <input type="text" name="at_leaf_3_t" placeholder="T">
-                                            <input type="text" name="at_leaf_3_u" placeholder="U">
+                                            <select name="at_leaf_3_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_3_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_3_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_3_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
                                         </div>
+                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_3_i" class="inorm-field" readonly></div>
                                     </div>
                                 </td>
                             </tr>
@@ -313,11 +321,12 @@
                                             <label><input type="checkbox" name="at_leaf_4_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <input type="text" name="at_leaf_4_k" placeholder="K">
-                                            <input type="text" name="at_leaf_4_s" placeholder="S">
-                                            <input type="text" name="at_leaf_4_t" placeholder="T">
-                                            <input type="text" name="at_leaf_4_u" placeholder="U">
+                                            <select name="at_leaf_4_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_4_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_4_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_4_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
                                         </div>
+                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_4_i" class="inorm-field" readonly></div>
                                     </div>
                                 </td>
                             </tr>
@@ -325,8 +334,13 @@
                     </table>
                 </div>
                 
-                <div style="margin-top: 20px; text-align: right;">
-                    <button type="submit" class="primary-button">Angriffsbaum Speichern</button>
+                <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" id="btnDeleteAttackTree" class="action-button dangerous" style="display: none;">
+                        <i class="fas fa-trash"></i> Löschen
+                    </button>
+                    <button type="submit" class="primary-button">
+                        <i class="fas fa-save"></i> Angriffsbaum Speichern
+                    </button>
                 </div>
             </form>
         </div>
