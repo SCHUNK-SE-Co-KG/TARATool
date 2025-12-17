@@ -685,15 +685,12 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* =============================================================
-   --- NODE SUMMARY BOX (ASCII-STYLE LAYOUT) ---
-   ============================================================= */
-
-.node-stats-box {
+   --- N.node-stats-box, .kstu-summary {
     margin-top: 10px;
     background-color: #fdfdfd;
     border: 1px solid #333; /* Dunkler Rahmen für ASCII-Look */
     border-radius: 4px;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; /* Monospace für Tabellen-Look */
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace; 
     font-size: 0.85em;
     color: #333;
     display: flex;
@@ -702,11 +699,18 @@ input:focus, textarea:focus, select:focus {
     box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
 }
 
+.kstu-summary {
+    /* Style Angleichung an node-stats-box für einheitlichen Look */
+    padding: 0;
+    line-height: normal;
+}
+
 .ns-row {
     display: flex;
     border-bottom: 1px solid #999; /* Trennlinien */
     padding: 4px 8px;
     align-items: center;
+    justify-content: space-between; /* Platz zwischen R und I(norm) */
 }
 
 .ns-row:last-child {
@@ -715,8 +719,7 @@ input:focus, textarea:focus, select:focus {
 
 .ns-label {
     font-weight: bold;
-    margin-right: 8px;
-    min-width: 60px;
+    margin-right: 4px;
     color: #555;
 }
 
@@ -740,4 +743,12 @@ input:focus, textarea:focus, select:focus {
 }
 .ns-kstu span {
     margin-right: 4px;
+}
+
+/* Neue Spalte für Level 2 */
+.col-level-2 {
+    background-color: #f9fbfd; /* Leicht bläulich zur Unterscheidung */
+}
+.col-level-2 input {
+    border-color: #0059B3;
 }

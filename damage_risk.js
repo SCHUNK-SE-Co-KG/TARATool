@@ -375,13 +375,14 @@ function renderExistingRiskEntries(analysis) {
 
     let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
     analysis.riskEntries.forEach(entry => {
-        const assetName = analysis.assets.find(a => a.id === entry.assetId)?.name || entry.assetId;
-        // Button hinzugefügt, der editAttackTree aufruft
+        // Hier greifen wir auf das korrekte Feld zu: rootRiskValue
+        const rootRisk = entry.rootRiskValue || '-';
+
         html += `
             <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
                 <div>
                     <strong>${entry.id}</strong>: ${entry.rootName} <br> 
-                    <span style="color:#666; font-size:0.9em;">Asset: ${assetName}</span>
+                    <span style="color:#666; font-size:0.9em;">Risk Score (R): <b>${rootRisk}</b></span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button onclick="editAttackTree('${entry.id}')" class="action-button small">
@@ -402,13 +403,27 @@ function renderExistingRiskEntries(analysis) {
 window.editAttackTree = (riskId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
-
-    // Modal öffnen im "Edit" Modus (Daten laden)
     openAttackTreeModal(entry);
 };
+
+
+// ------------------------------------------------------------------
+// NEUE HILFSFUNKTION: IDs neu durchnummerieren (R01, R02, ...)
+// ------------------------------------------------------------------
+function reindexRiskIDs(analysis) {
+    if (!analysis || !analysis.riskEntries) return;
+    
+    // Sortieren um Reihenfolge beizubehalten (falls nötig)
+    // Wir nehmen an, die Array-Reihenfolge ist die gewünschte.
+    
+    analysis.riskEntries.forEach((entry, index) => {
+        const newId = 'R' + (index + 1).toString().padStart(2, '0');
+        entry.id = newId;
+    });
+}
+
 
 window.deleteAttackTree = (riskId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -417,28 +432,30 @@ window.deleteAttackTree = (riskId) => {
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
-    const assetName = (analysis.assets || []).find(a => a.id === entry.assetId)?.name || entry.assetId;
-
     confirmationTitle.textContent = 'Angriffsbaum löschen bestätigen';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> (Asset: ${assetName}) löschen möchten?`;
+    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> löschen möchten?`;
 
     btnConfirmAction.textContent = 'Ja, Angriffsbaum löschen';
     btnConfirmAction.classList.add('dangerous');
 
     confirmationModal.style.display = 'block';
 
-    // Handler zurücksetzen (sonst stapeln sich Aktionen)
     btnConfirmAction.onclick = null;
     btnCancelConfirmation.onclick = null;
     closeConfirmationModal.onclick = null;
 
     btnConfirmAction.onclick = () => {
+        // Löschen
         analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
+        
+        // NEU: Sofort Re-Indizieren
+        reindexRiskIDs(analysis);
+
         saveAnalyses();
         if (attackTreeModal) attackTreeModal.style.display = 'none';
         confirmationModal.style.display = 'none';
         renderRiskAnalysis();
-        showToast(`Angriffsbaum ${riskId} gelöscht.`, 'success');
+        showToast(`Angriffsbaum gelöscht.`, 'success');
     };
 
     btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
@@ -446,58 +463,66 @@ window.deleteAttackTree = (riskId) => {
 };
 
 
+// -------------------------------------------------------------
+// UI HELPER: TOGGLE DEPTH
+// -------------------------------------------------------------
+function setTreeDepth(isDeep) {
+    const cols = document.querySelectorAll('.col-level-2');
+    const inputUseDeep = document.getElementById('use_deep_tree');
+    const btn = document.getElementById('btnToggleTreeDepth');
+
+    if (isDeep) {
+        cols.forEach(el => el.style.display = 'table-cell');
+        if (inputUseDeep) inputUseDeep.value = 'true';
+        if (btn) btn.innerHTML = '<i class="fas fa-minus"></i> Zwischenebene entfernen';
+    } else {
+        cols.forEach(el => el.style.display = 'none');
+        if (inputUseDeep) inputUseDeep.value = 'false';
+        if (btn) btn.innerHTML = '<i class="fas fa-layer-group"></i> Zwischenebene hinzufügen';
+    }
+    updateAttackTreeKSTUSummariesFromForm(); 
+}
+
+
 function openAttackTreeModal(existingEntry = null) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    // Asset Selector füllen
-    if (atTargetAsset) {
-        atTargetAsset.innerHTML = '';
-        analysis.assets.forEach(asset => {
-            const opt = document.createElement('option');
-            opt.value = asset.id;
-            opt.textContent = `${asset.id}: ${asset.name}`;
-            atTargetAsset.appendChild(opt);
-        });
-    }
-
     if (attackTreeForm) attackTreeForm.reset();
-
-    // Verstecktes ID Feld setzen oder löschen
     const hiddenIdField = document.getElementById('at_id');
     
+    // Default: Keine tiefe Struktur
+    setTreeDepth(false); 
+
     if (existingEntry) {
-        // --- DATEN LADEN (Mapping JSON -> Form) ---
+        // --- DATEN LADEN ---
         if (hiddenIdField) hiddenIdField.value = existingEntry.id;
         
-        // Asset setzen
-        atTargetAsset.value = existingEntry.assetId;
+        // Tiefe Struktur prüfen
+        const hasL2 = existingEntry.useDeepTree === true;
+        setTreeDepth(hasL2);
         
         // Root Pfad
         const rootInput = document.querySelector('input[name="at_root"]');
         if (rootInput) rootInput.value = existingEntry.rootName;
 
-        // Hilfsfunktion zum Laden eines Blattes
+        // Leaf Loader Helper
         const loadLeaf = (leafData, leafIndex) => {
             if (!leafData) return;
             const prefix = `at_leaf_${leafIndex}`;
             
-            // Text
             const txt = document.querySelector(`input[name="${prefix}_text"]`);
             if (txt) txt.value = leafData.text || '';
             
-            // K, S, T, U Selects
             ['k', 's', 't', 'u'].forEach(param => {
                 const sel = document.querySelector(`select[name="${prefix}_${param}"]`);
                 if (sel) sel.value = leafData[param] || '';
             });
 
-            // DS Checkboxes
             document.querySelectorAll(`input[type="checkbox"][name^="${prefix}_ds"]`).forEach(c => { if (c) c.checked = false; });
             if (leafData.ds && Array.isArray(leafData.ds)) {
                 leafData.ds.forEach(dsVal => {
-                    // dsVal ist z.B. "DS1", "DS3"
-                    // Checkbox Name z.B. at_leaf_1_ds1
+                    // dsVal ist z.B. "DS1"
                     const num = dsVal.replace('DS', '');
                     const chk = document.querySelector(`input[name="${prefix}_ds${num}"]`);
                     if (chk) chk.checked = true;
@@ -505,21 +530,31 @@ function openAttackTreeModal(existingEntry = null) {
             }
         };
 
-        // Branch 1 (Index 0) -> Leaf 1 & 2
+        // Branch 1
         if (existingEntry.branches[0]) {
             const b1 = existingEntry.branches[0];
-            const b1Input = document.querySelector('input[name="at_branch_1"]');
-            if (b1Input) b1Input.value = b1.name;
+            document.querySelector('input[name="at_branch_1"]').value = b1.name;
             
+            // Level 2 (optional)
+            if (hasL2 && b1.l2_node) {
+                 const l2Inp = document.querySelector('input[name="at_branch_1_l2"]');
+                 if(l2Inp) l2Inp.value = b1.l2_node.name || '';
+            }
+
             loadLeaf(b1.leaves[0], 1);
             loadLeaf(b1.leaves[1], 2);
         }
 
-        // Branch 2 (Index 1) -> Leaf 3 & 4
+        // Branch 2
         if (existingEntry.branches[1]) {
             const b2 = existingEntry.branches[1];
-            const b2Input = document.querySelector('input[name="at_branch_2"]');
-            if (b2Input) b2Input.value = b2.name;
+            document.querySelector('input[name="at_branch_2"]').value = b2.name;
+            
+            // Level 2 (optional)
+            if (hasL2 && b2.l2_node) {
+                 const l2Inp = document.querySelector('input[name="at_branch_2_l2"]');
+                 if(l2Inp) l2Inp.value = b2.l2_node.name || '';
+            }
 
             loadLeaf(b2.leaves[0], 3);
             loadLeaf(b2.leaves[1], 4);
@@ -527,11 +562,19 @@ function openAttackTreeModal(existingEntry = null) {
         
     } else {
         // --- NEU ERSTELLEN ---
-        if (hiddenIdField) hiddenIdField.value = ''; // ID leer -> Neues Element
+        if (hiddenIdField) hiddenIdField.value = ''; 
     }
 
+    // Toggle Button Event Listener initialisieren
+    const btnToggle = document.getElementById('btnToggleTreeDepth');
+    if (btnToggle) {
+        btnToggle.onclick = () => {
+            const current = document.getElementById('use_deep_tree').value === 'true';
+            setTreeDepth(!current);
+        };
+    }
 
-    // Delete-Button im Modal: nur bei bestehenden Bäumen anzeigen
+    // Delete Button Logik
     const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
     if (delBtn) {
         if (existingEntry && existingEntry.id) {
@@ -543,9 +586,8 @@ function openAttackTreeModal(existingEntry = null) {
         }
     }
 
-    // Read-only Summaries (Worst-Case) für K/S/T/U + I(norm) aktualisieren
+    // Summaries aktualisieren
     updateAttackTreeKSTUSummariesFromForm();
-
     if (attackTreeModal) attackTreeModal.style.display = 'block';
 }
 
@@ -555,16 +597,18 @@ function saveAttackTree(e) {
     if (!analysis) return;
 
     const fd = new FormData(attackTreeForm);
-    const editingId = fd.get('at_id'); // Prüfen, ob wir bearbeiten
-    
+    const editingId = fd.get('at_id');
+    const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
+
     // Datenstruktur aufbauen
     const treeData = {
-        id: editingId || generateNextRiskID(analysis), // Alte ID behalten oder neue generieren
-        assetId: atTargetAsset.value,
+        id: editingId || generateNextRiskID(analysis),
         rootName: fd.get('at_root'),
+        useDeepTree: useDeepTree,
         branches: [
             {
                 name: fd.get('at_branch_1'),
+                l2_node: useDeepTree ? { name: fd.get('at_branch_1_l2') } : null,
                 leaves: [
                     extractLeafData(fd, 1),
                     extractLeafData(fd, 2)
@@ -572,6 +616,7 @@ function saveAttackTree(e) {
             },
             {
                 name: fd.get('at_branch_2'),
+                l2_node: useDeepTree ? { name: fd.get('at_branch_2_l2') } : null,
                 leaves: [
                     extractLeafData(fd, 3),
                     extractLeafData(fd, 4)
@@ -580,39 +625,42 @@ function saveAttackTree(e) {
         ]
     };
 
-    // Worst-Case Vererbung:
-    //  - I(norm): max(ImpactMatrix[assetId][DS...] ) je Leaf, dann max nach oben
-    //  - K/S/T/U: max je Aspekt nach oben
+    // Worst-Case Vererbung & Berechnung
     applyImpactInheritance(treeData, analysis);
     applyWorstCaseInheritance(treeData);
-
+    
+    // Gesamtrisiko Root
+    const rootKSTU = treeData.kstu; 
+    const rootI = parseFloat(treeData.i_norm) || 0;
+    const sumP = (parseFloat(rootKSTU.k)||0) + (parseFloat(rootKSTU.s)||0) + (parseFloat(rootKSTU.t)||0) + (parseFloat(rootKSTU.u)||0);
+    treeData.rootRiskValue = (rootI * sumP).toFixed(2);
 
     if (!analysis.riskEntries) analysis.riskEntries = [];
 
     if (editingId) {
-        // Update existierenden Eintrag
         const index = analysis.riskEntries.findIndex(r => r.id === editingId);
         if (index > -1) {
             analysis.riskEntries[index] = treeData;
-            showToast(`Angriffsbaum ${editingId} aktualisiert.`, 'success');
+            showToast(`Angriffsbaum aktualisiert.`, 'success');
         } else {
-            // Fallback, falls ID nicht gefunden (sollte nicht passieren)
             analysis.riskEntries.push(treeData);
         }
     } else {
-        // Neuer Eintrag
         analysis.riskEntries.push(treeData);
-        showToast(`Angriffsbaum ${treeData.id} gespeichert.`, 'success');
+        showToast(`Angriffsbaum gespeichert.`, 'success');
     }
     
-    saveAnalyses();
+    // WICHTIG: Immer Re-Indizieren, damit IDs sauber sind (R01, R02...)
+    // Das behebt das Problem mit "verwaisten" R03 IDs.
+    reindexRiskIDs(analysis);
     
+    saveAnalyses();
     if (attackTreeModal) attackTreeModal.style.display = 'none';
     renderRiskAnalysis(); 
 }
 
 
-// Liest DS-Checkboxen eines Leafs direkt aus dem DOM (robust, unabhängig von FormData).
+// Liest DS-Checkboxen eines Leafs
 function readLeafDsFromDOM(leafIndex) {
     const ds = [];
     const boxes = document.querySelectorAll(`input[type="checkbox"][name^="at_leaf_${leafIndex}_ds"]`);
@@ -625,24 +673,20 @@ function readLeafDsFromDOM(leafIndex) {
     return [...new Set(ds)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
-
 function extractLeafData(formData, index) {
     let checkedDS = [];
     try {
         checkedDS = readLeafDsFromDOM(index);
-    } catch (e) {
-        checkedDS = [];
-    }
+    } catch (e) { checkedDS = []; }
 
-    // Fallback: falls DOM-Query nichts liefert (z.B. falls Checkboxen dynamisch anders benannt sind)
-    if (!checkedDS || checkedDS.length === 0) {
-        for (const [key, val] of formData.entries()) {
+    // Fallback falls DOM leer
+    if (checkedDS.length === 0) {
+         for (const [key, val] of formData.entries()) {
             if (!key) continue;
             if (!key.startsWith(`at_leaf_${index}_ds`)) continue;
             const m = key.match(/_ds(\d+)$/i);
             if (m) checkedDS.push(`DS${m[1]}`);
         }
-        checkedDS = [...new Set(checkedDS)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
     }
 
     return {
@@ -652,14 +696,13 @@ function extractLeafData(formData, index) {
         s: formData.get(`at_leaf_${index}_s`),
         t: formData.get(`at_leaf_${index}_t`),
         u: formData.get(`at_leaf_${index}_u`),
-        // Read-only Feld im UI; wird beim Speichern zusätzlich aus der Impact-Matrix neu berechnet
         i_norm: formData.get(`at_leaf_${index}_i`) || ''
     };
 }
 
 
 // =============================================================
-// --- WORST-CASE VERERBUNG K/S/T/U (Anzeige + Speicherung) ---
+// --- WORST-CASE VERERBUNG K/S/T/U ---
 
 function _parseKSTUValue(val) {
     const num = parseFloat(val);
@@ -676,7 +719,13 @@ function _kstuWorstCase(items) {
         }
         items.forEach(it => {
             if (!it) return;
-            const v = _parseKSTUValue(it[key]);
+            // Wenn it ein Leaf-Objekt ist, sind die Werte evtl strings
+            // Wenn it ein Node ist (branch), ist es schon ein kstu objekt
+            let raw = it[key];
+            // Falls it das 'kstu' Objekt selbst enthält (Structure mismatch prevention)
+            if (it.kstu && it.kstu[key]) raw = it.kstu[key];
+            
+            const v = _parseKSTUValue(raw);
             if (v === null) return;
             if (max === null || v > max) max = v;
         });
@@ -685,13 +734,65 @@ function _kstuWorstCase(items) {
     return res;
 }
 
-// NEU: Hilfsfunktion zur Umwandlung der Matrix-Werte in SCHASAM I(norm)
-function getSchasamImpactValue(matrixValue) {
-    // matrixValue ist der Wert aus dem Select ("1", "2", "3", "N/A" oder undefined)
-    if (matrixValue === '3') return 1.0; // High
-    if (matrixValue === '2') return 0.6; // Medium
-    if (matrixValue === '1') return 0.3; // Low
-    return 0.0; // N/A oder undefiniert
+// I(norm) Berechnung (S x G)
+function computeLeafImpactNorm(dsList, analysis) {
+    if (!analysis || !analysis.impactMatrix) return '';
+    if (!dsList || dsList.length === 0) return '';
+    if (!analysis.assets || analysis.assets.length === 0) return '';
+
+    let maxWeightedImpact = 0.0;
+    let foundAny = false;
+
+    analysis.assets.forEach(asset => {
+        const row = analysis.impactMatrix[asset.id];
+        if (!row) return;
+
+        let gFactor = 0.6; 
+        if (asset.schutzbedarf === 'III') gFactor = 1.0;
+        else if (asset.schutzbedarf === 'II') gFactor = 0.8;
+        else if (asset.schutzbedarf === 'I') gFactor = 0.6;
+        
+        dsList.forEach(dsId => {
+            const rawVal = row[dsId]; 
+            let sFactor = 0.0;
+            if (rawVal === '3') sFactor = 1.0;       
+            else if (rawVal === '2') sFactor = 0.6;  
+            else if (rawVal === '1') sFactor = 0.3;  
+            
+            if (sFactor > 0) {
+                const currentWeightedImpact = sFactor * gFactor;
+                if (currentWeightedImpact > maxWeightedImpact) maxWeightedImpact = currentWeightedImpact;
+                foundAny = true;
+            }
+        });
+    });
+
+    if (!foundAny && maxWeightedImpact === 0.0) return '';
+    if (maxWeightedImpact === 0.0) return '0.0';
+    return maxWeightedImpact.toFixed(2);
+}
+
+function applyWorstCaseInheritance(treeData) {
+    if (!treeData || !treeData.branches) return treeData;
+
+    treeData.branches.forEach(branch => {
+        // 1. Blätter -> L2 (wenn vorhanden) oder direkt Branch
+        const leavesWC = _kstuWorstCase(branch.leaves || []);
+        
+        if (treeData.useDeepTree && branch.l2_node) {
+            // Wenn Deep Tree: L2 erbt von Leaves
+            branch.l2_node.kstu = leavesWC;
+            // Branch erbt von L2
+            branch.kstu = _kstuWorstCase([branch.l2_node]);
+        } else {
+            // Normal: Branch erbt von Leaves
+            branch.kstu = leavesWC;
+        }
+    });
+
+    // Root erbt von Branches
+    treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
+    return treeData;
 }
 
 function _parseImpactValue(val) {
@@ -699,204 +800,228 @@ function _parseImpactValue(val) {
     return isNaN(num) ? null : num;
 }
 
-/**
- * Konsolidierter Impact-Vektor -> Maximum (Worst Case) nach SCHASAM.
- * - assetId: Asset des Angriffsbaums
- * - dsList: Array wie ["DS1","DS3"]
- * - analysis: aktive Analyse (enthält impactMatrix)
- * Ergebnis: Zahl als String (z.B. "1.0", "0.6") oder "" wenn nicht bestimmbar
- */
-function computeLeafImpactNorm(assetId, dsList, analysis) {
-    if (!analysis || !analysis.impactMatrix || !assetId) return '';
-    if (!dsList || dsList.length === 0) return '';
-    const row = analysis.impactMatrix[assetId]; // Objekt z.B. { DS1: "3", DS2: "1" }
-    if (!row) return '';
-
-    let maxNorm = 0.0;
-    let foundAny = false;
-
-    dsList.forEach(dsId => {
-        const rawVal = row[dsId]; // "1", "2", "3", "N/A"
-        const normVal = getSchasamImpactValue(rawVal);
-        
-        // Da N/A = 0.0, prüfen wir auf > maxNorm
-        if (normVal > maxNorm) {
-            maxNorm = normVal;
-        }
-        // Wir markieren, dass wir zumindest einen Eintrag geprüft haben
-        foundAny = true; 
-    });
-
-    if (!foundAny) return '';
-    
-    // Ausgabe formatieren (z.B. "1" -> "1.0", "0.6")
-    if (maxNorm === 0.0) return '0.0';
-    return maxNorm.toFixed(1); 
-}
-
-/**
- * Übernimmt beim Speichern die Worst-Case Werte (max) der K/S/T/U aus den Blättern
- * in die nächsthöheren Knoten (Branch -> Root).
- */
-function applyWorstCaseInheritance(treeData) {
-    if (!treeData || !treeData.branches) return treeData;
-
-    treeData.branches.forEach(branch => {
-        branch.kstu = _kstuWorstCase(branch.leaves || []);
-    });
-
-    treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
-    return treeData;
-}
-
-/**
- * Impact-Vererbung:
- * - Leaf: I(norm) = max(ImpactMatrix[assetId][DS...] ) über die selektierten DS (SCHASAM gemappt)
- * - Branch: I(norm) = max(Leaf I(norm))
- * - Root: I(norm) = max(Branch I(norm))
- */
 function applyImpactInheritance(treeData, analysis) {
     if (!treeData || !treeData.branches) return treeData;
-    const assetId = treeData.assetId;
 
     treeData.branches.forEach(branch => {
+        // 1. Blätter berechnen
         (branch.leaves || []).forEach(leaf => {
             const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
-            // Hier wird jetzt die neue Logik verwendet:
-            leaf.i_norm = computeLeafImpactNorm(assetId, dsList, analysis);
+            leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
         });
 
+        // 2. Max I(norm) aus Blättern
         let bMax = 0.0;
         let bFound = false;
-
         (branch.leaves || []).forEach(leaf => {
             const v = _parseImpactValue(leaf?.i_norm);
             if (v === null) return;
             if (v > bMax) bMax = v;
             bFound = true;
         });
-        branch.i_norm = bFound ? bMax.toFixed(1) : '';
+        
+        const leavesMaxI = bFound ? bMax.toFixed(2) : '';
+
+        // 3. Vererbungskette
+        if (treeData.useDeepTree && branch.l2_node) {
+            branch.l2_node.i_norm = leavesMaxI;
+            branch.i_norm = leavesMaxI; // L1 erbt von L2 (Identisch)
+        } else {
+            branch.i_norm = leavesMaxI;
+        }
     });
 
+    // Root
     let rMax = 0.0;
     let rFound = false;
-    
     treeData.branches.forEach(branch => {
         const v = _parseImpactValue(branch?.i_norm);
         if (v === null) return;
         if (v > rMax) rMax = v;
         rFound = true;
     });
-    treeData.i_norm = rFound ? rMax.toFixed(1) : '';
+    treeData.i_norm = rFound ? rMax.toFixed(2) : '';
 
     return treeData;
 }
 
+// Render Funktion für die Kacheln (inkl. Leaf R Anzeige)
 function _renderNodeSummaryHTML(kstu, iNorm) {
-    const fmt = (v) => (v === null || v === undefined || v === '') ? '-' : v;
-    const iTxt = fmt(iNorm);
-    return `Worst-Case: 
-        <span><strong>I(norm)</strong>: ${iTxt}</span>
-        <span><strong>K</strong>: ${fmt(kstu ? kstu.k : null)}</span>
-        <span><strong>S</strong>: ${fmt(kstu ? kstu.s : null)}</span>
-        <span><strong>T</strong>: ${fmt(kstu ? kstu.t : null)}</span>
-        <span><strong>U</strong>: ${fmt(kstu ? kstu.u : null)}</span>`;
+    const valK = parseFloat(kstu?.k) || 0;
+    const valS = parseFloat(kstu?.s) || 0;
+    const valT = parseFloat(kstu?.t) || 0;
+    const valU = parseFloat(kstu?.u) || 0;
+    const valI = parseFloat(iNorm) || 0;
+
+    const sumP = valK + valS + valT + valU;
+    const riskR = (valI * sumP).toFixed(2);
+    
+    const dispI = (iNorm === '' || iNorm === null) ? '-' : iNorm;
+    const dispK = (kstu?.k === null || kstu?.k === '') ? '-' : kstu.k;
+    const dispS = (kstu?.s === null || kstu?.s === '') ? '-' : kstu.s;
+    const dispT = (kstu?.t === null || kstu?.t === '') ? '-' : kstu.t;
+    const dispU = (kstu?.u === null || kstu?.u === '') ? '-' : kstu.u;
+
+    let riskClass = 'risk-val-low';
+    const R = parseFloat(riskR);
+    if (R >= 2.0) riskClass = 'risk-val-critical';
+    else if (R >= 1.6) riskClass = 'risk-val-high';
+    else if (R >= 0.8) riskClass = 'risk-val-medium';
+    else if (R > 0) riskClass = 'risk-val-low'; 
+
+    return `
+        <div class="ns-row" style="background-color: #f0f0f0;">
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label">R=</span>
+                <span class="ns-value ${riskClass}">${riskR}</span>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label" style="font-size:0.9em; min-width:auto; margin-left:10px;">I(N)=</span>
+                <span class="ns-value">${dispI}</span>
+            </div>
+        </div>
+        <div class="ns-row" style="border-bottom:none; font-size:0.8em; color:#666;">
+            <div class="ns-kstu">
+                <span>K:${dispK}</span>
+                <span>S:${dispS}</span>
+                <span>T:${dispT}</span>
+                <span>U:${dispU}</span>
+            </div>
+        </div>
+    `;
 }
 
-/**
- * Aktualisiert:
- * - I(norm) Read-only Textfelder in den Blättern
- * - Read-only Anzeige der vererbten Worst-Case Werte in Root/Branches
- */
 function updateAttackTreeKSTUSummariesFromForm() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
-    const assetId = document.getElementById('atTargetAsset')?.value || '';
+    if (!analysis) return;
+    
+    const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
 
-    const getLeaf = (idx) => ({
+    // Helper um Blattdaten zu lesen
+    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
+    const getLeafKSTU = (idx) => ({
         k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
         s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
         t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
         u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
     });
 
-    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
-
-    const leafImp = {};
-    [1,2,3,4].forEach(idx => {
-        const iVal = computeLeafImpactNorm(assetId, getLeafDs(idx), analysis);
-        leafImp[idx] = iVal;
-        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
-        if (inp) inp.value = iVal;
-    });
-
-    const b1 = _kstuWorstCase([getLeaf(1), getLeaf(2)]);
-    const b2 = _kstuWorstCase([getLeaf(3), getLeaf(4)]);
-    const root = _kstuWorstCase([b1, b2]);
-
-    const b1I = (() => {
-        const v1 = _parseImpactValue(leafImp[1]);
-        const v2 = _parseImpactValue(leafImp[2]);
-        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
-        return (max === null || max === undefined) ? '' : max.toFixed(1);
-    })();
-
-    const b2I = (() => {
-        const v1 = _parseImpactValue(leafImp[3]);
-        const v2 = _parseImpactValue(leafImp[4]);
-        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
-        return (max === null || max === undefined) ? '' : max.toFixed(1);
-    })();
-
-    const rootI = (() => {
-        const v1 = _parseImpactValue(b1I);
-        const v2 = _parseImpactValue(b2I);
-        const max = (v1 === null) ? v2 : (v2 === null ? v1 : Math.max(v1, v2));
-        return (max === null || max === undefined) ? '' : max.toFixed(1);
-    })();
-
-    const elRoot = document.getElementById('at_root_kstu_summary');
-    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(root, rootI);
-
-    const elB1 = document.getElementById('at_branch_1_kstu_summary');
-    if (elB1) elB1.innerHTML = _renderNodeSummaryHTML(b1, b1I);
-
-    const elB2 = document.getElementById('at_branch_2_kstu_summary');
-    if (elB2) elB2.innerHTML = _renderNodeSummaryHTML(b2, b2I);
-}
-function generateNextRiskID(analysis) {
-    if (!analysis.riskEntries || analysis.riskEntries.length === 0) return 'R01';
+    // Dummy Struktur aufbauen für Vererbungsrechnung
+    const formValues = {
+        useDeepTree: useDeepTree,
+        branches: [
+            {
+                l2_node: useDeepTree ? {} : null,
+                leaves: [
+                    { ds: getLeafDs(1), kstu: getLeafKSTU(1) },
+                    { ds: getLeafDs(2), kstu: getLeafKSTU(2) }
+                ]
+            },
+            {
+                l2_node: useDeepTree ? {} : null,
+                leaves: [
+                    { ds: getLeafDs(3), kstu: getLeafKSTU(3) },
+                    { ds: getLeafDs(4), kstu: getLeafKSTU(4) }
+                ]
+            }
+        ]
+    };
     
-    let max = 0;
-    analysis.riskEntries.forEach(entry => {
-        const num = parseInt(entry.id.replace('R', ''));
-        if (!isNaN(num) && num > max) max = num;
+    // Berechnungen
+    applyImpactInheritance(formValues, analysis);
+    applyWorstCaseInheritance(formValues);
+
+    // --- RENDERING ---
+    
+    // 1. Root
+    const elRoot = document.getElementById('at_root_kstu_summary');
+    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
+
+    // 2. Branches L1 & L2
+    [0, 1].forEach((bIdx) => {
+        const branchNum = bIdx + 1;
+        const branchData = formValues.branches[bIdx];
+        
+        // L1
+        const elB1 = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
+        if (elB1) elB1.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
+        
+        // L2 (nur rendern wenn aktiv)
+        if (useDeepTree) {
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData.l2_node.kstu, branchData.l2_node.i_norm);
+        }
     });
-    return 'R' + (max + 1).toString().padStart(2, '0');
+
+    // 3. Leaves (Jetzt auch mit Risikoanzeige!)
+    const leaves = [
+        formValues.branches[0].leaves[0], formValues.branches[0].leaves[1],
+        formValues.branches[1].leaves[0], formValues.branches[1].leaves[1]
+    ];
+    
+    leaves.forEach((leaf, idx) => {
+        const leafNum = idx + 1;
+        const inp = document.querySelector(`input[name="at_leaf_${leafNum}_i"]`);
+        if (inp) inp.value = leaf.i_norm;
+        
+        const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
+        if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm); // Leaf KSTU ist direkt im Leaf Objekt
+        
+        const oldDisplay = document.querySelector(`.leaf-container .inorm-display`); 
+        if(oldDisplay) oldDisplay.style.display = 'none'; 
+    });
 }
 
-// Event Listeners für das neue Modal
-if (closeAttackTreeModal) {
-    closeAttackTreeModal.onclick = () => attackTreeModal.style.display = 'none';
-}
+
+// Live-Update Logik
 if (attackTreeForm) {
     attackTreeForm.onsubmit = saveAttackTree;
 
-    
-// Live-Update: sobald K/S/T/U, DS-Checkboxen oder Asset geändert wird
-const _atShouldUpdate = (t) => {
-    if (!t) return false;
-    if ((t.classList && t.classList.contains('kstu-select')) || t.id === 'atTargetAsset') return true;
-    if (t.type === 'checkbox') return true;
-    if (t.closest && t.closest('.ds-checks')) return true; // Klick auf Label/Container
-    return false;
-};
+    const _atShouldUpdate = (t) => {
+        if (!t) return false;
+        if (t.classList && t.classList.contains('kstu-select')) return true;
+        if (t.type === 'checkbox') return true;
+        if (t.closest && t.closest('.ds-checks')) return true; 
+        return false;
+    };
 
-['change','input','click'].forEach(evtName => {
-    attackTreeForm.addEventListener(evtName, (ev) => {
-        const t = ev && ev.target ? ev.target : null;
-        if (!_atShouldUpdate(t)) return;
-        updateAttackTreeKSTUSummariesFromForm();
+    ['change','input','click'].forEach(evtName => {
+        attackTreeForm.addEventListener(evtName, (ev) => {
+            const t = ev && ev.target ? ev.target : null;
+            if (!_atShouldUpdate(t)) return;
+            updateAttackTreeKSTUSummariesFromForm();
+        });
     });
+}
+
+function generateNextRiskID(analysis) {
+    if (!analysis.riskEntries) return 'R01';
+    // Da wir eh re-indizieren, können wir einfach die Länge + 1 nehmen
+    // Das ist sicher, solange reindexRiskIDs aufgerufen wird.
+    return 'R' + (analysis.riskEntries.length + 1).toString().padStart(2, '0');
+}
+
+// -------------------------------------------------------------
+// FIX: Close Button für Attack Tree Modal (Robuster Init)
+// -------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    // Falls das Skript nachträglich geladen wird, auch direkt suchen:
+    const closeBtn = document.getElementById('closeAttackTreeModal');
+    const modal = document.getElementById('attackTreeModal');
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
 });
 
-}
+// Fallback für den Fall, dass DOMContentLoaded schon gefeuert hat:
+(function() {
+    const closeBtn = document.getElementById('closeAttackTreeModal');
+    const modal = document.getElementById('attackTreeModal');
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+})();

@@ -27,12 +27,10 @@
         </div>
 
         <div class="main-content">
-            
             <header class="main-header">
                 <div>
                     <h2 id="analysisNameDisplay">Analyse wählen oder neu starten</h2>
-                    <div class="metadata" id="analysisMetadata">
-                        </div>
+                    <div class="metadata" id="analysisMetadata"></div>
                 </div>
                 <div class="header-actions">
                     <button id="btnSave" class="primary-button" disabled><i class="fas fa-save"></i> Speichern</button>
@@ -48,33 +46,26 @@
                 <button class="tab-button active" data-tab="tabGeneral">Allgemein</button>
                 <button class="tab-button" data-tab="tabAssets">Assets</button>
                 <button class="tab-button" data-tab="tabDamageScenarios">Schadensszenarien</button>
-                
                 <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button> 
-                
                 <button class="tab-button" data-tab="tabConclusion" disabled>Fazit</button>
             </nav>
 
             <div class="tab-content-container">
-
                 <div id="tabGeneral" class="tab-content" style="display: block;">
                     <section class="analysis-section">
                         <h3>Allgemeine Informationen</h3>
-                        
                         <div class="form-group">
                             <label for="inputAnalysisName">Name der Analyse</label>
                             <input type="text" id="inputAnalysisName" required disabled>
                         </div>
-                        
                         <div class="form-group">
                             <label for="inputAuthorName">Autor / Bearbeiter</label>
                             <input type="text" id="inputAuthorName" required disabled>
                         </div>
-                        
                         <div class="form-group">
                             <label for="inputDescription">Produkt/System Beschreibung</label>
                             <textarea id="inputDescription" rows="5" disabled></textarea>
                         </div>
-
                         <div class="form-group">
                             <label for="inputIntendedUse">Vorgesehener Einsatzzweck/Kontext</label>
                             <textarea id="inputIntendedUse" rows="3" disabled></textarea>
@@ -86,9 +77,7 @@
                     <section class="analysis-section">
                         <h3>Assets (Schutzobjekte)</h3>
                         <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
-
-                        <div id="assetsCardContainer">
-                            </div>
+                        <div id="assetsCardContainer"></div>
                     </section>
                 </div>
 
@@ -96,24 +85,18 @@
                     <section class="analysis-section">
                         <h3>Schadensszenarien & Impact Bewertung</h3>
                         <button id="btnAddDamageScenario" class="primary-button"><i class="fas fa-plus"></i> Neues Schadensszenario</button>
-                        
-                        <div id="dsManagementContainer" style="margin-top: 15px;">
-                            </div>
-
-                        <div id="dsMatrixContainer" style="margin-top: 40px;">
-                            </div>
+                        <div id="dsManagementContainer" style="margin-top: 15px;"></div>
+                        <div id="dsMatrixContainer" style="margin-top: 40px;"></div>
                     </section>
                 </div>
                 
                 <div id="tabRiskAnalysis" class="tab-content" style="display: none;">
                     <h3>Risikoanalyse</h3>
                     <p class="description-text">Hier wird das Risiko durch die Kombination von Schutzbedarf der Assets und dem potentiellen Schaden der Szenarien ermittelt und dargestellt.</p>
-                    <div id="riskAnalysisContainer" class="card-container" style="display: block; margin-top: 20px;">
-                    </div>
+                    <div id="riskAnalysisContainer" class="card-container" style="display: block; margin-top: 20px;"></div>
                 </div>
                 
                 <div id="tabConclusion" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Fazit und Zusammenfassung</h3><p>In Entwicklung.</p></section></div>
-
             </div>
         </div>
     </div>
@@ -143,45 +126,35 @@
                     <input type="text" id="assetName" required>
                 </div>
                 <div class="form-group">
-                    <label for="assetType">Typ (z.B. Hardware, Software, Daten)</label>
+                    <label for="assetType">Typ</label>
                     <input type="text" id="assetType" required>
                 </div>
                 <div class="form-group">
                     <label for="assetDescription">Beschreibung</label>
                     <textarea id="assetDescription" rows="3"></textarea>
                 </div>
-
                 <div class="form-group">
-                    <label for="confidentiality">1. Vertraulichkeit (Confidentiality)</label>
+                    <label>1. Vertraulichkeit (Confidentiality)</label>
                     <div class="radio-group">
-                        <input type="radio" id="c-i" name="confidentiality" value="I" required>
-                        <label for="c-i">I (Niedrig)</label>
-                        <input type="radio" id="c-ii" name="confidentiality" value="II">
-                        <label for="c-ii">II (Mittel)</label>
-                        <input type="radio" id="c-iii" name="confidentiality" value="III">
-                        <label for="c-iii">III (Hoch)</label>
+                        <input type="radio" id="c-i" name="confidentiality" value="I" required><label for="c-i">I (Niedrig)</label>
+                        <input type="radio" id="c-ii" name="confidentiality" value="II"><label for="c-ii">II (Mittel)</label>
+                        <input type="radio" id="c-iii" name="confidentiality" value="III"><label for="c-iii">III (Hoch)</label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="integrity">2. Integrität (Integrity)</label>
+                    <label>2. Integrität (Integrity)</label>
                     <div class="radio-group">
-                        <input type="radio" id="i-i" name="integrity" value="I" required>
-                        <label for="i-i">I (Niedrig)</label>
-                        <input type="radio" id="i-ii" name="integrity" value="II">
-                        <label for="i-ii">II (Mittel)</label>
-                        <input type="radio" id="i-iii" name="integrity" value="III">
-                        <label for="i-iii">III (Hoch)</label>
+                        <input type="radio" id="i-i" name="integrity" value="I" required><label for="i-i">I (Niedrig)</label>
+                        <input type="radio" id="i-ii" name="integrity" value="II"><label for="i-ii">II (Mittel)</label>
+                        <input type="radio" id="i-iii" name="integrity" value="III"><label for="i-iii">III (Hoch)</label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="authenticity">3. Verfügbarkeit (Availability)</label>
+                    <label>3. Verfügbarkeit (Availability)</label>
                     <div class="radio-group">
-                        <input type="radio" id="a-i" name="authenticity" value="I" required>
-                        <label for="a-i">I (Niedrig)</label>
-                        <input type="radio" id="a-ii" name="authenticity" value="II">
-                        <label for="a-ii">II (Mittel)</label>
-                        <input type="radio" id="a-iii" name="authenticity" value="III">
-                        <label for="a-iii">III (Hoch)</label>
+                        <input type="radio" id="a-i" name="authenticity" value="I" required><label for="a-i">I (Niedrig)</label>
+                        <input type="radio" id="a-ii" name="authenticity" value="II"><label for="a-ii">II (Mittel)</label>
+                        <input type="radio" id="a-iii" name="authenticity" value="III"><label for="a-iii">III (Hoch)</label>
                     </div>
                 </div>
                 <button type="submit" class="primary-button">Speichern</button>
@@ -200,11 +173,11 @@
                     <input type="text" id="dsName" required>
                 </div>
                 <div class="form-group">
-                    <label for="dsShort">Kurzbezeichnung (z.B. Fusi)</label>
+                    <label for="dsShort">Kurzbezeichnung</label>
                     <input type="text" id="dsShort" required maxlength="10">
                 </div>
                 <div class="form-group">
-                    <label for="dsDescription">Detaillierte Beschreibung der Auswirkung</label>
+                    <label for="dsDescription">Beschreibung</label>
                     <textarea id="dsDescription" rows="3"></textarea>
                 </div>
                 <button type="submit" class="primary-button">Speichern</button>
@@ -218,10 +191,12 @@
             <h2>Angriffsbaum bearbeiten</h2>
             <form id="attackTreeForm">
                 <input type="hidden" name="at_id" id="at_id">
-
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label for="atTargetAsset">Betroffenes Asset wählen:</label>
-                    <select id="atTargetAsset" name="assetId" required style="width: 100%; padding: 10px; font-size: 1em;"></select>
+                
+                <div style="margin-bottom: 10px; display:flex; justify-content: flex-end;">
+                     <button type="button" id="btnToggleTreeDepth" class="action-button small">
+                        <i class="fas fa-layer-group"></i> Zwischenebene hinzufügen
+                    </button>
+                    <input type="hidden" name="use_deep_tree" id="use_deep_tree" value="false">
                 </div>
 
                 <div style="overflow-x: auto;">
@@ -230,7 +205,8 @@
                             <tr>
                                 <th style="width: 20%;">Angriffspfad / Schnittstelle<br><span style="font-weight:normal; font-size:0.8em;">(Max. 20 Zeichen)</span></th>
                                 <th style="width: 25%;">Angriff ermöglicht:<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen)</span></th>
-                                <th style="width: 55%;">Auswirkung des Angriffs<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen + DS Checkboxen + K/S/T/U)</span></th>
+                                <th class="col-level-2" style="width: 25%; display:none;">Angriff ermöglicht (2):<br><span style="font-weight:normal; font-size:0.8em;">(Zwischenschritt)</span></th>
+                                <th style="width: 30%;">Auswirkung des Angriffs<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen)</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -243,6 +219,10 @@
                                     <input type="text" name="at_branch_1" placeholder="Pfad 1" maxlength="30" required style="width: 90%;">
                                     <div class="kstu-summary" id="at_branch_1_kstu_summary"></div>
                                 </td>
+                                <td rowspan="2" class="col-level-2" style="vertical-align: middle; display:none;">
+                                    <input type="text" name="at_branch_1_l2" placeholder="Zwischenschritt 1" maxlength="30" style="width: 90%;">
+                                    <div class="kstu-summary" id="at_branch_1_l2_kstu_summary"></div>
+                                </td>
                                 <td>
                                     <div class="leaf-container">
                                         <input type="text" name="at_leaf_1_text" placeholder="Konsequenz 1.1" maxlength="30" class="leaf-input">
@@ -254,12 +234,13 @@
                                             <label><input type="checkbox" name="at_leaf_1_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <select name="at_leaf_1_k" class="kstu-select" title="Komplexität (K)"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_1_s" class="kstu-select" title="Skalierung (S)"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_1_t" class="kstu-select" title="Zeit (T)"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_1_u" class="kstu-select" title="Nutzen (U)"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_1_k" class="kstu-select" title="Komplexität (K)"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_1_s" class="kstu-select" title="Skalierung (S)"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_1_t" class="kstu-select" title="Zeit (T)"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_1_u" class="kstu-select" title="Nutzen (U)"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
                                         </div>
-                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_1_i" class="inorm-field" readonly></div>
+                                        <div class="node-stats-box" id="at_leaf_1_summary"></div>
+                                        <input type="hidden" name="at_leaf_1_i">
                                     </div>
                                 </td>
                             </tr>
@@ -275,19 +256,25 @@
                                             <label><input type="checkbox" name="at_leaf_2_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <select name="at_leaf_2_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_2_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_2_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_2_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_2_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_2_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_2_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_2_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
                                         </div>
-                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_2_i" class="inorm-field" readonly></div>
+                                        <div class="node-stats-box" id="at_leaf_2_summary"></div>
+                                        <input type="hidden" name="at_leaf_2_i">
                                     </div>
                                 </td>
                             </tr>
+                            
                             <tr>
                                 <td rowspan="2" style="vertical-align: middle;">
                                     <input type="text" name="at_branch_2" placeholder="Pfad 2" maxlength="30" style="width: 90%;">
                                     <div class="kstu-summary" id="at_branch_2_kstu_summary"></div>
+                                </td>
+                                <td rowspan="2" class="col-level-2" style="vertical-align: middle; display:none;">
+                                    <input type="text" name="at_branch_2_l2" placeholder="Zwischenschritt 2" maxlength="30" style="width: 90%;">
+                                    <div class="kstu-summary" id="at_branch_2_l2_kstu_summary"></div>
                                 </td>
                                 <td>
                                     <div class="leaf-container">
@@ -300,12 +287,13 @@
                                             <label><input type="checkbox" name="at_leaf_3_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <select name="at_leaf_3_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_3_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_3_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_3_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_3_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_3_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_3_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_3_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
                                         </div>
-                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_3_i" class="inorm-field" readonly></div>
+                                        <div class="node-stats-box" id="at_leaf_3_summary"></div>
+                                        <input type="hidden" name="at_leaf_3_i">
                                     </div>
                                 </td>
                             </tr>
@@ -321,12 +309,13 @@
                                             <label><input type="checkbox" name="at_leaf_4_ds5"> DS5</label>
                                         </div>
                                         <div class="kstu-inputs">
-                                            <select name="at_leaf_4_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7 – Bekannte Schwachstelle</option><option value="0.6">0.6 – Internetrecherche</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_4_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5 – Produktportfolio</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_4_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5 – &lt; 1 Woche</option><option value="0.4">0.4 – &lt; 4 Wochen</option><option value="0.2">0.2 – &lt; 3 Monate</option><option value="0.1">0.1 – Expertenwissen</option></select>
-                                            <select name="at_leaf_4_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5 – Groß</option><option value="0.3">0.3 – Expertenrecherche</option><option value="0.1">0.1 – Expertenwissen</option></select>
+                                            <select name="at_leaf_4_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_4_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_4_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
+                                            <select name="at_leaf_4_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
                                         </div>
-                                        <div class="inorm-display"><label>I(norm)</label><input type="text" name="at_leaf_4_i" class="inorm-field" readonly></div>
+                                        <div class="node-stats-box" id="at_leaf_4_summary"></div>
+                                        <input type="hidden" name="at_leaf_4_i">
                                     </div>
                                 </td>
                             </tr>
@@ -345,7 +334,7 @@
             </form>
         </div>
     </div>
-
+    
     <div id="importAnalysisModal" class="modal" style="display: none;">
         <div class="modal-content small">
             <span class="close-button" id="closeImportAnalysisModal">&times;</span>
