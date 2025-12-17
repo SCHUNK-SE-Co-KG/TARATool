@@ -1,3 +1,44 @@
+// =============================================================
+// --- ANALYSE VERWALTUNG (SWITCH, CREATE, IMPORT, EXPORT) ---
+// =============================================================
+
+function activateAnalysis(id) {
+    const analysis = analysisData.find(a => a.id === id);
+    if (!analysis) return;
+    
+    activeAnalysisId = id;
+    
+    // UI Update
+    fillAnalysisForm(analysis);
+    
+    // Status Bar Update
+    if (statusBarMessage) {
+        statusBarMessage.textContent = `Aktiv: ${analysis.name} (v${analysis.metadata.version})`;
+    }
+    
+    // Dropdown Sync
+    if (analysisSelector) analysisSelector.value = id;
+
+    // Aktiven Tab neu rendern
+    const activeTabBtn = document.querySelector('.tab-button.active');
+    if (activeTabBtn) {
+        const tabId = activeTabBtn.dataset.tab;
+        
+        if (tabId === 'tabOverview') {
+            renderOverview(analysis);
+        }
+        else if (tabId === 'tabAssets' && typeof renderAssets === 'function') {
+            renderAssets(analysis);
+        }
+        else if (tabId === 'tabDamageScenarios') {
+            if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
+            if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+        }
+        else if (tabId === 'tabRiskAnalysis') {
+            if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+        }
+    }
+}
 
 // =============================================================
 // --- UI UPDATES & ALLGEMEINE FUNKTIONEN ---
@@ -27,111 +68,130 @@ function renderAnalysisSelector() {
 }
 
 function fillAnalysisForm(analysis) {
-    analysisNameDisplay.textContent = analysis.name;
-    inputAnalysisName.value = analysis.name;
-    inputDescription.value = analysis.description;
-    inputIntendedUse.value = analysis.intendedUse;
-    inputAuthorName.value = analysis.metadata.author; 
+    if (analysisNameDisplay) analysisNameDisplay.textContent = analysis.name;
+    if (inputAnalysisName) inputAnalysisName.value = analysis.name;
+    if (inputDescription) inputDescription.value = analysis.description;
+    if (inputIntendedUse) inputIntendedUse.value = analysis.intendedUse;
+    if (inputAuthorName) inputAuthorName.value = analysis.metadata.author; 
     
-    analysisMetadata.innerHTML = `
-        <span>Version: ${analysis.metadata.version}</span> | 
-        <span>Autor: ${analysis.metadata.author}</span> | 
-        <span>Datum: ${analysis.metadata.date}</span>
-    `;
+    if (analysisMetadata) {
+        analysisMetadata.innerHTML = `
+            <span>Version: ${analysis.metadata.version}</span> | 
+            <span>Autor: ${analysis.metadata.author}</span> | 
+            <span>Datum: ${analysis.metadata.date}</span>
+        `;
+    }
+    
+    // Auch Übersicht aktualisieren, wenn gerade sichtbar
+    renderOverview(analysis);
+}
 
-    const disable = !analysis || !activeAnalysisId;
-    document.querySelectorAll('.main-content input, .main-content textarea, .main-content select, #btnSave, #btnShowVersionControl').forEach(el => {
-        el.disabled = disable;
+// NEU: Erweiterte Funktion für die Übersicht (Dashboard)
+function renderOverview(analysis) {
+    if (!analysis) return;
+
+    // 1. Einfache Zähler
+    const elAssetCount = document.getElementById('statAssetCount');
+    const elDSCount = document.getElementById('statDSCount');
+    const elRiskCount = document.getElementById('statRiskCount');
+
+    if (elAssetCount) elAssetCount.textContent = (analysis.assets || []).length;
+    if (elDSCount) elDSCount.textContent = (analysis.damageScenarios || []).length;
+    
+    const risks = analysis.riskEntries || [];
+    if (elRiskCount) elRiskCount.textContent = risks.length;
+
+    // 2. Detaillierte Risiko-Kategorisierung
+    let cCrit = 0;   // >= 2.0
+    let cHigh = 0;   // >= 1.6
+    let cMed = 0;    // >= 0.8
+    let cLow = 0;    // < 0.8
+
+    risks.forEach(r => {
+        const val = parseFloat(r.rootRiskValue);
+        if (isNaN(val)) return;
+
+        if (val >= 2.0) {
+            cCrit++;
+        } else if (val >= 1.6) {
+            cHigh++;
+        } else if (val >= 0.8) {
+            cMed++;
+        } else {
+            cLow++;
+        }
     });
-    if (btnExportAnalysis) btnExportAnalysis.disabled = disable;
+
+    // Werte in die neuen Felder schreiben
+    const elCrit = document.getElementById('statCrit');
+    const elHigh = document.getElementById('statHigh');
+    const elMed = document.getElementById('statMed');
+    const elLow = document.getElementById('statLow');
+
+    if (elCrit) elCrit.textContent = cCrit;
+    if (elHigh) elHigh.textContent = cHigh;
+    if (elMed) elMed.textContent = cMed;
+    if (elLow) elLow.textContent = cLow;
 }
 
-function activateAnalysis(id) {
-    if (activeAnalysisId) {
-        saveCurrentAnalysisState();
-    }
-    
-    activeAnalysisId = id;
-    const analysis = analysisData.find(a => a.id === id);
-
-    if (analysis) {
-        fillAnalysisForm(analysis);
-        renderAnalysisSelector(); 
-        saveAnalyses();
-        statusBarMessage.textContent = `Analyse "${analysis.name}" geladen.`;
-        showToast(`Analyse "${analysis.name}" geladen.`, 'info');
-        
-        const firstTabButton = document.querySelector('.tab-navigation .tab-button');
-        if(firstTabButton) firstTabButton.click();
-    } else {
-        activeAnalysisId = null;
-        fillAnalysisForm(defaultAnalysis); 
-        renderAnalysisSelector();
-        statusBarMessage.textContent = 'Bereit.';
-    }
-}
 
 // =============================================================
-// --- EXPORT FUNKTION ---
+// --- IMPORT / EXPORT LOGIK ---
 // =============================================================
 
-function handleExport() {
-    saveCurrentAnalysisState();
-    const dataToExport = analysisData; 
-    
-    if (dataToExport.length === 0) {
-        showToast('Keine Analysen zum Exportieren vorhanden.', 'info');
+function exportAnalysis() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) {
+        showToast('Keine aktive Analyse zum Exportieren.', 'warning');
         return;
     }
-
-    const filename = `TARA_Alle_Analysen_Backup_${todayISO}.json`;
-    const dataStr = JSON.stringify(dataToExport, null, 2);
     
-    const tempLink = document.createElement('a');
-    tempLink.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    tempLink.download = filename;
+    const dataStr = JSON.stringify(analysis, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
     
-    tempLink.click();
-    showToast(`Alle ${dataToExport.length} Analysen in "${filename}" exportiert.`, 'success');
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = analysis.name.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    a.download = `TARA_Export_${safeName}_${analysis.metadata.date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast('Analyse exportiert.', 'success');
 }
 
-// =============================================================
-// --- IMPORT FUNKTIONEN ---
-// =============================================================
-
-function handleImportWarningConfirmed() {
-    if (importForm) importForm.reset();
-    importAnalysisModal.style.display = 'block';
-    if (importFileInput) importFileInput.disabled = false;
-    if (btnImportStart) btnImportStart.disabled = false;
-    if (importForm) {
-        importForm.onsubmit = handleImportFile;
-    }
+if (closeImportAnalysisModal) {
+    closeImportAnalysisModal.onclick = () => {
+        if (importAnalysisModal) importAnalysisModal.style.display = 'none';
+    };
 }
 
-function handleImportFile(e) {
-    e.preventDefault();
+function executeImport() {
     const file = importFileInput.files[0];
     if (!file) {
-        showToast('Bitte wählen Sie eine Datei aus.', 'warning');
+        showToast('Bitte eine Datei auswählen.', 'warning');
         return;
     }
-
+    
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = (e) => {
         try {
-            const importedData = JSON.parse(event.target.result);
-            if (Array.isArray(importedData) && importedData.every(item => item.id && item.name)) {
-                analysisData = importedData;
-                saveAnalyses();
-                const firstId = analysisData.length > 0 ? analysisData[0].id : null;
-                if (firstId) {
-                    activateAnalysis(firstId);
-                } else {
-                    loadAnalyses(); 
+            const json = JSON.parse(e.target.result);
+            if (json.id && json.metadata) {
+                if (analysisData.some(a => a.id === json.id)) {
+                    json.id = json.id + '_imp_' + Date.now();
+                    json.name = json.name + ' (Imported)';
                 }
+                
+                analysisData.push(json);
+                saveAnalyses();
+                renderAnalysisSelector();
+                activateAnalysis(json.id);
+                
                 importAnalysisModal.style.display = 'none';
-                showToast(`Erfolgreich ${analysisData.length} Analysen importiert.`, 'success');
+                showToast(`Analyse "${json.name}" erfolgreich importiert.`, 'success');
             } else {
                 showToast('Importfehler: Ungültige Datenstruktur.', 'error');
             }
@@ -152,7 +212,7 @@ function createNewAnalysis(e) {
     const newName = newAnalysisName.value.trim();
     if (!newName) return;
 
-    const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0');
+    const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0') + '-' + Date.now().toString().slice(-4);
     
     const newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
     newAnalysis.id = newId;
@@ -161,10 +221,18 @@ function createNewAnalysis(e) {
     newAnalysis.history[0].state.name = newName; 
     
     analysisData.push(newAnalysis);
+    renderAnalysisSelector();
     activateAnalysis(newId);
+    saveAnalyses();
     
     newAnalysisModal.style.display = 'none';
-    showToast(`Analyse "${newName}" erfolgreich erstellt.`, 'success');
+    showToast(`Analyse "${newName}" erstellt.`, 'success');
+}
+
+if (closeNewAnalysisModal) {
+    closeNewAnalysisModal.onclick = () => {
+        if (newAnalysisModal) newAnalysisModal.style.display = 'none';
+    };
 }
 
 if (newAnalysisForm) {

@@ -10,12 +10,10 @@ function renderDamageScenarios() {
     let dsList = [];
     const defaultIds = new Set(DEFAULT_DAMAGE_SCENARIOS.map(ds => ds.id));
 
-    // 1. Liste IMMER mit Standard-DS initialisieren (tief kopiert)
     if (DEFAULT_DAMAGE_SCENARIOS && DEFAULT_DAMAGE_SCENARIOS.length > 0) {
         dsList = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
     }
     
-    // 2. Benutzerdefinierte Szenarien aus der Analyse hinzufügen
     if (analysis.damageScenarios && Array.isArray(analysis.damageScenarios)) {
         analysis.damageScenarios.forEach(ds => {
             if (ds && ds.id && !defaultIds.has(ds.id)) {
@@ -33,21 +31,33 @@ function renderDamageScenarios() {
     dsList.forEach(ds => {
         const isDefault = defaultIds.has(ds.id);
         
+        // NEUES LAYOUT:
+        // Zeile 1: ID und Name
+        // Zeile 2: (Short) (Standard) -> Zeilenumbruch hier
+        
         html += `<li data-id="${ds.id}">
-            <div class="ds-row-header">
-                <div class="ds-col-id-name">
-                    <strong>${ds.id}:</strong> ${ds.name} 
-                    <span style="font-weight: 400; color: #7f8c8d; margin-left: 5px;">(${ds.short})</span>
-                    ${isDefault ? `<span class="small" style="color: #2ecc71; margin-left: 10px;">(Standard)</span>` : ''}
+            
+            <div class="ds-header-row">
+                <div style="flex-grow: 1;">
+                    <div class="ds-col-id-name">
+                        <strong>${ds.id}:</strong> ${ds.name} 
+                    </div>
+                    <div class="ds-subtitle-row">
+                        (${ds.short})
+                        ${isDefault ? `<span style="color: #2ecc71; margin-left: 5px; font-weight:600;">(Standard)</span>` : ''}
+                    </div>
                 </div>
+                
                 <div class="ds-actions">
                     <button onclick="editDamageScenario('${ds.id}')" class="action-button small" ${isDefault ? 'disabled' : ''}>Bearbeiten</button>
-                    <button onclick="removeDamageScenario('${ds.id}')" class="action-button small dangerous" ${isDefault ? 'disabled' : ''}>Entfernen</button>
+                    <button onclick="removeDamageScenario('${ds.id}')" class="action-button small dangerous" ${isDefault ? 'disabled' : ''}>Löschen</button>
                 </div>
             </div>
+
             <div class="ds-col-description">
                 ${ds.description || '— Keine Beschreibung —'}
             </div>
+
         </li>`;
     });
 
@@ -55,7 +65,8 @@ function renderDamageScenarios() {
     dsManagementContainer.innerHTML = html;
 }
 
-function saveDamageScenario(e) {
+// Funktionen explizit ans Window binden, damit sie im HTML onclick funktionieren
+window.saveDamageScenario = function(e) {
     if (e) e.preventDefault();
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -96,28 +107,36 @@ function saveDamageScenario(e) {
     damageScenarioModal.style.display = 'none';
 }
 
-window.editDamageScenario = (dsId) => {
+window.editDamageScenario = function(dsId) {
+    console.log("Edit DS Triggered for:", dsId);
     if (!activeAnalysisId) return;
-
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
     let ds = analysis.damageScenarios ? analysis.damageScenarios.find(d => d.id === dsId) : null;
     if (!ds) ds = DEFAULT_DAMAGE_SCENARIOS.find(d => d.id === dsId);
 
-    if (!ds) return;
+    if (!ds) {
+        console.error("DS not found:", dsId);
+        return;
+    }
     
-    if (dsModalTitle) dsModalTitle.textContent = `Schadensszenario ${ds.id} bearbeiten`;
-    if (dsIdField) dsIdField.value = ds.id; 
+    const titleEl = document.getElementById('dsModalTitle');
+    const idField = document.getElementById('dsIdField');
+    
+    if (titleEl) titleEl.textContent = `Schadensszenario ${ds.id} bearbeiten`;
+    if (idField) idField.value = ds.id; 
 
     document.getElementById('dsName').value = ds.name;
     document.getElementById('dsShort').value = ds.short;
     document.getElementById('dsDescription').value = ds.description;
 
-    if (damageScenarioModal) damageScenarioModal.style.display = 'block';
+    const modal = document.getElementById('damageScenarioModal');
+    if (modal) modal.style.display = 'block';
 };
 
-window.removeDamageScenario = (dsId) => {
+window.removeDamageScenario = function(dsId) {
+    console.log("Remove DS Triggered for:", dsId);
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
     
@@ -127,21 +146,31 @@ window.removeDamageScenario = (dsId) => {
     }
 
     const ds = analysis.damageScenarios.find(d => d.id === dsId);
-    if (!ds) return;
+    if (!ds) {
+        console.error("DS to remove not found in custom list:", dsId);
+        return;
+    }
     
-    confirmationTitle.textContent = 'Schadensszenario löschen bestätigen';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Schadensszenario <b>${ds.name} (${dsId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
-    
-    btnConfirmAction.textContent = 'Ja, DS löschen';
-    btnConfirmAction.classList.add('dangerous'); 
-    
-    confirmationModal.style.display = 'block';
+    const modal = document.getElementById('confirmationModal');
+    const title = document.getElementById('confirmationTitle');
+    const msg = document.getElementById('confirmationMessage');
+    const btnConfirm = document.getElementById('btnConfirmAction');
+    const btnCancel = document.getElementById('btnCancelConfirmation');
+    const btnClose = document.getElementById('closeConfirmationModal');
 
-    btnConfirmAction.onclick = null; 
-    btnCancelConfirmation.onclick = null;
-    closeConfirmationModal.onclick = null;
+    if(title) title.textContent = 'Schadensszenario löschen bestätigen';
+    msg.innerHTML = `Sind Sie sicher, dass Sie das Schadensszenario <b>${ds.name} (${dsId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
     
-    btnConfirmAction.onclick = () => {
+    btnConfirm.textContent = 'Ja, DS löschen';
+    btnConfirm.className = 'primary-button dangerous'; 
+    
+    modal.style.display = 'block';
+
+    btnConfirm.onclick = null; 
+    btnCancel.onclick = null;
+    btnClose.onclick = null;
+    
+    btnConfirm.onclick = () => {
         analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
         
         if (analysis.impactMatrix) {
@@ -153,15 +182,25 @@ window.removeDamageScenario = (dsId) => {
         saveAnalyses();
         renderDamageScenarios();
         renderImpactMatrix();
-        confirmationModal.style.display = 'none'; 
+        modal.style.display = 'none'; 
         showToast(`Schadensszenario ${dsId} gelöscht.`, 'success');
     };
 
-    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
-    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
+    const closeFn = () => { modal.style.display = 'none'; };
+    btnCancel.onclick = closeFn;
+    btnClose.onclick = closeFn;
 }
 
-window.updateImpactScore = (assetId, dsId, score) => {
+// Hilfsfunktion für Farben
+function getImpactColorClass(val) {
+    if (val === '3') return 'impact-high';
+    if (val === '2') return 'impact-medium';
+    if (val === '1') return 'impact-low';
+    if (val === 'N/A') return 'impact-na';
+    return '';
+}
+
+window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
     
@@ -170,9 +209,15 @@ window.updateImpactScore = (assetId, dsId, score) => {
         analysis.impactMatrix[assetId] = {};
     }
     
-    analysis.impactMatrix[assetId][dsId] = score;
+    analysis.impactMatrix[assetId][dsId] = newValue;
+    
+    // Farbe live aktualisieren
+    if (selectElement) {
+        selectElement.className = 'impact-select ' + getImpactColorClass(newValue);
+    }
+
     saveAnalyses();
-    showToast(`Impact für ${assetId}/${dsId} auf ${score} gesetzt.`, 'info');
+    showToast(`Impact für ${assetId}/${dsId} auf ${newValue} gesetzt.`, 'info');
     
     if (document.getElementById('tabRiskAnalysis').classList.contains('active')) {
          renderRiskAnalysis();
@@ -218,7 +263,6 @@ function renderImpactMatrix() {
     });
     
     html += '</tr></thead>';
-
     html += '<tbody>';
     
     if (!analysis.impactMatrix) analysis.impactMatrix = {};
@@ -233,13 +277,15 @@ function renderImpactMatrix() {
         
         displayDS.forEach(ds => {
             const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
+            const colorClass = getImpactColorClass(currentScore);
             
             html += '<td class="score-cell">';
+            // Übergebe 'this' an die Funktion, um direkten DOM-Zugriff zu haben
             html += `<select 
                 data-asset-id="${asset.id}" 
                 data-ds-id="${ds.id}" 
-                onchange="updateImpactScore('${asset.id}', '${ds.id}', this.value)"
-                class="impact-select">
+                onchange="updateImpactScore('${asset.id}', '${ds.id}', this.value, this)"
+                class="impact-select ${colorClass}">
                 <option value="N/A" ${currentScore === 'N/A' ? 'selected' : ''}>N/A</option>
                 <option value="1" ${currentScore === '1' ? 'selected' : ''}>1 (Low)</option>
                 <option value="2" ${currentScore === '2' ? 'selected' : ''}>2 (Medium)</option>
@@ -247,7 +293,6 @@ function renderImpactMatrix() {
             </select>`;
             html += '</td>';
         });
-        
         html += '</tr>';
     });
     
@@ -265,74 +310,35 @@ function renderRiskAnalysis() {
     if (!analysis) return;
     if (!riskAnalysisContainer) return; 
 
-    // 1. Prüfen auf Assets
     if (!analysis.assets || analysis.assets.length === 0) {
         riskAnalysisContainer.innerHTML = `
             <div class="warning-box">
                 <h4>Fehlende Daten: Assets</h4>
-                <p>Es wurden noch keine Schutzobjekte (Assets) im Reiter "Assets" erfasst. Die Risikoanalyse kann ohne Assets nicht durchgeführt werden.</p>
+                <p>Es wurden noch keine Schutzobjekte (Assets) im Reiter "Assets" erfasst.</p>
             </div>
         `;
         return;
     }
 
-    // 2. Prüfen auf Schadensszenarien
     const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...(analysis.damageScenarios || [])];
     if (allDS.length === 0) {
         riskAnalysisContainer.innerHTML = `
             <div class="warning-box">
                 <h4>Fehlende Daten: Schadensszenarien</h4>
-                <p>Es wurden noch keine Schadensszenarien im Reiter "Schadensszenarien" erfasst. Die Risikoanalyse kann nicht gestartet werden.</p>
+                <p>Bitte definieren Sie zuerst Schadensszenarien.</p>
             </div>
         `;
         return;
     }
     
-    // 3. Prüfen auf Impact Matrix (Bewertung)
-    let incompleteImpact = false;
-    let missingCount = 0;
-    const validScores = ['1', '2', '3', 'N/A'];
-    
-    if (!analysis.impactMatrix) analysis.impactMatrix = {};
-
-    analysis.assets.forEach(asset => {
-        const assetId = asset.id;
-        const assetMatrix = analysis.impactMatrix[assetId] || {}; 
-        
-        allDS.forEach(ds => {
-            const storedValue = assetMatrix[ds.id]; 
-            const scoreToCheck = storedValue === undefined ? 'N/A' : storedValue;
-
-            if (scoreToCheck === null || !validScores.includes(scoreToCheck)) {
-                incompleteImpact = true;
-                missingCount++;
-            }
-        });
-    });
-
-    if (incompleteImpact) {
-        riskAnalysisContainer.innerHTML = `
-            <div class="warning-box">
-                <h4>Unvollständige Bewertung</h4>
-                <p>Die Schadensauswirkungsmatrix ist unvollständig. Es fehlen noch <b>${missingCount}</b> Bewertungen (Impact-Werte) im Reiter "Schadensszenarien".</p>
-                <p><b>Aktion:</b> Bitte vervollständigen Sie alle Einträge in der Schadensauswirkungsmatrix (Werte 1, 2, 3 oder N/A).</p>
-            </div>
-        `;
-        return;
-    }
-
-    // Wenn alle Daten vorhanden sind
     riskAnalysisContainer.innerHTML = `
-        <div class="success-box">
-            <h4>Datenprüfung abgeschlossen</h4>
-            <p>Alle notwendigen Assets, Schadensszenarien und Impact-Bewertungen sind vorhanden.</p>
-            <div style="margin-top:10px; display:flex; gap:10px;">
+        <div class="success-box" style="margin-bottom:20px;">
+            <div style="display:flex; gap:10px;">
                 <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
-                <button onclick="exportRiskAnalysisToDot()" class="action-button large"><i class="fas fa-file-export"></i> Alle Exportieren (.dot)</button>
+                <button onclick="exportRiskAnalysisToDot()" class="action-button large"><i class="fas fa-file-export"></i> Export (.dot)</button>
             </div>
         </div>
-        
-        <div id="existingRiskEntriesContainer" style="margin-top: 20px;">
+        <div id="existingRiskEntriesContainer">
             ${renderExistingRiskEntries(analysis)}
         </div>
     `;
@@ -349,16 +355,40 @@ function renderExistingRiskEntries(analysis) {
     let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
     analysis.riskEntries.forEach(entry => {
         const rootRisk = entry.rootRiskValue || '-';
+        
+        // Berechnung Risikoklasse und Label
+        let rColor = '#7f8c8d';
+        let rLabel = 'Unbekannt';
+
+        const rVal = parseFloat(rootRisk);
+        if(!isNaN(rVal)) {
+            if(rVal >= 2.0) {
+                rColor = '#c0392b';
+                rLabel = 'Kritisch';
+            } else if(rVal >= 1.6) {
+                rColor = '#e67e22';
+                rLabel = 'Hoch';
+            } else if(rVal >= 0.8) {
+                rColor = '#f39c12';
+                rLabel = 'Mittel';
+            } else {
+                rColor = '#27ae60';
+                rLabel = 'Niedrig';
+            }
+        }
 
         html += `
-            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
+            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${rColor};">
                 <div>
                     <strong>${entry.id}</strong>: ${entry.rootName} <br> 
-                    <span style="color:#666; font-size:0.9em;">Risk Score (R): <b>${rootRisk}</b></span>
+                    <span style="color:#666; font-size:0.9em;">
+                        Risk Score (R): <b style="color:${rColor}">${rootRisk}</b> 
+                        <span style="margin-left:5px; padding:2px 6px; border-radius:3px; background:${rColor}; color:#fff; font-size:0.8em;">${rLabel}</span>
+                    </span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <button onclick="editAttackTree('${entry.id}')" class="action-button small">
-                        <i class="fas fa-edit"></i> Bearbeiten / Anzeigen
+                        <i class="fas fa-edit"></i> Bearbeiten
                     </button>
                     <button onclick="deleteAttackTree('${entry.id}')" class="action-button small dangerous">
                         <i class="fas fa-trash"></i> Löschen
@@ -371,7 +401,7 @@ function renderExistingRiskEntries(analysis) {
     return html;
 }
 
-window.editAttackTree = (riskId) => {
+window.editAttackTree = function(riskId) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
     const entry = analysis.riskEntries.find(r => r.id === riskId);
@@ -379,10 +409,6 @@ window.editAttackTree = (riskId) => {
     openAttackTreeModal(entry);
 };
 
-
-// ------------------------------------------------------------------
-// RE-INDIZIERUNG
-// ------------------------------------------------------------------
 function reindexRiskIDs(analysis) {
     if (!analysis || !analysis.riskEntries) return;
     analysis.riskEntries.forEach((entry, index) => {
@@ -391,48 +417,53 @@ function reindexRiskIDs(analysis) {
     });
 }
 
-
-window.deleteAttackTree = (riskId) => {
+window.deleteAttackTree = function(riskId) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis || !analysis.riskEntries) return;
 
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
-    confirmationTitle.textContent = 'Angriffsbaum löschen bestätigen';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> löschen möchten?`;
+    // FIX: Explizite DOM-Elemente holen (ReferenceError Fix)
+    const modal = document.getElementById('confirmationModal');
+    const title = document.getElementById('confirmationTitle');
+    const msg = document.getElementById('confirmationMessage');
+    const btnConfirm = document.getElementById('btnConfirmAction');
+    const btnCancel = document.getElementById('btnCancelConfirmation');
+    const btnClose = document.getElementById('closeConfirmationModal');
 
-    btnConfirmAction.textContent = 'Ja, Angriffsbaum löschen';
-    btnConfirmAction.classList.add('dangerous');
+    if(title) title.textContent = 'Angriffsbaum löschen';
+    msg.innerHTML = `Möchten Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> wirklich löschen?`;
 
-    confirmationModal.style.display = 'block';
+    btnConfirm.textContent = 'Löschen';
+    btnConfirm.className = 'primary-button dangerous';
 
-    btnConfirmAction.onclick = null;
-    btnCancelConfirmation.onclick = null;
-    closeConfirmationModal.onclick = null;
+    modal.style.display = 'block';
 
-    btnConfirmAction.onclick = () => {
-        // Löschen
+    // Events bereinigen
+    btnConfirm.onclick = null;
+    btnCancel.onclick = null;
+    btnClose.onclick = null;
+
+    btnConfirm.onclick = () => {
         analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
-        
-        // Re-Indizieren
         reindexRiskIDs(analysis);
-
         saveAnalyses();
-        if (attackTreeModal) attackTreeModal.style.display = 'none';
-        confirmationModal.style.display = 'none';
+        
+        // Modal und AttackTree Modal schließen, falls offen
+        if (typeof attackTreeModal !== 'undefined' && attackTreeModal) attackTreeModal.style.display = 'none';
+        modal.style.display = 'none';
+        
         renderRiskAnalysis();
         showToast(`Angriffsbaum gelöscht.`, 'success');
     };
 
-    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
-    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
+    const closeFn = () => { modal.style.display = 'none'; };
+    btnCancel.onclick = closeFn;
+    btnClose.onclick = closeFn;
 };
 
-
-// -------------------------------------------------------------
 // UI HELPER: TOGGLE DEPTH
-// -------------------------------------------------------------
 function setTreeDepth(isDeep) {
     const cols = document.querySelectorAll('.col-level-2');
     const inputUseDeep = document.getElementById('use_deep_tree');
@@ -441,22 +472,63 @@ function setTreeDepth(isDeep) {
     if (isDeep) {
         cols.forEach(el => el.style.display = 'table-cell');
         if (inputUseDeep) inputUseDeep.value = 'true';
-        if (btn) btn.innerHTML = '<i class="fas fa-minus"></i> Zwischenebene entfernen';
+        if (btn) btn.innerHTML = '<i class="fas fa-minus"></i> Zwischenebene ausblenden';
     } else {
         cols.forEach(el => el.style.display = 'none');
         if (inputUseDeep) inputUseDeep.value = 'false';
-        if (btn) btn.innerHTML = '<i class="fas fa-layer-group"></i> Zwischenebene hinzufügen';
+        if (btn) btn.innerHTML = '<i class="fas fa-layer-group"></i> Zwischenebene einblenden';
     }
     updateAttackTreeKSTUSummariesFromForm(); 
 }
 
+// FIX: Default value is now the Scalar name (K, S, T, U)
+function populateAttackTreeDropdowns() {
+    const selects = document.querySelectorAll('.kstu-select');
+    selects.forEach(select => {
+        const name = select.getAttribute('name');
+        if (!name) return;
+        
+        let type = null;
+        if (name.endsWith('_k')) type = 'K';
+        else if (name.endsWith('_s')) type = 'S';
+        else if (name.endsWith('_t')) type = 'T';
+        else if (name.endsWith('_u')) type = 'U';
+        
+        if (type && PROBABILITY_CRITERIA[type]) {
+            const currentVal = select.value;
+            select.innerHTML = ''; 
+
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = type; // Zeigt Buchstaben
+            emptyOpt.style.fontWeight = 'bold';
+            emptyOpt.style.color = '#888';
+            select.appendChild(emptyOpt);
+            
+            PROBABILITY_CRITERIA[type].options.forEach(opt => {
+                const el = document.createElement('option');
+                el.value = opt.value;
+                el.textContent = opt.text;
+                select.appendChild(el);
+            });
+            
+            if (currentVal) select.value = currentVal;
+        }
+    });
+}
 
 function openAttackTreeModal(existingEntry = null) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
     if (attackTreeForm) attackTreeForm.reset();
+    
+    // Zuerst Dropdowns befüllen
+    populateAttackTreeDropdowns();
+    
     const hiddenIdField = document.getElementById('at_id');
+    const previewContainer = document.getElementById('graph-preview-container');
+    if (previewContainer) previewContainer.innerHTML = '';
     
     setTreeDepth(false); 
 
@@ -478,7 +550,13 @@ function openAttackTreeModal(existingEntry = null) {
             
             ['k', 's', 't', 'u'].forEach(param => {
                 const sel = document.querySelector(`select[name="${prefix}_${param}"]`);
-                if (sel) sel.value = leafData[param] || '';
+                if (sel) {
+                    let val = leafData[param]; 
+                    if ((val === undefined || val === null) && leafData.kstu) {
+                        val = leafData.kstu[param];
+                    }
+                    sel.value = (val !== undefined && val !== null) ? String(val) : '';
+                }
             });
 
             document.querySelectorAll(`input[type="checkbox"][name^="${prefix}_ds"]`).forEach(c => { if (c) c.checked = false; });
@@ -493,7 +571,7 @@ function openAttackTreeModal(existingEntry = null) {
 
         if (existingEntry.branches[0]) {
             const b1 = existingEntry.branches[0];
-            document.querySelector('input[name="at_branch_1"]').value = b1.name;
+            document.querySelector('input[name="at_branch_1"]').value = b1.name || '';
             if (hasL2 && b1.l2_node) {
                  const l2Inp = document.querySelector('input[name="at_branch_1_l2"]');
                  if(l2Inp) l2Inp.value = b1.l2_node.name || '';
@@ -504,7 +582,7 @@ function openAttackTreeModal(existingEntry = null) {
 
         if (existingEntry.branches[1]) {
             const b2 = existingEntry.branches[1];
-            document.querySelector('input[name="at_branch_2"]').value = b2.name;
+            document.querySelector('input[name="at_branch_2"]').value = b2.name || '';
             if (hasL2 && b2.l2_node) {
                  const l2Inp = document.querySelector('input[name="at_branch_2_l2"]');
                  if(l2Inp) l2Inp.value = b2.l2_node.name || '';
@@ -642,8 +720,7 @@ function extractLeafData(formData, index) {
 }
 
 
-// =============================================================
-// --- WORST-CASE VERERBUNG K/S/T/U ---
+// --- CALCULATION LOGIC ---
 
 function _parseKSTUValue(val) {
     const num = parseFloat(val);
@@ -726,12 +803,10 @@ function applyWorstCaseInheritance(treeData) {
     return treeData;
 }
 
-// === HELPER WIEDERHERGESTELLT ===
 function _parseImpactValue(val) {
     const num = parseFloat(val);
     return isNaN(num) ? null : num;
 }
-// =================================
 
 function applyImpactInheritance(treeData, analysis) {
     if (!treeData || !treeData.branches) return treeData;
@@ -884,9 +959,6 @@ function updateAttackTreeKSTUSummariesFromForm() {
         
         const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
         if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm); 
-        
-        const oldDisplay = document.querySelector(`.leaf-container .inorm-display`); 
-        if(oldDisplay) oldDisplay.style.display = 'none'; 
     });
 }
 
@@ -915,28 +987,25 @@ function generateNextRiskID(analysis) {
     return 'R' + (analysis.riskEntries.length + 1).toString().padStart(2, '0');
 }
 
-// =============================================================
-// --- EXPORT TO DOT (GRAPHVIZ) ---
-// =============================================================
 
-function exportRiskAnalysisToDot() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+// --- GRAPHVIZ GENERATOR (WASM) ---
+
+function generateDotString(analysis, specificTreeId = null) {
     if (!analysis || !analysis.riskEntries || analysis.riskEntries.length === 0) {
-        showToast('Keine Angriffsbäume zum Exportieren vorhanden.', 'warning');
-        return;
+        return null;
     }
 
     let dot = 'digraph {\n\n';
-    dot += '    node [shape=record];\n';
-    dot += '    overlap = false;\n    splines = true;\n\n';
+    dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
+    dot += '    edge [fontname="Arial", fontsize=9];\n';
+    dot += '    rankdir=TB;\n'; 
+    dot += '    overlap = false;\n    splines = ortho;\n\n'; 
 
-    // Helper für Zahlenformate (0.5 -> 0,5)
     const _fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
         return String(val).replace('.', ',');
     };
 
-    // Helper für P String
     const _pStr = (kstu) => {
         if (!kstu) return '- / - / - / -';
         const k = _fmt(kstu.k);
@@ -946,9 +1015,8 @@ function exportRiskAnalysisToDot() {
         return `${k} / ${s} / ${t} / ${u}`;
     };
 
-    // Helper für R Calc (Label Logik)
     const _calcR = (iNorm, kstu) => {
-        const iVal = parseFloat(String(iNorm).replace(',','.')) || 0;
+        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
         const k = parseFloat(kstu?.k) || 0;
         const s = parseFloat(kstu?.s) || 0;
         const t = parseFloat(kstu?.t) || 0;
@@ -957,46 +1025,57 @@ function exportRiskAnalysisToDot() {
         return _fmt((iVal * pSum).toFixed(2));
     };
 
-    // Helper für Label
     const _lbl = (text, kstu, iNorm) => {
         const p = _pStr(kstu);
         const i = _fmt(iNorm);
         const r = _calcR(i, kstu);
-        const cleanText = (text || '').replace(/[\{\}<>|]/g, '');
+        const cleanText = (text || '').replace(/[\{\}<>|"]/g, "'");
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };
 
-    analysis.riskEntries.forEach(entry => {
-        const riskId = entry.id; // R01, R02...
-        
-        // --- NODES ---
-        
-        // Root
+    const _getColor = (iNorm, kstu) => {
+        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
+        const pSum = (parseFloat(kstu?.k)||0) + (parseFloat(kstu?.s)||0) + (parseFloat(kstu?.t)||0) + (parseFloat(kstu?.u)||0);
+        const r = iVal * pSum;
+        if(r >= 2.0) return '#ffcccc'; 
+        if(r >= 1.6) return '#ffe0b3'; 
+        if(r >= 0.8) return '#ffffcc'; 
+        return '#ccffcc'; 
+    };
+
+    let entriesToProcess = analysis.riskEntries;
+    if (specificTreeId) {
+        entriesToProcess = analysis.riskEntries.filter(e => e.id === specificTreeId);
+    }
+
+    entriesToProcess.forEach(entry => {
+        const riskId = entry.id;
         const rootId = `${riskId}_Root`;
+        const rootFill = _getColor(entry.i_norm, entry.kstu);
+        
         dot += `    // Tree ${riskId}\n`;
-        dot += `    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}"]\n`;
+        dot += `    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
 
         entry.branches.forEach((branch, bIdx) => {
             const bId = `${riskId}_B${bIdx+1}`;
-            // Branch Node
             if (branch.name) {
-                dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}"]\n`;
+                const bFill = _getColor(branch.i_norm, branch.kstu);
+                dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}", style=filled, fillcolor="${bFill}"]\n`;
             }
 
-            // Optional L2
             let l2Id = null;
             if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
                 l2Id = `${riskId}_B${bIdx+1}_L2`;
-                dot += `    ${l2Id} [label="${_lbl(branch.l2_node.name, branch.l2_node.kstu, branch.l2_node.i_norm)}"]\n`;
+                const l2Fill = _getColor(branch.l2_node.i_norm, branch.l2_node.kstu);
+                dot += `    ${l2Id} [label="${_lbl(branch.l2_node.name, branch.l2_node.kstu, branch.l2_node.i_norm)}", style=filled, fillcolor="${l2Fill}"]\n`;
             }
 
-            // Leaves
             if (branch.leaves) {
                 branch.leaves.forEach((leaf, lIdx) => {
                     if (leaf.text) {
                         const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
-                        // HIER WURDE GEÄNDERT: leaf statt leaf.kstu übergeben
-                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}"]\n`;
+                        const lFill = _getColor(leaf.i_norm, leaf); 
+                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
                     }
                 });
             }
@@ -1004,25 +1083,19 @@ function exportRiskAnalysisToDot() {
         
         dot += '\n';
 
-        // --- EDGES ---
         entry.branches.forEach((branch, bIdx) => {
             if (!branch.name) return;
             const bId = `${riskId}_B${bIdx+1}`;
             
-            // Root -> Branch
             dot += `    ${rootId} -> ${bId}\n`;
 
-            // Branch Flow
             let parentForLeaves = bId;
-            
             if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
                 const l2Id = `${riskId}_B${bIdx+1}_L2`;
-                // Branch -> L2
                 dot += `    ${bId} -> ${l2Id}\n`;
                 parentForLeaves = l2Id;
             }
 
-            // (Branch or L2) -> Leaves
             if (branch.leaves) {
                 branch.leaves.forEach((leaf, lIdx) => {
                     if (leaf.text) {
@@ -1032,37 +1105,14 @@ function exportRiskAnalysisToDot() {
                 });
             }
         });
-
         dot += '\n';
     });
 
     dot += '}\n';
-
-    // DOWNLOAD FIX (Binary/Octet Stream forcing)
-    const blob = new Blob([dot], { type: 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    // Dateiname bereinigen
-    const safeName = (analysis.name || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
-    a.download = `TARA_${safeName}_Export.dot`;
-    
-    document.body.appendChild(a);
-    a.click();
-    
-    // Aufräumen mit leichter Verzögerung für Browser-Kompatibilität
-    setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }, 100);
-    
-    showToast('Export wurde gestartet.', 'success');
+    return dot;
 }
 
-// Global verfügbar machen
 window.exportRiskAnalysisToDot = exportRiskAnalysisToDot;
-
 
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('closeAttackTreeModal');
@@ -1073,13 +1123,3 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
-
-(function() {
-    const closeBtn = document.getElementById('closeAttackTreeModal');
-    const modal = document.getElementById('attackTreeModal');
-    if (closeBtn && modal) {
-        closeBtn.onclick = () => {
-            modal.style.display = 'none';
-        };
-    }
-})();

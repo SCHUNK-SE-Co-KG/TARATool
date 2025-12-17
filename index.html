@@ -6,6 +6,11 @@
     <title>TARA Analysis Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    
+    <script type="module">
+        import { Graphviz } from "https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.js";
+        window.GraphvizLib = { Graphviz };
+    </script>
 </head>
 <body>
 
@@ -13,399 +18,370 @@
         
         <div class="header-nav">
             <h1>TARA Tool</h1>
-            
             <div class="action-nav">
-                <button id="btnNewAnalysis"><i class="fas fa-plus"></i> Neue Analyse</button>
-                <select id="analysisSelector" style="width: 250px;">
+                <button id="btnNewAnalysis" class="action-button small"><i class="fas fa-plus"></i> Neu</button>
+                <select id="analysisSelector" style="width: 200px; padding:4px;">
                     </select>
             </div>
-            
             <div class="utility-actions">
-                <button id="btnImportAnalysis" class="action-button-header"><i class="fas fa-file-import"></i> Import</button>
-                <button id="btnExportAnalysis" class="action-button-header"><i class="fas fa-file-export"></i> Export</button>
+                <button id="btnImportAnalysis" class="action-button small"><i class="fas fa-file-import"></i> Import</button>
+                <button id="btnExportAnalysis" class="action-button small"><i class="fas fa-file-export"></i> Export</button>
             </div>
         </div>
 
         <div class="main-content">
-            <header class="main-header">
-                <div>
-                    <h2 id="analysisNameDisplay">Analyse wählen oder neu starten</h2>
-                    <div class="metadata" id="analysisMetadata"></div>
-                </div>
-                <div class="header-actions">
-                    <button id="btnSave" class="primary-button" disabled><i class="fas fa-save"></i> Speichern</button>
-                    <button id="btnShowVersionControl" class="action-button" disabled><i class="fas fa-history"></i> Versionen</button>
+            
+            <header class="main-header" style="padding: 10px 15px; margin-bottom: 10px;">
+                <div style="width: 100%; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h2 id="analysisNameDisplay" style="margin:0; font-size:1.2em;">Analyse wählen oder neu starten</h2>
+                        <div class="metadata" id="analysisMetadata" style="font-size:0.85em; color:#777; margin-top:2px;"></div>
+                    </div>
+                    <div class="header-actions">
+                        <button id="btnSave" class="primary-button"><i class="fas fa-save"></i> Speichern</button>
+                        <button id="btnShowVersionControl" class="action-button"><i class="fas fa-code-branch"></i> Versionen</button>
+                    </div>
                 </div>
             </header>
 
-            <div class="status-bar">
-                <span id="statusBarMessage">Bereit.</span>
-            </div>
-
-            <nav class="tab-navigation">
-                <button class="tab-button active" data-tab="tabGeneral">Allgemein</button>
+            <div class="tab-navigation">
+                <button class="tab-button active" data-tab="tabOverview">Übersicht</button>
                 <button class="tab-button" data-tab="tabAssets">Assets</button>
                 <button class="tab-button" data-tab="tabDamageScenarios">Schadensszenarien</button>
-                <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button> 
-                <button class="tab-button" data-tab="tabConclusion" disabled>Fazit</button>
-            </nav>
-
-            <div class="tab-content-container">
-                <div id="tabGeneral" class="tab-content" style="display: block;">
-                    <section class="analysis-section">
-                        <h3>Allgemeine Informationen</h3>
-                        <div class="form-group">
-                            <label for="inputAnalysisName">Name der Analyse</label>
-                            <input type="text" id="inputAnalysisName" required disabled>
-                        </div>
-                        <div class="form-group">
-                            <label for="inputAuthorName">Autor / Bearbeiter</label>
-                            <input type="text" id="inputAuthorName" required disabled>
-                        </div>
-                        <div class="form-group">
-                            <label for="inputDescription">Produkt/System Beschreibung</label>
-                            <textarea id="inputDescription" rows="5" disabled></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="inputIntendedUse">Vorgesehener Einsatzzweck/Kontext</label>
-                            <textarea id="inputIntendedUse" rows="3" disabled></textarea>
-                        </div>
-                    </section>
-                </div>
-
-                <div id="tabAssets" class="tab-content" style="display: none;">
-                    <section class="analysis-section">
-                        <h3>Assets (Schutzobjekte)</h3>
-                        <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
-                        <div id="assetsCardContainer"></div>
-                    </section>
-                </div>
-
-                <div id="tabDamageScenarios" class="tab-content" style="display: none;">
-                    <section class="analysis-section">
-                        <h3>Schadensszenarien & Impact Bewertung</h3>
-                        <button id="btnAddDamageScenario" class="primary-button"><i class="fas fa-plus"></i> Neues Schadensszenario</button>
-                        <div id="dsManagementContainer" style="margin-top: 15px;"></div>
-                        <div id="dsMatrixContainer" style="margin-top: 40px;"></div>
-                    </section>
-                </div>
-                
-                <div id="tabRiskAnalysis" class="tab-content" style="display: none;">
-                    <h3>Risikoanalyse</h3>
-                    <p class="description-text">Hier wird das Risiko durch die Kombination von Schutzbedarf der Assets und dem potentiellen Schaden der Szenarien ermittelt und dargestellt.</p>
-                    <div id="riskAnalysisContainer" class="card-container" style="display: block; margin-top: 20px;"></div>
-                </div>
-                
-                <div id="tabConclusion" class="tab-content" style="display: none;"><section class="analysis-section"><h3>Fazit und Zusammenfassung</h3><p>In Entwicklung.</p></section></div>
+                <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button>
             </div>
-        </div>
+
+            <div id="tabOverview" class="tab-content" style="display: block;">
+                <div class="dashboard-grid">
+                    <div class="stats-row">
+                        <div class="stat-card" style="border-left-color: #3498db;">
+                            <span class="stat-label">Assets</span>
+                            <span class="stat-value" id="statAssetCount">0</span>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #e67e22;">
+                            <span class="stat-label">Szenarien</span>
+                            <span class="stat-value" id="statDSCount">0</span>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #f1c40f;">
+                            <span class="stat-label">Risiken (Gesamt)</span>
+                            <span class="stat-value" id="statRiskCount">0</span>
+                        </div>
+                        <div class="stat-card" style="border-left-color: #e74c3c; display: block; padding: 10px 15px;">
+                            <div style="font-size: 0.85em; color: #666; font-weight: 600; margin-bottom: 5px;">Risikoverteilung</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.85em;">
+                                <div style="color:#c0392b; font-weight:bold;">Kritisch: <span id="statCrit" style="color:#333;">0</span></div>
+                                <div style="color:#e67e22; font-weight:bold;">Hoch: <span id="statHigh" style="color:#333;">0</span></div>
+                                <div style="color:#f39c12; font-weight:bold;">Mittel: <span id="statMed" style="color:#333;">0</span></div>
+                                <div style="color:#27ae60; font-weight:bold;">Niedrig: <span id="statLow" style="color:#333;">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="background: #fff; padding: 0;">
+                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">Projektbeschreibung</h3>
+                        <div class="meta-form-grid">
+                            <div class="form-group">
+                                <label>Analysename</label>
+                                <input type="text" id="inputAnalysisName">
+                            </div>
+                            <div class="form-group">
+                                <label>Autor / Verantwortlich</label>
+                                <input type="text" id="inputAuthorName">
+                            </div>
+                            <div class="form-group">
+                                <label>Systembeschreibung</label>
+                                <textarea id="inputDescription" rows="3"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Verwendungszweck (Intended Use)</label>
+                                <textarea id="inputIntendedUse" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabAssets" class="tab-content" style="display: none;">
+                <div class="assets-controls" style="margin-bottom:15px;">
+                    <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
+                </div>
+                <div id="assetsCardContainer" class="cards-grid"></div>
+            </div>
+
+            <div id="tabDamageScenarios" class="tab-content" style="display: none;">
+                <div class="two-column-layout">
+                    <div class="column-left" style="flex:1;">
+                        <div class="panel">
+                            <div class="panel-header" style="display:flex; justify-content:space-between;">
+                                <h3 style="margin:0;">Verwaltung</h3>
+                                <button id="btnAddDamageScenario" class="action-button small"><i class="fas fa-plus"></i> Neu</button>
+                            </div>
+                            <div id="dsManagementContainer" style="margin-top:10px;"></div>
+                        </div>
+                    </div>
+                    <div class="column-right" style="flex:3;">
+                        <div class="panel">
+                            <h3 style="margin-top:0;">Schadensauswirkungsmatrix</h3>
+                            <div id="dsMatrixContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tabRiskAnalysis" class="tab-content" style="display: none;">
+                <div class="panel">
+                    <h3>Risikoanalyse & Angriffsbäume</h3>
+                    <div id="riskAnalysisContainer"></div>
+                </div>
+            </div>
+
+        </div> 
+        
+        <footer class="status-bar" style="background: #333; color: #fff; padding: 4px 20px; font-size: 0.8em; margin-top: auto;">
+            <span id="statusBarMessage">Bereit.</span>
+        </footer>
     </div>
 
-    <div id="newAnalysisModal" class="modal" style="display: none;">
-        <div class="modal-content small">
-            <span class="close-button" id="closeNewAnalysisModal">&times;</span>
-            <h2>Neue TARA-Analyse</h2>
-            <form id="newAnalysisForm">
-                <div class="form-group">
-                    <label for="newAnalysisName">Name der Analyse</label>
-                    <input type="text" id="newAnalysisName" placeholder="Z.B. TARA Produkt X Version 1.1" required>
-                </div>
-                <button type="submit" class="primary-button">Erstellen</button>
-            </form>
-        </div>
-    </div>
-    
     <div id="assetModal" class="modal" style="display: none;">
-        <div class="modal-content small">
+        <div class="modal-content">
             <span class="close-button" id="closeAssetModal">&times;</span>
-            <h2 id="assetModalTitle">Asset erfassen</h2>
+            <h2 id="assetModalTitle">Neues Asset</h2>
             <form id="assetForm">
                 <input type="hidden" id="assetIdField">
                 <div class="form-group">
-                    <label for="assetName">Name</label>
-                    <input type="text" id="assetName" required>
+                    <label>Name</label> <input type="text" id="assetName" required>
                 </div>
                 <div class="form-group">
-                    <label for="assetType">Typ</label>
-                    <input type="text" id="assetType" required>
+                    <label>Typ</label> <input type="text" id="assetType">
                 </div>
                 <div class="form-group">
-                    <label for="assetDescription">Beschreibung</label>
-                    <textarea id="assetDescription" rows="3"></textarea>
+                    <label>Beschreibung</label> <textarea id="assetDescription" rows="3"></textarea>
                 </div>
-                <div class="form-group">
-                    <label>1. Vertraulichkeit (Confidentiality)</label>
-                    <div class="radio-group">
-                        <input type="radio" id="c-i" name="confidentiality" value="I" required><label for="c-i">I (Niedrig)</label>
-                        <input type="radio" id="c-ii" name="confidentiality" value="II"><label for="c-ii">II (Mittel)</label>
-                        <input type="radio" id="c-iii" name="confidentiality" value="III"><label for="c-iii">III (Hoch)</label>
+                <fieldset style="border:1px solid #ddd; padding:10px;">
+                    <legend>Schutzbedarf (CIA)</legend>
+                    <div class="cia-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+                        <div>
+                            <label>Confidentiality</label><br>
+                            <label><input type="radio" name="confidentiality" value="I"> I</label>
+                            <label><input type="radio" name="confidentiality" value="II"> II</label>
+                            <label><input type="radio" name="confidentiality" value="III"> III</label>
+                        </div>
+                        <div>
+                            <label>Integrity</label><br>
+                            <label><input type="radio" name="integrity" value="I"> I</label>
+                            <label><input type="radio" name="integrity" value="II"> II</label>
+                            <label><input type="radio" name="integrity" value="III"> III</label>
+                        </div>
+                        <div>
+                            <label>Availability</label><br>
+                            <label><input type="radio" name="authenticity" value="I"> I</label>
+                            <label><input type="radio" name="authenticity" value="II"> II</label>
+                            <label><input type="radio" name="authenticity" value="III"> III</label>
+                        </div>
                     </div>
-                </div>
-                <div class="form-group">
-                    <label>2. Integrität (Integrity)</label>
-                    <div class="radio-group">
-                        <input type="radio" id="i-i" name="integrity" value="I" required><label for="i-i">I (Niedrig)</label>
-                        <input type="radio" id="i-ii" name="integrity" value="II"><label for="i-ii">II (Mittel)</label>
-                        <input type="radio" id="i-iii" name="integrity" value="III"><label for="i-iii">III (Hoch)</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>3. Verfügbarkeit (Availability)</label>
-                    <div class="radio-group">
-                        <input type="radio" id="a-i" name="authenticity" value="I" required><label for="a-i">I (Niedrig)</label>
-                        <input type="radio" id="a-ii" name="authenticity" value="II"><label for="a-ii">II (Mittel)</label>
-                        <input type="radio" id="a-iii" name="authenticity" value="III"><label for="a-iii">III (Hoch)</label>
-                    </div>
-                </div>
-                <button type="submit" class="primary-button">Speichern</button>
+                </fieldset>
+                <button type="submit" class="primary-button" style="margin-top:15px;">Speichern</button>
             </form>
         </div>
     </div>
 
     <div id="damageScenarioModal" class="modal" style="display: none;">
-        <div class="modal-content small">
+        <div class="modal-content">
             <span class="close-button" id="closeDamageScenarioModal">&times;</span>
-            <h2 id="dsModalTitle">Schadensszenario erfassen</h2>
+            <h2 id="dsModalTitle">Schadensszenario</h2>
             <form id="damageScenarioForm">
-                <input type="hidden" id="dsIdField"> 
-                <div class="form-group">
-                    <label for="dsName">Name</label>
-                    <input type="text" id="dsName" required>
-                </div>
-                <div class="form-group">
-                    <label for="dsShort">Kurzbezeichnung</label>
-                    <input type="text" id="dsShort" required maxlength="10">
-                </div>
-                <div class="form-group">
-                    <label for="dsDescription">Beschreibung</label>
-                    <textarea id="dsDescription" rows="3"></textarea>
-                </div>
+                <input type="hidden" id="dsIdField">
+                <div class="form-group"><label>Name</label><input type="text" id="dsName" required></div>
+                <div class="form-group"><label>Kurzbeschreibung</label><input type="text" id="dsShort" required maxlength="10"></div>
+                <div class="form-group"><label>Beschreibung</label><textarea id="dsDescription" rows="3"></textarea></div>
                 <button type="submit" class="primary-button">Speichern</button>
             </form>
         </div>
     </div>
-    
-    <div id="attackTreeModal" class="modal" style="display: none;">
-        <div class="modal-content large">
+
+    <div id="attackTreeModal" class="modal large-modal" style="display: none;">
+        <div class="modal-content large-content">
             <span class="close-button" id="closeAttackTreeModal">&times;</span>
-            <h2>Angriffsbaum bearbeiten</h2>
+            
             <form id="attackTreeForm">
-                <input type="hidden" name="at_id" id="at_id">
-                
-                <div style="margin-bottom: 10px; display:flex; justify-content: flex-end;">
-                     <button type="button" id="btnToggleTreeDepth" class="action-button small">
-                        <i class="fas fa-layer-group"></i> Zwischenebene hinzufügen
-                    </button>
-                    <input type="hidden" name="use_deep_tree" id="use_deep_tree" value="false">
+                <input type="hidden" id="at_id" name="at_id">
+                <input type="hidden" id="use_deep_tree" name="use_deep_tree" value="false">
+
+                <div style="background:#f0f0f0; padding:10px; border-radius:4px; border:1px solid #ccc; margin-bottom:15px; display:flex; gap:15px; align-items:center;">
+                    <strong style="white-space:nowrap;">Angriffsziel (Root):</strong>
+                    <input type="text" name="at_root" placeholder="z.B. Manipulation der Firmware" required style="flex-grow:1; font-weight:bold;">
+                    <div id="at_root_kstu_summary" class="node-stats-box" style="width:200px; margin-top:0;"></div>
                 </div>
 
-                <div style="overflow-x: auto;">
-                    <table class="attack-tree-table">
+                <div class="tree-controls" style="margin-bottom:10px;">
+                    <button type="button" id="btnToggleTreeDepth" class="action-button small"><i class="fas fa-layer-group"></i> Zwischenebene einblenden</button>
+                </div>
+
+                <div class="tree-structure-table">
+                    <table>
                         <thead>
                             <tr>
-                                <th style="width: 20%;">Angriffspfad / Schnittstelle<br><span style="font-weight:normal; font-size:0.8em;">(Max. 20 Zeichen)</span></th>
-                                <th style="width: 25%;">Angriff ermöglicht:<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen)</span></th>
-                                <th class="col-level-2" style="width: 25%; display:none;">Angriff ermöglicht (2):<br><span style="font-weight:normal; font-size:0.8em;">(Zwischenschritt)</span></th>
-                                <th style="width: 30%;">Auswirkung des Angriffs<br><span style="font-weight:normal; font-size:0.8em;">(Max. 30 Zeichen)</span></th>
+                                <th style="width:30%;">Angriffspfad</th>
+                                <th class="col-level-2" style="display:none; width:20%;">Angriffspfad</th>
+                                <th>Auswirkung</th>
                             </tr>
                         </thead>
                         <tbody>
+                            <tr class="branch-separator"><td colspan="3"><strong>Pfad 1</strong></td></tr>
                             <tr>
-                                <td rowspan="4" style="vertical-align: middle;">
-                                    <input type="text" name="at_root" placeholder="Root Pfad" maxlength="20" required style="width: 90%;">
-                                    <div class="kstu-summary" id="at_root_kstu_summary"></div>
+                                <td rowspan="2" class="cell-l1">
+                                    <div class="form-group">
+                                        <input type="text" name="at_branch_1" placeholder="Name Pfad 1">
+                                    </div>
+                                    <div id="at_branch_1_kstu_summary" class="node-stats-box"></div>
                                 </td>
-                                <td rowspan="2" style="vertical-align: middle;">
-                                    <input type="text" name="at_branch_1" placeholder="Pfad 1" maxlength="30" required style="width: 90%;">
-                                    <div class="kstu-summary" id="at_branch_1_kstu_summary"></div>
+                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;">
+                                    <div class="form-group"><input type="text" name="at_branch_1_l2" placeholder="Zwischenknoten"></div>
+                                    <div id="at_branch_1_l2_kstu_summary" class="node-stats-box"></div>
                                 </td>
-                                <td rowspan="2" class="col-level-2" style="vertical-align: middle; display:none;">
-                                    <input type="text" name="at_branch_1_l2" placeholder="Zwischenschritt 1" maxlength="30" style="width: 90%;">
-                                    <div class="kstu-summary" id="at_branch_1_l2_kstu_summary"></div>
-                                </td>
-                                <td>
+                                <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_1_text" placeholder="Konsequenz 1.1" maxlength="30" class="leaf-input">
-                                        <div class="ds-checks" id="ds_checks_1">
-                                            <label><input type="checkbox" name="at_leaf_1_ds1"> DS1</label>
-                                            <label><input type="checkbox" name="at_leaf_1_ds2"> DS2</label>
-                                            <label><input type="checkbox" name="at_leaf_1_ds3"> DS3</label>
-                                            <label><input type="checkbox" name="at_leaf_1_ds4"> DS4</label>
-                                            <label><input type="checkbox" name="at_leaf_1_ds5"> DS5</label>
+                                        <input type="text" name="at_leaf_1_text" placeholder="Schritt 1.1">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_1_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_1_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_1_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_1_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_1_ds5"></label>
                                         </div>
-                                        <div class="kstu-inputs">
-                                            <select name="at_leaf_1_k" class="kstu-select" title="Komplexität (K)"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_1_s" class="kstu-select" title="Skalierung (S)"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_1_t" class="kstu-select" title="Zeit (T)"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_1_u" class="kstu-select" title="Nutzen (U)"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_1_k" class="kstu-select"></select>
+                                            <select name="at_leaf_1_s" class="kstu-select"></select>
+                                            <select name="at_leaf_1_t" class="kstu-select"></select>
+                                            <select name="at_leaf_1_u" class="kstu-select"></select>
                                         </div>
-                                        <div class="node-stats-box" id="at_leaf_1_summary"></div>
                                         <input type="hidden" name="at_leaf_1_i">
+                                        <div id="at_leaf_1_summary" class="node-stats-box"></div>
                                     </div>
                                 </td>
                             </tr>
                             <tr>
-                                <td>
+                                <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_2_text" placeholder="Konsequenz 1.2" maxlength="30" class="leaf-input">
+                                        <input type="text" name="at_leaf_2_text" placeholder="Schritt 1.2">
                                         <div class="ds-checks">
-                                            <label><input type="checkbox" name="at_leaf_2_ds1"> DS1</label>
-                                            <label><input type="checkbox" name="at_leaf_2_ds2"> DS2</label>
-                                            <label><input type="checkbox" name="at_leaf_2_ds3"> DS3</label>
-                                            <label><input type="checkbox" name="at_leaf_2_ds4"> DS4</label>
-                                            <label><input type="checkbox" name="at_leaf_2_ds5"> DS5</label>
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_2_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_2_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_2_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_2_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_2_ds5"></label>
                                         </div>
-                                        <div class="kstu-inputs">
-                                            <select name="at_leaf_2_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_2_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_2_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_2_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_2_k" class="kstu-select"></select>
+                                            <select name="at_leaf_2_s" class="kstu-select"></select>
+                                            <select name="at_leaf_2_t" class="kstu-select"></select>
+                                            <select name="at_leaf_2_u" class="kstu-select"></select>
                                         </div>
-                                        <div class="node-stats-box" id="at_leaf_2_summary"></div>
                                         <input type="hidden" name="at_leaf_2_i">
+                                        <div id="at_leaf_2_summary" class="node-stats-box"></div>
                                     </div>
                                 </td>
                             </tr>
-                            
+
+                            <tr class="branch-separator"><td colspan="3"><strong>Pfad 2</strong></td></tr>
                             <tr>
-                                <td rowspan="2" style="vertical-align: middle;">
-                                    <input type="text" name="at_branch_2" placeholder="Pfad 2" maxlength="30" style="width: 90%;">
-                                    <div class="kstu-summary" id="at_branch_2_kstu_summary"></div>
+                                <td rowspan="2" class="cell-l1">
+                                    <div class="form-group"><input type="text" name="at_branch_2" placeholder="Name Pfad 2"></div>
+                                    <div id="at_branch_2_kstu_summary" class="node-stats-box"></div>
                                 </td>
-                                <td rowspan="2" class="col-level-2" style="vertical-align: middle; display:none;">
-                                    <input type="text" name="at_branch_2_l2" placeholder="Zwischenschritt 2" maxlength="30" style="width: 90%;">
-                                    <div class="kstu-summary" id="at_branch_2_l2_kstu_summary"></div>
+                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;">
+                                    <div class="form-group"><input type="text" name="at_branch_2_l2" placeholder="Zwischenknoten"></div>
+                                    <div id="at_branch_2_l2_kstu_summary" class="node-stats-box"></div>
                                 </td>
-                                <td>
+                                <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_3_text" placeholder="Konsequenz 2.1" maxlength="30" class="leaf-input">
+                                        <input type="text" name="at_leaf_3_text" placeholder="Schritt 2.1">
                                         <div class="ds-checks">
-                                            <label><input type="checkbox" name="at_leaf_3_ds1"> DS1</label>
-                                            <label><input type="checkbox" name="at_leaf_3_ds2"> DS2</label>
-                                            <label><input type="checkbox" name="at_leaf_3_ds3"> DS3</label>
-                                            <label><input type="checkbox" name="at_leaf_3_ds4"> DS4</label>
-                                            <label><input type="checkbox" name="at_leaf_3_ds5"> DS5</label>
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_3_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_3_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_3_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_3_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_3_ds5"></label>
                                         </div>
-                                        <div class="kstu-inputs">
-                                            <select name="at_leaf_3_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_3_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_3_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_3_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_3_k" class="kstu-select"></select>
+                                            <select name="at_leaf_3_s" class="kstu-select"></select>
+                                            <select name="at_leaf_3_t" class="kstu-select"></select>
+                                            <select name="at_leaf_3_u" class="kstu-select"></select>
                                         </div>
-                                        <div class="node-stats-box" id="at_leaf_3_summary"></div>
                                         <input type="hidden" name="at_leaf_3_i">
+                                        <div id="at_leaf_3_summary" class="node-stats-box"></div>
                                     </div>
                                 </td>
                             </tr>
                             <tr>
-                                <td>
+                                <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_4_text" placeholder="Konsequenz 2.2" maxlength="30" class="leaf-input">
+                                        <input type="text" name="at_leaf_4_text" placeholder="Schritt 2.2">
                                         <div class="ds-checks">
-                                            <label><input type="checkbox" name="at_leaf_4_ds1"> DS1</label>
-                                            <label><input type="checkbox" name="at_leaf_4_ds2"> DS2</label>
-                                            <label><input type="checkbox" name="at_leaf_4_ds3"> DS3</label>
-                                            <label><input type="checkbox" name="at_leaf_4_ds4"> DS4</label>
-                                            <label><input type="checkbox" name="at_leaf_4_ds5"> DS5</label>
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_4_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_4_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_4_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_4_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_4_ds5"></label>
                                         </div>
-                                        <div class="kstu-inputs">
-                                            <select name="at_leaf_4_k" class="kstu-select"><option value="" disabled selected>K</option><option value="0.7">0.7</option><option value="0.6">0.6</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_4_s" class="kstu-select"><option value="" disabled selected>S</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_4_t" class="kstu-select"><option value="" disabled selected>T</option><option value="0.5">0.5</option><option value="0.4">0.4</option><option value="0.2">0.2</option><option value="0.1">0.1</option></select>
-                                            <select name="at_leaf_4_u" class="kstu-select"><option value="" disabled selected>U</option><option value="0.5">0.5</option><option value="0.3">0.3</option><option value="0.1">0.1</option></select>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_4_k" class="kstu-select"></select>
+                                            <select name="at_leaf_4_s" class="kstu-select"></select>
+                                            <select name="at_leaf_4_t" class="kstu-select"></select>
+                                            <select name="at_leaf_4_u" class="kstu-select"></select>
                                         </div>
-                                        <div class="node-stats-box" id="at_leaf_4_summary"></div>
                                         <input type="hidden" name="at_leaf_4_i">
+                                        <div id="at_leaf_4_summary" class="node-stats-box"></div>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-                
-                <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" id="btnDeleteAttackTree" class="action-button dangerous" style="display: none;">
-                        <i class="fas fa-trash"></i> Löschen
-                    </button>
-                    <button type="submit" class="primary-button">
-                        <i class="fas fa-save"></i> Angriffsbaum Speichern
-                    </button>
+
+                <div class="modal-actions" style="margin-top: 20px; display:flex; justify-content:space-between;">
+                     <button type="button" id="btnDeleteAttackTree" class="action-button dangerous" style="display:none;">Löschen</button>
+                     <button type="submit" class="primary-button large">Speichern & Schließen</button>
                 </div>
             </form>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px;">
+                <h4 style="margin:0 0 10px 0;">Vorschau</h4>
+                <button type="button" onclick="renderCurrentTreePreview()" class="action-button small">
+                    <i class="fas fa-eye"></i> Generieren
+                </button>
+                <div id="graph-preview-container" style="margin-top: 10px; overflow: auto; max-height: 400px; border: 1px solid #eee;"></div>
+            </div>
         </div>
+    </div>
+
+    <div id="newAnalysisModal" class="modal" style="display:none;">
+        <div class="modal-content"><span class="close-button" id="closeNewAnalysisModal">&times;</span>
+        <h2>Neue Analyse</h2><form id="newAnalysisForm"><div class="form-group"><label>Name</label><input type="text" id="newAnalysisName" required></div><button type="submit" class="primary-button">Erstellen</button></form></div>
+    </div>
+    <div id="importAnalysisModal" class="modal" style="display:none;">
+        <div class="modal-content"><span class="close-button" id="closeImportAnalysisModal">&times;</span><h2>Import</h2><input type="file" id="importFileInput" accept=".json"><div style="margin-top:10px;"><button class="primary-button" onclick="executeImport()">Importieren</button></div></div>
+    </div>
+    <div id="versionControlModal" class="modal" style="display:none;">
+        <div class="modal-content large-content"><span class="close-button" id="closeVersionControlModal">&times;</span><h2>Versionen</h2><table class="history-table"><thead><tr><th>Ver.</th><th>Datum</th><th>Autor</th><th>Kommentar</th></tr></thead><tbody id="historyTableBody"></tbody></table><div style="margin-top:10px;"><button class="primary-button" onclick="openVersionCommentModal()">Neue Version</button></div></div>
+    </div>
+    <div id="versionCommentModal" class="modal" style="display:none;">
+        <div class="modal-content"><span class="close-button" id="closeVersionCommentModal">&times;</span><h2>Neue Version</h2><form id="versionCommentForm"><textarea id="inputVersionComment" required></textarea><button type="submit" class="primary-button">Speichern</button></form></div>
     </div>
     
-    <div id="importAnalysisModal" class="modal" style="display: none;">
-        <div class="modal-content small">
-            <span class="close-button" id="closeImportAnalysisModal">&times;</span>
-            <h2>Analyse importieren</h2>
-            <p>Die Import-Funktion ist in diesem stabilen Zustand deaktiviert, um Instabilität zu vermeiden.</p>
-            <form id="importForm">
-                <div class="form-group">
-                    <label for="importFileInput">JSON-Datei auswählen:</label>
-                    <input type="file" id="importFileInput" accept=".json" required disabled>
-                </div>
-                <button type="submit" class="primary-button" disabled>Import starten</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="versionControlModal" class="modal" style="display: none;">
-        <div class="modal-content large">
-            <span class="close-button" id="closeVersionControlModal">&times;</span>
-            <h2>Versionskontrolle & Historie</h2>
-            
-            <div class="version-controls">
-                <button id="btnCreateNewVersion" class="primary-button"><i class="fas fa-code-branch"></i> Neue Version speichern</button>
-            </div>
-            
-            <table class="history-table">
-                <thead>
-                    <tr>
-                        <th>Version</th>
-                        <th>Autor</th>
-                        <th>Datum</th>
-                        <th>Kommentar</th>
-                        <th>Aktion</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="versionCommentModal" class="modal" style="display: none;">
-        <div class="modal-content small">
-            <span class="close-button" id="closeVersionCommentModal">&times;</span>
-            <h2>Versionskommentar</h2>
-            <form id="versionCommentForm">
-                <div class="form-group">
-                    <label for="inputVersionComment">Kommentar zur neuen Version</label>
-                    <textarea id="inputVersionComment" rows="3" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Versionstyp</label>
-                    <div style="display: flex; gap: 20px;">
-                        <input type="radio" id="versionMinor" name="versionType" value="minor" checked style="width: auto;">
-                        <label for="versionMinor" style="width: auto;">Minor (z.B. 1.1 -> 1.2)</label>
-                        <input type="radio" id="versionMajor" name="versionType" value="major" style="width: auto;">
-                        <label for="versionMajor" style="width: auto;">Major (z.B. 1.2 -> 2.0)</label>
-                    </div>
-                </div>
-                <button type="submit" class="primary-button">Speichern</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="confirmationModal" class="modal" style="display: none;">
+    <div id="confirmationModal" class="modal" style="display:none;">
         <div class="modal-content small">
             <span class="close-button" id="closeConfirmationModal">&times;</span>
-            <h2 id="confirmationTitle">Bestätigung erforderlich</h2>
-            <p id="confirmationMessage">Sind Sie sicher, dass Sie diese Aktion ausführen möchten?</p>
-            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-                <button id="btnCancelConfirmation" class="action-button">Abbrechen</button>
-                <button id="btnConfirmAction" class="primary-button">Bestätigen</button>
+            <h2 id="confirmationTitle">Bestätigung</h2>
+            <p id="confirmationMessage">Sicher?</p>
+            <div style="text-align:right;">
+                <button id="btnCancelConfirmation" class="action-button">Abbrechen</button> 
+                <button id="btnConfirmAction" class="primary-button">OK</button>
             </div>
         </div>
     </div>

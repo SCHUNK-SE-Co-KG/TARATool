@@ -1,212 +1,217 @@
-
 // =============================================================
-// --- ASSET LOGIK (CRUD) ---
+// --- ASSETS LOGIK ---
 // =============================================================
 
 function renderAssets(analysis) {
-    if (!assetsCardContainer) return; 
+    if (!assetsCardContainer) return;
     assetsCardContainer.innerHTML = '';
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        assetsCardContainer.innerHTML = '<p style="text-align: center; color: #7f8c8d; padding: 40px;">Noch keine Assets erfasst.</p>';
+        assetsCardContainer.innerHTML = '<p style="color: #7f8c8d; grid-column: 1/-1; text-align: center;">Noch keine Assets vorhanden. Klicken Sie auf "Asset hinzufügen".</p>';
         return;
     }
 
     analysis.assets.forEach(asset => {
         const card = document.createElement('div');
-        card.classList.add('asset-card');
-        card.dataset.id = asset.id;
-        
-        const highestCIA = asset.schutzbedarf;
-
+        card.className = 'asset-card';
         card.innerHTML = `
-            <div class="asset-card-header">
-                ${asset.id}: ${asset.name} 
+            <div class="asset-card-header">${asset.id}: ${asset.name}</div>
+            <div class="asset-description-area">
+                <strong>Typ:</strong> ${asset.type || '-'}<br><br>
+                ${asset.description ? asset.description.substring(0, 100) + (asset.description.length > 100 ? '...' : '') : 'Keine Beschreibung'}
             </div>
-            <div class="asset-card-body">
-                <p class="type">Typ: ${asset.type}</p>
-                <p style="margin-top: 10px; font-weight: 600;">Beschreibung:</p>
-                <p>${asset.description || '— Keine Beschreibung erfasst —'}</p>
-                
-                <hr style="border: 0; border-top: 1px dashed #eee; margin: 10px 0;">
-
-                <p style="font-weight: 600;">CIA-Anforderungen:</p>
-                <ul style="list-style: none; padding: 0; margin: 5px 0 0 0;">
-                    <li><strong title="Confidentiality">C (Confidentiality):</strong> ${asset.confidentiality}</li>
-                    <li><strong title="Integrity">I (Integrity):</strong> ${asset.integrity}</li>
-                    <li><strong title="Authenticity">A (Availability):</strong> ${asset.authenticity}</li> 
-                </ul>
+            <div class="asset-cia-area">
+                <div style="font-weight:600; font-size:0.8em; margin-bottom:2px; text-transform:uppercase; color:#999;">Schutzbedarf</div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                    <span title="Confidentiality">C: ${asset.confidentiality || '-'}</span>
+                    <span title="Integrity">I: ${asset.integrity || '-'}</span>
+                    <span title="Availability">A: ${asset.authenticity || '-'}</span>
+                </div>
             </div>
             <div class="asset-card-footer">
-                <span class="protection-level" title="Höchster Wert von C, I, A">Gesamtschutzbedarf: ${highestCIA}</span>
-                <div class="asset-card-actions">
-                    <button onclick="editAsset('${asset.id}')" class="action-button small">Bearbeiten</button>
-                    <button onclick="deleteAsset('${asset.id}')" class="action-button small dangerous">Löschen</button>
-                </div>
+                <button onclick="editAsset('${asset.id}')" class="action-button small">Bearbeiten</button>
+                <button onclick="removeAsset('${asset.id}')" class="action-button small dangerous">Löschen</button>
             </div>
         `;
         assetsCardContainer.appendChild(card);
     });
 }
 
-function saveAsset() {
+function saveAsset(e) {
+    e.preventDefault();
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
     const idField = document.getElementById('assetIdField');
-    const assetId = idField ? idField.value : '';
+    const nameField = document.getElementById('assetName');
+    const typeField = document.getElementById('assetType');
+    const descField = document.getElementById('assetDescription');
 
-    const cEl = document.querySelector('input[name="confidentiality"]:checked');
-    const iEl = document.querySelector('input[name="integrity"]:checked');
-    const aEl = document.querySelector('input[name="authenticity"]:checked');
-
-    if (!cEl || !iEl || !aEl) {
-        showToast('Fehler: Bitte wählen Sie einen Schutzbedarf für alle drei CIA-Ziele aus.', 'error');
+    const assetId = idField.value;
+    const name = nameField.value.trim();
+    
+    if (!name) {
+        showToast('Name ist erforderlich.', 'warning');
         return;
     }
-    
-    const cVal = cEl.value;
-    const iVal = iEl.value;
-    const aVal = aEl.value;
-    
-    const scoreMap = { 'I': 1, 'II': 2, 'III': 3 };
-    const maxScore = Math.max(scoreMap[cVal], scoreMap[iVal], scoreMap[aVal]);
-    const overallSchutzbedarf = Object.keys(scoreMap).find(key => scoreMap[key] === maxScore);
 
-    const newAssetData = {
-        name: document.getElementById('assetName').value.trim(),
-        type: document.getElementById('assetType').value.trim(),
-        description: document.getElementById('assetDescription').value.trim(), 
-        confidentiality: cVal, 
-        integrity: iVal, 
-        authenticity: aVal, 
-        schutzbedarf: overallSchutzbedarf 
+    // CIA Werte auslesen
+    const getRadioVal = (name) => {
+        const el = document.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : '-';
+    };
+    
+    const cia = {
+        c: getRadioVal('confidentiality'),
+        i: getRadioVal('integrity'),
+        a: getRadioVal('authenticity') 
     };
 
+    // Schutzbedarf ermitteln (höchster Wert)
+    let levels = { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
+    let maxLevel = Math.max(levels[cia.c], levels[cia.i], levels[cia.a]);
+    let schutzbedarf = '-';
+    if (maxLevel === 1) schutzbedarf = 'I';
+    if (maxLevel === 2) schutzbedarf = 'II';
+    if (maxLevel === 3) schutzbedarf = 'III';
+
     if (assetId) {
-        // Bearbeiten
+        // Edit
         const index = analysis.assets.findIndex(a => a.id === assetId);
         if (index !== -1) {
-            analysis.assets[index] = { ...newAssetData, id: assetId };
-            showToast('Asset aktualisiert.', 'success');
+            analysis.assets[index] = {
+                ...analysis.assets[index],
+                name: name,
+                type: typeField.value,
+                description: descField.value,
+                confidentiality: cia.c,
+                integrity: cia.i,
+                authenticity: cia.a,
+                schutzbedarf: schutzbedarf
+            };
+            showToast(`Asset ${assetId} aktualisiert.`, 'success');
         }
     } else {
-        // Neu erstellen mit A01 Format
-        const existingIds = analysis.assets
-            .map(a => parseInt(a.id.replace('A', ''), 10))
-            .filter(n => !isNaN(n));
+        // Neu
+        if (!analysis.assets) analysis.assets = [];
+        const existingIds = analysis.assets.map(a => parseInt(a.id.replace('A', ''))).filter(n => !isNaN(n));
+        const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+        const newId = 'A' + newIndex.toString().padStart(2, '0');
         
-        const nextNum = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
-        const newId = `A${nextNum.toString().padStart(2, '0')}`;
-        
-        analysis.assets.push({ ...newAssetData, id: newId });
-        showToast(`Neues Asset ${newId} hinzugefügt.`, 'success');
+        analysis.assets.push({
+            id: newId,
+            name: name,
+            type: typeField.value,
+            description: descField.value,
+            confidentiality: cia.c,
+            integrity: cia.i,
+            authenticity: cia.a,
+            schutzbedarf: schutzbedarf
+        });
+        showToast(`Asset ${newId} erstellt.`, 'success');
     }
 
-    if (assetModal) assetModal.style.display = 'none';
-    saveCurrentAnalysisState();
     saveAnalyses();
     renderAssets(analysis);
-    
-    const activeTab = document.querySelector('.tab-button.active');
-    // NEU: Nur renderImpactMatrix aufrufen, wenn Tab "Schadensszenarien" aktiv ist
-    if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios' && typeof renderImpactMatrix === 'function') {
-        renderImpactMatrix();
-    }
+    if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+    assetModal.style.display = 'none';
 }
 
-window.editAsset = (assetId) => {
-    if (!activeAnalysisId) return;
-
+window.editAsset = (id) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-
-    const asset = analysis.assets.find(a => a.id === assetId);
+    const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
+    if (assetModalTitle) assetModalTitle.textContent = `Asset ${asset.id} bearbeiten`;
     document.getElementById('assetIdField').value = asset.id;
-    assetModalTitle.textContent = `Asset ${asset.id} bearbeiten`;
-    
     document.getElementById('assetName').value = asset.name;
-    document.getElementById('assetType').value = asset.type;
-    document.getElementById('assetDescription').value = asset.description || ''; 
+    document.getElementById('assetType').value = asset.type || '';
+    document.getElementById('assetDescription').value = asset.description || '';
 
-    const cRadio = document.querySelector(`input[name="confidentiality"][value="${asset.confidentiality}"]`);
-    if(cRadio) cRadio.checked = true;
-    const iRadio = document.querySelector(`input[name="integrity"][value="${asset.integrity}"]`);
-    if(iRadio) iRadio.checked = true;
-    const aRadio = document.querySelector(`input[name="authenticity"][value="${asset.authenticity}"]`);
-    if(aRadio) aRadio.checked = true;
+    // Radio Buttons setzen
+    const setRadio = (name, val) => {
+        const els = document.querySelectorAll(`input[name="${name}"]`);
+        els.forEach(el => {
+            el.checked = (el.value === val);
+        });
+    };
+    setRadio('confidentiality', asset.confidentiality);
+    setRadio('integrity', asset.integrity);
+    setRadio('authenticity', asset.authenticity);
 
     if (assetModal) assetModal.style.display = 'block';
 };
 
-window.deleteAsset = (assetId) => {
-    if (!activeAnalysisId) return;
-
+window.removeAsset = (id) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-
-    const asset = analysis.assets.find(a => a.id === assetId);
+    const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
-    
-    confirmationTitle.textContent = 'Asset löschen bestätigen';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie das Asset <b>${asset.id}: ${asset.name}</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
-    
-    btnConfirmAction.textContent = 'Ja, Asset löschen';
-    btnConfirmAction.classList.add('dangerous'); 
-    
-    confirmationModal.style.display = 'block';
 
-    btnConfirmAction.onclick = null; 
-    btnCancelConfirmation.onclick = null;
-    closeConfirmationModal.onclick = null;
-    
-    btnConfirmAction.onclick = () => {
-        analysis.assets = analysis.assets.filter(a => a.id !== assetId);
-        delete analysis.impactMatrix[assetId];
+    // FIX: Explizite DOM-Elemente holen (verhindert ReferenceError)
+    const modal = document.getElementById('confirmationModal');
+    const title = document.getElementById('confirmationTitle'); // Benötigt das korrigierte HTML!
+    const msg = document.getElementById('confirmationMessage');
+    const btnConfirm = document.getElementById('btnConfirmAction');
+    const btnCancel = document.getElementById('btnCancelConfirmation');
+    const btnClose = document.getElementById('closeConfirmationModal');
 
-        saveCurrentAnalysisState();
+    // Sicherstellen, dass das Element existiert, um Abstürze zu vermeiden
+    if (title) title.textContent = 'Asset löschen';
+    
+    msg.innerHTML = `Möchten Sie das Asset <b>${asset.name} (${asset.id})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`;
+    
+    btnConfirm.textContent = 'Löschen';
+    btnConfirm.className = 'primary-button dangerous';
+
+    modal.style.display = 'block';
+
+    // Events bereinigen
+    btnConfirm.onclick = null;
+    btnCancel.onclick = null;
+    btnClose.onclick = null;
+
+    btnConfirm.onclick = () => {
+        analysis.assets = analysis.assets.filter(a => a.id !== id);
+        
+        // Bereinige Impact Matrix
+        if (analysis.impactMatrix && analysis.impactMatrix[id]) {
+            delete analysis.impactMatrix[id];
+        }
+
         saveAnalyses();
         renderAssets(analysis);
-        if (typeof renderImpactMatrix === 'function') {
-            renderImpactMatrix(); 
-        }
+        if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
         
-        confirmationModal.style.display = 'none'; 
-        showToast(`Asset ${assetId} gelöscht.`, 'success');
+        modal.style.display = 'none';
+        showToast(`Asset ${id} gelöscht.`, 'success');
     };
-    
-    btnCancelConfirmation.onclick = () => { confirmationModal.style.display = 'none'; };
-    closeConfirmationModal.onclick = () => { confirmationModal.style.display = 'none'; };
+
+    const closeFn = () => { modal.style.display = 'none'; };
+    btnCancel.onclick = closeFn;
+    btnClose.onclick = closeFn;
 };
 
-// Event Listener für Modals
+if (assetForm) {
+    assetForm.onsubmit = saveAsset;
+}
+
 if (btnAddAsset) {
     btnAddAsset.onclick = () => {
         if (!activeAnalysisId) {
-            showToast('Bitte wählen Sie zuerst eine aktive Analyse aus.', 'info');
+            showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
             return;
         }
-        if (assetForm) assetForm.reset();
+        if (assetModalTitle) assetModalTitle.textContent = 'Neues Asset';
+        assetForm.reset();
         document.getElementById('assetIdField').value = '';
-        assetModalTitle.textContent = 'Neues Asset erfassen';
-        
-        document.querySelector('input[name="confidentiality"][value="I"]').checked = true;
-        document.querySelector('input[name="integrity"][value="I"]').checked = true;
-        document.querySelector('input[name="authenticity"][value="I"]').checked = true;
-        
         if (assetModal) assetModal.style.display = 'block';
     };
 }
 
 if (closeAssetModal) {
-    closeAssetModal.onclick = () => { if (assetModal) assetModal.style.display = 'none'; };
-}
-
-if (assetForm) {
-    assetForm.onsubmit = (e) => {
-        e.preventDefault();
-        saveAsset();
+    closeAssetModal.onclick = () => {
+        if (assetModal) assetModal.style.display = 'none';
     };
 }

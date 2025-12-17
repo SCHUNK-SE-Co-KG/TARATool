@@ -5,141 +5,55 @@
 document.addEventListener('DOMContentLoaded', () => {
     
     // 1. Initialisierung
-    loadAnalyses();
-    renderAnalysisSelector(); 
+    if (typeof loadAnalyses === 'function') loadAnalyses();
+    if (typeof renderAnalysisSelector === 'function') renderAnalysisSelector(); 
 
-    // Aktiviere die erste Analyse
     if (analysisData.length > 0) {
         const firstId = analysisData[0].id;
-        activateAnalysis(firstId); 
+        if (typeof activateAnalysis === 'function') activateAnalysis(firstId); 
     } else {
-        fillAnalysisForm(defaultAnalysis);
-        statusBarMessage.textContent = 'Bitte starten Sie eine neue Analyse.';
+        if (typeof fillAnalysisForm === 'function') fillAnalysisForm(defaultAnalysis);
+        if (statusBarMessage) statusBarMessage.textContent = 'Bitte starten Sie eine neue Analyse.';
     }
     
     // 2. Listener für den Analysen-Selektor
     if (analysisSelector) {
         analysisSelector.addEventListener('change', (e) => {
-            activateAnalysis(e.target.value);
+            if (typeof activateAnalysis === 'function') activateAnalysis(e.target.value);
         });
     }
     
-    // 3. Change-Listener für Konsistenz (Aktualisierung des Headers/Speichern)
-    document.querySelectorAll('#inputAnalysisName, #inputAuthorName, #inputDescription, #inputIntendedUse').forEach(input => {
+    // 3. Listener für Metadaten-Änderungen (Auto-Save)
+    const metaInputs = document.querySelectorAll('#inputAnalysisName, #inputAuthorName, #inputDescription, #inputIntendedUse');
+    metaInputs.forEach(input => {
         input.addEventListener('change', () => {
-            saveCurrentAnalysisState();
+            if (typeof saveCurrentAnalysisState === 'function') saveCurrentAnalysisState();
             
+            // Wenn Name/Autor geändert, Header & Liste aktualisieren
             if (input.id === 'inputAnalysisName' || input.id === 'inputAuthorName') {
                 const analysis = analysisData.find(a => a.id === activeAnalysisId);
                 if (analysis) {
                     fillAnalysisForm(analysis); 
+                    renderAnalysisSelector();
                 }
             }
         });
     });
 
-    // 4. Haupt-Button Listeners
-    
-    if (btnSave) {
-        btnSave.onclick = () => {
-            saveCurrentAnalysisState();
-            saveAnalyses();
-            showToast('Änderungen gespeichert.', 'success');
-            statusBarMessage.textContent = 'Änderungen gespeichert.';
-        };
-    }
-    
-    if (btnExportAnalysis) {
-        btnExportAnalysis.onclick = handleExport;
-    }
-    
-    if (document.getElementById('btnImportAnalysis')) {
-        document.getElementById('btnImportAnalysis').onclick = () => {
-            confirmationTitle.textContent = 'Achtung: Datenimport';
-            confirmationMessage.innerHTML = 'Durch den Datenimport werden die Daten im Browser überschrieben.<br>Sichern Sie Ihre Daten vorab mit der Export-Funktion, um Datenverlust zu vermeiden.';
-            
-            btnConfirmAction.textContent = 'Importieren';
-            btnConfirmAction.classList.remove('dangerous'); 
-            
-            confirmationModal.style.display = 'block';
-
-            btnConfirmAction.onclick = null; 
-            btnCancelConfirmation.onclick = null;
-            closeConfirmationModal.onclick = null;
-            
-            btnConfirmAction.onclick = () => {
-                confirmationModal.style.display = 'none';
-                handleImportWarningConfirmed();
-            };
-            
-            btnCancelConfirmation.onclick = () => {
-                confirmationModal.style.display = 'none';
-                showToast('Import abgebrochen.', 'info');
-            };
-            
-            closeConfirmationModal.onclick = () => {
-                confirmationModal.style.display = 'none';
-                showToast('Import abgebrochen.', 'info');
-            };
-        };
-    }
-
-    // 5. Versionskontrolle Modal Listeners
-    if (btnShowVersionControl) {
-        btnShowVersionControl.onclick = () => {
-            const analysis = analysisData.find(a => a.id === activeAnalysisId);
-            if (analysis) {
-                renderHistoryTable(analysis);
-                versionControlModal.style.display = 'block';
-            }
-        };
-    }
-    
-    if (btnCreateNewVersion) {
-        btnCreateNewVersion.onclick = () => {
-            if (!activeAnalysisId) return;
-            versionControlModal.style.display = 'none'; 
-            inputVersionComment.value = ''; 
-            versionCommentModal.style.display = 'block';
-            
-            const defaultMinor = document.querySelector('input[name="versionType"][value="minor"]');
-            if (defaultMinor) defaultMinor.checked = true;
-        };
-    }
-    
-    // 6. Neues Analyse Modal Listeners
-    if (document.getElementById('btnNewAnalysis')) {
-        document.getElementById('btnNewAnalysis').onclick = () => {
-            newAnalysisForm.reset();
-            newAnalysisModal.style.display = 'block';
-        };
-    }
-    
-    if (closeNewAnalysisModal) {
-        closeNewAnalysisModal.onclick = () => newAnalysisModal.style.display = 'none';
-    }
-
-    // 7. Import Modal (Schließen des Hauptmodals)
-    if (closeImportAnalysisModal) {
-        closeImportAnalysisModal.onclick = () => importAnalysisModal.style.display = 'none';
-    }
-    
-    // 8. Globaler Listener zum Schließen von Modals bei Klick außerhalb
-    window.onclick = function(event) {
-        if (event.target == newAnalysisModal || event.target == versionControlModal || event.target == importAnalysisModal || event.target == assetModal || event.target == versionCommentModal || event.target == confirmationModal || event.target == damageScenarioModal) {
-            event.target.style.display = 'none';
-        }
-    };
-    
-    // 9. TAB NAVIGATION
-    document.querySelectorAll('.tab-navigation .tab-button').forEach(button => {
+    // 4. TAB NAVIGATION
+    const tabs = document.querySelectorAll('.tab-navigation .tab-button');
+    tabs.forEach(button => {
         button.addEventListener('click', (e) => {
-            if (activeAnalysisId) {
+            // Speichern bevor gewechselt wird
+            if (activeAnalysisId && typeof saveCurrentAnalysisState === 'function') {
                 saveCurrentAnalysisState();
             }
-            document.querySelectorAll('.tab-navigation .tab-button').forEach(btn => btn.classList.remove('active'));
+
+            // Buttons umschalten
+            tabs.forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
 
+            // Inhalte umschalten
             document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
             const tabId = e.target.dataset.tab;
             const tabContent = document.getElementById(tabId);
@@ -147,19 +61,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 tabContent.style.display = 'block';
             }
             
+            // Render Funktionen aufrufen
             const activeAnalysis = analysisData.find(a => a.id === activeAnalysisId);
+            if (!activeAnalysis) return;
             
-            if (tabId === 'tabAssets' && activeAnalysis && typeof renderAssets === 'function') {
-                renderAssets(activeAnalysis);
-            } 
-            else if (tabId === 'tabDamageScenarios' && activeAnalysis && typeof renderDamageScenarios === 'function' && typeof renderImpactMatrix === 'function') {
-                renderDamageScenarios();
-                renderImpactMatrix();
+            if (tabId === 'tabOverview') {
+                if (typeof renderOverview === 'function') renderOverview(activeAnalysis);
             }
-            // NEU: Logik für Risikoanalyse Tab hinzufügen
-            else if (tabId === 'tabRiskAnalysis' && activeAnalysis && typeof renderRiskAnalysis === 'function') {
-                renderRiskAnalysis();
+            else if (tabId === 'tabAssets') {
+                if (typeof renderAssets === 'function') renderAssets(activeAnalysis);
+            } 
+            else if (tabId === 'tabDamageScenarios') {
+                if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
+                if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+            }
+            else if (tabId === 'tabRiskAnalysis') {
+                if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
             }
         });
     });
+
+    // 5. BUTTON EVENTS
+    
+    if (btnExportAnalysis) {
+        btnExportAnalysis.onclick = () => {
+            if (typeof exportAnalysis === 'function') exportAnalysis();
+        };
+    }
+
+    if (btnImportAnalysis) {
+        btnImportAnalysis.onclick = () => {
+            if (importFileInput) importFileInput.value = '';
+            if (importAnalysisModal) importAnalysisModal.style.display = 'block';
+        };
+    }
+    
+    if (btnNewAnalysis) {
+        btnNewAnalysis.onclick = () => {
+            if (newAnalysisForm) newAnalysisForm.reset();
+            if (newAnalysisModal) newAnalysisModal.style.display = 'block';
+        };
+    }
+
+    if (btnSave) {
+        btnSave.onclick = () => {
+            if (typeof saveCurrentAnalysisState === 'function') saveCurrentAnalysisState();
+            if (typeof saveAnalyses === 'function') saveAnalyses();
+            if (typeof showToast === 'function') showToast('Analyse gespeichert.', 'success');
+        };
+    }
+    
+    if (btnShowVersionControl) {
+        btnShowVersionControl.onclick = () => {
+             const analysis = analysisData.find(a => a.id === activeAnalysisId);
+             if (analysis && typeof renderHistoryTable === 'function') {
+                 renderHistoryTable(analysis);
+                 if (versionControlModal) versionControlModal.style.display = 'block';
+             }
+        };
+    }
 });
