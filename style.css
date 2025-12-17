@@ -685,10 +685,11 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* =============================================================
-   --- N.node-stats-box, .kstu-summary {
+   --- N.node-stats-box, */
+   .kstu-summary {
     margin-top: 10px;
     background-color: #fdfdfd;
-    border: 1px solid #333; /* Dunkler Rahmen für ASCII-Look */
+    border: 1px solid #333; 
     border-radius: 4px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace; 
     font-size: 0.85em;

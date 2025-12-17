@@ -255,36 +255,6 @@ function renderImpactMatrix() {
     dsMatrixContainer.innerHTML = html;
 }
 
-// Event Listener für DS Modals
-if (btnAddDamageScenario) {
-    btnAddDamageScenario.onclick = () => {
-         if (!activeAnalysisId) {
-            showToast('Bitte wählen Sie zuerst eine aktive Analyse aus.', 'info');
-            return;
-        }
-        damageScenarioForm.reset();
-        if (dsIdField) dsIdField.value = ''; 
-        
-        const analysis = analysisData.find(a => a.id === activeAnalysisId);
-        let maxNum = 0;
-        const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...(analysis.damageScenarios || [])];
-        allDS.forEach(ds => {
-             const match = ds.id.match(/DS(\d+)/);
-             if (match) maxNum = Math.max(maxNum, parseInt(match[1]));
-        });
-        const nextId = 'DS' + (maxNum + 1);
-        
-        if (dsModalTitle) dsModalTitle.textContent = `Neues Schadensszenario ${nextId} erfassen`;
-        damageScenarioModal.style.display = 'block';
-    };
-}
-if (closeDamageScenarioModal) {
-    closeDamageScenarioModal.onclick = () => damageScenarioModal.style.display = 'none';
-}
-if (damageScenarioForm) {
-    damageScenarioForm.onsubmit = saveDamageScenario; 
-}
-
 
 // =============================================================
 // --- RISIKOANALYSE & ANGRIFFSBAUM LOGIK ---
@@ -356,7 +326,10 @@ function renderRiskAnalysis() {
         <div class="success-box">
             <h4>Datenprüfung abgeschlossen</h4>
             <p>Alle notwendigen Assets, Schadensszenarien und Impact-Bewertungen sind vorhanden.</p>
-            <button id="btnOpenAttackTreeModal" class="primary-button large" style="margin-top:10px;"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
+            <div style="margin-top:10px; display:flex; gap:10px;">
+                <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
+                <button onclick="exportRiskAnalysisToDot()" class="action-button large"><i class="fas fa-file-export"></i> Alle Exportieren (.dot)</button>
+            </div>
         </div>
         
         <div id="existingRiskEntriesContainer" style="margin-top: 20px;">
@@ -365,7 +338,7 @@ function renderRiskAnalysis() {
     `;
 
     const btn = document.getElementById('btnOpenAttackTreeModal');
-    if (btn) btn.onclick = () => openAttackTreeModal(); // Neuer Aufruf ohne ID -> Erstellt neu
+    if (btn) btn.onclick = () => openAttackTreeModal(); 
 }
 
 function renderExistingRiskEntries(analysis) {
@@ -375,7 +348,6 @@ function renderExistingRiskEntries(analysis) {
 
     let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
     analysis.riskEntries.forEach(entry => {
-        // Hier greifen wir auf das korrekte Feld zu: rootRiskValue
         const rootRisk = entry.rootRiskValue || '-';
 
         html += `
@@ -399,7 +371,6 @@ function renderExistingRiskEntries(analysis) {
     return html;
 }
 
-// Global verfügbar machen für onclick im HTML
 window.editAttackTree = (riskId) => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -410,14 +381,10 @@ window.editAttackTree = (riskId) => {
 
 
 // ------------------------------------------------------------------
-// NEUE HILFSFUNKTION: IDs neu durchnummerieren (R01, R02, ...)
+// RE-INDIZIERUNG
 // ------------------------------------------------------------------
 function reindexRiskIDs(analysis) {
     if (!analysis || !analysis.riskEntries) return;
-    
-    // Sortieren um Reihenfolge beizubehalten (falls nötig)
-    // Wir nehmen an, die Array-Reihenfolge ist die gewünschte.
-    
     analysis.riskEntries.forEach((entry, index) => {
         const newId = 'R' + (index + 1).toString().padStart(2, '0');
         entry.id = newId;
@@ -448,7 +415,7 @@ window.deleteAttackTree = (riskId) => {
         // Löschen
         analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
         
-        // NEU: Sofort Re-Indizieren
+        // Re-Indizieren
         reindexRiskIDs(analysis);
 
         saveAnalyses();
@@ -491,22 +458,17 @@ function openAttackTreeModal(existingEntry = null) {
     if (attackTreeForm) attackTreeForm.reset();
     const hiddenIdField = document.getElementById('at_id');
     
-    // Default: Keine tiefe Struktur
     setTreeDepth(false); 
 
     if (existingEntry) {
-        // --- DATEN LADEN ---
         if (hiddenIdField) hiddenIdField.value = existingEntry.id;
         
-        // Tiefe Struktur prüfen
         const hasL2 = existingEntry.useDeepTree === true;
         setTreeDepth(hasL2);
         
-        // Root Pfad
         const rootInput = document.querySelector('input[name="at_root"]');
         if (rootInput) rootInput.value = existingEntry.rootName;
 
-        // Leaf Loader Helper
         const loadLeaf = (leafData, leafIndex) => {
             if (!leafData) return;
             const prefix = `at_leaf_${leafIndex}`;
@@ -522,7 +484,6 @@ function openAttackTreeModal(existingEntry = null) {
             document.querySelectorAll(`input[type="checkbox"][name^="${prefix}_ds"]`).forEach(c => { if (c) c.checked = false; });
             if (leafData.ds && Array.isArray(leafData.ds)) {
                 leafData.ds.forEach(dsVal => {
-                    // dsVal ist z.B. "DS1"
                     const num = dsVal.replace('DS', '');
                     const chk = document.querySelector(`input[name="${prefix}_ds${num}"]`);
                     if (chk) chk.checked = true;
@@ -530,42 +491,32 @@ function openAttackTreeModal(existingEntry = null) {
             }
         };
 
-        // Branch 1
         if (existingEntry.branches[0]) {
             const b1 = existingEntry.branches[0];
             document.querySelector('input[name="at_branch_1"]').value = b1.name;
-            
-            // Level 2 (optional)
             if (hasL2 && b1.l2_node) {
                  const l2Inp = document.querySelector('input[name="at_branch_1_l2"]');
                  if(l2Inp) l2Inp.value = b1.l2_node.name || '';
             }
-
             loadLeaf(b1.leaves[0], 1);
             loadLeaf(b1.leaves[1], 2);
         }
 
-        // Branch 2
         if (existingEntry.branches[1]) {
             const b2 = existingEntry.branches[1];
             document.querySelector('input[name="at_branch_2"]').value = b2.name;
-            
-            // Level 2 (optional)
             if (hasL2 && b2.l2_node) {
                  const l2Inp = document.querySelector('input[name="at_branch_2_l2"]');
                  if(l2Inp) l2Inp.value = b2.l2_node.name || '';
             }
-
             loadLeaf(b2.leaves[0], 3);
             loadLeaf(b2.leaves[1], 4);
         }
         
     } else {
-        // --- NEU ERSTELLEN ---
         if (hiddenIdField) hiddenIdField.value = ''; 
     }
 
-    // Toggle Button Event Listener initialisieren
     const btnToggle = document.getElementById('btnToggleTreeDepth');
     if (btnToggle) {
         btnToggle.onclick = () => {
@@ -574,7 +525,6 @@ function openAttackTreeModal(existingEntry = null) {
         };
     }
 
-    // Delete Button Logik
     const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
     if (delBtn) {
         if (existingEntry && existingEntry.id) {
@@ -586,7 +536,6 @@ function openAttackTreeModal(existingEntry = null) {
         }
     }
 
-    // Summaries aktualisieren
     updateAttackTreeKSTUSummariesFromForm();
     if (attackTreeModal) attackTreeModal.style.display = 'block';
 }
@@ -600,7 +549,6 @@ function saveAttackTree(e) {
     const editingId = fd.get('at_id');
     const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
 
-    // Datenstruktur aufbauen
     const treeData = {
         id: editingId || generateNextRiskID(analysis),
         rootName: fd.get('at_root'),
@@ -625,11 +573,9 @@ function saveAttackTree(e) {
         ]
     };
 
-    // Worst-Case Vererbung & Berechnung
     applyImpactInheritance(treeData, analysis);
     applyWorstCaseInheritance(treeData);
     
-    // Gesamtrisiko Root
     const rootKSTU = treeData.kstu; 
     const rootI = parseFloat(treeData.i_norm) || 0;
     const sumP = (parseFloat(rootKSTU.k)||0) + (parseFloat(rootKSTU.s)||0) + (parseFloat(rootKSTU.t)||0) + (parseFloat(rootKSTU.u)||0);
@@ -650,8 +596,6 @@ function saveAttackTree(e) {
         showToast(`Angriffsbaum gespeichert.`, 'success');
     }
     
-    // WICHTIG: Immer Re-Indizieren, damit IDs sauber sind (R01, R02...)
-    // Das behebt das Problem mit "verwaisten" R03 IDs.
     reindexRiskIDs(analysis);
     
     saveAnalyses();
@@ -659,8 +603,6 @@ function saveAttackTree(e) {
     renderRiskAnalysis(); 
 }
 
-
-// Liest DS-Checkboxen eines Leafs
 function readLeafDsFromDOM(leafIndex) {
     const ds = [];
     const boxes = document.querySelectorAll(`input[type="checkbox"][name^="at_leaf_${leafIndex}_ds"]`);
@@ -679,7 +621,6 @@ function extractLeafData(formData, index) {
         checkedDS = readLeafDsFromDOM(index);
     } catch (e) { checkedDS = []; }
 
-    // Fallback falls DOM leer
     if (checkedDS.length === 0) {
          for (const [key, val] of formData.entries()) {
             if (!key) continue;
@@ -719,12 +660,8 @@ function _kstuWorstCase(items) {
         }
         items.forEach(it => {
             if (!it) return;
-            // Wenn it ein Leaf-Objekt ist, sind die Werte evtl strings
-            // Wenn it ein Node ist (branch), ist es schon ein kstu objekt
             let raw = it[key];
-            // Falls it das 'kstu' Objekt selbst enthält (Structure mismatch prevention)
             if (it.kstu && it.kstu[key]) raw = it.kstu[key];
-            
             const v = _parseKSTUValue(raw);
             if (v === null) return;
             if (max === null || v > max) max = v;
@@ -734,7 +671,6 @@ function _kstuWorstCase(items) {
     return res;
 }
 
-// I(norm) Berechnung (S x G)
 function computeLeafImpactNorm(dsList, analysis) {
     if (!analysis || !analysis.impactMatrix) return '';
     if (!dsList || dsList.length === 0) return '';
@@ -776,41 +712,36 @@ function applyWorstCaseInheritance(treeData) {
     if (!treeData || !treeData.branches) return treeData;
 
     treeData.branches.forEach(branch => {
-        // 1. Blätter -> L2 (wenn vorhanden) oder direkt Branch
         const leavesWC = _kstuWorstCase(branch.leaves || []);
         
         if (treeData.useDeepTree && branch.l2_node) {
-            // Wenn Deep Tree: L2 erbt von Leaves
             branch.l2_node.kstu = leavesWC;
-            // Branch erbt von L2
             branch.kstu = _kstuWorstCase([branch.l2_node]);
         } else {
-            // Normal: Branch erbt von Leaves
             branch.kstu = leavesWC;
         }
     });
 
-    // Root erbt von Branches
     treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
     return treeData;
 }
 
+// === HELPER WIEDERHERGESTELLT ===
 function _parseImpactValue(val) {
     const num = parseFloat(val);
     return isNaN(num) ? null : num;
 }
+// =================================
 
 function applyImpactInheritance(treeData, analysis) {
     if (!treeData || !treeData.branches) return treeData;
 
     treeData.branches.forEach(branch => {
-        // 1. Blätter berechnen
         (branch.leaves || []).forEach(leaf => {
             const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
             leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
         });
 
-        // 2. Max I(norm) aus Blättern
         let bMax = 0.0;
         let bFound = false;
         (branch.leaves || []).forEach(leaf => {
@@ -822,16 +753,14 @@ function applyImpactInheritance(treeData, analysis) {
         
         const leavesMaxI = bFound ? bMax.toFixed(2) : '';
 
-        // 3. Vererbungskette
         if (treeData.useDeepTree && branch.l2_node) {
             branch.l2_node.i_norm = leavesMaxI;
-            branch.i_norm = leavesMaxI; // L1 erbt von L2 (Identisch)
+            branch.i_norm = leavesMaxI; 
         } else {
             branch.i_norm = leavesMaxI;
         }
     });
 
-    // Root
     let rMax = 0.0;
     let rFound = false;
     treeData.branches.forEach(branch => {
@@ -845,7 +774,6 @@ function applyImpactInheritance(treeData, analysis) {
     return treeData;
 }
 
-// Render Funktion für die Kacheln (inkl. Leaf R Anzeige)
 function _renderNodeSummaryHTML(kstu, iNorm) {
     const valK = parseFloat(kstu?.k) || 0;
     const valS = parseFloat(kstu?.s) || 0;
@@ -897,7 +825,6 @@ function updateAttackTreeKSTUSummariesFromForm() {
     
     const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
 
-    // Helper um Blattdaten zu lesen
     const getLeafDs = (idx) => readLeafDsFromDOM(idx);
     const getLeafKSTU = (idx) => ({
         k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
@@ -906,7 +833,6 @@ function updateAttackTreeKSTUSummariesFromForm() {
         u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
     });
 
-    // Dummy Struktur aufbauen für Vererbungsrechnung
     const formValues = {
         useDeepTree: useDeepTree,
         branches: [
@@ -927,33 +853,25 @@ function updateAttackTreeKSTUSummariesFromForm() {
         ]
     };
     
-    // Berechnungen
     applyImpactInheritance(formValues, analysis);
     applyWorstCaseInheritance(formValues);
 
-    // --- RENDERING ---
-    
-    // 1. Root
     const elRoot = document.getElementById('at_root_kstu_summary');
     if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
 
-    // 2. Branches L1 & L2
     [0, 1].forEach((bIdx) => {
         const branchNum = bIdx + 1;
         const branchData = formValues.branches[bIdx];
         
-        // L1
         const elB1 = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
         if (elB1) elB1.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
         
-        // L2 (nur rendern wenn aktiv)
         if (useDeepTree) {
             const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
             if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData.l2_node.kstu, branchData.l2_node.i_norm);
         }
     });
 
-    // 3. Leaves (Jetzt auch mit Risikoanzeige!)
     const leaves = [
         formValues.branches[0].leaves[0], formValues.branches[0].leaves[1],
         formValues.branches[1].leaves[0], formValues.branches[1].leaves[1]
@@ -965,15 +883,13 @@ function updateAttackTreeKSTUSummariesFromForm() {
         if (inp) inp.value = leaf.i_norm;
         
         const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
-        if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm); // Leaf KSTU ist direkt im Leaf Objekt
+        if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm); 
         
         const oldDisplay = document.querySelector(`.leaf-container .inorm-display`); 
         if(oldDisplay) oldDisplay.style.display = 'none'; 
     });
 }
 
-
-// Live-Update Logik
 if (attackTreeForm) {
     attackTreeForm.onsubmit = saveAttackTree;
 
@@ -996,16 +912,159 @@ if (attackTreeForm) {
 
 function generateNextRiskID(analysis) {
     if (!analysis.riskEntries) return 'R01';
-    // Da wir eh re-indizieren, können wir einfach die Länge + 1 nehmen
-    // Das ist sicher, solange reindexRiskIDs aufgerufen wird.
     return 'R' + (analysis.riskEntries.length + 1).toString().padStart(2, '0');
 }
 
-// -------------------------------------------------------------
-// FIX: Close Button für Attack Tree Modal (Robuster Init)
-// -------------------------------------------------------------
+// =============================================================
+// --- EXPORT TO DOT (GRAPHVIZ) ---
+// =============================================================
+
+function exportRiskAnalysisToDot() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis || !analysis.riskEntries || analysis.riskEntries.length === 0) {
+        showToast('Keine Angriffsbäume zum Exportieren vorhanden.', 'warning');
+        return;
+    }
+
+    let dot = 'digraph {\n\n';
+    dot += '    node [shape=record];\n';
+    dot += '    overlap = false;\n    splines = true;\n\n';
+
+    // Helper für Zahlenformate (0.5 -> 0,5)
+    const _fmt = (val) => {
+        if (val === null || val === undefined || val === '') return '0,0';
+        return String(val).replace('.', ',');
+    };
+
+    // Helper für P String
+    const _pStr = (kstu) => {
+        if (!kstu) return '- / - / - / -';
+        const k = _fmt(kstu.k);
+        const s = _fmt(kstu.s);
+        const t = _fmt(kstu.t);
+        const u = _fmt(kstu.u);
+        return `${k} / ${s} / ${t} / ${u}`;
+    };
+
+    // Helper für R Calc (Label Logik)
+    const _calcR = (iNorm, kstu) => {
+        const iVal = parseFloat(String(iNorm).replace(',','.')) || 0;
+        const k = parseFloat(kstu?.k) || 0;
+        const s = parseFloat(kstu?.s) || 0;
+        const t = parseFloat(kstu?.t) || 0;
+        const u = parseFloat(kstu?.u) || 0;
+        const pSum = k + s + t + u;
+        return _fmt((iVal * pSum).toFixed(2));
+    };
+
+    // Helper für Label
+    const _lbl = (text, kstu, iNorm) => {
+        const p = _pStr(kstu);
+        const i = _fmt(iNorm);
+        const r = _calcR(i, kstu);
+        const cleanText = (text || '').replace(/[\{\}<>|]/g, '');
+        return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
+    };
+
+    analysis.riskEntries.forEach(entry => {
+        const riskId = entry.id; // R01, R02...
+        
+        // --- NODES ---
+        
+        // Root
+        const rootId = `${riskId}_Root`;
+        dot += `    // Tree ${riskId}\n`;
+        dot += `    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}"]\n`;
+
+        entry.branches.forEach((branch, bIdx) => {
+            const bId = `${riskId}_B${bIdx+1}`;
+            // Branch Node
+            if (branch.name) {
+                dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}"]\n`;
+            }
+
+            // Optional L2
+            let l2Id = null;
+            if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
+                l2Id = `${riskId}_B${bIdx+1}_L2`;
+                dot += `    ${l2Id} [label="${_lbl(branch.l2_node.name, branch.l2_node.kstu, branch.l2_node.i_norm)}"]\n`;
+            }
+
+            // Leaves
+            if (branch.leaves) {
+                branch.leaves.forEach((leaf, lIdx) => {
+                    if (leaf.text) {
+                        const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
+                        // HIER WURDE GEÄNDERT: leaf statt leaf.kstu übergeben
+                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}"]\n`;
+                    }
+                });
+            }
+        });
+        
+        dot += '\n';
+
+        // --- EDGES ---
+        entry.branches.forEach((branch, bIdx) => {
+            if (!branch.name) return;
+            const bId = `${riskId}_B${bIdx+1}`;
+            
+            // Root -> Branch
+            dot += `    ${rootId} -> ${bId}\n`;
+
+            // Branch Flow
+            let parentForLeaves = bId;
+            
+            if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
+                const l2Id = `${riskId}_B${bIdx+1}_L2`;
+                // Branch -> L2
+                dot += `    ${bId} -> ${l2Id}\n`;
+                parentForLeaves = l2Id;
+            }
+
+            // (Branch or L2) -> Leaves
+            if (branch.leaves) {
+                branch.leaves.forEach((leaf, lIdx) => {
+                    if (leaf.text) {
+                        const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
+                        dot += `    ${parentForLeaves} -> ${lId}\n`;
+                    }
+                });
+            }
+        });
+
+        dot += '\n';
+    });
+
+    dot += '}\n';
+
+    // DOWNLOAD FIX (Binary/Octet Stream forcing)
+    const blob = new Blob([dot], { type: 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    // Dateiname bereinigen
+    const safeName = (analysis.name || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    a.download = `TARA_${safeName}_Export.dot`;
+    
+    document.body.appendChild(a);
+    a.click();
+    
+    // Aufräumen mit leichter Verzögerung für Browser-Kompatibilität
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 100);
+    
+    showToast('Export wurde gestartet.', 'success');
+}
+
+// Global verfügbar machen
+window.exportRiskAnalysisToDot = exportRiskAnalysisToDot;
+
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Falls das Skript nachträglich geladen wird, auch direkt suchen:
     const closeBtn = document.getElementById('closeAttackTreeModal');
     const modal = document.getElementById('attackTreeModal');
     if (closeBtn && modal) {
@@ -1015,7 +1074,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Fallback für den Fall, dass DOMContentLoaded schon gefeuert hat:
 (function() {
     const closeBtn = document.getElementById('closeAttackTreeModal');
     const modal = document.getElementById('attackTreeModal');
