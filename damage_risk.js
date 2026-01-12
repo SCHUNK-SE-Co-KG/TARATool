@@ -335,7 +335,7 @@ function renderRiskAnalysis() {
         <div class="success-box" style="margin-bottom:20px;">
             <div style="display:flex; gap:10px;">
                 <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
-                <button onclick="exportRiskAnalysisToDot()" class="action-button large"><i class="fas fa-file-export"></i> Export (.dot)</button>
+                <button onclick="downloadDotFile()" class="action-button large"><i class="fas fa-file-export"></i> Export (.dot)</button>
             </div>
         </div>
         <div id="existingRiskEntriesContainer">
@@ -1112,7 +1112,8 @@ function generateDotString(analysis, specificTreeId = null) {
     return dot;
 }
 
-window.exportRiskAnalysisToDot = exportRiskAnalysisToDot;
+// Wir definieren exportRiskAnalysisToDot als Alias für generateDotString
+window.exportRiskAnalysisToDot = generateDotString;
 
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('closeAttackTreeModal');
@@ -1123,3 +1124,49 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+
+// =============================================================
+// --- EXPORT TRIGGER FÜR .DOT DATEI ---
+// =============================================================
+
+window.downloadDotFile = function() {
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+    
+    if (!dotContent) {
+        if (typeof showToast === 'function') {
+            showToast('Keine Daten für den Export vorhanden.', 'warning');
+        } else {
+            alert('Keine Daten für den Export vorhanden.');
+        }
+        return;
+    }
+
+    try {
+        const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        
+        const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
+        
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        
+        // Aufräumen
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+
+        if (typeof showToast === 'function') {
+            showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
+        }
+    } catch (err) {
+        console.error("Fehler beim DOT-Export:", err);
+        if (typeof showToast === 'function') {
+            showToast('Export fehlgeschlagen.', 'error');
+        }
+    }
+};
