@@ -184,25 +184,24 @@ function updateAttackTreeKSTUSummariesFromForm() {
         u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
     });
 
+    const AT_MAX_IMPACTS_PER_PATH = 5;
+    const AT_BRANCH_LEAF_BASE = [1, 6]; // Branch 1: 1..5, Branch 2: 6..10
+
     const formValues = {
         useDeepTree: useDeepTree,
         branches: [
-            {
-                l2_node: useDeepTree ? {} : null,
-                leaves: [
-                    { ds: getLeafDs(1), kstu: getLeafKSTU(1) },
-                    { ds: getLeafDs(2), kstu: getLeafKSTU(2) }
-                ]
-            },
-            {
-                l2_node: useDeepTree ? {} : null,
-                leaves: [
-                    { ds: getLeafDs(3), kstu: getLeafKSTU(3) },
-                    { ds: getLeafDs(4), kstu: getLeafKSTU(4) }
-                ]
-            }
+            { l2_node: useDeepTree ? {} : null, leaves: [] },
+            { l2_node: useDeepTree ? {} : null, leaves: [] }
         ]
     };
+
+    for (let b = 0; b < 2; b++) {
+        const base = AT_BRANCH_LEAF_BASE[b];
+        for (let i = 0; i < AT_MAX_IMPACTS_PER_PATH; i++) {
+            const idx = base + i;
+            formValues.branches[b].leaves.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+        }
+    }
     
     applyImpactInheritance(formValues, analysis);
     applyWorstCaseInheritance(formValues);
@@ -223,19 +222,18 @@ function updateAttackTreeKSTUSummariesFromForm() {
         }
     });
 
-    const leaves = [
-        formValues.branches[0].leaves[0], formValues.branches[0].leaves[1],
-        formValues.branches[1].leaves[0], formValues.branches[1].leaves[1]
-    ];
-    
-    leaves.forEach((leaf, idx) => {
-        const leafNum = idx + 1;
-        const inp = document.querySelector(`input[name="at_leaf_${leafNum}_i"]`);
-        if (inp) inp.value = leaf.i_norm;
-        
-        const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
-        if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm); 
-    });
+    // Leaf-Summaries für alle Slots (1..10). (Hidden Rows sind ok – werden nur nicht sichtbar.)
+    for (let b = 0; b < 2; b++) {
+        const base = AT_BRANCH_LEAF_BASE[b];
+        for (let i = 0; i < AT_MAX_IMPACTS_PER_PATH; i++) {
+            const leafNum = base + i;
+            const leaf = formValues.branches[b].leaves[i];
+            const inp = document.querySelector(`input[name="at_leaf_${leafNum}_i"]`);
+            if (inp) inp.value = leaf.i_norm;
+            const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
+            if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm);
+        }
+    }
 }
 
 if (attackTreeForm) {

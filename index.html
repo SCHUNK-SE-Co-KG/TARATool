@@ -229,14 +229,17 @@
                         </thead>
                         <tbody>
                             <tr class="branch-separator"><td colspan="3"><strong>Pfad 1</strong></td></tr>
-                            <tr>
-                                <td rowspan="2" class="cell-l1">
+                            <tr class="impact-row" data-branch="1" data-impact="1">
+                                <td rowspan="2" class="cell-l1" id="at_branch_1_cell_l1">
                                     <div class="form-group">
                                         <input type="text" name="at_branch_1" placeholder="Name Pfad 1">
                                     </div>
                                     <div id="at_branch_1_kstu_summary" class="node-stats-box"></div>
+                                    <div style="text-align:right; margin-top:6px;">
+                                        <button type="button" class="action-button small add-impact-btn" data-branch="1" title="Auswirkung hinzufügen" aria-label="Auswirkung hinzufügen"><i class="fas fa-plus"></i></button>
+                                    </div>
                                 </td>
-                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;">
+                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;" id="at_branch_1_cell_l2">
                                     <div class="form-group"><input type="text" name="at_branch_1_l2" placeholder="Zwischenknoten"></div>
                                     <div id="at_branch_1_l2_kstu_summary" class="node-stats-box"></div>
                                 </td>
@@ -262,7 +265,7 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="impact-row" data-branch="1" data-impact="2">
                                 <td class="cell-leaf">
                                     <div class="leaf-container">
                                         <input type="text" name="at_leaf_2_text" placeholder="Schritt 1.2">
@@ -285,20 +288,10 @@
                                     </div>
                                 </td>
                             </tr>
-
-                            <tr class="branch-separator"><td colspan="3"><strong>Pfad 2</strong></td></tr>
-                            <tr>
-                                <td rowspan="2" class="cell-l1">
-                                    <div class="form-group"><input type="text" name="at_branch_2" placeholder="Name Pfad 2"></div>
-                                    <div id="at_branch_2_kstu_summary" class="node-stats-box"></div>
-                                </td>
-                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;">
-                                    <div class="form-group"><input type="text" name="at_branch_2_l2" placeholder="Zwischenknoten"></div>
-                                    <div id="at_branch_2_l2_kstu_summary" class="node-stats-box"></div>
-                                </td>
+                            <tr class="impact-row extra-impact" data-branch="1" data-impact="3" style="display:none;">
                                 <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_3_text" placeholder="Schritt 2.1">
+                                        <input type="text" name="at_leaf_3_text" placeholder="Schritt 1.3">
                                         <div class="ds-checks">
                                             <span>Impact:</span>
                                             <label>DS1<input type="checkbox" name="at_leaf_3_ds1"></label>
@@ -318,10 +311,10 @@
                                     </div>
                                 </td>
                             </tr>
-                            <tr>
+                            <tr class="impact-row extra-impact" data-branch="1" data-impact="4" style="display:none;">
                                 <td class="cell-leaf">
                                     <div class="leaf-container">
-                                        <input type="text" name="at_leaf_4_text" placeholder="Schritt 2.2">
+                                        <input type="text" name="at_leaf_4_text" placeholder="Schritt 1.4">
                                         <div class="ds-checks">
                                             <span>Impact:</span>
                                             <label>DS1<input type="checkbox" name="at_leaf_4_ds1"></label>
@@ -338,6 +331,157 @@
                                         </div>
                                         <input type="hidden" name="at_leaf_4_i">
                                         <div id="at_leaf_4_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="impact-row extra-impact" data-branch="1" data-impact="5" style="display:none;">
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_5_text" placeholder="Schritt 1.5">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_5_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_5_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_5_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_5_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_5_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_5_k" class="kstu-select"></select>
+                                            <select name="at_leaf_5_s" class="kstu-select"></select>
+                                            <select name="at_leaf_5_t" class="kstu-select"></select>
+                                            <select name="at_leaf_5_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_5_i">
+                                        <div id="at_leaf_5_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr class="branch-separator"><td colspan="3"><strong>Pfad 2</strong></td></tr>
+                            <tr class="impact-row" data-branch="2" data-impact="1">
+                                <td rowspan="2" class="cell-l1" id="at_branch_2_cell_l1">
+                                    <div class="form-group"><input type="text" name="at_branch_2" placeholder="Name Pfad 2"></div>
+                                    <div id="at_branch_2_kstu_summary" class="node-stats-box"></div>
+                                    <div style="text-align:right; margin-top:6px;">
+                                        <button type="button" class="action-button small add-impact-btn" data-branch="2" title="Auswirkung hinzufügen" aria-label="Auswirkung hinzufügen"><i class="fas fa-plus"></i></button>
+                                    </div>
+                                </td>
+                                <td rowspan="2" class="cell-l2 col-level-2" style="display:none;" id="at_branch_2_cell_l2">
+                                    <div class="form-group"><input type="text" name="at_branch_2_l2" placeholder="Zwischenknoten"></div>
+                                    <div id="at_branch_2_l2_kstu_summary" class="node-stats-box"></div>
+                                </td>
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_6_text" placeholder="Schritt 2.1">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_6_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_6_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_6_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_6_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_6_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_6_k" class="kstu-select"></select>
+                                            <select name="at_leaf_6_s" class="kstu-select"></select>
+                                            <select name="at_leaf_6_t" class="kstu-select"></select>
+                                            <select name="at_leaf_6_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_6_i">
+                                        <div id="at_leaf_6_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="impact-row" data-branch="2" data-impact="2">
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_7_text" placeholder="Schritt 2.2">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_7_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_7_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_7_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_7_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_7_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_7_k" class="kstu-select"></select>
+                                            <select name="at_leaf_7_s" class="kstu-select"></select>
+                                            <select name="at_leaf_7_t" class="kstu-select"></select>
+                                            <select name="at_leaf_7_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_7_i">
+                                        <div id="at_leaf_7_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="impact-row extra-impact" data-branch="2" data-impact="3" style="display:none;">
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_8_text" placeholder="Schritt 2.3">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_8_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_8_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_8_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_8_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_8_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_8_k" class="kstu-select"></select>
+                                            <select name="at_leaf_8_s" class="kstu-select"></select>
+                                            <select name="at_leaf_8_t" class="kstu-select"></select>
+                                            <select name="at_leaf_8_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_8_i">
+                                        <div id="at_leaf_8_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="impact-row extra-impact" data-branch="2" data-impact="4" style="display:none;">
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_9_text" placeholder="Schritt 2.4">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_9_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_9_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_9_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_9_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_9_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_9_k" class="kstu-select"></select>
+                                            <select name="at_leaf_9_s" class="kstu-select"></select>
+                                            <select name="at_leaf_9_t" class="kstu-select"></select>
+                                            <select name="at_leaf_9_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_9_i">
+                                        <div id="at_leaf_9_summary" class="node-stats-box"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="impact-row extra-impact" data-branch="2" data-impact="5" style="display:none;">
+                                <td class="cell-leaf">
+                                    <div class="leaf-container">
+                                        <input type="text" name="at_leaf_10_text" placeholder="Schritt 2.5">
+                                        <div class="ds-checks">
+                                            <span>Impact:</span>
+                                            <label>DS1<input type="checkbox" name="at_leaf_10_ds1"></label>
+                                            <label>DS2<input type="checkbox" name="at_leaf_10_ds2"></label>
+                                            <label>DS3<input type="checkbox" name="at_leaf_10_ds3"></label>
+                                            <label>DS4<input type="checkbox" name="at_leaf_10_ds4"></label>
+                                            <label>DS5<input type="checkbox" name="at_leaf_10_ds5"></label>
+                                        </div>
+                                        <div class="kstu-grid">
+                                            <select name="at_leaf_10_k" class="kstu-select"></select>
+                                            <select name="at_leaf_10_s" class="kstu-select"></select>
+                                            <select name="at_leaf_10_t" class="kstu-select"></select>
+                                            <select name="at_leaf_10_u" class="kstu-select"></select>
+                                        </div>
+                                        <input type="hidden" name="at_leaf_10_i">
+                                        <div id="at_leaf_10_summary" class="node-stats-box"></div>
                                     </div>
                                 </td>
                             </tr>

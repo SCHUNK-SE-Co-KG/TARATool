@@ -350,7 +350,17 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 
 /* Modals */
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;}
-.modal-content { background: #fff; margin: 5vh auto; padding: 20px; width: 500px; border-radius: 8px; position: relative; }
+.modal-content {
+    background: #fff;
+    margin: 5vh auto;
+    padding: 20px;
+    width: 500px;
+    border-radius: 8px;
+    position: relative;
+    /* Wenn die Viewport-Höhe klein ist, soll der Dialog selbst scrollen */
+    max-height: 90vh;
+    overflow-y: auto;
+}
 .large-modal .modal-content { width: 90%; max-width: 1200px; }
 .close-button { float: right; font-size: 1.5em; cursor: pointer; }
 
