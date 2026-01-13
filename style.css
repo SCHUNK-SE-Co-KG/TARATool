@@ -156,6 +156,16 @@ button { cursor: pointer; }
 .action-button.dangerous { color: #c0392b; border-color: #e74c3c; }
 .action-button.dangerous:hover { background: #fee; }
 
+/* Bestätigungs-Buttons im selben Look&Feel wie die übrigen Buttons,
+   aber mit klarer "Löschen"-Signalfarbe (ohne Layoutänderung). */
+.primary-button.dangerous {
+    background: #e74c3c;
+    border-color: #c0392b;
+}
+.primary-button.dangerous:hover {
+    background: #c0392b;
+}
+
 /* --- FORMS --- */
 .form-group { margin-bottom: 10px; }
 .form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.9em; }

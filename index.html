@@ -40,6 +40,7 @@
                     <div class="header-actions">
                         <button id="btnSave" class="primary-button"><i class="fas fa-save"></i> Speichern</button>
                         <button id="btnShowVersionControl" class="action-button"><i class="fas fa-code-branch"></i> Versionen</button>
+                        <button id="btnDeleteAnalysis" class="action-button dangerous"><i class="fas fa-trash"></i> Analyse löschen</button>
                     </div>
                 </div>
             </header>
@@ -362,7 +363,25 @@
 
     <div id="newAnalysisModal" class="modal" style="display:none;">
         <div class="modal-content"><span class="close-button" id="closeNewAnalysisModal">&times;</span>
-        <h2>Neue Analyse</h2><form id="newAnalysisForm"><div class="form-group"><label>Name</label><input type="text" id="newAnalysisName" required></div><button type="submit" class="primary-button">Erstellen</button></form></div>
+        <h2>Neue Analyse</h2>
+        <form id="newAnalysisForm">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="newAnalysisName" required>
+            </div>
+
+            <div class="form-group" style="display:flex; gap:10px; align-items:center;">
+                <button type="button" id="btnToggleCopyExistingAnalysis" class="action-button small">Kopieren</button>
+            </div>
+
+            <div class="form-group" id="copyExistingAnalysisGroup" style="display:none;">
+                <label>Vorlage</label>
+                <select id="copyExistingAnalysisSelect"></select>
+            </div>
+
+            <button type="submit" class="primary-button">Erstellen</button>
+        </form>
+        </div>
     </div>
     <div id="importAnalysisModal" class="modal" style="display:none;">
         <div class="modal-content"><span class="close-button" id="closeImportAnalysisModal">&times;</span><h2>Import</h2><input type="file" id="importFileInput" accept=".json"><div style="margin-top:10px;"><button class="primary-button" onclick="executeImport()">Importieren</button></div></div>

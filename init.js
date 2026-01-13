@@ -108,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnNewAnalysis) {
         btnNewAnalysis.onclick = () => {
             if (newAnalysisForm) newAnalysisForm.reset();
+	            if (typeof prepareNewAnalysisModal === 'function') prepareNewAnalysisModal();
             if (newAnalysisModal) newAnalysisModal.style.display = 'block';
         };
     }

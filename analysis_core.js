@@ -208,6 +208,59 @@ function executeImport() {
 // --- NEUE ANALYSE LOGIK ---
 // =============================================================
 
+/**
+ * Initialisiert den "Neue Analyse"-Dialog (Reset/Populate der Kopierauswahl).
+ * Wird beim Öffnen und beim Schließen des Modals verwendet.
+ */
+function prepareNewAnalysisModal() {
+    const group = document.getElementById('copyExistingAnalysisGroup');
+    const select = document.getElementById('copyExistingAnalysisSelect');
+    const btn = document.getElementById('btnToggleCopyExistingAnalysis');
+
+    if (group) group.style.display = 'none';
+    if (btn) btn.textContent = 'Kopieren';
+
+    if (!select) return;
+
+    // Optionen neu aufbauen (aktuelle Liste der Analysen)
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Bitte Vorlage wählen…';
+    select.appendChild(placeholder);
+
+    (analysisData || []).forEach(a => {
+        // Nur valide Analysen
+        if (!a || !a.id) return;
+        const opt = document.createElement('option');
+        opt.value = a.id;
+        opt.textContent = a.name || a.id;
+        select.appendChild(opt);
+    });
+}
+
+function toggleCopyExistingAnalysisUI() {
+    const group = document.getElementById('copyExistingAnalysisGroup');
+    const btn = document.getElementById('btnToggleCopyExistingAnalysis');
+    const select = document.getElementById('copyExistingAnalysisSelect');
+    if (!group) return;
+
+    const willShow = group.style.display === 'none' || group.style.display === '';
+    group.style.display = willShow ? 'block' : 'none';
+
+    if (btn) btn.textContent = willShow ? 'Kopieren ausblenden' : 'Kopieren';
+    if (willShow) {
+        // Beim ersten Öffnen sicherstellen, dass Optionen aktuell sind
+        prepareNewAnalysisModal();
+        // Danach wieder sichtbar machen (prepareNewAnalysisModal blendet aus)
+        group.style.display = 'block';
+        if (btn) btn.textContent = 'Kopieren ausblenden';
+        if (select) select.focus();
+    } else {
+        if (select) select.value = '';
+    }
+}
+
 function createNewAnalysis(e) {
     e.preventDefault();
     
@@ -221,18 +274,55 @@ function createNewAnalysis(e) {
     // Eindeutige ID generieren
     const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0') + '-' + Date.now().toString().slice(-4);
     
-    // Tiefenkopie der Standardstruktur
-    const newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
+    // Optional: aus bestehender Analyse kopieren
+    const copyGroup = document.getElementById('copyExistingAnalysisGroup');
+    const copySelect = document.getElementById('copyExistingAnalysisSelect');
+    const copySourceId = (copyGroup && copyGroup.style.display !== 'none' && copySelect) ? (copySelect.value || '') : '';
+
+    let newAnalysis;
+    let copySourceName = '';
+
+    if (copySourceId) {
+        const source = analysisData.find(a => a.id === copySourceId);
+        if (source) {
+            copySourceName = source.name || source.id;
+            newAnalysis = JSON.parse(JSON.stringify(source));
+        }
+    }
+
+    // Fallback: Standardstruktur
+    if (!newAnalysis) {
+        newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
+    }
     newAnalysis.id = newId;
     newAnalysis.name = newName;
+    // Metadaten/History für neue Analyse zurücksetzen
+    if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: 'Unbekannt', date: todayISO };
+    newAnalysis.metadata.version = INITIAL_VERSION;
     newAnalysis.metadata.date = todayISO;
-    
-    // Fehlerbehebung: Sicherstellen, dass history[0].state existiert, bevor man 'name' setzt
-    if (newAnalysis.history && newAnalysis.history[0]) {
-        // Falls state null ist, initialisieren wir es als Objekt
-        if (!newAnalysis.history[0].state) {
-            newAnalysis.history[0].state = {};
+
+    // History initialisieren (keine Übernahme der alten Historie)
+    newAnalysis.history = [
+        {
+            version: INITIAL_VERSION,
+            date: todayISO,
+            author: (newAnalysis.metadata && newAnalysis.metadata.author) ? newAnalysis.metadata.author : 'System',
+            comment: copySourceName ? `Kopie von: ${copySourceName}` : 'Initiale Erstellung',
+            state: {
+                name: newName,
+                metadata: { ...(newAnalysis.metadata || {}), version: INITIAL_VERSION, date: todayISO },
+                description: newAnalysis.description || '',
+                intendedUse: newAnalysis.intendedUse || '',
+                assets: JSON.parse(JSON.stringify(newAnalysis.assets || [])),
+                damageScenarios: JSON.parse(JSON.stringify(newAnalysis.damageScenarios || JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)))),
+                impactMatrix: JSON.parse(JSON.stringify(newAnalysis.impactMatrix || {})),
+                riskEntries: JSON.parse(JSON.stringify(newAnalysis.riskEntries || []))
+            }
         }
+    ];
+    
+    // Name in der initialen Historie konsistent halten
+    if (newAnalysis.history && newAnalysis.history[0] && newAnalysis.history[0].state) {
         newAnalysis.history[0].state.name = newName;
     }
     
@@ -250,9 +340,44 @@ function createNewAnalysis(e) {
 // Event-Listener neu binden
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('newAnalysisForm');
+    const modal = document.getElementById('newAnalysisModal');
+    const closeBtn = document.getElementById('closeNewAnalysisModal');
+    const btnToggleCopy = document.getElementById('btnToggleCopyExistingAnalysis');
+
+    // Submit-Handler (Erstellen)
     if (form) {
         form.onsubmit = createNewAnalysis;
     }
+
+    // X-Button schließen (Bugfix: zuvor fehlender Handler)
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+            if (form) form.reset();
+            prepareNewAnalysisModal();
+        };
+    }
+
+    // Klick auf den dunklen Hintergrund schließt ebenfalls
+    if (modal) {
+        window.addEventListener('click', (ev) => {
+            if (ev.target === modal) {
+                modal.style.display = 'none';
+                if (form) form.reset();
+                prepareNewAnalysisModal();
+            }
+        });
+    }
+
+    // Kopieren-UI
+    if (btnToggleCopy) {
+        btnToggleCopy.onclick = () => {
+            toggleCopyExistingAnalysisUI();
+        };
+    }
+
+    // Initialer Reset
+    prepareNewAnalysisModal();
 });
 
 /**
@@ -270,17 +395,27 @@ function deleteActiveAnalysis() {
     const msg = document.getElementById('confirmationMessage');
     const btnConfirm = document.getElementById('btnConfirmAction');
     const btnCancel = document.getElementById('btnCancelConfirmation');
+    const btnClose = document.getElementById('closeConfirmationModal');
 
     if (title) title.textContent = 'Gesamte Analyse löschen';
     if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${analysis.name}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
     
-    btnConfirm.textContent = 'Ja, alles löschen';
-    btnConfirm.className = 'primary-button dangerous'; // Nutzt das rote Styling
+    // Buttonzustand zurücksetzen (wichtig, da das Bestätigungs-Modal für mehrere Aktionen genutzt wird)
+    if (btnConfirm) {
+        btnConfirm.className = 'primary-button';
+        btnConfirm.classList.add('dangerous');
+        btnConfirm.textContent = 'Ja, alles löschen';
+    }
     
     modal.style.display = 'block';
 
+    // Vorherige Handler entfernen, damit es keine Überschneidungen mit anderen Bestätigungen gibt
+    if (btnConfirm) btnConfirm.onclick = null;
+    if (btnCancel) btnCancel.onclick = null;
+    if (btnClose) btnClose.onclick = null;
+
     // Event-Handler für Bestätigung
-    btnConfirm.onclick = () => {
+    if (btnConfirm) btnConfirm.onclick = () => {
         // Aus der Liste entfernen
         analysisData = analysisData.filter(a => a.id !== activeAnalysisId);
         
@@ -302,7 +437,11 @@ function deleteActiveAnalysis() {
     };
 
     // Abbrechen
-    btnCancel.onclick = () => {
+    if (btnCancel) btnCancel.onclick = () => {
+        modal.style.display = 'none';
+    };
+
+    if (btnClose) btnClose.onclick = () => {
         modal.style.display = 'none';
     };
 }
