@@ -83,7 +83,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 5. BUTTON EVENTS
-    
+    const btnDeleteAnalysis = document.getElementById('btnDeleteAnalysis');
+    if (btnDeleteAnalysis) {
+        btnDeleteAnalysis.onclick = () => {
+            if (typeof deleteActiveAnalysis === 'function') {
+                deleteActiveAnalysis();
+            }
+    };
+}
+
     if (btnExportAnalysis) {
         btnExportAnalysis.onclick = () => {
             if (typeof exportAnalysis === 'function') exportAnalysis();

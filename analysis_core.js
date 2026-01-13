@@ -210,32 +210,99 @@ function executeImport() {
 
 function createNewAnalysis(e) {
     e.preventDefault();
-    const newName = newAnalysisName.value.trim();
+    
+    // Explizite Auswahl der Elemente zur Sicherheit
+    const nameInput = document.getElementById('newAnalysisName');
+    const modal = document.getElementById('newAnalysisModal');
+    
+    const newName = nameInput.value.trim();
     if (!newName) return;
 
+    // Eindeutige ID generieren
     const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0') + '-' + Date.now().toString().slice(-4);
     
+    // Tiefenkopie der Standardstruktur
     const newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
     newAnalysis.id = newId;
     newAnalysis.name = newName;
     newAnalysis.metadata.date = todayISO;
-    newAnalysis.history[0].state.name = newName; 
     
+    // Fehlerbehebung: Sicherstellen, dass history[0].state existiert, bevor man 'name' setzt
+    if (newAnalysis.history && newAnalysis.history[0]) {
+        // Falls state null ist, initialisieren wir es als Objekt
+        if (!newAnalysis.history[0].state) {
+            newAnalysis.history[0].state = {};
+        }
+        newAnalysis.history[0].state.name = newName;
+    }
+    
+    // Daten speichern und UI aktualisieren
     analysisData.push(newAnalysis);
     renderAnalysisSelector();
     activateAnalysis(newId);
     saveAnalyses();
     
-    newAnalysisModal.style.display = 'none';
-    showToast(`Analyse "${newName}" erstellt.`, 'success');
+    // Modal schließen und Feedback geben
+    if (modal) modal.style.display = 'none';
+    showToast(`Analyse "${newName}" wurde erstellt.`, 'success');
 }
 
-if (closeNewAnalysisModal) {
-    closeNewAnalysisModal.onclick = () => {
-        if (newAnalysisModal) newAnalysisModal.style.display = 'none';
+// Event-Listener neu binden
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('newAnalysisForm');
+    if (form) {
+        form.onsubmit = createNewAnalysis;
+    }
+});
+
+/**
+ * Löscht die aktuell aktive Analyse nach Bestätigung durch den Benutzer.
+ */
+function deleteActiveAnalysis() {
+    if (!activeAnalysisId) return;
+    
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+
+    // Vorhandenes Bestätigungs-Modal nutzen
+    const modal = document.getElementById('confirmationModal');
+    const title = document.getElementById('confirmationTitle');
+    const msg = document.getElementById('confirmationMessage');
+    const btnConfirm = document.getElementById('btnConfirmAction');
+    const btnCancel = document.getElementById('btnCancelConfirmation');
+
+    if (title) title.textContent = 'Gesamte Analyse löschen';
+    if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${analysis.name}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
+    
+    btnConfirm.textContent = 'Ja, alles löschen';
+    btnConfirm.className = 'primary-button dangerous'; // Nutzt das rote Styling
+    
+    modal.style.display = 'block';
+
+    // Event-Handler für Bestätigung
+    btnConfirm.onclick = () => {
+        // Aus der Liste entfernen
+        analysisData = analysisData.filter(a => a.id !== activeAnalysisId);
+        
+        // Falls keine Analysen mehr übrig sind, leere Standard-Analyse erstellen
+        if (analysisData.length === 0) {
+            analysisData = [JSON.parse(JSON.stringify(defaultAnalysis))];
+        }
+        
+        // Die nächste verfügbare Analyse wählen (die erste in der Liste)
+        const nextId = analysisData[0].id;
+        
+        // Speichern und UI aktualisieren
+        saveAnalyses();
+        renderAnalysisSelector();
+        activateAnalysis(nextId);
+        
+        modal.style.display = 'none';
+        showToast('Analyse wurde erfolgreich gelöscht.', 'success');
     };
-}
 
-if (newAnalysisForm) {
-    newAnalysisForm.onsubmit = createNewAnalysis;
+    // Abbrechen
+    btnCancel.onclick = () => {
+        modal.style.display = 'none';
+    };
 }

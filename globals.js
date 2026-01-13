@@ -9,7 +9,7 @@ const todayISO = new Date().toISOString().substring(0, 10);
 const DEFAULT_DAMAGE_SCENARIOS = [
     { id: 'DS1', name: 'Gefahr für Leib und Leben', short: 'Safety', description: 'Verletzung von Personen oder lebensbedrohliche Situationen.' },
     { id: 'DS2', name: 'Finanzieller Schaden', short: 'Financial', description: 'Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).' },
-    { id: 'DS3', name: 'Verlust Operationeller Betrieb', short: 'Operational', description: 'Fahrzeug/System funktioniert nicht mehr wie vorgesehen.' },
+    { id: 'DS3', name: 'Verlust von geistigem Eigentum', short: 'IP loss', description: 'Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).' },
     { id: 'DS4', name: 'Verlust Privatsphäre/Daten', short: 'Privacy', description: 'Verlust sensibler persönlicher oder technischer Daten.' },
     { id: 'DS5', name: 'Rechtliche Konsequenzen', short: 'Legal', description: 'Verstoß gegen Gesetze oder Vorschriften.' }
 ];
