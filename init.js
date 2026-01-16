@@ -130,4 +130,29 @@ document.addEventListener('DOMContentLoaded', () => {
              }
         };
     }
+
+    const btnGenerateReport = document.getElementById("btnGenerateReport");
+    if (btnGenerateReport) {
+        btnGenerateReport.onclick = () => {
+            if (typeof generateReportPdf === "function") {
+                try {
+                    const p = generateReportPdf();
+                    if (p && typeof p.then === 'function') {
+                        p.catch(() => {
+                            if (typeof showToast === "function") {
+                                showToast("Report-Erzeugung fehlgeschlagen.", "error");
+                            }
+                        });
+                    }
+                } catch (_) {
+                    if (typeof showToast === "function") {
+                        showToast("Report-Erzeugung fehlgeschlagen.", "error");
+                    }
+                }
+            } else if (typeof showToast === "function") {
+                showToast("Report-Funktion nicht verfügbar (jsPDF fehlt?).", "error");
+            }
+        };
+    }
+
 });

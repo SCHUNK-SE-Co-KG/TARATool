@@ -1,21 +1,3 @@
-function setTreeDepth(isDeep) {
-    const cols = document.querySelectorAll('.col-level-2');
-    const inputUseDeep = document.getElementById('use_deep_tree');
-    const btn = document.getElementById('btnToggleTreeDepth');
-
-    if (isDeep) {
-        cols.forEach(el => el.style.display = 'table-cell');
-        if (inputUseDeep) inputUseDeep.value = 'true';
-        if (btn) btn.innerHTML = '<i class="fas fa-minus"></i> Zwischenebene ausblenden';
-    } else {
-        cols.forEach(el => el.style.display = 'none');
-        if (inputUseDeep) inputUseDeep.value = 'false';
-        if (btn) btn.innerHTML = '<i class="fas fa-layer-group"></i> Zwischenebene einblenden';
-    }
-    updateAttackTreeKSTUSummariesFromForm(); 
-}
-
-// FIX: Default value is now the Scalar name (K, S, T, U)
 function populateAttackTreeDropdowns() {
     const selects = document.querySelectorAll('.kstu-select');
     selects.forEach(select => {
@@ -51,86 +33,6 @@ function populateAttackTreeDropdowns() {
     });
 }
 
-// =============================================================
-// --- DYNAMIC IMPACT (AUSWIRKUNG) ROWS PER PATH ---
-// =============================================================
-const AT_MAX_IMPACTS_PER_PATH = 5;
-const AT_BRANCH_LEAF_BASE = { 1: 1, 2: 6 }; // Branch 1 uses 1..5, Branch 2 uses 6..10
-
-function _atLeafIndex(branchNum, impactPos) {
-    const base = AT_BRANCH_LEAF_BASE[branchNum];
-    return base ? (base + (impactPos - 1)) : null;
-}
-
-function _atGetImpactRow(branchNum, impactPos) {
-    return document.querySelector(`tr.impact-row[data-branch="${branchNum}"][data-impact="${impactPos}"]`);
-}
-
-function _atGetVisibleImpactCount(branchNum) {
-    const rows = document.querySelectorAll(`tr.impact-row[data-branch="${branchNum}"]`);
-    let c = 0;
-    rows.forEach(r => {
-        if (!r) return;
-        const disp = r.style && r.style.display;
-        if (disp === 'none') return;
-        c++;
-    });
-    return c;
-}
-
-function _atSetBranchRowspan(branchNum, newSpan) {
-    const tdL1 = document.getElementById(`at_branch_${branchNum}_cell_l1`);
-    if (tdL1) tdL1.rowSpan = newSpan;
-    const tdL2 = document.getElementById(`at_branch_${branchNum}_cell_l2`);
-    if (tdL2) tdL2.rowSpan = newSpan;
-}
-
-function _atUpdateAddImpactButtonState(branchNum) {
-    const btn = document.querySelector(`button.add-impact-btn[data-branch="${branchNum}"]`);
-    if (!btn) return;
-    const visible = _atGetVisibleImpactCount(branchNum);
-    btn.style.display = (visible >= AT_MAX_IMPACTS_PER_PATH) ? 'none' : 'inline-flex';
-}
-
-function _atResetImpactRows() {
-    [1, 2].forEach(branchNum => {
-        document.querySelectorAll(`tr.extra-impact[data-branch="${branchNum}"]`).forEach(r => {
-            if (r) r.style.display = 'none';
-        });
-        _atSetBranchRowspan(branchNum, 2);
-        _atUpdateAddImpactButtonState(branchNum);
-    });
-}
-
-function _atShowImpactsUpTo(branchNum, count) {
-    const capped = Math.max(2, Math.min(AT_MAX_IMPACTS_PER_PATH, count || 2));
-    for (let i = 3; i <= capped; i++) {
-        const row = _atGetImpactRow(branchNum, i);
-        if (row) row.style.display = '';
-    }
-    _atSetBranchRowspan(branchNum, capped);
-    _atUpdateAddImpactButtonState(branchNum);
-}
-
-function initAttackTreeImpactAdders() {
-    const btns = document.querySelectorAll('button.add-impact-btn');
-    btns.forEach(btn => {
-        btn.onclick = () => {
-            const branchNum = parseInt(btn.getAttribute('data-branch') || '0', 10);
-            if (!branchNum) return;
-            const visible = _atGetVisibleImpactCount(branchNum);
-            const next = visible + 1;
-            if (next > AT_MAX_IMPACTS_PER_PATH) return;
-            const row = _atGetImpactRow(branchNum, next);
-            if (row) row.style.display = '';
-            _atSetBranchRowspan(branchNum, next);
-            _atUpdateAddImpactButtonState(branchNum);
-            // Dropdowns in newly shown rows should have their options
-            populateAttackTreeDropdowns();
-            updateAttackTreeKSTUSummariesFromForm();
-        };
-    });
-}
 
 function openAttackTreeModal(existingEntry = null) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -145,30 +47,42 @@ function openAttackTreeModal(existingEntry = null) {
     const previewContainer = document.getElementById('graph-preview-container');
     if (previewContainer) previewContainer.innerHTML = '';
     
-    setTreeDepth(false);
+    setTreeDepth(1);
     // Startzustand: je Pfad nur 2 Auswirkungen sichtbar
     _atResetImpactRows();
 
     if (existingEntry) {
         if (hiddenIdField) hiddenIdField.value = existingEntry.id;
-        
-        const hasL2 = existingEntry.useDeepTree === true;
-        setTreeDepth(hasL2);
-        
+
+        // Abwärtskompatibel:
+        // - treeDepth 1 => ohne Zwischenpfad
+        // - treeDepth 2 => Zwischenpfad(e) parallel
+        // - treeDepth 3 (alte Version) => wird als "2. Zwischenpfad aktiv" interpretiert, Leaves hängen am 2. Zwischenpfad
+        const rawDepth = parseInt(existingEntry.treeDepth, 10);
+        const depth = (rawDepth === 1) ? 1 : ((existingEntry.useDeepTree === true || rawDepth === 2 || rawDepth === 3) ? 2 : 1);
+        setTreeDepth(depth);
+
+        const wantsSecond = (existingEntry.useSecondIntermediate === true) ||
+            (rawDepth === 3) ||
+            (existingEntry.branches || []).some(b => Array.isArray(b?.l2_nodes) && b.l2_nodes.length > 1) ||
+            (existingEntry.branches || []).some(b => b?.l3_node && b?.l3_node?.name);
+
+        if (depth === 2 && wantsSecond) _atSetSecondIntermediateEnabled(true);
+
         const rootInput = document.querySelector('input[name="at_root"]');
         if (rootInput) rootInput.value = existingEntry.rootName;
 
         const loadLeaf = (leafData, leafIndex) => {
             if (!leafData) return;
             const prefix = `at_leaf_${leafIndex}`;
-            
+
             const txt = document.querySelector(`input[name="${prefix}_text"]`);
             if (txt) txt.value = leafData.text || '';
-            
+
             ['k', 's', 't', 'u'].forEach(param => {
                 const sel = document.querySelector(`select[name="${prefix}_${param}"]`);
                 if (sel) {
-                    let val = leafData[param]; 
+                    let val = leafData[param];
                     if ((val === undefined || val === null) && leafData.kstu) {
                         val = leafData.kstu[param];
                     }
@@ -186,45 +100,95 @@ function openAttackTreeModal(existingEntry = null) {
             }
         };
 
-        if (existingEntry.branches[0]) {
-            const b1 = existingEntry.branches[0];
-            document.querySelector('input[name="at_branch_1"]').value = b1.name || '';
-            if (hasL2 && b1.l2_node) {
-                 const l2Inp = document.querySelector('input[name="at_branch_1_l2"]');
-                 if(l2Inp) l2Inp.value = b1.l2_node.name || '';
+        const _loadBranch = (branchData, branchNum) => {
+            if (!branchData) return;
+
+            const bInp = document.querySelector(`input[name="at_branch_${branchNum}"]`);
+            if (bInp) bInp.value = branchData.name || '';
+
+            // Gruppe A/B Daten auflösen (neu: l2_nodes, alt: l2_node/leaves, alt-v7: l2_node + l3_node + leaves)
+            let l2AName = '';
+            let l2BName = '';
+            let leavesA = [];
+            let leavesB = [];
+
+            if (depth === 1) {
+                leavesA = branchData.leaves || [];
+            } else {
+                if (Array.isArray(branchData.l2_nodes) && branchData.l2_nodes.length > 0) {
+                    const a = branchData.l2_nodes[0] || {};
+                    l2AName = a.name || '';
+                    leavesA = a.leaves || [];
+                    if (branchData.l2_nodes[1]) {
+                        const b = branchData.l2_nodes[1] || {};
+                        l2BName = b.name || '';
+                        leavesB = b.leaves || [];
+                        _atSetSecondIntermediateEnabled(true);
+                    }
+                } else {
+                    // Legacy single intermediate
+                    if (branchData.l2_node) l2AName = branchData.l2_node.name || '';
+                    // v7 legacy nested: interpret l3_node as "Zwischenpfad 2", leaves hängen dort
+                    if (rawDepth === 3 && branchData.l3_node) {
+                        l2BName = branchData.l3_node.name || '';
+                        leavesB = branchData.leaves || [];
+                        _atSetSecondIntermediateEnabled(true);
+                        leavesA = []; // bleibt leer (UI zeigt default 2 leere Slots)
+                    } else {
+                        leavesA = branchData.leaves || [];
+                    }
+                }
             }
 
-            const cnt = Math.min(AT_MAX_IMPACTS_PER_PATH, Math.max(2, (b1.leaves || []).length));
-            _atShowImpactsUpTo(1, cnt);
-            for (let i = 0; i < cnt; i++) {
-                loadLeaf((b1.leaves || [])[i], _atLeafIndex(1, i + 1));
-            }
-        }
+            if (depth === 2) {
+                const l2Inp = document.querySelector(`input[name="at_branch_${branchNum}_l2"]`);
+                if (l2Inp) l2Inp.value = l2AName;
 
-        if (existingEntry.branches[1]) {
-            const b2 = existingEntry.branches[1];
-            document.querySelector('input[name="at_branch_2"]').value = b2.name || '';
-            if (hasL2 && b2.l2_node) {
-                 const l2Inp = document.querySelector('input[name="at_branch_2_l2"]');
-                 if(l2Inp) l2Inp.value = b2.l2_node.name || '';
+                const l2bInp = document.querySelector(`input[name="at_branch_${branchNum}_l2b"]`);
+                if (l2bInp) l2bInp.value = l2BName;
             }
 
-            const cnt = Math.min(AT_MAX_IMPACTS_PER_PATH, Math.max(2, (b2.leaves || []).length));
-            _atShowImpactsUpTo(2, cnt);
-            for (let i = 0; i < cnt; i++) {
-                loadLeaf((b2.leaves || [])[i], _atLeafIndex(2, i + 1));
+            const cntA = Math.min(AT_MAX_IMPACTS_PER_PATH, Math.max(2, (leavesA || []).length || 2));
+            _atShowImpactsUpTo(branchNum, 'a', cntA);
+            for (let i = 0; i < cntA; i++) {
+                const leafIdx = _atLeafIndex(branchNum, 'a', i + 1);
+                loadLeaf((leavesA || [])[i], leafIdx);
             }
-        }
-        
+
+            if (depth === 2 && _atIsSecondIntermediateEnabled()) {
+                const cntB = Math.min(AT_MAX_IMPACTS_PER_PATH, Math.max(2, (leavesB || []).length || 2));
+                _atShowImpactsUpTo(branchNum, 'b', cntB);
+                for (let i = 0; i < cntB; i++) {
+                    const leafIdx = _atLeafIndex(branchNum, 'b', i + 1);
+                    loadLeaf((leavesB || [])[i], leafIdx);
+                }
+            }
+        };
+
+        _loadBranch(existingEntry.branches && existingEntry.branches[0], 1);
+        _loadBranch(existingEntry.branches && existingEntry.branches[1], 2);
+
     } else {
-        if (hiddenIdField) hiddenIdField.value = ''; 
+        if (hiddenIdField) hiddenIdField.value = '';
     }
 
     const btnToggle = document.getElementById('btnToggleTreeDepth');
     if (btnToggle) {
         btnToggle.onclick = () => {
-            const current = document.getElementById('use_deep_tree').value === 'true';
-            setTreeDepth(!current);
+            const currentDepth = _atGetTreeDepth();
+            setTreeDepth(currentDepth === 2 ? 1 : 2);
+        };
+    }
+
+    const btnToggle2 = document.getElementById('btnToggleTreeDepth2');
+    if (btnToggle2) {
+        btnToggle2.onclick = () => {
+            const currentDepth = _atGetTreeDepth();
+            if (currentDepth < 2) return;
+            // Zweiter Zwischenpfad parallel ein/aus
+            _atSetSecondIntermediateEnabled(!_atIsSecondIntermediateEnabled());
+            // Labels/Buttons/Rowspans aktualisieren
+            setTreeDepth(2);
         };
     }
 
@@ -250,7 +214,9 @@ function saveAttackTree(e) {
 
     const fd = new FormData(attackTreeForm);
     const editingId = fd.get('at_id');
-    const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
+    const depth = _atGetTreeDepth();
+    const useDeepTree = depth >= 2;
+    const useSecondIntermediate = (fd.get('use_second_intermediate') || '').toString().toLowerCase() === 'true';
 
     const _leafIsEmpty = (leaf) => {
         if (!leaf) return true;
@@ -263,41 +229,65 @@ function saveAttackTree(e) {
         return textEmpty && dsEmpty && kEmpty && sEmpty && tEmpty && uEmpty;
     };
 
-    const _collectLeavesForBranch = (branchNum) => {
+    const _collectLeavesForBranchGroup = (branchNum, group) => {
         const leaves = [];
         for (let pos = 1; pos <= AT_MAX_IMPACTS_PER_PATH; pos++) {
-            const leafIdx = _atLeafIndex(branchNum, pos);
+            const leafIdx = _atLeafIndex(branchNum, group, pos);
             if (!leafIdx) continue;
             const leaf = extractLeafData(fd, leafIdx);
-            // Vorher waren 2 Auswirkungen fest vorhanden. Diese Logik bleibt:
-            // - die ersten beiden Slots werden immer gespeichert
-            // - zusätzliche nur, wenn wirklich befüllt
             if (pos <= 2 || !_leafIsEmpty(leaf)) {
                 leaves.push(leaf);
             }
         }
-        // trailing empties (beyond 2) entfernen, falls der Nutzer nach dem Hinzufügen alles geleert hat
         while (leaves.length > 2 && _leafIsEmpty(leaves[leaves.length - 1])) {
             leaves.pop();
         }
         return leaves;
     };
 
+    const _buildBranch = (branchNum) => {
+        const name = fd.get(`at_branch_${branchNum}`);
+        if (depth === 1) {
+            return {
+                name,
+                leaves: _collectLeavesForBranchGroup(branchNum, 'a')
+            };
+        }
+
+        // depth === 2
+        const nodeA = {
+            name: fd.get(`at_branch_${branchNum}_l2`),
+            leaves: _collectLeavesForBranchGroup(branchNum, 'a')
+        };
+
+        const nodes = [nodeA];
+
+        if (useSecondIntermediate) {
+            const nodeB = {
+                name: fd.get(`at_branch_${branchNum}_l2b`),
+                leaves: _collectLeavesForBranchGroup(branchNum, 'b')
+            };
+            nodes.push(nodeB);
+        }
+
+        return {
+            name,
+            l2_nodes: nodes,
+            // Legacy-Felder für Abwärtskompatibilität (werden in Calc/Export toleriert)
+            l2_node: { name: nodeA.name },
+            l3_node: useSecondIntermediate ? { name: (nodes[1] || {}).name } : null
+        };
+    };
+
     const treeData = {
         id: editingId || generateNextRiskID(analysis),
         rootName: fd.get('at_root'),
+        treeDepth: depth,
         useDeepTree: useDeepTree,
+        useSecondIntermediate: useSecondIntermediate,
         branches: [
-            {
-                name: fd.get('at_branch_1'),
-                l2_node: useDeepTree ? { name: fd.get('at_branch_1_l2') } : null,
-                leaves: _collectLeavesForBranch(1)
-            },
-            {
-                name: fd.get('at_branch_2'),
-                l2_node: useDeepTree ? { name: fd.get('at_branch_2_l2') } : null,
-                leaves: _collectLeavesForBranch(2)
-            }
+            _buildBranch(1),
+            _buildBranch(2)
         ]
     };
 
@@ -375,5 +365,7 @@ function extractLeafData(formData, index) {
 // Initialisiere "Auswirkung hinzufügen" Buttons
 document.addEventListener('DOMContentLoaded', () => {
     try { initAttackTreeImpactAdders(); } catch (e) {}
+    try { initAttackTreeImpactRemovers(); } catch (e) {}
+    try { initAttackTreeLeafRemovers(); } catch (e) {}
 });
 

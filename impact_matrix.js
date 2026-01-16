@@ -1,3 +1,6 @@
+// Explizite DOM-Referenz (robuster als implizite Window-ID-Globals)
+const dsMatrixContainer = document.getElementById('dsMatrixContainer');
+
 function getImpactColorClass(val) {
     if (val === '3') return 'impact-high';
     if (val === '2') return 'impact-medium';

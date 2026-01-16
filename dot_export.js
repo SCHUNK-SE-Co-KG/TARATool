@@ -6,8 +6,8 @@ function generateDotString(analysis, specificTreeId = null) {
     let dot = 'digraph {\n\n';
     dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
     dot += '    edge [fontname="Arial", fontsize=9];\n';
-    dot += '    rankdir=TB;\n'; 
-    dot += '    overlap = false;\n    splines = ortho;\n\n'; 
+    dot += '    rankdir=TB;\n';
+    dot += '    overlap = false;\n    splines = ortho;\n\n';
 
     const _fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
@@ -45,10 +45,43 @@ function generateDotString(analysis, specificTreeId = null) {
         const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
         const pSum = (parseFloat(kstu?.k)||0) + (parseFloat(kstu?.s)||0) + (parseFloat(kstu?.t)||0) + (parseFloat(kstu?.u)||0);
         const r = iVal * pSum;
-        if(r >= 2.0) return '#ffcccc'; 
-        if(r >= 1.6) return '#ffe0b3'; 
-        if(r >= 0.8) return '#ffffcc'; 
-        return '#ccffcc'; 
+        if(r >= 2.0) return '#ffcccc';
+        if(r >= 1.6) return '#ffe0b3';
+        if(r >= 0.8) return '#ffffcc';
+        return '#ccffcc';
+    };
+
+    const _normBranchNodes = (entry, branch) => {
+        const d = parseInt(entry.treeDepth, 10);
+        const treeDepth = (d === 1) ? 1 : 2; // alte 3 wird als 2 interpretiert
+
+        if (treeDepth === 1) {
+            return [{ name: null, leaves: branch.leaves || [], kstu: null, i_norm: null, idSuffix: 'Direct' }];
+        }
+
+        if (Array.isArray(branch.l2_nodes) && branch.l2_nodes.length > 0) {
+            return branch.l2_nodes.map((n, idx) => ({
+                name: n?.name || '',
+                leaves: n?.leaves || [],
+                kstu: n?.kstu,
+                i_norm: n?.i_norm,
+                idSuffix: `L2_${idx+1}`
+            }));
+        }
+
+        // Legacy: single intermediate in l2_node + leaves
+        if (branch.l2_node) {
+            return [{
+                name: branch.l2_node?.name || '',
+                leaves: branch.leaves || [],
+                kstu: branch.l2_node?.kstu,
+                i_norm: branch.l2_node?.i_norm,
+                idSuffix: 'L2_1'
+            }];
+        }
+
+        // Fallback
+        return [{ name: '', leaves: branch.leaves || [], kstu: null, i_norm: null, idSuffix: 'L2_1' }];
     };
 
     let entriesToProcess = analysis.riskEntries;
@@ -56,11 +89,15 @@ function generateDotString(analysis, specificTreeId = null) {
         entriesToProcess = analysis.riskEntries.filter(e => e.id === specificTreeId);
     }
 
+    // --- NODES ---
     entriesToProcess.forEach(entry => {
         const riskId = entry.id;
+        const d = parseInt(entry.treeDepth, 10);
+        const treeDepth = (d === 1) ? 1 : 2;
+
         const rootId = `${riskId}_Root`;
         const rootFill = _getColor(entry.i_norm, entry.kstu);
-        
+
         dot += `    // Tree ${riskId}\n`;
         dot += `    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
 
@@ -71,48 +108,91 @@ function generateDotString(analysis, specificTreeId = null) {
                 dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}", style=filled, fillcolor="${bFill}"]\n`;
             }
 
-            let l2Id = null;
-            if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
-                l2Id = `${riskId}_B${bIdx+1}_L2`;
-                const l2Fill = _getColor(branch.l2_node.i_norm, branch.l2_node.kstu);
-                dot += `    ${l2Id} [label="${_lbl(branch.l2_node.name, branch.l2_node.kstu, branch.l2_node.i_norm)}", style=filled, fillcolor="${l2Fill}"]\n`;
-            }
+            const nodes = _normBranchNodes(entry, branch);
+            if (treeDepth === 2) {
+                nodes.forEach((node, nIdx) => {
+                    if (!node.name) return;
+                    const nId = `${riskId}_B${bIdx+1}_${node.idSuffix}`;
+                    const nFill = _getColor(node.i_norm, node.kstu);
+                    dot += `    ${nId} [label="${_lbl(node.name, node.kstu, node.i_norm)}", style=filled, fillcolor="${nFill}"]\n`;
 
-            if (branch.leaves) {
-                branch.leaves.forEach((leaf, lIdx) => {
-                    if (leaf.text) {
-                        const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
-                        const lFill = _getColor(leaf.i_norm, leaf); 
+                    (node.leaves || []).forEach((leaf, lIdx) => {
+                        if (!leaf.text) return;
+                        const lId = `${riskId}_B${bIdx+1}_${node.idSuffix}_Leaf${lIdx+1}`;
+                        const lFill = _getColor(leaf.i_norm, leaf);
                         dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
-                    }
+                    });
+                });
+            } else {
+                // depth 1: leaves direkt unter branch
+                (branch.leaves || []).forEach((leaf, lIdx) => {
+                    if (!leaf.text) return;
+                    const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
+                    const lFill = _getColor(leaf.i_norm, leaf);
+                    dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
                 });
             }
         });
-        
+
         dot += '\n';
+    });
+
+    // --- EDGES ---
+    entriesToProcess.forEach(entry => {
+        const riskId = entry.id;
+        const d = parseInt(entry.treeDepth, 10);
+        const treeDepth = (d === 1) ? 1 : 2;
+
+        const rootId = `${riskId}_Root`;
+        // --- RANKING: enforce strict top->bottom levels for this tree ---
+        const __rank_branchIds = [];
+        const __rank_l2Ids = [];
+        const __rank_leafIds = [];
+
 
         entry.branches.forEach((branch, bIdx) => {
             if (!branch.name) return;
             const bId = `${riskId}_B${bIdx+1}`;
-            
+            __rank_branchIds.push(bId);
             dot += `    ${rootId} -> ${bId}\n`;
 
-            let parentForLeaves = bId;
-            if (entry.useDeepTree && branch.l2_node && branch.l2_node.name) {
-                const l2Id = `${riskId}_B${bIdx+1}_L2`;
-                dot += `    ${bId} -> ${l2Id}\n`;
-                parentForLeaves = l2Id;
-            }
+            const nodes = _normBranchNodes(entry, branch);
 
-            if (branch.leaves) {
-                branch.leaves.forEach((leaf, lIdx) => {
-                    if (leaf.text) {
-                        const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
-                        dot += `    ${parentForLeaves} -> ${lId}\n`;
-                    }
+            if (treeDepth === 2) {
+                nodes.forEach(node => {
+                    if (!node.name) return;
+                    const nId = `${riskId}_B${bIdx+1}_${node.idSuffix}`;
+                    __rank_l2Ids.push(nId);
+                    dot += `    ${bId} -> ${nId}\n`;
+                    (node.leaves || []).forEach((leaf, lIdx) => {
+                        if (!leaf.text) return;
+                        const lId = `${riskId}_B${bIdx+1}_${node.idSuffix}_Leaf${lIdx+1}`;
+                        __rank_leafIds.push(lId);
+                        dot += `    ${nId} -> ${lId}\n`;
+                    });
+                });
+            } else {
+                (branch.leaves || []).forEach((leaf, lIdx) => {
+                    if (!leaf.text) return;
+                    const lId = `${riskId}_B${bIdx+1}_Leaf${lIdx+1}`;
+                    __rank_leafIds.push(lId);
+                    dot += `    ${bId} -> ${lId}\n`;
                 });
             }
         });
+
+        // --- APPLY RANK GROUPS (keeps all arrows flowing downward) ---
+        dot += `    { rank=source; ${rootId}; }\n`;
+        if (__rank_branchIds.length) {
+            dot += `    { rank=same; ${__rank_branchIds.join('; ')}; }\n`;
+        }
+        if (__rank_l2Ids.length) {
+            dot += `    { rank=same; ${__rank_l2Ids.join('; ')}; }\n`;
+        }
+        if (__rank_leafIds.length) {
+            dot += `    { rank=sink; ${__rank_leafIds.join('; ')}; }\n`;
+        }
+
         dot += '\n';
     });
 
@@ -120,7 +200,7 @@ function generateDotString(analysis, specificTreeId = null) {
     return dot;
 }
 
-// Wir definieren exportRiskAnalysisToDot als Alias für generateDotString
+// Wir definieren exportRiskAnalysisToDot als Alias für generateDotString als Alias für generateDotString
 window.exportRiskAnalysisToDot = generateDotString;
 
 document.addEventListener('DOMContentLoaded', () => {

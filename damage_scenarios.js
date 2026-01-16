@@ -2,13 +2,28 @@
 // --- DAMAGE SCENARIO LOGIK (CRUD & MATRIX) ---
 // =============================================================
 
+// Explizite DOM-Referenzen (robuster als die impliziten Window-ID-Globals)
+const dsManagementContainer = document.getElementById('dsManagementContainer');
+const btnAddDamageScenario = document.getElementById('btnAddDamageScenario');
+const damageScenarioModal = document.getElementById('damageScenarioModal');
+const closeDamageScenarioModal = document.getElementById('closeDamageScenarioModal');
+const damageScenarioForm = document.getElementById('damageScenarioForm');
+
+// Default-IDs zentral (wird in mehreren Funktionen benötigt).
+// Wichtig: Nicht im Scope von renderDamageScenarios() definieren, sonst sind Edit/Delete Handler fehlerhaft.
+const DEFAULT_DS_IDS = new Set(
+    (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS)
+        ? DEFAULT_DAMAGE_SCENARIOS
+        : []
+    ).map(ds => ds.id)
+);
+
 function renderDamageScenarios() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
     if (!dsManagementContainer) return;
 
     let dsList = [];
-    const defaultIds = new Set(DEFAULT_DAMAGE_SCENARIOS.map(ds => ds.id));
 
     if (DEFAULT_DAMAGE_SCENARIOS && DEFAULT_DAMAGE_SCENARIOS.length > 0) {
         dsList = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
@@ -16,7 +31,7 @@ function renderDamageScenarios() {
     
     if (analysis.damageScenarios && Array.isArray(analysis.damageScenarios)) {
         analysis.damageScenarios.forEach(ds => {
-            if (ds && ds.id && !defaultIds.has(ds.id)) {
+            if (ds && ds.id && !DEFAULT_DS_IDS.has(ds.id)) {
                 dsList.push(ds);
             }
         });
@@ -29,7 +44,7 @@ function renderDamageScenarios() {
     html += '<ul class="ds-list">';
     
     dsList.forEach(ds => {
-        const isDefault = defaultIds.has(ds.id);
+        const isDefault = DEFAULT_DS_IDS.has(ds.id);
         
         // NEUES LAYOUT:
         // Zeile 1: ID und Name
@@ -48,10 +63,11 @@ function renderDamageScenarios() {
                     </div>
                 </div>
                 
+                ${isDefault ? '' : `
                 <div class="ds-actions">
-                    <button onclick="editDamageScenario('${ds.id}')" class="action-button small" ${isDefault ? 'disabled' : ''}>Bearbeiten</button>
-                    <button onclick="removeDamageScenario('${ds.id}')" class="action-button small dangerous" ${isDefault ? 'disabled' : ''}>Löschen</button>
-                </div>
+                    <button type="button" onclick="editDamageScenario('${ds.id}')" class="action-button small">Bearbeiten</button>
+                    <button type="button" onclick="removeDamageScenario('${ds.id}')" class="action-button small dangerous">Löschen</button>
+                </div>`}
             </div>
 
             <div class="ds-col-description">
@@ -108,6 +124,11 @@ window.saveDamageScenario = function(e) {
 }
 
 window.editDamageScenario = function(dsId) {
+    if (DEFAULT_DS_IDS.has(dsId)) {
+        showToast('Standard-Szenarien können nicht bearbeitet werden.');
+        return;
+    }
+
     console.log("Edit DS Triggered for:", dsId);
     if (!activeAnalysisId) return;
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -136,6 +157,11 @@ window.editDamageScenario = function(dsId) {
 };
 
 window.removeDamageScenario = function(dsId) {
+    if (DEFAULT_DS_IDS.has(dsId)) {
+        showToast('Standard-Szenarien können nicht gelöscht werden.');
+        return;
+    }
+
     console.log("Remove DS Triggered for:", dsId);
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -145,7 +171,7 @@ window.removeDamageScenario = function(dsId) {
         return;
     }
 
-    const ds = analysis.damageScenarios.find(d => d.id === dsId);
+    const ds = (analysis.damageScenarios || []).find(d => d.id === dsId);
     if (!ds) {
         console.error("DS to remove not found in custom list:", dsId);
         return;
@@ -189,6 +215,44 @@ window.removeDamageScenario = function(dsId) {
     const closeFn = () => { modal.style.display = 'none'; };
     btnCancel.onclick = closeFn;
     btnClose.onclick = closeFn;
+}
+
+// =============================================================
+// --- UI WIRING (Button/Modal/Form) ---
+// =============================================================
+
+// Formular-Submit (neu + bearbeiten)
+if (damageScenarioForm) {
+    damageScenarioForm.onsubmit = window.saveDamageScenario;
+}
+
+// "Neu" Button in der Verwaltung
+if (btnAddDamageScenario) {
+    btnAddDamageScenario.onclick = () => {
+        if (!activeAnalysisId) {
+            showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
+            return;
+        }
+
+        const titleEl = document.getElementById('dsModalTitle');
+        const idField = document.getElementById('dsIdField');
+        if (titleEl) titleEl.textContent = 'Neues Schadensszenario';
+        if (idField) idField.value = '';
+
+        // Felder zurücksetzen
+        if (damageScenarioForm) damageScenarioForm.reset();
+        const desc = document.getElementById('dsDescription');
+        if (desc) desc.value = '';
+
+        if (damageScenarioModal) damageScenarioModal.style.display = 'block';
+    };
+}
+
+// Close (X)
+if (closeDamageScenarioModal) {
+    closeDamageScenarioModal.onclick = () => {
+        if (damageScenarioModal) damageScenarioModal.style.display = 'none';
+    };
 }
 
 // Hilfsfunktion für Farben

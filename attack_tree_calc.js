@@ -3,6 +3,14 @@ function _parseKSTUValue(val) {
     return isNaN(num) ? null : num;
 }
 
+function _getTreeDepthForData(treeData) {
+    const d = parseInt(treeData?.treeDepth, 10);
+    // Ab jetzt: 1 oder 2 (alte 3 wird als 2 interpretiert)
+    if (d === 1) return 1;
+    if (d === 2 || d === 3) return 2;
+    return treeData?.useDeepTree ? 2 : 1;
+}
+
 function _kstuWorstCase(items) {
     const res = { k: null, s: null, t: null, u: null };
     ['k', 's', 't', 'u'].forEach(key => {
@@ -61,18 +69,63 @@ function computeLeafImpactNorm(dsList, analysis) {
     return maxWeightedImpact.toFixed(2);
 }
 
+
+function _normalizeParallelIntermediate(treeData) {
+    // Sorgt dafür, dass bei depth=2 eine einheitliche Struktur vorliegt:
+    // branch.l2_nodes = [{name, leaves}, {name, leaves}?]
+    const depth = _getTreeDepthForData(treeData);
+    if (!treeData || !treeData.branches) return treeData;
+    if (depth !== 2) return treeData;
+
+    treeData.branches.forEach(branch => {
+        if (!branch) return;
+
+        // Neu: bereits vorhanden
+        if (Array.isArray(branch.l2_nodes) && branch.l2_nodes.length > 0) return;
+
+        // Legacy single intermediate: l2_node + leaves
+        if (branch.l2_node && (branch.leaves || branch.leaves === undefined)) {
+            branch.l2_nodes = [{
+                name: branch.l2_node?.name || '',
+                leaves: Array.isArray(branch.leaves) ? branch.leaves : []
+            }];
+            return;
+        }
+
+        // Legacy v7 nested depth=3: l2_node + l3_node + leaves hängen unter l3
+        if (branch.l2_node && branch.l3_node) {
+            branch.l2_nodes = [
+                { name: branch.l2_node?.name || '', leaves: [] },
+                { name: branch.l3_node?.name || '', leaves: Array.isArray(branch.leaves) ? branch.leaves : [] }
+            ];
+        }
+    });
+
+    return treeData;
+}
+
+
 function applyWorstCaseInheritance(treeData) {
     if (!treeData || !treeData.branches) return treeData;
 
+    const depth = _getTreeDepthForData(treeData);
+    _normalizeParallelIntermediate(treeData);
+
     treeData.branches.forEach(branch => {
-        const leavesWC = _kstuWorstCase(branch.leaves || []);
-        
-        if (treeData.useDeepTree && branch.l2_node) {
-            branch.l2_node.kstu = leavesWC;
-            branch.kstu = _kstuWorstCase([branch.l2_node]);
-        } else {
-            branch.kstu = leavesWC;
+        if (!branch) return;
+
+        if (depth === 1) {
+            branch.kstu = _kstuWorstCase(branch.leaves || []);
+            return;
         }
+
+        const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
+        nodes.forEach(node => {
+            node.kstu = _kstuWorstCase((node && node.leaves) ? node.leaves : []);
+        });
+
+        // Branch-Worst-Case über die Zwischenpfade
+        branch.kstu = _kstuWorstCase(nodes.map(n => n.kstu));
     });
 
     treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
@@ -87,31 +140,60 @@ function _parseImpactValue(val) {
 function applyImpactInheritance(treeData, analysis) {
     if (!treeData || !treeData.branches) return treeData;
 
+    const depth = _getTreeDepthForData(treeData);
+    _normalizeParallelIntermediate(treeData);
+
     treeData.branches.forEach(branch => {
-        (branch.leaves || []).forEach(leaf => {
-            const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
-            leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+        if (!branch) return;
+
+        if (depth === 1) {
+            (branch.leaves || []).forEach(leaf => {
+                const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
+                leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+            });
+
+            let bMax = 0.0;
+            let bFound = false;
+            (branch.leaves || []).forEach(leaf => {
+                const v = _parseImpactValue(leaf?.i_norm);
+                if (v === null) return;
+                if (v > bMax) bMax = v;
+                bFound = true;
+            });
+            branch.i_norm = bFound ? bMax.toFixed(2) : '';
+            return;
+        }
+
+        const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
+        nodes.forEach(node => {
+            (node.leaves || []).forEach(leaf => {
+                const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
+                leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+            });
+
+            let nMax = 0.0;
+            let nFound = false;
+            (node.leaves || []).forEach(leaf => {
+                const v = _parseImpactValue(leaf?.i_norm);
+                if (v === null) return;
+                if (v > nMax) nMax = v;
+                nFound = true;
+            });
+            node.i_norm = nFound ? nMax.toFixed(2) : '';
         });
 
         let bMax = 0.0;
         let bFound = false;
-        (branch.leaves || []).forEach(leaf => {
-            const v = _parseImpactValue(leaf?.i_norm);
+        nodes.forEach(node => {
+            const v = _parseImpactValue(node?.i_norm);
             if (v === null) return;
             if (v > bMax) bMax = v;
             bFound = true;
         });
-        
-        const leavesMaxI = bFound ? bMax.toFixed(2) : '';
-
-        if (treeData.useDeepTree && branch.l2_node) {
-            branch.l2_node.i_norm = leavesMaxI;
-            branch.i_norm = leavesMaxI; 
-        } else {
-            branch.i_norm = leavesMaxI;
-        }
+        branch.i_norm = bFound ? bMax.toFixed(2) : '';
     });
 
+    // Root Impact: max über branches
     let rMax = 0.0;
     let rFound = false;
     treeData.branches.forEach(branch => {
@@ -173,8 +255,12 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
 function updateAttackTreeKSTUSummariesFromForm() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-    
-    const useDeepTree = document.getElementById('use_deep_tree').value === 'true';
+
+    const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
+    const treeDepth = (depthRaw === 2 || depthRaw === 3) ? 2 : 1;
+    const useDeepTree = treeDepth >= 2;
+
+    const secondOn = (document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true';
 
     const getLeafDs = (idx) => readLeafDsFromDOM(idx);
     const getLeafKSTU = (idx) => ({
@@ -184,25 +270,58 @@ function updateAttackTreeKSTUSummariesFromForm() {
         u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
     });
 
-    const AT_MAX_IMPACTS_PER_PATH = 5;
-    const AT_BRANCH_LEAF_BASE = [1, 6]; // Branch 1: 1..5, Branch 2: 6..10
+    const max = 5;
+
+    // Indizes: 1..5 (B1A), 6..10 (B2A), 11..15 (B1B), 16..20 (B2B)
+    const bases = {
+        '1a': 1,
+        '2a': 6,
+        '1b': 11,
+        '2b': 16
+    };
+
+    const mkLeaves = (base) => {
+        const arr = [];
+        for (let i = 0; i < max; i++) {
+            const idx = base + i;
+            arr.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+        }
+        return arr;
+    };
 
     const formValues = {
+        treeDepth: treeDepth,
         useDeepTree: useDeepTree,
         branches: [
-            { l2_node: useDeepTree ? {} : null, leaves: [] },
-            { l2_node: useDeepTree ? {} : null, leaves: [] }
+            {},
+            {}
         ]
     };
 
-    for (let b = 0; b < 2; b++) {
-        const base = AT_BRANCH_LEAF_BASE[b];
-        for (let i = 0; i < AT_MAX_IMPACTS_PER_PATH; i++) {
-            const idx = base + i;
-            formValues.branches[b].leaves.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+    // Branch 1
+    if (treeDepth === 1) {
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else {
+        formValues.branches[0].l2_nodes = [
+            { leaves: mkLeaves(bases['1a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[0].l2_nodes.push({ leaves: mkLeaves(bases['1b']) });
         }
     }
-    
+
+    // Branch 2
+    if (treeDepth === 1) {
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else {
+        formValues.branches[1].l2_nodes = [
+            { leaves: mkLeaves(bases['2a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[1].l2_nodes.push({ leaves: mkLeaves(bases['2b']) });
+        }
+    }
+
     applyImpactInheritance(formValues, analysis);
     applyWorstCaseInheritance(formValues);
 
@@ -212,27 +331,43 @@ function updateAttackTreeKSTUSummariesFromForm() {
     [0, 1].forEach((bIdx) => {
         const branchNum = bIdx + 1;
         const branchData = formValues.branches[bIdx];
-        
-        const elB1 = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
-        if (elB1) elB1.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
-        
-        if (useDeepTree) {
+
+        const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
+        if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
+
+        if (treeDepth >= 2) {
+            const nodeA = (branchData.l2_nodes && branchData.l2_nodes[0]) ? branchData.l2_nodes[0] : null;
             const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
-            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData.l2_node.kstu, branchData.l2_node.i_norm);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
+
+            const nodeB = (branchData.l2_nodes && branchData.l2_nodes[1]) ? branchData.l2_nodes[1] : null;
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
         }
     });
 
-    // Leaf-Summaries für alle Slots (1..10). (Hidden Rows sind ok – werden nur nicht sichtbar.)
-    for (let b = 0; b < 2; b++) {
-        const base = AT_BRANCH_LEAF_BASE[b];
-        for (let i = 0; i < AT_MAX_IMPACTS_PER_PATH; i++) {
-            const leafNum = base + i;
-            const leaf = formValues.branches[b].leaves[i];
-            const inp = document.querySelector(`input[name="at_leaf_${leafNum}_i"]`);
-            if (inp) inp.value = leaf.i_norm;
-            const elL = document.getElementById(`at_leaf_${leafNum}_summary`);
-            if (elL) elL.innerHTML = _renderNodeSummaryHTML(leaf.kstu, leaf.i_norm);
-        }
+    // Leaf-Summaries für alle Slots (1..20). Hidden Rows sind ok.
+    for (let idx = 1; idx <= 20; idx++) {
+        const leafObj = (() => {
+            // Ermittlung: welche Branch/Gruppe gehört idx?
+            if (idx >= 1 && idx <= 5) return (treeDepth === 1 ? formValues.branches[0].leaves[idx-1] : formValues.branches[0].l2_nodes[0].leaves[idx-1]);
+            if (idx >= 6 && idx <= 10) return (treeDepth === 1 ? formValues.branches[1].leaves[idx-6] : formValues.branches[1].l2_nodes[0].leaves[idx-6]);
+            if (idx >= 11 && idx <= 15) {
+                if (treeDepth === 1 || !secondOn) return null;
+                return formValues.branches[0].l2_nodes[1].leaves[idx-11];
+            }
+            if (idx >= 16 && idx <= 20) {
+                if (treeDepth === 1 || !secondOn) return null;
+                return formValues.branches[1].l2_nodes[1].leaves[idx-16];
+            }
+            return null;
+        })();
+
+        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
+        if (inp) inp.value = leafObj ? (leafObj.i_norm || '') : '';
+
+        const elL = document.getElementById(`at_leaf_${idx}_summary`);
+        if (elL) elL.innerHTML = leafObj ? _renderNodeSummaryHTML(leafObj.kstu, leafObj.i_norm) : '';
     }
 }
 
