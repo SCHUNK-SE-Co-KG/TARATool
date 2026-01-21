@@ -24,6 +24,54 @@ function loadAnalyses() {
             if (!analysis.impactMatrix) {
                 analysis.impactMatrix = {};
             }
+            if (!analysis.securityGoals) {
+                analysis.securityGoals = [];
+            }
+            if (!analysis.residualRisk) {
+                analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
+            }
+            if (!analysis.residualRisk.leaves) {
+                analysis.residualRisk.leaves = {};
+            }
+            if (!Array.isArray(analysis.residualRisk.entries)) {
+                analysis.residualRisk.entries = [];
+            }
+            if (!analysis.residualRisk.treeNotes) {
+                analysis.residualRisk.treeNotes = {};
+            }
+
+            // --- Migration: stabile Risk-UIDs (damit Restrisiko-Daten nicht durch Reindexing verloren gehen)
+            if (!analysis.riskEntries) analysis.riskEntries = [];
+            analysis.riskEntries.forEach(entry => {
+                if (!entry.uid) entry.uid = generateUID('risk');
+            });
+
+            // --- Migration: alte Restrisiko-Keys (Prefix = Risk-ID) soweit moeglich auf UID umhaengen
+            try {
+                const leaves = analysis.residualRisk.leaves || {};
+                const converted = {};
+                Object.keys(leaves).forEach(k => {
+                    const parts = String(k).split('|');
+                    if (parts.length >= 2) {
+                        const prefix = parts[0];
+                        const entry = (analysis.riskEntries || []).find(r => r.id === prefix);
+                        if (entry && entry.uid) {
+                            const rest = k.substring(prefix.length);
+                            converted[`${entry.uid}${rest}`] = leaves[k];
+                            return;
+                        }
+                    }
+                    converted[k] = leaves[k];
+                });
+                analysis.residualRisk.leaves = converted;
+            } catch (e) {}
+
+            // --- Sync: Risikoanalyse -> Restrisiko-Struktur (entries)
+            try {
+                if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+                    syncResidualRiskFromRiskAnalysis(analysis, false);
+                }
+            } catch (e) {}
         });
 
     } else {
@@ -41,6 +89,23 @@ function saveCurrentAnalysisState() {
     analysis.description = inputDescription.value.trim();
     analysis.intendedUse = inputIntendedUse.value.trim();
     analysis.metadata.author = inputAuthorName.value.trim(); 
+}
+
+// =============================================================
+// --- ID / UID HELPERS ---
+// =============================================================
+
+// Stabiler UID-Generator fuer interne Zuordnungen (z.B. Restrisiko-Keys).
+// Nutzt crypto.randomUUID() wenn verfuegbar, sonst Fallback.
+function generateUID(prefix = 'uid') {
+    try {
+        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+            return `${prefix}_${crypto.randomUUID()}`;
+        }
+    } catch (e) {}
+    const rand = Math.random().toString(36).slice(2, 10);
+    const ts = Date.now().toString(36);
+    return `${prefix}_${ts}_${rand}`;
 }
 
 // =============================================================

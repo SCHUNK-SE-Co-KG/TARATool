@@ -116,7 +116,8 @@ body {
 
 .stats-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* Flexible: allows adding more stat-cards without breaking layout */
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     gap: 15px;
 }
 
@@ -247,6 +248,14 @@ textarea { resize: none; }
     text-align: right;
 }
 
+/* --- SECURITY GOALS (SCROLL AREA) --- */
+#securityGoalsScrollArea {
+    /* Nur scrollbar, wenn die Kacheln nicht auf die Seite passen */
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
 /* --- DAMAGE SCENARIOS (LISTE - NEUES LAYOUT) --- */
 .ds-list { list-style: none; padding: 0; margin: 0; }
 
@@ -375,4 +384,127 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .status-bar {
     background: #333; color: #fff; padding: 4px 20px; font-size: 0.8em; 
     margin-top: auto; 
+}
+
+/* --- RESIDUAL RISK ANALYSIS (SCROLL AREA) --- */
+#residualRiskScrollArea {
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* --- RESIDUAL RISK ANALYSIS (OVERVIEW) --- */
+.rr-overview-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.rr-tree-check {
+    font-size: 1.15em;
+    color: #27ae60;
+}
+
+.rr-tree-check.incomplete {
+    color: #bdc3c7;
+}
+
+/* --- RESIDUAL RISK ANALYSIS (LEAF EDITOR) --- */
+.rr-leaf-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.rr-leaf-table th, .rr-leaf-table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; background:#fff; }
+.rr-leaf-table th { background: #f4f4f4; }
+
+.rr-leaf-check { font-size: 1.2em; color: #27ae60; }
+.rr-leaf-check.incomplete { color: #bdc3c7; }
+
+.rr-leaf-row-complete td { background: rgba(46, 204, 113, 0.08); }
+
+.rr-hidden { display: none; }
+
+.rr-field { width: 100%; min-height: 34px; }
+.rr-textarea { width: 100%; min-height: 70px; resize: vertical; }
+.rr-textarea:disabled { background: #f2f2f2; color: #7f8c8d; }
+.rr-disabled { background: #f2f2f2 !important; color: #7f8c8d !important; }
+
+.rr-kstu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+.rr-select-invalid { border: 1px solid #e74c3c !important; }
+
+.rr-risk-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.rr-risk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.rr-leaf-block {
+    border: 1px dashed #e5e5e5;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    background: #fafafa;
+}
+
+.rr-leaf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.rr-leaf-title {
+    font-weight: 600;
+}
+
+.rr-check {
+    font-size: 1.1em;
+    color: #27ae60;
+}
+
+.rr-check.incomplete {
+    color: #bdc3c7;
+}
+
+.rr-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .rr-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rr-mitigation-box {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.rr-kstu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .rr-kstu-grid {
+        grid-template-columns: 1fr 1fr;
+    }
 }

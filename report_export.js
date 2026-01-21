@@ -270,6 +270,52 @@
             y += needed;
         };
 
+        // Key + farbiges Badge (z.B. Risikoklasse)
+        const addKeyBadge = (key, badgeLabel, badgeFillRgb, badgeTextRgb = [255, 255, 255]) => {
+            const k = String(key || '');
+            const label = (badgeLabel === null || badgeLabel === undefined || badgeLabel === '') ? '-' : String(badgeLabel);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(10);
+
+            const keyText = k + ':';
+            const keyW = Math.min(60, Math.max(28, doc.getTextWidth(keyText) + 3));
+            const badgeX = margin + keyW + 2;
+            const badgeMaxW = pageW - margin * 2 - keyW - 2;
+
+            const lineH = 6;
+            ensureSpace(lineH);
+
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0);
+            doc.text(keyText, margin, y);
+
+            // Badge
+            const padX = 2.6;
+            const padY = 1.8;
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            const textW = doc.getTextWidth(label);
+            const badgeW = Math.min(badgeMaxW, Math.max(16, textW + padX * 2));
+            const badgeH = 5.8;
+            const badgeY = y - 4.8;
+
+            doc.setFillColor(...(badgeFillRgb || [127, 140, 141]));
+            doc.setDrawColor(...(badgeFillRgb || [127, 140, 141]));
+            if (typeof doc.roundedRect === 'function') {
+                doc.roundedRect(badgeX, badgeY, badgeW, badgeH, 1.3, 1.3, 'F');
+            } else {
+                doc.rect(badgeX, badgeY, badgeW, badgeH, 'F');
+            }
+            doc.setTextColor(...(badgeTextRgb || [255, 255, 255]));
+            doc.text(label, badgeX + badgeW / 2, y - 1.0, { align: 'center' });
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+
+            y += lineH;
+        };
+
         // Minimaler, robuster Tabellenrenderer (ohne AutoTable)
         const addTable = (headers, rows, colWidths) => {
             if (!Array.isArray(headers) || headers.length === 0) return;
@@ -524,6 +570,7 @@
             addText,
             addSpacer,
             addKeyValue,
+            addKeyBadge,
             addTable,
             addImpactMatrixTable
         };
@@ -687,7 +734,12 @@
                 const cls = _riskClassFromValue(entry.rootRiskValue);
                 pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
                 pdf.addKeyValue('Risk Score (R)', entry.rootRiskValue ?? '-');
-                pdf.addKeyValue('Risikoklasse', cls.label);
+                pdf.addKeyValue('Gesamtschutzbedarf I(N)', (entry.i_norm === '' || entry.i_norm === null || entry.i_norm === undefined) ? '-' : entry.i_norm);
+                if (typeof pdf.addKeyBadge === 'function') {
+                    pdf.addKeyBadge('Risikoklasse', cls.label, cls.color);
+                } else {
+                    pdf.addKeyValue('Risikoklasse', cls.label);
+                }
 
                 // Hinweis: Im PDF werden pro Risikobaum nur die Wurzelangaben ausgegeben.
                 // Zwischenpfade und Blaetter sind im Tool einsehbar.
@@ -782,15 +834,219 @@
             pdf.setY(pdf.margin);
         }
 
-        // Abschluss (neue Seite): Unterschriften + Datum
-        // Abschluss wieder in A4 Hochformat
+        // =============================================================
+        // Restrisikoanalyse (Roots + Blattinformationen)
+        // =============================================================
+        try {
+            if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
+        } catch (_) {}
+
+        const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
+            ? analysis.residualRisk.entries
+            : [];
+
+        // Neue Seite A4
+        try { doc.addPage('a4', 'portrait'); } catch (_) { doc.addPage(); }
+        pdf.setY(pdf.margin);
+        pdf.addH1('Restrisikoanalyse');
+
+        // Helper: kleines farbiges Badge an Position
+        // Zeichnet ein Badge rechtsbuendig (xRight ist die rechte Kante)
+        const _drawBadgeAt = (xRight, yTop, label, fillRgb) => {
+            const txt = String(label || '-');
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            const padX = 2.6;
+            const padY = 1.8;
+            const textW = doc.getTextWidth(txt);
+            const w = Math.max(16, textW + padX * 2);
+            const h = 5.8;
+            const x = Math.max(pdf.margin, xRight - w);
+            doc.setFillColor(...(fillRgb || [127, 140, 141]));
+            doc.setDrawColor(...(fillRgb || [127, 140, 141]));
+            if (typeof doc.roundedRect === 'function') doc.roundedRect(x, yTop, w, h, 1.3, 1.3, 'F');
+            else doc.rect(x, yTop, w, h, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.text(txt, x + w / 2, yTop + 4.3, { align: 'center' });
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+            return w;
+        };
+
+        const _drawRiskBoxes = (riskVal, riskCls, rrVal, rrCls) => {
+            const gap = 8;
+            const colW = (pdf.pageW - pdf.margin * 2 - gap) / 2;
+            const boxH = 18;
+            pdf.ensureSpace(boxH + 2);
+            const y0 = pdf.getY();
+            const xL = pdf.margin;
+            const xR = pdf.margin + colW + gap;
+
+            const drawBox = (x, title, val, cls) => {
+                doc.setDrawColor(210);
+                doc.rect(x, y0, colW, boxH, 'S');
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.text(String(title), x + 2.5, y0 + 5);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text(`R = ${val === null || val === undefined || val === '' ? '-' : String(val)}`, x + 2.5, y0 + 12.5);
+                _drawBadgeAt(x + colW - 2.0, y0 + 2.2, cls?.label || '-', cls?.color);
+            };
+
+            drawBox(xL, 'Risikoanalyse', riskVal, riskCls);
+            drawBox(xR, 'Restrisiko', rrVal, rrCls);
+
+            pdf.setY(y0 + boxH + 4);
+        };
+
+        if (!rrEntries || rrEntries.length === 0) {
+            pdf.addText('Keine Restrisikoanalyse-Daten vorhanden.');
+        } else {
+            // sortiert nach Restrisiko (Root)
+            const decorated = rrEntries.map(e => {
+                const base = (analysis.riskEntries || []).find(r => r?.uid === e?.uid) || e;
+                const baseVal = (base && base.rootRiskValue !== undefined) ? base.rootRiskValue : '-';
+                const rrM = (typeof computeResidualTreeMetrics === 'function' && e?.uid)
+                    ? computeResidualTreeMetrics(analysis, e.uid)
+                    : null;
+                const rrVal = rrM?.riskValue ?? '-';
+                return {
+                    entry: e,
+                    baseVal,
+                    rrVal,
+                    baseCls: _riskClassFromValue(baseVal),
+                    rrCls: _riskClassFromValue(rrVal),
+                    note: (analysis.residualRisk && analysis.residualRisk.treeNotes) ? (analysis.residualRisk.treeNotes[e.uid] || '') : ''
+                };
+            });
+
+            decorated.sort((a, b) => (parseFloat(b.rrVal) || 0) - (parseFloat(a.rrVal) || 0));
+
+            for (const it of decorated) {
+                const e = it.entry;
+                pdf.addH2(`${e.id || ''}: ${e.rootName || ''}`);
+
+                // Risiko vs Restrisiko nebeneinander
+                _drawRiskBoxes(it.baseVal, it.baseCls, it.rrVal, it.rrCls);
+
+                // Anmerkung (aus Uebersicht)
+                pdf.addKeyValue('Anmerkung', (it.note && String(it.note).trim().length) ? it.note : '-');
+
+                // Blaetter
+                const leafRows = [];
+                try {
+                    if (typeof rrIterateLeaves === 'function') {
+                        rrIterateLeaves(e, (meta) => {
+                            const leaf = meta?.leaf;
+                            if (!leaf) return;
+                            const leafId = String(meta.leafKey || '').split('|').join('/');
+                            const name = leaf.text || '';
+                            const rr = leaf.rr || {};
+                            const tr = rr.treatment || '-';
+                            const comment = rr.note || '-';
+                            const measure = (String(tr).trim() === 'Mitigiert') ? (rr.securityConcept || '-') : '-';
+                            leafRows.push([leafId || '-', name || '-', tr, comment, measure]);
+                        });
+                    }
+                } catch (_) {}
+
+                if (leafRows.length > 0) {
+                    pdf.addSpacer(2);
+                    pdf.addTable(
+                        ['ID', 'Name', 'Behandlung', 'Kommentar', 'Maßnahme'],
+                        leafRows,
+                        [22, 60, 24, 35, (pdf.pageW - pdf.margin * 2) - (22 + 60 + 24 + 35)]
+                    );
+                } else {
+                    pdf.addText('Keine Blaetter (Auswirkungen) vorhanden.');
+                }
+
+                pdf.hLine();
+            }
+        }
+
+        // Visualisierung Restrisiko-Angriffsbäume (A3 Querformat)
+        if (rrEntries && rrEntries.length > 0) {
+            let rrSvgText = null;
+            try {
+                const dotContent = (typeof window.exportResidualRiskToDot === 'function')
+                    ? window.exportResidualRiskToDot(analysis)
+                    : null;
+                if (dotContent) {
+                    if (typeof showToast === 'function') showToast('Erzeuge Restrisiko-Angriffsbäume (SVG)…', 'info');
+                    rrSvgText = await _renderDotToSvg(dotContent);
+                }
+            } catch (_) {
+                rrSvgText = null;
+            }
+
+            try { doc.addPage('a3', 'landscape'); } catch (_) { doc.addPage([420, 297], 'landscape'); }
+
+            const pageW2 = doc.internal.pageSize.getWidth();
+            const pageH2 = doc.internal.pageSize.getHeight();
+            const margin2 = pdf.margin;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(18);
+            doc.setTextColor(0);
+            doc.text('Restrisiko Angriffsbäume', margin2, margin2);
+            doc.setFont('helvetica', 'normal');
+
+            try {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(58);
+                doc.setTextColor(245);
+                doc.text('Restrisiko', pageW2 / 2, pageH2 / 2, { align: 'center', angle: 35 });
+            } catch (_) { /* noop */ }
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+
+            const topY2 = margin2 + 10;
+            const availW2 = pageW2 - margin2 * 2;
+            const availH2 = pageH2 - topY2 - margin2;
+
+            if (rrSvgText && rrSvgText.includes('<svg')) {
+                const png = await _svgTextToPng(rrSvgText, 3800);
+                if (png && png.dataUrl) {
+                    const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
+                    let drawW = availW2;
+                    let drawH = drawW / imgRatio;
+                    if (drawH > availH2) {
+                        drawH = availH2;
+                        drawW = drawH * imgRatio;
+                    }
+                    const x = margin2 + (availW2 - drawW) / 2;
+                    const y = topY2 + (availH2 - drawH) / 2;
+                    try {
+                        doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
+                    } catch (_) {
+                        doc.setFontSize(11);
+                        doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', margin2, topY2);
+                    }
+                } else {
+                    doc.setFontSize(11);
+                    doc.text('Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', margin2, topY2);
+                }
+            } else {
+                doc.setFontSize(11);
+                doc.text('Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', margin2, topY2);
+            }
+
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+            pdf.setY(pdf.margin);
+        }
+
+        // Freigabe (neue Seite): Unterschriften + Datum
+        // Freigabe wieder in A4 Hochformat
         try {
             doc.addPage('a4', 'portrait');
         } catch (_) {
             doc.addPage();
         }
         pdf.setY(pdf.margin);
-        pdf.addTitle('Abschluss');
+        pdf.addTitle('Freigabe');
         pdf.addH2('Unterschriften');
         pdf.addSpacer(8);
 

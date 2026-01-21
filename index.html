@@ -50,6 +50,8 @@
                 <button class="tab-button" data-tab="tabAssets">Assets</button>
                 <button class="tab-button" data-tab="tabDamageScenarios">Schadensszenarien</button>
                 <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button>
+                <button class="tab-button" data-tab="tabSecurityGoals">Security Ziele</button>
+                <button class="tab-button" data-tab="tabResidualRisk">Restrisikoanalyse</button>
             </div>
 
             <div id="tabOverview" class="tab-content" style="display: block;">
@@ -78,6 +80,16 @@
                                 <div style="color:#e67e22; font-weight:bold;">Hoch: <span id="statHigh" style="color:#333;">0</span></div>
                                 <div style="color:#f39c12; font-weight:bold;">Mittel: <span id="statMed" style="color:#333;">0</span></div>
                                 <div style="color:#27ae60; font-weight:bold;">Niedrig: <span id="statLow" style="color:#333;">0</span></div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card" style="border-left-color: #8e44ad; display: block; padding: 10px 15px;">
+                            <div style="font-size: 0.85em; color: #666; font-weight: 600; margin-bottom: 5px;">Risikoverteilung Restrisiko</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.85em;">
+                                <div style="color:#c0392b; font-weight:bold;">Kritisch: <span id="statRRCrit" style="color:#333;">0</span></div>
+                                <div style="color:#e67e22; font-weight:bold;">Hoch: <span id="statRRHigh" style="color:#333;">0</span></div>
+                                <div style="color:#f39c12; font-weight:bold;">Mittel: <span id="statRRMed" style="color:#333;">0</span></div>
+                                <div style="color:#27ae60; font-weight:bold;">Niedrig: <span id="statRRLow" style="color:#333;">0</span></div>
                             </div>
                         </div>
                     </div>
@@ -140,7 +152,25 @@
                 </div>
             </div>
 
-        </div> 
+            <div id="tabSecurityGoals" class="tab-content" style="display: none;">
+                <div class="assets-controls" style="margin-bottom:15px;">
+                    <button id="btnAddSecurityGoal" class="primary-button"><i class="fas fa-plus"></i> Security Ziel hinzufügen</button>
+                </div>
+                <div id="securityGoalsScrollArea" class="scroll-area">
+                    <div id="securityGoalsCardContainer" class="cards-grid"></div>
+                </div>
+            </div>
+
+            <div id="tabResidualRisk" class="tab-content" style="display: none;">
+                <div class="panel">
+                    <h3>Restrisikoanalyse</h3>
+                    <p style="color:#666; margin-top:0;">Erfassen Sie für jede Auswirkung eine Risikomaßnahme sowie Anmerkung und Security Maßnahme. Bei <b>Mitigiert</b> ist zusätzlich eine Neubewertung (K/S/T/U) erforderlich. Die Risikoanalyse bleibt dabei unverändert.</p>
+                    <div id="residualRiskScrollArea" class="scroll-area">
+                        <div id="residualRiskContainer"></div>
+                    </div>
+                </div>
+            </div>
+
         
         <footer class="status-bar" style="background: #333; color: #fff; padding: 4px 20px; font-size: 0.8em; margin-top: auto;">
             <span id="statusBarMessage">Bereit.</span>
@@ -199,6 +229,24 @@
                 <div class="form-group"><label>Name</label><input type="text" id="dsName" required></div>
                 <div class="form-group"><label>Kurzbeschreibung</label><input type="text" id="dsShort" required maxlength="10"></div>
                 <div class="form-group"><label>Beschreibung</label><textarea id="dsDescription" rows="3"></textarea></div>
+                <button type="submit" class="primary-button">Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="securityGoalModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" id="closeSecurityGoalModal">&times;</span>
+            <h2 id="securityGoalModalTitle">Security Ziel</h2>
+            <form id="securityGoalForm">
+                <input type="hidden" id="sgIdField">
+                <div class="form-group"><label>Name</label><input type="text" id="sgName" required></div>
+                <div class="form-group"><label>Beschreibung</label><textarea id="sgDescription" rows="4"></textarea></div>
+                <div class="form-group">
+                    <label>Referenzierte Angriffsziel(e) (Root)</label>
+                    <select id="sgRootRefs" multiple size="6" style="width:100%;"></select>
+                    <div style="font-size:0.8em; color:#777; margin-top:4px;">Mehrfachauswahl: Strg/⌘</div>
+                </div>
                 <button type="submit" class="primary-button">Speichern</button>
             </form>
         </div>
@@ -816,6 +864,20 @@
     <div id="importAnalysisModal" class="modal" style="display:none;">
         <div class="modal-content"><span class="close-button" id="closeImportAnalysisModal">&times;</span><h2>Import</h2><input type="file" id="importFileInput" accept=".json"><div style="margin-top:10px;"><button class="primary-button" onclick="executeImport()">Importieren</button></div></div>
     </div>
+    
+
+    <!-- Restrisikoanalyse Modal (Bearbeiten) -->
+    <div id="residualRiskModal" class="modal large-modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-button" id="closeResidualRiskModal">&times;</span>
+            <h2 id="residualRiskModalTitle">Restrisiko bearbeiten</h2>
+            <div id="residualRiskModalBody"></div>
+            <div style="text-align:right; margin-top:15px;">
+                <button id="btnCloseResidualRiskModalFooter" class="primary-button">Fertig</button>
+            </div>
+        </div>
+    </div>
+
     <div id="versionControlModal" class="modal" style="display:none;">
         <div class="modal-content large-content"><span class="close-button" id="closeVersionControlModal">&times;</span><h2>Versionen</h2><table class="history-table"><thead><tr><th>Ver.</th><th>Datum</th><th>Autor</th><th>Kommentar</th></tr></thead><tbody id="historyTableBody"></tbody></table><div style="margin-top:10px;"><button class="primary-button" onclick="openVersionCommentModal()">Neue Version</button></div></div>
     </div>
@@ -843,6 +905,7 @@
     <script src="assets.js"></script>
     <script src="damage_scenarios.js"></script>
     <script src="impact_matrix.js"></script>
+    <script src="security_goals.js"></script>
     <script src="risk_analysis.js"></script>
     <script src="attack_tree_structure.js"></script>
     <script src="attack_tree_ui.js"></script>
@@ -850,7 +913,13 @@
     <script src="dot_export.js"></script>
     <script src="versioning.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="report_export.js?v=25"></script>
+    <script src="report_export.js?v=26"></script>
+    <script src="residual_risk_data.js"></script>
+    <script src="residual_risk_ui.js"></script>
+    <!-- <script src="residual_risk_structure.js?v=27"></script>
+    <script src="residual_risk_calc.js?v=27"></script>
+    <script src="residual_risk_pdf.js?v=27"></script>
+    <script src="residual_risk_ui.js?v=27"></script> -->
     <script src="init.js"></script>
 </body>
 </html>

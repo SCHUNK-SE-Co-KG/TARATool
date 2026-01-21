@@ -118,6 +118,13 @@ window.revertToVersion = (analysisId, version) => {
         analysis.impactMatrix = entry.state.impactMatrix;
         
         analysis.riskEntries = entry.state.riskEntries;
+
+        // Security Ziele (neu)
+        analysis.securityGoals = entry.state.securityGoals || [];
+        analysis.residualRisk = entry.state.residualRisk || { leaves: {}, entries: [], treeNotes: {} };
+        if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
+        if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
+        if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
         
         analysis.metadata.version = entry.version;
         analysis.metadata.author = entry.state.metadata.author;
@@ -132,8 +139,12 @@ window.revertToVersion = (analysisId, version) => {
         } else if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios' && typeof renderDamageScenarios === 'function' && typeof renderImpactMatrix === 'function') {
             renderDamageScenarios();
             renderImpactMatrix();
+        } else if (activeTab && activeTab.dataset.tab === 'tabSecurityGoals' && typeof renderSecurityGoals === 'function') {
+            renderSecurityGoals(analysis);
         } else if (activeTab && activeTab.dataset.tab === 'tabRiskAnalysis' && typeof renderRiskAnalysis === 'function') {
             renderRiskAnalysis();
+        } else if (activeTab && activeTab.dataset.tab === 'tabResidualRisk' && typeof renderResidualRisk === 'function') {
+            renderResidualRisk(analysis);
         }
 
         saveAnalyses();
@@ -198,7 +209,9 @@ function createNewVersion(comment) {
             assets: JSON.parse(JSON.stringify(analysis.assets)), 
             damageScenarios: JSON.parse(JSON.stringify(analysis.damageScenarios)),
             impactMatrix: JSON.parse(JSON.stringify(analysis.impactMatrix)),
-            riskEntries: JSON.parse(JSON.stringify(analysis.riskEntries)) 
+            riskEntries: JSON.parse(JSON.stringify(analysis.riskEntries)),
+            securityGoals: JSON.parse(JSON.stringify(analysis.securityGoals || [])),
+            residualRisk: JSON.parse(JSON.stringify(analysis.residualRisk || { leaves: {}, entries: [], treeNotes: {} }))
         }
     };
     
