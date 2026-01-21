@@ -76,8 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
                 if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
             }
+            else if (tabId === 'tabSecurityGoals') {
+                if (typeof renderSecurityGoals === 'function') renderSecurityGoals(activeAnalysis);
+            }
             else if (tabId === 'tabRiskAnalysis') {
                 if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+            }
+            else if (tabId === 'tabResidualRisk') {
+                if (typeof renderResidualRisk === 'function') renderResidualRisk(activeAnalysis);
             }
         });
     });

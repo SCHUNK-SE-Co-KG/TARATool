@@ -6,94 +6,50 @@ function renderHistoryTable(analysis) {
     if (!historyTableBody) return;
     historyTableBody.innerHTML = '';
 
-    const currentVersion = analysis.metadata.version;
-    const history = analysis.history;
-    
-    // Sortierung der Historie
-    history.sort((a, b) => {
-        const [aMajor, aMinor] = a.version.split('.').map(Number);
-        const [bMajor, bMinor] = b.version.split('.').map(Number);
-        if (aMajor !== bMajor) return aMajor - bMajor;
-        return aMinor - bMinor;
+    const currentVersion = (analysis && analysis.metadata) ? analysis.metadata.version : '';
+    const history = Array.isArray(analysis.history) ? analysis.history : [];
+
+    // Sortierung: neueste zuerst (major/minor numerisch)
+    const sorted = history.slice().sort((a, b) => {
+        const [aMajor, aMinor] = String(a.version || '0.0').split('.').map(n => parseInt(n, 10) || 0);
+        const [bMajor, bMinor] = String(b.version || '0.0').split('.').map(n => parseInt(n, 10) || 0);
+        if (aMajor !== bMajor) return bMajor - aMajor;
+        return bMinor - aMinor;
     });
 
-    const currentVersionIndex = history.findIndex(entry => entry.version === currentVersion);
-    
-    let tempMinorVersions = []; 
-    let finalBaseline = null;
-    
-    for (let i = currentVersionIndex - 1; i >= 0; i--) {
-        const entry = history[i];
-        
-        const isX0Baseline = entry.version.endsWith('.0') && entry.version !== INITIAL_VERSION;
+    sorted.forEach(entry => {
+        const row = document.createElement('tr');
+        const isCurrent = entry.version === currentVersion;
+        if (isCurrent) row.classList.add('is-current-version');
 
-        if (isX0Baseline) {
-            finalBaseline = entry.version;
-            tempMinorVersions = []; 
-            break; 
-        }
-        
-        if (tempMinorVersions.length < 3) {
-            tempMinorVersions.push(entry.version);
-        } else {
-            break; 
-        }
-    }
-    
-    const restorable = new Set();
-    
-    if (finalBaseline) {
-        restorable.add(finalBaseline);
-    } else {
-        tempMinorVersions.forEach(v => restorable.add(v));
-    }
-    
-    const versionsToRender = new Set([...restorable, currentVersion]);
-    
-    history
-        .filter(entry => versionsToRender.has(entry.version))
-        .sort((a, b) => {
-            if (a.version === currentVersion) return -1;
-            if (b.version === currentVersion) return 1;
-            
-            const [aMajor, aMinor] = a.version.split('.').map(Number);
-            const [bMajor, bMinor] = b.version.split('.').map(Number);
-            if (aMajor !== bMajor) return bMajor - aMajor;
-            return bMinor - aMinor;
-        })
-        .forEach(entry => {
-            const row = document.createElement('tr');
-            const isCurrent = entry.version === currentVersion;
-            
-            if (isCurrent) {
-                row.classList.add('is-current-version');
-            }
-
-            const isActiveRollbackButton = !isCurrent && restorable.has(entry.version);
-            
-            row.innerHTML = `
-                <td>${entry.version}</td>
-                <td>${entry.author}</td>
-                <td>${entry.date}</td>
-                <td>${entry.comment}</td>
-                <td>
-                    <button onclick="revertToVersion('${analysis.id}', '${entry.version}')" 
-                            class="action-button small" 
-                            ${!isActiveRollbackButton ? 'disabled' : ''}>
-                        ${isCurrent ? 'Aktuell' : 'Wiederherstellen'}
-                    </button>
-                </td>
-            `;
-            historyTableBody.appendChild(row);
-        });
+        row.innerHTML = `
+            <td>${entry.version || '-'}</td>
+            <td>${entry.date || '-'}</td>
+            <td>${entry.author || '-'}</td>
+            <td>${entry.comment || ''}</td>
+            <td>
+                <button onclick="revertToVersion('${analysis.id}', '${entry.version}')" 
+                        class="action-button small" 
+                        ${isCurrent ? 'disabled' : ''}>
+                    ${isCurrent ? 'Aktuell' : 'Wiederherstellen'}
+                </button>
+            </td>
+        `;
+        historyTableBody.appendChild(row);
+    });
 }
 
 window.revertToVersion = (analysisId, version) => {
     const analysis = analysisData.find(a => a.id === analysisId);
     if (!analysis) return;
 
-    const entry = analysis.history.find(h => h.version === version);
+    const entry = (analysis.history || []).find(h => h.version === version);
     if (!entry) return;
+
+    if (!entry.state) {
+        showToast('Diese Version kann nicht wiederhergestellt werden (kein gespeicherter Zustand).', 'error');
+        return;
+    }
     
     confirmationTitle.textContent = 'Versionswiederherstellung';
     confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie zur Version <b>${version}</b> (${entry.comment}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`;
@@ -118,6 +74,13 @@ window.revertToVersion = (analysisId, version) => {
         analysis.impactMatrix = entry.state.impactMatrix;
         
         analysis.riskEntries = entry.state.riskEntries;
+
+        // Security Ziele (neu)
+        analysis.securityGoals = entry.state.securityGoals || [];
+        analysis.residualRisk = entry.state.residualRisk || { leaves: {}, entries: [], treeNotes: {} };
+        if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
+        if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
+        if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
         
         analysis.metadata.version = entry.version;
         analysis.metadata.author = entry.state.metadata.author;
@@ -132,13 +95,18 @@ window.revertToVersion = (analysisId, version) => {
         } else if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios' && typeof renderDamageScenarios === 'function' && typeof renderImpactMatrix === 'function') {
             renderDamageScenarios();
             renderImpactMatrix();
+        } else if (activeTab && activeTab.dataset.tab === 'tabSecurityGoals' && typeof renderSecurityGoals === 'function') {
+            renderSecurityGoals(analysis);
         } else if (activeTab && activeTab.dataset.tab === 'tabRiskAnalysis' && typeof renderRiskAnalysis === 'function') {
             renderRiskAnalysis();
+        } else if (activeTab && activeTab.dataset.tab === 'tabResidualRisk' && typeof renderResidualRisk === 'function') {
+            renderResidualRisk(analysis);
         }
 
         saveAnalyses();
         versionControlModal.style.display = 'none';
         confirmationModal.style.display = 'none'; 
+        btnConfirmAction.classList.remove('dangerous');
         
         showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
         statusBarMessage.textContent = `Version ${version} wiederhergestellt.`;
@@ -146,11 +114,41 @@ window.revertToVersion = (analysisId, version) => {
     
     btnCancelConfirmation.onclick = () => {
         confirmationModal.style.display = 'none';
+        btnConfirmAction.classList.remove('dangerous');
     };
     
     closeConfirmationModal.onclick = () => {
         confirmationModal.style.display = 'none';
+        btnConfirmAction.classList.remove('dangerous');
     };
+};
+
+
+// Modal zum Anlegen einer neuen Version oeffnen
+window.openVersionCommentModal = () => {
+    if (!activeAnalysisId) return;
+    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    if (!analysis) return;
+
+    if (typeof currentVersionInModal !== 'undefined' && currentVersionInModal) {
+        currentVersionInModal.textContent = analysis.metadata && analysis.metadata.version ? analysis.metadata.version : '-';
+    }
+    if (typeof inputVersionComment !== 'undefined' && inputVersionComment) {
+        inputVersionComment.value = '';
+        inputVersionComment.focus();
+    }
+
+    // Default: inkrementell
+    try {
+        const radios = document.querySelectorAll('input[name="versionType"]');
+        radios.forEach(r => {
+            r.checked = (r.value === 'minor');
+        });
+    } catch (e) {}
+
+    if (typeof versionCommentModal !== 'undefined' && versionCommentModal) {
+        versionCommentModal.style.display = 'block';
+    }
 };
 
 
@@ -172,17 +170,21 @@ function createNewVersion(comment) {
     const versionTypeElement = document.querySelector('input[name="versionType"]:checked');
     const versionType = versionTypeElement ? versionTypeElement.value : 'minor'; 
 
-    const currentVersion = analysis.metadata.version;
-    let [major, minor] = currentVersion.split('.').map(Number);
-    let newVersion;
-    
+    const existing = new Set((analysis.history || []).map(h => String(h.version || '').trim()).filter(Boolean));
+
+    const currentVersion = String((analysis.metadata && analysis.metadata.version) ? analysis.metadata.version : '0.0');
+    let [major, minor] = currentVersion.split('.').map(n => parseInt(n, 10) || 0);
+
+    // Naechste freie Version bestimmen (keine Duplikate)
+    let newVersion = '';
     if (versionType === 'major') {
-        major++;
-        minor = 0; 
-        newVersion = `${major}.0`; 
-    } else { // 'minor'
-        minor++;
-        newVersion = `${major}.${minor}`;
+        let m = major + 1;
+        while (existing.has(`${m}.0`)) m++;
+        newVersion = `${m}.0`;
+    } else {
+        let mi = minor + 1;
+        while (existing.has(`${major}.${mi}`)) mi++;
+        newVersion = `${major}.${mi}`;
     }
 
     const newEntry = {
@@ -198,7 +200,9 @@ function createNewVersion(comment) {
             assets: JSON.parse(JSON.stringify(analysis.assets)), 
             damageScenarios: JSON.parse(JSON.stringify(analysis.damageScenarios)),
             impactMatrix: JSON.parse(JSON.stringify(analysis.impactMatrix)),
-            riskEntries: JSON.parse(JSON.stringify(analysis.riskEntries)) 
+            riskEntries: JSON.parse(JSON.stringify(analysis.riskEntries)),
+            securityGoals: JSON.parse(JSON.stringify(analysis.securityGoals || [])),
+            residualRisk: JSON.parse(JSON.stringify(analysis.residualRisk || { leaves: {} }))
         }
     };
     

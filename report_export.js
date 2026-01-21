@@ -782,15 +782,15 @@
             pdf.setY(pdf.margin);
         }
 
-        // Abschluss (neue Seite): Unterschriften + Datum
-        // Abschluss wieder in A4 Hochformat
+        // Freigabe (neue Seite): Unterschriften + Datum
+        // Freigabe wieder in A4 Hochformat
         try {
             doc.addPage('a4', 'portrait');
         } catch (_) {
             doc.addPage();
         }
         pdf.setY(pdf.margin);
-        pdf.addTitle('Abschluss');
+        pdf.addTitle('Freigabe');
         pdf.addH2('Unterschriften');
         pdf.addSpacer(8);
 

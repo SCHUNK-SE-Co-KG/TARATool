@@ -218,6 +218,10 @@ function saveAttackTree(e) {
     const useDeepTree = depth >= 2;
     const useSecondIntermediate = (fd.get('use_second_intermediate') || '').toString().toLowerCase() === 'true';
 
+    // Stabiler UID: bleibt auch bei reindexRiskIDs unveraendert (wichtig fuer Restrisikoanalyse)
+    const existingEntry = editingId ? (analysis.riskEntries || []).find(r => r.id === editingId) : null;
+    const riskUid = (existingEntry && existingEntry.uid) ? existingEntry.uid : generateUID('risk');
+
     const _leafIsEmpty = (leaf) => {
         if (!leaf) return true;
         const textEmpty = !leaf.text || String(leaf.text).trim() === '';
@@ -281,6 +285,7 @@ function saveAttackTree(e) {
 
     const treeData = {
         id: editingId || generateNextRiskID(analysis),
+        uid: riskUid,
         rootName: fd.get('at_root'),
         treeDepth: depth,
         useDeepTree: useDeepTree,
@@ -315,6 +320,13 @@ function saveAttackTree(e) {
     }
     
     reindexRiskIDs(analysis);
+
+    // Restrisiko-Struktur aktualisieren (getrennte Datenhaltung)
+    try {
+        if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+            syncResidualRiskFromRiskAnalysis(analysis, false);
+        }
+    } catch (e) {}
     
     saveAnalyses();
     if (attackTreeModal) attackTreeModal.style.display = 'none';

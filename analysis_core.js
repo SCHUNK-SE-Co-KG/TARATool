@@ -8,6 +8,13 @@ function activateAnalysis(id) {
     if (!analysis) return;
     
     activeAnalysisId = id;
+
+    // Restrisiko-Struktur stets aktuell halten (Risikoanalyse -> Restrisiko)
+    try {
+        if (typeof ensureResidualRiskSynced === 'function') {
+            ensureResidualRiskSynced(analysis);
+        }
+    } catch (e) {}
     
     // UI Update
     fillAnalysisForm(analysis);
@@ -35,8 +42,14 @@ function activateAnalysis(id) {
             if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
             if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
         }
+        else if (tabId === 'tabSecurityGoals') {
+            if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
+        }
         else if (tabId === 'tabRiskAnalysis') {
             if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+        }
+        else if (tabId === 'tabResidualRisk') {
+            if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
         }
     }
 }
@@ -133,6 +146,54 @@ function renderOverview(analysis) {
     if (elHigh) elHigh.textContent = cHigh;
     if (elMed) elMed.textContent = cMed;
     if (elLow) elLow.textContent = cLow;
+
+    // 3. Restrisiko-Verteilung (basierend auf Restrisiko-Root je Angriffsbaum)
+    // Falls Restrisiko noch nicht existiert, wird es automatisch gesynct.
+    try {
+        if (typeof ensureResidualRiskSynced === 'function') {
+            ensureResidualRiskSynced(analysis);
+        }
+    } catch (_) {}
+
+    let rrCrit = 0;
+    let rrHigh = 0;
+    let rrMed = 0;
+    let rrLow = 0;
+
+    risks.forEach(r => {
+        if (!r?.uid) return;
+        let val = NaN;
+        try {
+            if (typeof computeResidualTreeMetrics === 'function') {
+                const m = computeResidualTreeMetrics(analysis, r.uid);
+                if (m && m.riskValue !== undefined) val = parseFloat(m.riskValue);
+            }
+        } catch (_) {}
+        if (isNaN(val)) {
+            val = parseFloat(r.rootRiskValue);
+        }
+        if (isNaN(val)) return;
+
+        if (val >= 2.0) {
+            rrCrit++;
+        } else if (val >= 1.6) {
+            rrHigh++;
+        } else if (val >= 0.8) {
+            rrMed++;
+        } else {
+            rrLow++;
+        }
+    });
+
+    const elRRCrit = document.getElementById('statRRCrit');
+    const elRRHigh = document.getElementById('statRRHigh');
+    const elRRMed = document.getElementById('statRRMed');
+    const elRRLow = document.getElementById('statRRLow');
+
+    if (elRRCrit) elRRCrit.textContent = rrCrit;
+    if (elRRHigh) elRRHigh.textContent = rrHigh;
+    if (elRRMed) elRRMed.textContent = rrMed;
+    if (elRRLow) elRRLow.textContent = rrLow;
 }
 
 
@@ -187,6 +248,21 @@ function executeImport() {
                 }
                 
                 analysisData.push(json);
+
+                // Import-Migration: Felder sicherstellen + Risk-UIDs + Restrisiko-Sync
+                try {
+                    if (!json.damageScenarios) json.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
+                    if (!json.impactMatrix) json.impactMatrix = {};
+                    if (!json.securityGoals) json.securityGoals = [];
+                    if (!json.residualRisk) json.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
+                    if (!json.residualRisk.leaves) json.residualRisk.leaves = {};
+                    if (!Array.isArray(json.residualRisk.entries)) json.residualRisk.entries = [];
+                    if (!json.residualRisk.treeNotes) json.residualRisk.treeNotes = {};
+                    if (!Array.isArray(json.riskEntries)) json.riskEntries = [];
+                    json.riskEntries.forEach(e => { if (e && !e.uid && typeof generateUID === 'function') e.uid = generateUID('risk'); });
+                    if (typeof syncResidualRiskFromRiskAnalysis === 'function') syncResidualRiskFromRiskAnalysis(json, false);
+                } catch (e) {}
+
                 saveAnalyses();
                 renderAnalysisSelector();
                 activateAnalysis(json.id);
@@ -316,7 +392,9 @@ function createNewAnalysis(e) {
                 assets: JSON.parse(JSON.stringify(newAnalysis.assets || [])),
                 damageScenarios: JSON.parse(JSON.stringify(newAnalysis.damageScenarios || JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)))),
                 impactMatrix: JSON.parse(JSON.stringify(newAnalysis.impactMatrix || {})),
-                riskEntries: JSON.parse(JSON.stringify(newAnalysis.riskEntries || []))
+                riskEntries: JSON.parse(JSON.stringify(newAnalysis.riskEntries || [])),
+                securityGoals: JSON.parse(JSON.stringify(newAnalysis.securityGoals || [])),
+                residualRisk: JSON.parse(JSON.stringify(newAnalysis.residualRisk || { leaves: {} }))
             }
         }
     ];

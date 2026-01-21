@@ -145,6 +145,13 @@ window.deleteAttackTree = function(riskId) {
     btnConfirm.onclick = () => {
         analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
         reindexRiskIDs(analysis);
+
+        // Restrisiko-Struktur aktualisieren (getrennte Datenhaltung)
+        try {
+            if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+                syncResidualRiskFromRiskAnalysis(analysis, false);
+            }
+        } catch (e) {}
         saveAnalyses();
         
         // Modal und AttackTree Modal schließen, falls offen

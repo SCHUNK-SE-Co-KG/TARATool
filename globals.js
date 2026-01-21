@@ -88,5 +88,7 @@ const defaultAnalysis = {
     assets: [],
     damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
     impactMatrix: {},
-    riskEntries: []
+    riskEntries: [],
+    securityGoals: [],
+    residualRisk: { leaves: {}, entries: [], treeNotes: {} }
 };
