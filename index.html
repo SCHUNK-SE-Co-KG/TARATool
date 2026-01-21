@@ -879,10 +879,52 @@
     </div>
 
     <div id="versionControlModal" class="modal" style="display:none;">
-        <div class="modal-content large-content"><span class="close-button" id="closeVersionControlModal">&times;</span><h2>Versionen</h2><table class="history-table"><thead><tr><th>Ver.</th><th>Datum</th><th>Autor</th><th>Kommentar</th></tr></thead><tbody id="historyTableBody"></tbody></table><div style="margin-top:10px;"><button class="primary-button" onclick="openVersionCommentModal()">Neue Version</button></div></div>
+        <div class="modal-content large-content">
+            <span class="close-button" id="closeVersionControlModal">&times;</span>
+            <h2>Versionen</h2>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Ver.</th>
+                        <th>Datum</th>
+                        <th>Autor</th>
+                        <th>Kommentar</th>
+                        <th>Aktion</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+            <div style="margin-top:10px;">
+                <button class="primary-button" onclick="openVersionCommentModal()">Neue Version</button>
+            </div>
+        </div>
     </div>
     <div id="versionCommentModal" class="modal" style="display:none;">
-        <div class="modal-content"><span class="close-button" id="closeVersionCommentModal">&times;</span><h2>Neue Version</h2><form id="versionCommentForm"><textarea id="inputVersionComment" required></textarea><button type="submit" class="primary-button">Speichern</button></form></div>
+        <div class="modal-content">
+            <span class="close-button" id="closeVersionCommentModal">&times;</span>
+            <h2>Neue Version</h2>
+            <div style="color:#666; font-size:0.9em; margin-bottom:8px;">Aktuelle Version: <b id="currentVersionInModal">-</b></div>
+            <div class="form-group" style="margin-bottom:10px;">
+                <label style="font-weight:600;">Versionstyp</label>
+                <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
+                    <label style="display:flex; gap:6px; align-items:center;">
+                        <input type="radio" name="versionType" value="minor" checked>
+                        Inkrementell (x.y → x.(y+1))
+                    </label>
+                    <label style="display:flex; gap:6px; align-items:center;">
+                        <input type="radio" name="versionType" value="major">
+                        Hauptversion ((x).y → (x+1).0)
+                    </label>
+                </div>
+            </div>
+            <form id="versionCommentForm">
+                <label style="font-weight:600;">Kommentar</label>
+                <textarea id="inputVersionComment" required placeholder="Kurz beschreiben, was sich geändert hat..."></textarea>
+                <div style="text-align:right; margin-top:10px;">
+                    <button type="submit" class="primary-button">Speichern</button>
+                </div>
+            </form>
+        </div>
     </div>
     
     <div id="confirmationModal" class="modal" style="display:none;">

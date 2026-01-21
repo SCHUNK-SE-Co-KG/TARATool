@@ -430,6 +430,8 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 
 .rr-select-invalid { border: 1px solid #e74c3c !important; }
 
+.rr-text-invalid { border: 1px solid #e74c3c !important; }
+
 .rr-risk-card {
     background: #fff;
     border: 1px solid #ddd;

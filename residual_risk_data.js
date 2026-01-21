@@ -32,10 +32,10 @@
 
     function rrEnsureStructure(analysis) {
         if (!analysis) return;
-        if (!analysis.residualRisk) analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
+        if (!analysis.residualRisk) analysis.residualRisk = { leaves: {}, treeNotes: {} };
         if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
-        if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
         if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
+        if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
     }
 
     function rrMakeLeafKey(branchNum, nodeNum, leafNum) {

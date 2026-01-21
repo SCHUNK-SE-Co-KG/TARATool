@@ -157,42 +157,20 @@
         return false;
     }
 
-    function rrAllLeavesComplete(entry) {
+    function rrTreeAllLeavesComplete(entry) {
+        if (!entry) return false;
+        let any = false;
         let ok = true;
         try {
             if (typeof rrIterateLeaves === 'function') {
                 rrIterateLeaves(entry, ({ leaf }) => {
                     if (!leaf) return;
+                    any = true;
                     if (!rrLeafComplete(leaf)) ok = false;
                 });
             }
-        } catch (_) {
-            // fallback: if we cannot iterate, do not claim complete
-            ok = false;
-        }
-        return ok;
-    }
-
-    function rrGetTreeNote(analysis, uid) {
-        try {
-            return (analysis?.residualRisk?.treeNotes && uid) ? (analysis.residualRisk.treeNotes[uid] || '') : '';
-        } catch (_) {
-            return '';
-        }
-    }
-
-    function rrSetTreeNote(analysis, uid, val) {
-        try {
-            if (!analysis) return;
-            if (!analysis.residualRisk) analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
-            if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
-            analysis.residualRisk.treeNotes[uid] = String(val ?? '');
         } catch (_) {}
-    }
-
-    function rrTreeNoteRequired(riskLabel) {
-        const lbl = String(riskLabel || '').trim();
-        return (lbl === 'Kritisch' || lbl === 'Hoch');
+        return any && ok;
     }
 
     function rrUpdateRowUI(row, leaf) {
@@ -470,62 +448,94 @@
         const origMeta = rrGetRiskMeta(origRisk);
         const iNorm = (base?.i_norm === '' || base?.i_norm === null || base?.i_norm === undefined) ? '-' : String(base.i_norm);
 
+        const okstu = base?.kstu || {};
+        const oK = (okstu.k === undefined || okstu.k === null || String(okstu.k).trim() === '') ? '-' : String(okstu.k);
+        const oS = (okstu.s === undefined || okstu.s === null || String(okstu.s).trim() === '') ? '-' : String(okstu.s);
+        const oT = (okstu.t === undefined || okstu.t === null || String(okstu.t).trim() === '') ? '-' : String(okstu.t);
+        const oU = (okstu.u === undefined || okstu.u === null || String(okstu.u).trim() === '') ? '-' : String(okstu.u);
+
         let resVal = '-';
-        // K/S/T/U werden in der Uebersicht nicht dargestellt (nur Risiko, Restrisiko, I und Anmerkung)
+        let resK = '-';
+        let resS = '-';
+        let resT = '-';
+        let resU = '-';
 
         try {
             if (typeof computeResidualTreeMetrics === 'function' && analysis && entry?.uid) {
                 const m = computeResidualTreeMetrics(analysis, entry.uid);
                 if (m && m.riskValue !== undefined) {
                     resVal = String(m.riskValue);
+                    const rkstu = m.kstu || {};
+                    resK = (rkstu.k === undefined || rkstu.k === null || String(rkstu.k).trim() === '') ? '-' : String(rkstu.k);
+                    resS = (rkstu.s === undefined || rkstu.s === null || String(rkstu.s).trim() === '') ? '-' : String(rkstu.s);
+                    resT = (rkstu.t === undefined || rkstu.t === null || String(rkstu.t).trim() === '') ? '-' : String(rkstu.t);
+                    resU = (rkstu.u === undefined || rkstu.u === null || String(rkstu.u).trim() === '') ? '-' : String(rkstu.u);
                 }
             }
         } catch (e) {}
 
         const resMeta = rrGetRiskMeta(resVal);
 
+        // Baum-Anmerkung (Pflicht bei Kritisch/Hoch im Restrisiko)
+        const notesDict = analysis?.residualRisk?.treeNotes || {};
+        const treeNote = (notesDict && entry?.uid && notesDict[entry.uid] !== undefined) ? String(notesDict[entry.uid] || '') : '';
+        const noteRequired = (resMeta.label === 'Kritisch' || resMeta.label === 'Hoch');
+
+        // Completion-Check: alle Blaetter + ggf. Pflicht-Anmerkung
+        const allLeavesOk = rrTreeAllLeavesComplete(entry);
+        const noteOk = (!noteRequired) || (treeNote.trim().length > 0);
+        const treeComplete = allLeavesOk && noteOk;
+
         // In der Restrisiko-Uebersicht soll die Randfarbe das Restrisiko widerspiegeln
         const borderColor = resMeta.color;
 
-        const note = rrGetTreeNote(analysis, entry?.uid);
-        const noteRequired = rrTreeNoteRequired(resMeta.label);
-        const leavesOk = rrAllLeavesComplete(entry);
-        const treeOk = leavesOk && (!noteRequired || String(note || '').trim().length > 0);
-
         return `
-            <div class="rr-risk-card" style="border-left: 5px solid ${borderColor};" data-rr-uid="${uid}" data-rr-leaves-ok="${leavesOk ? '1' : '0'}" data-rr-note-required="${noteRequired ? '1' : '0'}">
+            <div class="rr-risk-card" style="border-left: 5px solid ${borderColor};">
                 <div class="rr-risk-header">
                     <div style="flex:1; min-width:260px;">
                         <div style="font-size:1.05em; font-weight:700;">
                             <span>${id}</span>: ${name}
                         </div>
-                        <div style="margin-top:8px; color:#666; font-size:0.9em; display:flex; flex-wrap:wrap; gap:14px; align-items:center;">
-                            <span>
-                                Risiko-Score (R): <b style="color:${origMeta.color}">${rrEscapeHtml(origMeta.display)}</b>
-                                <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${origMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(origMeta.label)}</span>
-                            </span>
-                            <span>
-                                Restrisiko (R): <b style="color:${resMeta.color}">${rrEscapeHtml(resMeta.display)}</b>
-                                <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${resMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(resMeta.label)}</span>
-                            </span>
+
+                        <!-- Risiko-Score & Restrisiko hintereinander -->
+                        <div style="margin-top:6px; color:#666; font-size:0.9em;">
+                            <span>Risiko-Score (R): <b style="color:${origMeta.color}">${rrEscapeHtml(origMeta.display)}</b></span>
+                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${origMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(origMeta.label)}</span>
+                            <span style="margin:0 8px; color:#bbb;">|</span>
+                            <span>Restrisiko (R): <b style="color:${resMeta.color}">${rrEscapeHtml(resMeta.display)}</b></span>
+                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${resMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(resMeta.label)}</span>
                         </div>
-                        <div style="margin-top:6px; color:#666; font-size:0.85em;">
-                            Gesamtschutzbedarf I(N): <b>${rrEscapeHtml(iNorm)}</b>
+
+                        <div style="margin-top:4px; color:#666; font-size:0.85em;">
+                            I(N): <b>${rrEscapeHtml(iNorm)}</b>
+                            <span style="margin-left:10px;">K:${rrEscapeHtml(oK)} S:${rrEscapeHtml(oS)} T:${rrEscapeHtml(oT)} U:${rrEscapeHtml(oU)}</span>
+                        </div>
+
+                        <div style="margin-top:4px; color:#666; font-size:0.85em;">
+                            Restrisiko K/S/T/U: <span>K:${rrEscapeHtml(resK)} S:${rrEscapeHtml(resS)} T:${rrEscapeHtml(resT)} U:${rrEscapeHtml(resU)}</span>
+                        </div>
+
+                        <div style="margin-top:10px;">
+                            <div style="font-size:0.85em; color:#666; font-weight:600; margin-bottom:4px;">
+                                Anmerkungen ${noteRequired ? '<span style="color:#c0392b; font-weight:700;">(Pflicht bei Kritisch/Hoch)</span>' : '<span style="color:#7f8c8d; font-weight:600;">(optional)</span>'}
+                            </div>
+                            <textarea
+                                class="rr-tree-note rr-textarea ${noteRequired && !treeNote.trim() ? 'rr-text-invalid' : ''}"
+                                data-rr-tree-uid="${uid}"
+                                data-rr-note-required="${noteRequired ? '1' : '0'}"
+                                data-rr-allleaves="${allLeavesOk ? '1' : '0'}"
+                                placeholder="Anmerkungen zum Restrisiko..."
+                                style="min-height:56px;"
+                            >${rrEscapeHtml(treeNote)}</textarea>
                         </div>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">
-                        <i class="fas fa-check-circle rr-check ${treeOk ? '' : 'incomplete'}" title="${treeOk ? 'Restrisikoanalyse komplett' : 'Restrisikoanalyse unvollstaendig'}"></i>
+
+                    <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
+                        <i class="fas fa-check-circle rr-tree-check ${treeComplete ? '' : 'incomplete'}" title="${treeComplete ? 'Restrisikoanalyse komplett' : 'Restrisikoanalyse unvollstaendig'}"></i>
                         <button class="action-button small rr-edit-btn" data-rr-edit="${uid}">
                             <i class="fas fa-edit"></i> Bearbeiten
                         </button>
                     </div>
-                </div>
-
-                <div style="margin-top:10px;">
-                    <label style="display:block; font-weight:600; font-size:0.9em; margin-bottom:6px; color:#333;">
-                        Anmerkungen${noteRequired ? ' (Pflicht bei Kritisch/Hoch)' : ''}
-                    </label>
-                    <textarea class="rr-tree-note rr-textarea ${noteRequired && String(note||'').trim().length===0 ? 'rr-select-invalid' : ''}" data-rr-uid="${uid}" data-rr-note-required="${noteRequired ? '1' : '0'}" placeholder="Anmerkungen zur Restrisiko-Bewertung...">${rrEscapeHtml(note || '')}</textarea>
                 </div>
             </div>
         `;
@@ -568,26 +578,32 @@
             });
         });
 
-        // Tree-Notizen (Pflicht bei Kritisch/Hoch)
+        // Tree-Anmerkungen persistieren + Pflichtlogik + Check aktualisieren
         container.querySelectorAll('textarea.rr-tree-note').forEach(ta => {
             ta.addEventListener('input', () => {
-                const uid = ta.dataset.rrUid;
-                rrSetTreeNote(analysis, uid, ta.value);
+                const uid = ta.dataset.rrTreeUid;
+                if (!uid) return;
+                if (!analysis.residualRisk) analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
+                if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
+                analysis.residualRisk.treeNotes[uid] = ta.value;
 
-                const noteRequired = (ta.dataset.rrNoteRequired === '1');
-                const noteOk = String(ta.value || '').trim().length > 0;
-                ta.classList.toggle('rr-select-invalid', noteRequired && !noteOk);
+                // Pflicht-Markierung
+                const required = ta.dataset.rrNoteRequired === '1';
+                const allLeavesOk = ta.dataset.rrAllleaves === '1';
+                const noteOk = (!required) || (ta.value || '').trim().length > 0;
+                ta.classList.toggle('rr-text-invalid', required && !noteOk);
 
-                // Checkmark aktualisieren
+                // Tree-Check
                 const card = ta.closest('.rr-risk-card');
-                const leavesOk = card ? (card.dataset.rrLeavesOk === '1') : false;
-                const treeOk = leavesOk && (!noteRequired || noteOk);
-                if (card) {
-                    const ico = card.querySelector('.rr-check');
-                    if (ico) ico.classList.toggle('incomplete', !treeOk);
+                const ico = card ? card.querySelector('.rr-tree-check') : null;
+                if (ico) {
+                    const complete = allLeavesOk && noteOk;
+                    ico.classList.toggle('incomplete', !complete);
                 }
 
-                try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (_) {}
+                try {
+                    if (typeof saveAnalyses === 'function') saveAnalyses();
+                } catch (_) {}
             });
         });
     };

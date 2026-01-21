@@ -203,69 +203,6 @@ function generateDotString(analysis, specificTreeId = null) {
 // Wir definieren exportRiskAnalysisToDot als Alias für generateDotString als Alias für generateDotString
 window.exportRiskAnalysisToDot = generateDotString;
 
-// =============================================================
-// --- RESTRISIKO DOT EXPORT ---
-// Generiert DOT basierend auf analysis.residualRisk.entries.
-// Bei Leaf-Behandlung "Mitigiert" werden rr.K/S/T/U fuer die Berechnung uebernommen.
-// =============================================================
-
-function generateResidualDotString(analysis, specificTreeId = null) {
-    if (!analysis) return null;
-    try {
-        if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
-    } catch (_) {}
-
-    const entries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
-        ? analysis.residualRisk.entries
-        : [];
-    if (!entries || entries.length === 0) return null;
-
-    const fake = { riskEntries: [] };
-
-    let entriesToProcess = entries;
-    if (specificTreeId) {
-        entriesToProcess = entries.filter(e => e && e.id === specificTreeId);
-    }
-
-    entriesToProcess.forEach(e => {
-        if (!e) return;
-        let clone = null;
-        try { clone = JSON.parse(JSON.stringify(e)); } catch (_) { clone = e; }
-
-        // Override leaf K/S/T/U if mitigated
-        try {
-            if (typeof rrIterateLeaves === 'function') {
-                rrIterateLeaves(clone, ({ leaf }) => {
-                    if (!leaf) return;
-                    const rr = leaf.rr || {};
-                    const tr = String(rr.treatment || '').trim();
-                    if (tr !== 'Mitigiert') return;
-                    const pick = (orig, rrVal) => {
-                        const rrStr = (rrVal === undefined || rrVal === null) ? '' : String(rrVal).trim();
-                        if (rrStr) return rrStr;
-                        return (orig === undefined || orig === null) ? '' : String(orig);
-                    };
-                    leaf.k = pick(leaf.k, rr.k);
-                    leaf.s = pick(leaf.s, rr.s);
-                    leaf.t = pick(leaf.t, rr.t);
-                    leaf.u = pick(leaf.u, rr.u);
-                });
-            }
-        } catch (_) {}
-
-        // Recompute worst-case scalars for internal nodes/root
-        try {
-            if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone);
-        } catch (_) {}
-
-        fake.riskEntries.push(clone);
-    });
-
-    return generateDotString(fake, null);
-}
-
-window.exportResidualRiskToDot = generateResidualDotString;
-
 document.addEventListener('DOMContentLoaded', () => {
     const closeBtn = document.getElementById('closeAttackTreeModal');
     const modal = document.getElementById('attackTreeModal');
