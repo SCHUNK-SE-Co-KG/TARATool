@@ -1,10 +1,16 @@
 function _atGetTreeDepth() {
-    // Ab jetzt gibt es nur noch:
-    // 1 = Root -> Auswirkungen
-    // 2 = Root -> Zwischenpfad(e) -> Auswirkungen (1 oder 2 Zwischenpfade parallel)
+    // 1 = Root -> Pfad -> Auswirkungen
+    // 2 = Root -> Pfad -> Zwischenebene(n) -> Auswirkungen (optional parallel moeglich)
+    // 3 = Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Auswirkungen (optional parallel moeglich)
+    // 4 = Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Zwischenknoten 3 -> Auswirkungen (optional parallel moeglich)
     const v = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
-    return (v === 2) ? 2 : 1;
+    if (v === 4) return 4;
+    if (v === 3) return 3;
+    if (v === 2) return 2;
+    return 1;
 }
+
+
 
 function _atIsSecondIntermediateEnabled() {
     const v = (document.getElementById('use_second_intermediate')?.value || 'false');
@@ -15,20 +21,40 @@ function _atSetSecondIntermediateEnabled(enabled) {
     const inp = document.getElementById('use_second_intermediate');
     if (inp) inp.value = enabled ? 'true' : 'false';
 
-    // L2B Zellen + Rows pro Branch ein-/ausblenden
+    const depth = _atGetTreeDepth();
+    const showL2 = depth >= 2;
+    const showL3 = depth >= 3;
+    const showL4 = depth >= 4;
+
+    // L2B/L3B/L4B Zellen + Rows pro Branch ein-/ausblenden
     [1,2].forEach(branchNum => {
-        const cell = document.getElementById(`at_branch_${branchNum}_cell_l2b`);
-        if (cell) cell.style.display = enabled ? 'table-cell' : 'none';
+        const on = enabled && showL2;
+
+        const cellL2B = document.getElementById(`at_branch_${branchNum}_cell_l2b`);
+        if (cellL2B) cellL2B.style.display = on ? 'table-cell' : 'none';
+
+        const cellL3B = document.getElementById(`at_branch_${branchNum}_cell_l3b`);
+        if (cellL3B) cellL3B.style.display = (on && showL3) ? 'table-cell' : 'none';
+
+        const cellL4B = document.getElementById(`at_branch_${branchNum}_cell_l4b`);
+        if (cellL4B) cellL4B.style.display = (on && showL4) ? 'table-cell' : 'none';
 
         document.querySelectorAll(`tr.l2b-row[data-branch="${branchNum}"]`).forEach(r => {
             if (!r) return;
-            r.style.display = enabled ? '' : 'none';
+            r.style.display = on ? '' : 'none';
         });
 
-        if (enabled) {
+        // Separator row for alternative branch (B)
+        document.querySelectorAll(`tr.branch-b-separator[data-branch="${branchNum}"]`).forEach(r => {
+            if (!r) return;
+            r.style.display = on ? '' : 'none';
+        });
+
+        if (on) {
             // Default: 2 Auswirkungen sichtbar, Extra hidden
-            document.querySelectorAll(`tr.l2b-row[data-branch="${branchNum}"][data-impact="3"], tr.l2b-row[data-branch="${branchNum}"][data-impact="4"], tr.l2b-row[data-branch="${branchNum}"][data-impact="5"]`)
-                .forEach(r => { if (r) r.style.display = 'none'; });
+            document.querySelectorAll(
+                `tr.l2b-row[data-branch="${branchNum}"][data-impact="3"], tr.l2b-row[data-branch="${branchNum}"][data-impact="4"], tr.l2b-row[data-branch="${branchNum}"][data-impact="5"]`
+            ).forEach(r => { if (r) r.style.display = 'none'; });
         }
     });
 
@@ -51,86 +77,110 @@ function _atSetSecondIntermediateEnabled(enabled) {
 }
 
 function setTreeDepth(depth) {
-    // Backwards-compatible: old calls used boolean (deep on/off) oder 3
+    // Backwards-compatible: old calls used boolean (deep on/off)
     if (typeof depth === 'boolean') depth = depth ? 2 : 1;
     depth = parseInt(depth || 1, 10);
-    if (depth !== 2) depth = 1;
+    if (![1,2,3,4].includes(depth)) depth = 1;
 
     const colsL2 = document.querySelectorAll('.col-level-2');
-    const colsL3 = document.querySelectorAll('.col-level-3'); // bleibt künftig ungenutzt/ausgeblendet
+    const colsL3 = document.querySelectorAll('.col-level-3');
+    const colsL4 = document.querySelectorAll('.col-level-4');
+
     const inputUseDeep = document.getElementById('use_deep_tree');
     const inputDepth = document.getElementById('tree_depth');
 
     const btnL2 = document.getElementById('btnToggleTreeDepth');
     const btnSecond = document.getElementById('btnToggleTreeDepth2');
+    const btnThird = document.getElementById('btnToggleTreeDepth3');
+    const btnFourth = document.getElementById('btnToggleTreeDepth4');
 
-    const showL2 = depth === 2;
+    const showL2 = depth >= 2;
+    const showL3 = depth >= 3;
+    const showL4 = depth >= 4;
 
     colsL2.forEach(el => el.style.display = showL2 ? 'table-cell' : 'none');
-    colsL3.forEach(el => el.style.display = 'none'); // keine "tiefe" dritte Ebene mehr
+    colsL3.forEach(el => el.style.display = showL3 ? 'table-cell' : 'none');
+    colsL4.forEach(el => el.style.display = showL4 ? 'table-cell' : 'none');
 
     if (inputUseDeep) inputUseDeep.value = showL2 ? 'true' : 'false';
     if (inputDepth) inputDepth.value = String(depth);
 
     if (btnL2) {
         btnL2.innerHTML = showL2
-            ? '<i class="fas fa-minus"></i> Zwischenebene ausblenden'
-            : '<i class="fas fa-layer-group"></i> Zwischenebene einblenden';
+            ? '<i class="fas fa-minus"></i> Zwischenknoten 1 ausblenden'
+            : '<i class="fas fa-layer-group"></i> Zwischenknoten 1 anzeigen';
     }
 
-    // Zweiter Zwischenpfad nur möglich, wenn Zwischenebene aktiv
+    // Zweiter Zwischenpfad: ab Tiefe >=2 moeglich
     if (btnSecond) {
         btnSecond.style.display = showL2 ? 'inline-flex' : 'none';
         btnSecond.innerHTML = _atIsSecondIntermediateEnabled()
-            ? '<i class="fas fa-minus"></i> 2. Zwischenpfad entfernen'
-            : '<i class="fas fa-layer-group"></i> 2. Zwischenpfad anlegen';
+            ? '<i class="fas fa-minus"></i> Alternativen Ast (B) entfernen'
+            : '<i class="fas fa-layer-group"></i> Alternativen Ast (B) hinzufügen';
     }
 
-    // "Auswirkung hinzufügen" Buttons:
-    // - Tiefe 1: am L1-Knoten
-    // - Tiefe 2: am jeweiligen Zwischenpfad (L2 / L2B)
-    document.querySelectorAll('button.add-impact-btn').forEach(b => {
-        if (!b || !b.classList) return;
-        const isL1 = b.classList.contains('level-l1');
-        const isL2 = b.classList.contains('level-l2');
-        const isL2B = b.classList.contains('level-l2b');
-        const isL3 = b.classList.contains('level-l3');
+    // Dritte Zwischenebene Button: Toggle zwischen Tiefe 2 und 3
+    if (btnThird) {
+        btnThird.style.display = showL2 ? 'inline-flex' : 'none';
+        btnThird.innerHTML = (depth >= 3)
+            ? '<i class="fas fa-minus"></i> Zwischenknoten 2 ausblenden'
+            : '<i class="fas fa-layer-group"></i> Zwischenknoten 2 anzeigen';
+    }
+
+    // Vierte Zwischenebene Button: Toggle zwischen Tiefe 3 und 4
+    if (btnFourth) {
+        btnFourth.style.display = showL3 ? 'inline-flex' : 'none';
+        btnFourth.innerHTML = (depth === 4)
+            ? '<i class="fas fa-minus"></i> Zwischenknoten 3 ausblenden'
+            : '<i class="fas fa-layer-group"></i> Zwischenknoten 3 anzeigen';
+    }
+
+    // Wenn Zwischenebene aus: auch 2. Zwischenpfad aus
+    if (!showL2) {
+        _atSetSecondIntermediateEnabled(false);
+    } else {
+        // Re-apply, damit L3B/L4B Zellen korrekt auf Tiefe reagieren
+        _atSetSecondIntermediateEnabled(_atIsSecondIntermediateEnabled());
+    }
+
+    const secondOn = _atIsSecondIntermediateEnabled();
+
+    const _shouldShowButton = (btn, isAdd) => {
+        if (!btn || !btn.classList) return false;
+        const group = (btn.getAttribute('data-group') || 'a');
+        if (group === 'b' && !secondOn) return false;
+
+        const isL1 = btn.classList.contains('level-l1');
+        const isL2 = btn.classList.contains('level-l2');
+        const isL2B = btn.classList.contains('level-l2b');
+        const isL3 = btn.classList.contains('level-l3');
+        const isL3B = btn.classList.contains('level-l3b');
+        const isL4 = btn.classList.contains('level-l4');
+        const isL4B = btn.classList.contains('level-l4b');
 
         if (depth === 1) {
-            b.style.display = isL1 ? 'inline-flex' : 'none';
-        } else {
-            if (isL3) { b.style.display = 'none'; return; }
-            if (isL2B) {
-                b.style.display = _atIsSecondIntermediateEnabled() ? 'inline-flex' : 'none';
-            } else {
-                b.style.display = isL2 ? 'inline-flex' : 'none';
-            }
+            return group === 'a' && isL1;
         }
+        if (depth === 2) {
+            return (group === 'a' && isL2) || (group === 'b' && isL2B);
+        }
+        if (depth === 3) {
+            return (group === 'a' && isL3) || (group === 'b' && isL3B);
+        }
+        // depth === 4
+        return (group === 'a' && isL4) || (group === 'b' && isL4B);
+    };
+
+    // "Auswirkung hinzufügen" / "Auswirkung entfernen" Buttons je nach Tiefe
+    document.querySelectorAll('button.add-impact-btn').forEach(b => {
+        b.style.display = _shouldShowButton(b, true) ? 'inline-flex' : 'none';
     });
 
     document.querySelectorAll('button.remove-impact-btn').forEach(b => {
-        if (!b || !b.classList) return;
-        const isL1 = b.classList.contains('level-l1');
-        const isL2 = b.classList.contains('level-l2');
-        const isL2B = b.classList.contains('level-l2b');
-        const isL3 = b.classList.contains('level-l3');
-
-        if (depth === 1) {
-            b.style.display = isL1 ? 'inline-flex' : 'none';
-        } else {
-            if (isL3) { b.style.display = 'none'; return; }
-            if (isL2B) {
-                b.style.display = _atIsSecondIntermediateEnabled() ? 'inline-flex' : 'none';
-            } else {
-                b.style.display = isL2 ? 'inline-flex' : 'none';
-            }
-        }
+        b.style.display = _shouldShowButton(b, false) ? 'inline-flex' : 'none';
     });
 
-    // Wenn Zwischenebene aus: 2. Zwischenpfad auch ausblenden
-    if (!showL2) _atSetSecondIntermediateEnabled(false);
-
-    // Max-5 Zustände und Rowspans aktualisieren
+    // Rowspans / Button-States aktualisieren
     try { _atRecomputeAllRowspans(); } catch(e) {}
     try { _atUpdateAddImpactButtonState(1, 'a'); } catch(e) {}
     try { _atUpdateAddImpactButtonState(2, 'a'); } catch(e) {}
@@ -143,10 +193,11 @@ function setTreeDepth(depth) {
 
     updateAttackTreeKSTUSummariesFromForm();
 
-    // Leaf-Delete Buttons pro Zeile (sichtbar/disabled) aktualisieren
     try { _atEnsureLeafDeleteButtons(); } catch(e) {}
     try { _atUpdateAllLeafDeleteButtonsState(); } catch(e) {}
 }
+
+
 
 // =============================================================
 // --- DYNAMIC IMPACT (AUSWIRKUNG) ROWS PER PATH / ZWISCHENPFAD ---
@@ -206,16 +257,29 @@ function _atGetVisibleImpactCount(branchNum, group) {
     return c;
 }
 
-function _atSetRowspanFor(branchNum, spanL1, spanA, spanB) {
+function _atSetRowspanFor(branchNum, spanL1, spanL2A, spanL2B, spanL3A, spanL4A, spanL3B, spanL4B) {
     const tdL1 = document.getElementById(`at_branch_${branchNum}_cell_l1`);
     if (tdL1) tdL1.rowSpan = spanL1;
 
     const tdL2A = document.getElementById(`at_branch_${branchNum}_cell_l2`);
-    if (tdL2A) tdL2A.rowSpan = spanA;
+    if (tdL2A) tdL2A.rowSpan = spanL2A;
+
+    const tdL3A = document.getElementById(`at_branch_${branchNum}_cell_l3`);
+    if (tdL3A) tdL3A.rowSpan = spanL3A;
+
+    const tdL4A = document.getElementById(`at_branch_${branchNum}_cell_l4`);
+    if (tdL4A) tdL4A.rowSpan = spanL4A;
 
     const tdL2B = document.getElementById(`at_branch_${branchNum}_cell_l2b`);
-    if (tdL2B) tdL2B.rowSpan = spanB;
+    if (tdL2B) tdL2B.rowSpan = spanL2B;
+
+    const tdL3B = document.getElementById(`at_branch_${branchNum}_cell_l3b`);
+    if (tdL3B) tdL3B.rowSpan = spanL3B;
+
+    const tdL4B = document.getElementById(`at_branch_${branchNum}_cell_l4b`);
+    if (tdL4B) tdL4B.rowSpan = spanL4B;
 }
+
 
 function _atRecomputeAllRowspans() {
     const depth = _atGetTreeDepth();
@@ -223,16 +287,31 @@ function _atRecomputeAllRowspans() {
 
     [1,2].forEach(branchNum => {
         const a = _atGetVisibleImpactCount(branchNum, 'a');
-        const b = secondOn ? _atGetVisibleImpactCount(branchNum, 'b') : 0;
+        const b = (depth >= 2 && secondOn) ? _atGetVisibleImpactCount(branchNum, 'b') : 0;
 
         if (depth === 1) {
-            _atSetRowspanFor(branchNum, a, a, 0);
-        } else {
-            const total = a + b;
-            _atSetRowspanFor(branchNum, total, a, Math.max(2, b || 2));
+            _atSetRowspanFor(branchNum, a, a, 0, 0, 0, 0, 0);
+            return;
         }
+
+        if (depth === 2) {
+            const total = a + b;
+            _atSetRowspanFor(branchNum, total, a, b || 0, 0, 0, 0, 0);
+            return;
+        }
+
+        if (depth === 3) {
+            const total = a + b;
+            _atSetRowspanFor(branchNum, total, a, b || 0, a, 0, b || 0, 0);
+            return;
+        }
+
+        // depth === 4
+        const total = a + b;
+        _atSetRowspanFor(branchNum, total, a, b || 0, a, a, b || 0, b || 0);
     });
 }
+
 
 function _atUpdateAddImpactButtonState(branchNum, group) {
     const g = (group || 'a');
@@ -249,24 +328,28 @@ function _atUpdateAddImpactButtonState(branchNum, group) {
         const btnGroup = btn.getAttribute('data-group') || 'a';
         if (btnGroup !== g) return;
 
-        // Sichtbarkeit abhängig von Ebene
         const isL1 = btn.classList && btn.classList.contains('level-l1');
         const isL2 = btn.classList && btn.classList.contains('level-l2');
         const isL2B = btn.classList && btn.classList.contains('level-l2b');
+        const isL3 = btn.classList && btn.classList.contains('level-l3');
 
         if (depth === 1) {
             if (!isL1 || g !== 'a') { btn.style.display = 'none'; return; }
-        } else {
+        } else if (depth === 2) {
             if (g === 'a') {
                 if (!isL2) { btn.style.display = 'none'; return; }
             } else {
                 if (!secondOn || !isL2B) { btn.style.display = 'none'; return; }
             }
+        } else {
+            // depth === 3: nur Gruppe A am L3
+            if (g !== 'a' || !isL3) { btn.style.display = 'none'; return; }
         }
 
         btn.style.display = (visible >= AT_MAX_IMPACTS_PER_PATH) ? 'none' : 'inline-flex';
     });
 }
+
 
 
 function _atUpdateRemoveImpactButtonState(branchNum, group) {
@@ -287,20 +370,25 @@ function _atUpdateRemoveImpactButtonState(branchNum, group) {
         const isL1 = btn.classList && btn.classList.contains('level-l1');
         const isL2 = btn.classList && btn.classList.contains('level-l2');
         const isL2B = btn.classList && btn.classList.contains('level-l2b');
+        const isL3 = btn.classList && btn.classList.contains('level-l3');
 
         if (depth === 1) {
             if (!isL1 || g !== 'a') { btn.style.display = 'none'; return; }
-        } else {
+        } else if (depth === 2) {
             if (g === 'a') {
                 if (!isL2) { btn.style.display = 'none'; return; }
             } else {
                 if (!secondOn || !isL2B) { btn.style.display = 'none'; return; }
             }
+        } else {
+            // depth === 3: nur Gruppe A am L3
+            if (g !== 'a' || !isL3) { btn.style.display = 'none'; return; }
         }
 
-        btn.style.display = (visible <= 2) ? 'none' : 'inline-flex';
+        btn.style.display = (visible <= 1) ? 'none' : 'inline-flex';
     });
 }
+
 
 function _atClearLeafFields(leafIdx) {
     if (!leafIdx) return;
@@ -353,6 +441,18 @@ function _atReadLeafFields(leafIdx) {
         i: iInp ? iInp.value : ''
     };
 }
+
+function _atLeafDataIsEmpty(d) {
+    if (!d) return true;
+    const textEmpty = !d.text || String(d.text).trim() === '';
+    const dsEmpty = !d.ds || !Array.isArray(d.ds) || d.ds.every(v => !v);
+    const kEmpty = !d.k || String(d.k).trim() === '';
+    const sEmpty = !d.s || String(d.s).trim() === '';
+    const tEmpty = !d.t || String(d.t).trim() === '';
+    const uEmpty = !d.u || String(d.u).trim() === '';
+    return textEmpty && dsEmpty && kEmpty && sEmpty && tEmpty && uEmpty;
+}
+
 
 function _atWriteLeafFields(leafIdx, data) {
     if (!leafIdx || !data) return;
@@ -427,19 +527,21 @@ function _atUpdateLeafDeleteButtonsState(branchNum, group) {
         if (!btn) return;
         const isHidden = r.style && r.style.display === 'none';
         btn.style.display = isHidden ? 'none' : 'inline-flex';
-        // Minimum 2 Auswirkungen pro Gruppe
-        btn.disabled = visible <= 2;
+        // Minimum 1 Auswirkung pro Gruppe
+        btn.disabled = visible <= 1;
     });
 }
+
 
 function _atUpdateAllLeafDeleteButtonsState() {
     [1, 2].forEach(b => {
         _atUpdateLeafDeleteButtonsState(b, 'a');
-        if (_atGetTreeDepth() === 2 && _atIsSecondIntermediateEnabled()) {
+        if (_atGetTreeDepth() >= 2 && _atIsSecondIntermediateEnabled()) {
             _atUpdateLeafDeleteButtonsState(b, 'b');
         }
     });
 }
+
 
 function _atResetImpactRows() {
     // Gruppe A: extra impacts ausblenden
@@ -467,7 +569,7 @@ function _atResetImpactRows() {
 
 function _atShowImpactsUpTo(branchNum, group, count) {
     const g = (group || 'a');
-    const capped = Math.max(2, Math.min(AT_MAX_IMPACTS_PER_PATH, count || 2));
+    const capped = Math.max(1, Math.min(AT_MAX_IMPACTS_PER_PATH, count || 2));
     for (let i = 1; i <= capped; i++) {
         const row = _atGetImpactRow(branchNum, g, i);
         if (row) row.style.display = '';
@@ -483,6 +585,7 @@ function _atShowImpactsUpTo(branchNum, group, count) {
     _atEnsureLeafDeleteButtons();
     _atUpdateLeafDeleteButtonsState(branchNum, g);
 }
+
 
 function initAttackTreeImpactAdders() {
     const btns = document.querySelectorAll('button.add-impact-btn');
@@ -525,13 +628,18 @@ function initAttackTreeImpactRemovers() {
             if (group === 'b' && !_atIsSecondIntermediateEnabled()) return;
 
             const visible = _atGetVisibleImpactCount(branchNum, group);
-            if (visible <= 2) return;
+            if (visible <= 1) return;
 
-            // Letzte sichtbare Auswirkung entfernen (nur hinzugefügte, also >2)
+            // Letzte sichtbare Auswirkung entfernen
+            const leafIdx = _atLeafIndex(branchNum, group, visible);
+            const leafData = _atReadLeafFields(leafIdx);
+            if (!_atLeafDataIsEmpty(leafData)) {
+                const ok = confirm('Diese Auswirkung ist nicht leer. Wirklich löschen?');
+                if (!ok) return;
+            }
+
             const row = _atGetImpactRow(branchNum, group, visible);
             if (row) row.style.display = 'none';
-
-            const leafIdx = _atLeafIndex(branchNum, group, visible);
             _atClearLeafFields(leafIdx);
 
             _atRecomputeAllRowspans();
@@ -546,6 +654,7 @@ function initAttackTreeImpactRemovers() {
         };
     });
 }
+
 
 function initAttackTreeLeafRemovers() {
     _atEnsureLeafDeleteButtons();
@@ -562,8 +671,16 @@ function initAttackTreeLeafRemovers() {
             if (group === 'b' && !_atIsSecondIntermediateEnabled()) return;
 
             const visible = _atGetVisibleImpactCount(branchNum, group);
-            if (visible <= 2) return; // Minimum 2
+            if (visible <= 1) return; // Minimum 1
             if (impactPos > visible) return;
+
+            // Confirm wenn nicht leer
+            const delIdx = _atLeafIndex(branchNum, group, impactPos);
+            const delData = _atReadLeafFields(delIdx);
+            if (!_atLeafDataIsEmpty(delData)) {
+                const ok = confirm('Diese Auswirkung ist nicht leer. Wirklich löschen?');
+                if (!ok) return;
+            }
 
             // Werte nach oben schieben (damit keine Lücken entstehen)
             for (let pos = impactPos; pos < visible; pos++) {
@@ -590,4 +707,5 @@ function initAttackTreeLeafRemovers() {
 
     _atUpdateAllLeafDeleteButtonsState();
 }
+
 
