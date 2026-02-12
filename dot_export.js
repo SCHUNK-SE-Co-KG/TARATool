@@ -7,7 +7,9 @@ function generateDotString(analysis, specificTreeId = null) {
     dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
     dot += '    edge [fontname="Arial", fontsize=9];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap = false;\n    splines = ortho;\n\n';
+    dot += '    overlap = false;\n    splines = ortho;\n';
+    dot += '    nodesep = 0.8;\n    ranksep = 0.8;\n';
+    dot += '    ordering = out;\n\n';
 
     const _fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
@@ -546,7 +548,9 @@ const _buildResidualClone = (baseEntry) => {
     dot += '    node [shape=record, fontname="Arial", fontsize=9];\n';
     dot += '    edge [fontname="Arial", fontsize=8];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=ortho;\n\n';
+    dot += '    overlap=false;\n    splines=ortho;\n';
+    dot += '    nodesep = 0.8;\n    ranksep = 0.8;\n';
+    dot += '    ordering = out;\n\n';
 
     entriesToProcess.forEach(entry => {
         if (!entry) return;
