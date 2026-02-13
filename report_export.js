@@ -170,8 +170,6 @@
 
     function _pdfBuilder(doc) {
         const margin = 15;
-        const pageW = doc.internal.pageSize.getWidth();
-        const pageH = doc.internal.pageSize.getHeight();
         let y = margin;
 
         // Globale Abstaende (PDF) – bewusst etwas luftiger, ohne das Web-Layout zu beeinflussen
@@ -181,7 +179,7 @@
         const lineGapBottom = 9;
 
         const ensureSpace = (needed) => {
-            if (y + needed <= pageH - margin) return;
+            if (y + needed <= doc.internal.pageSize.getHeight() - margin) return;
             doc.addPage();
             y = margin;
         };
@@ -191,7 +189,7 @@
             ensureSpace(top + bottom + 1);
             y += top;
             doc.setDrawColor(220);
-            doc.line(margin, y, pageW - margin, y);
+            doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
             y += bottom;
         };
 
@@ -230,7 +228,7 @@
         const addText = (text, fontSize = 10, spacing = 5) => {
             const t = String(text || '');
             doc.setFontSize(fontSize);
-            const lines = doc.splitTextToSize(t, pageW - margin * 2);
+            const lines = doc.splitTextToSize(t, doc.internal.pageSize.getWidth() - margin * 2);
             ensureSpace(lines.length * spacing);
             doc.text(lines, margin, y);
             y += lines.length * spacing;
@@ -252,7 +250,7 @@
             const keyText = k + ':';
             const keyW = Math.min(60, Math.max(28, doc.getTextWidth(keyText) + 3));
             const valX = margin + keyW + 2;
-            const valW = pageW - margin * 2 - keyW - 2;
+            const valW = doc.internal.pageSize.getWidth() - margin * 2 - keyW - 2;
 
             const keyLines = doc.splitTextToSize(keyText, keyW);
             doc.setFont('helvetica', 'normal');
@@ -275,10 +273,17 @@
             if (!Array.isArray(headers) || headers.length === 0) return;
             if (!Array.isArray(rows)) rows = [];
 
-            const totalW = pageW - margin * 2;
+            const totalW = doc.internal.pageSize.getWidth() - margin * 2;
             const widths = Array.isArray(colWidths) && colWidths.length === headers.length
                 ? colWidths
                 : headers.map(() => totalW / headers.length);
+
+            // Skaliere Spaltenbreiten auf verfügbare Seitenbreite (ganze Seite nutzen)
+            const sumW = widths.reduce((a, b) => a + b, 0);
+            if (sumW > 0 && Math.abs(sumW - totalW) > 0.5) {
+                const scale = totalW / sumW;
+                for (let i = 0; i < widths.length; i++) widths[i] = widths[i] * scale;
+            }
 
             const xPos = [margin];
             for (let i = 0; i < widths.length; i++) xPos[i + 1] = xPos[i] + widths[i];
@@ -299,7 +304,7 @@
             doc.setFont('helvetica', 'normal');
             y += 6;
             doc.setDrawColor(220);
-            doc.line(margin, y - 4, pageW - margin, y - 4);
+            doc.line(margin, y - 4, doc.internal.pageSize.getWidth() - margin, y - 4);
 
             // Rows
             doc.setFontSize(fontSizeCell);
@@ -323,6 +328,145 @@
         };
 
 
+        // Tabellenrenderer mit Rahmen (grid), wiederholtem Header und Zebra-Striping
+        // Nutzt die gesamte Seitenbreite (innerhalb der PDF-Margins) und optimiert auf Lesbarkeit.
+        const addTableGrid = (headers, rows, colWidths, options = {}) => {
+            if (!Array.isArray(headers) || headers.length === 0) return;
+            if (!Array.isArray(rows)) rows = [];
+
+            const totalW = doc.internal.pageSize.getWidth() - margin * 2;
+            const widths = Array.isArray(colWidths) && colWidths.length === headers.length
+                ? colWidths
+                : headers.map(() => totalW / headers.length);
+
+            // Skaliere Spaltenbreiten auf verfügbare Seitenbreite (ganze Seite nutzen)
+            const sumW = widths.reduce((a, b) => a + b, 0);
+            if (sumW > 0 && Math.abs(sumW - totalW) > 0.5) {
+                const scale = totalW / sumW;
+                for (let i = 0; i < widths.length; i++) widths[i] = widths[i] * scale;
+            }
+
+            const xPos = [margin];
+            for (let i = 0; i < widths.length; i++) xPos[i + 1] = xPos[i] + widths[i];
+
+            const opt = {
+                headerFill: options.headerFill || [250, 250, 250],
+                headerTextColor: options.headerTextColor || [20, 20, 20],
+                zebra: (options.zebra !== undefined) ? options.zebra : true,
+                zebraFill: options.zebraFill || [252, 252, 252],
+                borderColor: options.borderColor || [190, 190, 190],
+                headerFontSize: options.headerFontSize || 10,
+                cellFontSize: options.cellFontSize || 8.5,
+                cellPadX: options.cellPadX || 1.6,
+                cellPadY: options.cellPadY || 1.4,
+                lineH: options.lineH || 4.0,
+            };
+            const noWrapCols = Array.isArray(options.noWrapCols) ? options.noWrapCols : [];
+            const _truncateToWidth = (text, maxW) => {
+                let s = String(text ?? '');
+                if (!s) return '';
+                // Fast path
+                if (doc.getTextWidth(s) <= maxW) return s;
+                const ell = '...';
+                const ellW = doc.getTextWidth(ell);
+                if (ellW >= maxW) return '';
+                // Binary search for max substring length that fits
+                let lo = 0, hi = s.length;
+                while (lo < hi) {
+                    const mid = Math.ceil((lo + hi) / 2);
+                    const sub = s.slice(0, mid);
+                    if (doc.getTextWidth(sub) + ellW <= maxW) lo = mid;
+                    else hi = mid - 1;
+                }
+                return s.slice(0, lo) + ell;
+            };
+
+
+            const drawHeader = () => {
+                const headerLines = headers.map((h, i) => {
+                    const w = Math.max(5, widths[i] - opt.cellPadX * 2);
+                    return doc.splitTextToSize(String(h ?? ''), w);
+                });
+                const maxLines = Math.max(1, ...headerLines.map(a => (a ? a.length : 1)));
+                const headerH = maxLines * opt.lineH + opt.cellPadY * 2;
+
+                if (y + headerH > doc.internal.pageSize.getHeight() - margin) {
+                    doc.addPage();
+                    y = margin;
+                }
+
+                
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(opt.headerFontSize);
+                doc.setDrawColor(...opt.borderColor);
+
+                for (let i = 0; i < headers.length; i++) {
+                    // Hintergrund (hell) + Rahmen
+                    doc.setFillColor(...opt.headerFill);
+                    doc.rect(xPos[i], y, widths[i], headerH, 'F');
+                    doc.rect(xPos[i], y, widths[i], headerH, 'S');
+
+                    // Text (explizit dunkel)
+                    doc.setTextColor(...opt.headerTextColor);
+                    doc.text(headerLines[i] || [''], xPos[i] + opt.cellPadX, y + opt.cellPadY + opt.lineH - 0.8);
+                }
+
+                // zurück auf Standard-Textfarbe
+                doc.setTextColor(0);
+y += headerH;
+
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(opt.cellFontSize);
+            };
+
+            drawHeader();
+
+            rows.forEach((r, ri) => {
+                const cells = Array.isArray(r) ? r : [r];
+                const normCells = headers.map((_, i) => (cells[i] !== undefined ? cells[i] : ''));
+
+                const wrapped = normCells.map((c, i) => {
+                    const w = Math.max(5, widths[i] - opt.cellPadX * 2);
+                    if (noWrapCols.includes(i)) {
+                        return [_truncateToWidth(String(c ?? ''), w)];
+                    }
+                    return doc.splitTextToSize(String(c ?? ''), w);
+                });
+
+                const maxLines = Math.max(1, ...wrapped.map(a => (a ? a.length : 1)));
+                const rowH = maxLines * opt.lineH + opt.cellPadY * 2;
+
+                if (y + rowH > doc.internal.pageSize.getHeight() - margin) {
+                    doc.addPage();
+                    y = margin;
+                    drawHeader();
+                }
+
+                const doZebra = opt.zebra && (ri % 2 === 1);
+                doc.setDrawColor(...opt.borderColor);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(opt.cellFontSize);
+                doc.setTextColor(20, 20, 20);
+
+                const fill = doZebra ? opt.zebraFill : [255, 255, 255];
+
+                for (let i = 0; i < headers.length; i++) {
+                    doc.setFillColor(...fill);
+                    // Hintergrund + Rahmen (pro Zelle) -> druckfreundlich, keine "schwarzen Kästen"
+                    doc.rect(xPos[i], y, widths[i], rowH, 'F');
+                    doc.rect(xPos[i], y, widths[i], rowH, 'S');
+
+                    doc.text(wrapped[i] || [''], xPos[i] + opt.cellPadX, y + opt.cellPadY + opt.lineH - 0.8);
+                }
+
+                doc.setTextColor(0);
+
+                y += rowH;
+            });
+
+            y += 2;
+        };
+
         // Schadensauswirkungsmatrix als farbige Tabelle (Assets x Schadensszenarien)
         // - Y: Assets (ID + Name)
         // - X: Damage Szenarien (ID + Name)
@@ -331,7 +475,7 @@
             if (!Array.isArray(assets) || assets.length === 0) return;
             if (!Array.isArray(dsList) || dsList.length === 0) return;
 
-            const totalW = pageW - margin * 2;
+            const totalW = doc.internal.pageSize.getWidth() - margin * 2;
             const assetW = 55; // ausreichend fuer "ID: Name" in einer Zeile
             const desiredDsW = 25; // Zielbreite je DS-Spalte (wird je Block angepasst)
             const maxCols = Math.max(1, Math.floor((totalW - assetW) / desiredDsW));
@@ -488,7 +632,7 @@
             // Matrix als Spaltenbloecke (falls zu viele DS fuer eine Seite)
             blocks.forEach((dsSubset, bi) => {
                 // Neue Seite, falls kaum Platz fuer Block uebrig
-                if (y + headerH + rowH > pageH - margin) {
+                if (y + headerH + rowH > doc.internal.pageSize.getHeight() - margin) {
                     doc.addPage();
                     y = margin;
                 }
@@ -497,7 +641,7 @@
 
                 // Rows (mit Seitenumbruechen + wiederholtem Header)
                 for (let ai = 0; ai < assets.length; ai++) {
-                    if (y + rowH > pageH - margin) {
+                    if (y + rowH > doc.internal.pageSize.getHeight() - margin) {
                         doc.addPage();
                         y = margin;
                         dsW = drawHeader(dsSubset, bi, blocks.length);
@@ -512,8 +656,8 @@
 
         return {
             margin,
-            pageW,
-            pageH,
+            get pageW() { return doc.internal.pageSize.getWidth(); },
+            get pageH() { return doc.internal.pageSize.getHeight(); },
             getY: () => y,
             setY: (v) => { y = v; },
             ensureSpace,
@@ -525,6 +669,7 @@
             addSpacer,
             addKeyValue,
             addTable,
+            addTableGrid,
             addImpactMatrixTable
         };
     }
@@ -682,7 +827,7 @@
         if (risks.length === 0) {
             pdf.addText('Keine Angriffsbäume vorhanden.');
         } else {
-            const sorted = [...risks].sort((a, b) => (parseFloat(b.rootRiskValue) || 0) - (parseFloat(a.rootRiskValue) || 0));
+            const sorted = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
             sorted.forEach(entry => {
                 const cls = _riskClassFromValue(entry.rootRiskValue);
                 pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
@@ -697,92 +842,388 @@
             });
         }
 
-        // Visualisierung Angriffsbäume (A3 Querformat)
+
+        // Visualisierung Angriffsbäume (A3 Querformat) – je Baum eine Seite
         if (risks.length > 0) {
-            let svgText = null;
-            try {
-                const dotContent = (typeof window.exportRiskAnalysisToDot === 'function')
-                    ? window.exportRiskAnalysisToDot(analysis)
-                    : null;
+            const sortedTrees = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
 
-                if (dotContent) {
-                    if (typeof showToast === 'function') showToast('Erzeuge Angriffsbäume (SVG)…', 'info');
-                    svgText = await _renderDotToSvg(dotContent);
-                }
-            } catch (_) {
-                svgText = null;
-            }
+            for (let ti = 0; ti < sortedTrees.length; ti++) {
+                const entry = sortedTrees[ti];
+                let svgText = null;
 
-            // A3 landscape page for the SVG
-            try {
-                doc.addPage('a3', 'landscape');
-            } catch (_) {
-                // Fallback: custom size in mm (A3 landscape ~ 420 x 297)
-                doc.addPage([420, 297], 'landscape');
-            }
+                try {
+                    const dotContent = (typeof window.exportRiskAnalysisToDot === 'function')
+                        ? window.exportRiskAnalysisToDot(analysis, entry.id)
+                        : null;
 
-            const pageW = doc.internal.pageSize.getWidth();
-            const pageH = doc.internal.pageSize.getHeight();
-            const margin = pdf.margin;
-
-            // Title
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(18);
-            doc.setTextColor(0);
-            doc.text('Angriffsbäume', margin, margin);
-            doc.setFont('helvetica', 'normal');
-
-            // Light watermark behind (optional, very subtle)
-            try {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(60);
-                doc.setTextColor(245);
-                doc.text('Angriffsbäume', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
-            } catch (_) { /* noop */ }
-            doc.setTextColor(0);
-            doc.setFont('helvetica', 'normal');
-
-            const topY = margin + 10;
-            const availW = pageW - margin * 2;
-            const availH = pageH - topY - margin;
-
-            if (svgText && svgText.includes('<svg')) {
-                // Convert SVG to PNG and embed
-                const png = await _svgTextToPng(svgText, 3800);
-                if (png && png.dataUrl) {
-                    // Fit preserving aspect ratio
-                    const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
-                    let drawW = availW;
-                    let drawH = drawW / imgRatio;
-                    if (drawH > availH) {
-                        drawH = availH;
-                        drawW = drawH * imgRatio;
+                    if (dotContent) {
+                        if (typeof showToast === 'function') showToast('Erzeuge Angriffsbaum (SVG)… ' + (entry.id || ''), 'info');
+                        svgText = await _renderDotToSvg(dotContent);
                     }
-                    const x = margin + (availW - drawW) / 2;
-                    const y = topY + (availH - drawH) / 2;
-                    try {
-                        doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
-                    } catch (_) {
-                        // fallback text
+                } catch (_) {
+                    svgText = null;
+                }
+
+                // A3 landscape page per tree
+                try {
+                    doc.addPage('a3', 'landscape');
+                } catch (_) {
+                    doc.addPage([420, 297], 'landscape');
+                }
+
+                const pageW = doc.internal.pageSize.getWidth();
+                const pageH = doc.internal.pageSize.getHeight();
+                const margin = pdf.margin;
+
+                // Title
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(0);
+                doc.text('Angriffsbaum ' + (entry.id || '') + ': ' + (entry.rootName || ''), margin, margin);
+                doc.setFont('helvetica', 'normal');
+
+                // Watermark
+                try {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(60);
+                    doc.setTextColor(245);
+                    doc.text('Angriffsbaum', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
+                } catch (_) { /* noop */ }
+                doc.setTextColor(0);
+                doc.setFont('helvetica', 'normal');
+
+                const topY = margin + 10;
+                const availW = pageW - margin * 2;
+                const availH = pageH - topY - margin;
+
+                if (svgText && svgText.includes('<svg')) {
+                    let png = null;
+                    try { png = await _svgTextToPng(svgText, 3800); } catch (e) { png = null; }
+                    if (png && png.dataUrl) {
+                        const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
+                        let drawW = availW;
+                        let drawH = drawW / imgRatio;
+                        if (drawH > availH) {
+                            drawH = availH;
+                            drawW = drawH * imgRatio;
+                        }
+                        const x = margin + (availW - drawW) / 2;
+                        const y = topY + (availH - drawH) / 2;
+                        try {
+                            doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
+                        } catch (_) {
+                            doc.setFontSize(11);
+                            doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', margin, topY);
+                        }
+                    } else {
                         doc.setFontSize(11);
-                        doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', margin, topY);
+                        doc.text('Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', margin, topY);
                     }
                 } else {
                     doc.setFontSize(11);
-                    doc.text('Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', margin, topY);
+                    doc.text('Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', margin, topY);
                 }
-            } else {
-                doc.setFontSize(11);
-                doc.text('Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', margin, topY);
             }
 
-            // Reset builder Y for following pages (we will switch back to A4)
+            // Reset builder state (next chapter will add an A4 portrait page explicitly)
             doc.setTextColor(0);
             doc.setFont('helvetica', 'normal');
             pdf.setY(pdf.margin);
         }
 
-        // Freigabe (neue Seite): Unterschriften + Datum
+        // =============================================================
+        // Security Objectives (Kapitel)
+        // =============================================================
+        try {
+            doc.addPage('a4', 'portrait');
+        } catch (_) {
+            doc.addPage();
+        }
+        pdf.setY(pdf.margin);
+        pdf.addH1('Security Objectives');
+
+        const secGoals = Array.isArray(analysis.securityGoals) ? analysis.securityGoals : [];
+        if (secGoals.length === 0) {
+            pdf.addText('Keine Security Objectives definiert.');
+        } else {
+            const sortedSG = [...secGoals].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
+            
+            pdf.addTable(
+                ['ID', 'Name', 'Beschreibung', 'Ref. Risiken'],
+                sortedSG.map(sg => {
+                    const refs = Array.isArray(sg.rootRefs) ? sg.rootRefs.join(', ') : '-';
+                    return [
+                        sg.id || '-',
+                        sg.name || '-',
+                        sg.description || '-',
+                        refs
+                    ];
+                }),
+                [15, 40, 85, 40]
+            );
+        }
+
+        
+
+        // =============================================================
+        // Restrisikoanalyse (Kapitel)
+        // =============================================================
+        try {
+            if (typeof ensureResidualRiskSynced === 'function') {
+                ensureResidualRiskSynced(analysis);
+            } else if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+                syncResidualRiskFromRiskAnalysis(analysis, false);
+            }
+        } catch (_) { /* noop */ }
+        // Bewertung der Restrisiken (Tabellarisch)
+        try {
+            doc.addPage('a4', 'landscape');
+        } catch (_) {
+            doc.addPage();
+        }
+        pdf.setY(pdf.margin);
+        pdf.addH1('Restrisikoanalyse');
+        pdf.addH2('Bewertung der Restrisiken');
+        const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
+
+        const _fmtNumComma = (val, digits = 2) => {
+            const n = parseFloat(String(val ?? '').replace(',', '.'));
+            if (isNaN(n)) return '-';
+            return n.toFixed(digits).replace('.', ',');
+        };
+
+        const _pVec = (k, s, t, u) => {
+            const f = (x) => {
+                if (x === null || x === undefined) return '-';
+                const xs = String(x).trim();
+                if (!xs) return '-';
+                return xs.replace('.', ',');
+            };
+            return `${f(k)} / ${f(s)} / ${f(t)} / ${f(u)}`;
+        };
+        const _sanitizePdfText = (input) => {
+            let s = String(input ?? '');
+            // Replace problematic glyphs (WinAnsi/Helvetica) for better print readability
+            s = s.replace(/\u00A0/g, ' ');            // NBSP
+            s = s.replace(/[→⇒]/g, '->');
+            s = s.replace(/[←⇐]/g, '<-');
+            s = s.replace(/[–—−]/g, '-');
+            s = s.replace(/[“”„‟]/g, '"');
+            s = s.replace(/[’‘‚‛]/g, "'");
+            s = s.replace(/…/g, '...');
+            s = s.replace(/[•·]/g, '*');
+            s = s.replace(/›/g, '/');
+            s = s.replace(/\s+/g, ' ').trim();
+
+            // Replace non-Latin1 chars (code > 255), which can show up as black boxes
+            s = Array.from(s).map(ch => (ch.charCodeAt(0) <= 255 ? ch : '?')).join('');
+            return s;
+        };
+
+
+        const _riskNum = (iNorm, k, s, t, u) => {
+            const i = parseFloat(String(iNorm ?? '').replace(',', '.')) || 0;
+            const kk = parseFloat(String(k ?? '').replace(',', '.')) || 0;
+            const ss = parseFloat(String(s ?? '').replace(',', '.')) || 0;
+            const tt = parseFloat(String(t ?? '').replace(',', '.')) || 0;
+            const uu = parseFloat(String(u ?? '').replace(',', '.')) || 0;
+            return i * (kk + ss + tt + uu);
+        };
+
+        if (!rrEntries || rrEntries.length === 0 || typeof rrIterateLeaves !== 'function') {
+            pdf.addText('Keine Restrisikoanalyse-Daten vorhanden.');
+        } else {
+            const rows = [];
+
+            rrEntries.forEach((rrEntry) => {
+                if (!rrEntry) return;
+                const treeId = (rrEntry.id || rrEntry.uid || '').toString();
+                const origEntry = (analysis.riskEntries || []).find(e => String(e.id) === String(rrEntry.id));
+                const rootName = _sanitizePdfText((rrEntry.rootName || origEntry?.rootName || rrEntry.name || rrEntry.root || '').toString());
+
+                // Map leafKey -> original leaf (so R/RR can fall back correctly even if rrEntry has missing KSTU)
+                const origLeafMap = {};
+                try {
+                    if (origEntry && typeof rrIterateLeaves === 'function') {
+                        rrIterateLeaves(origEntry, (m0) => {
+                            if (m0?.leafKey && m0?.leaf) origLeafMap[String(m0.leafKey)] = m0.leaf;
+                        });
+                    }
+                } catch (_) { /* noop */ }
+
+
+                rrIterateLeaves(rrEntry, (meta) => {
+                    const leaf = meta?.leaf;
+                    if (!leaf) return;
+
+                    const leafKey = (meta?.leafKey !== undefined && meta?.leafKey !== null) ? String(meta.leafKey) : '';
+                    const oLeaf = (leafKey && origLeafMap[leafKey]) ? origLeafMap[leafKey] : leaf;
+
+                    const rr = leaf.rr || {};
+                    const treatment = (rr.treatment || '').trim() || '-';
+                    const sec = (rr.securityConcept || '').trim() || '';
+                    const note = (rr.note || '').trim() || '';
+
+                    const path = (meta.breadcrumb || meta?.branch?.name || '').toString();
+                    const leafText = (oLeaf.text || oLeaf.name || oLeaf.label || '').toString();
+                    const impactName =                    (path ? (path + ' -> ') : '') + (leafText || '(ohne Text)');
+
+                    const iNorm = (oLeaf.i_norm !== undefined && oLeaf.i_norm !== null && String(oLeaf.i_norm).trim() !== '')
+                        ? oLeaf.i_norm
+                        : ((origEntry && origEntry.i_norm !== undefined && origEntry.i_norm !== null && String(origEntry.i_norm).trim() !== '')
+                            ? origEntry.i_norm
+                            : ((rrEntry.i_norm !== undefined && rrEntry.i_norm !== null && String(rrEntry.i_norm).trim() !== '')
+                                ? rrEntry.i_norm
+                                : (leaf.i_norm !== undefined ? leaf.i_norm : '')));
+
+                    // Original
+                    const oRnum = _riskNum(iNorm, oLeaf.k, oLeaf.s, oLeaf.t, oLeaf.u);
+                    const oR = isNaN(oRnum) ? '-' : _fmtNumComma(oRnum, 2);
+
+                    // Residual: bei Mitigiert -> rr.K/S/T/U sofern gesetzt
+                    const pick = (orig, rrVal) => {
+                        const rrs = (rrVal === null || rrVal === undefined) ? '' : String(rrVal).trim();
+                        if (treatment === 'Mitigiert' && rrs) return rrs;
+                        return (orig === null || orig === undefined) ? '' : String(orig);
+                    };
+
+                    const rk = pick(oLeaf.k, rr.k);
+                    const rs = pick(oLeaf.s, rr.s);
+                    const rt = pick(oLeaf.t, rr.t);
+                    const ru = pick(oLeaf.u, rr.u);
+
+                    const rrNum = _riskNum(iNorm, rk, rs, rt, ru);
+                    const rrVal = isNaN(rrNum) ? '-' : _fmtNumComma(rrNum, 2);
+                    const rrClass = isNaN(rrNum) ? 'Unbekannt' : _riskClassFromValue(rrNum).label;
+
+                    const prrVec = (treatment === 'Mitigiert') ? _pVec(rk, rs, rt, ru) : '-';
+
+                    const treeRefId = _sanitizePdfText(treeId);
+                    const impactText = _sanitizePdfText(String(impactName || ''));
+
+                    // RR: bei Akzeptiert/Delegiert/leer soll RR = R sein
+                    const rrTxt = (treatment === 'Mitigiert') ? String(rrVal || '-') : String(oR || '-');
+
+                    rows.push([
+                        treeRefId,
+                        rootName,
+                        impactText,
+                        treatment,
+                        oR,
+                        rrTxt,
+                        sec,
+                        note
+                    ]);
+});
+            });
+
+            if (rows.length === 0) {
+                pdf.addText('Keine Auswirkungen in der Restrisikoanalyse gefunden.');
+            } else {
+                // Menschenlesbare Tabelle: ganze Breite, Rahmen, Zebra-Striping
+                // Spaltenbreiten (mm) für Querformat-A4:
+                // - R und RR jeweils 1,5x breiter
+                // - Maßnahme und Anmerkung ebenfalls 1,5x breiter
+                // -> übrige Breite wird aus "Baum Name" und "Auswirkung" genommen, damit die Gesamttabelle weiterhin die Seitenbreite ausnutzt.
+                 pdf.addTableGrid(
+                    ['', 'Baum Name', 'Auswirkung', 'Behandlung', 'R', 'RR', 'Maßnahme', 'Anmerkung'],
+                    rows,
+                    [14, 22, 35, 20, 11, 11, 77, 77],
+                    { zebra: true, noWrapCols: [0,3,4,5], headerFill: [250,250,250], headerTextColor: [20,20,20], zebraFill: [252,252,252], borderColor: [190,190,190], headerFontSize: 10, cellFontSize: 9 }
+                );
+}
+        }
+
+
+        // Visualisierung Restrisiko-Bäume (Querformat) – je Baum eine Seite
+        if (risks.length > 0) {
+            const sortedTrees = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
+
+            for (let ti = 0; ti < sortedTrees.length; ti++) {
+                const entry = sortedTrees[ti];
+                let rrSvgText = null;
+
+                try {
+                    const rrDot = (typeof window.exportResidualRiskToDot === 'function')
+                        ? window.exportResidualRiskToDot(analysis, entry.id)
+                        : null;
+
+                    if (rrDot) {
+                        if (typeof showToast === 'function') showToast('Erzeuge Restrisiko-Baum (SVG)… ' + (entry.id || ''), 'info');
+                        rrSvgText = await _renderDotToSvg(rrDot);
+                    }
+                } catch (_) {
+                    rrSvgText = null;
+                }
+
+                // A3 landscape page per tree
+                try {
+                    doc.addPage('a3', 'landscape');
+                } catch (_) {
+                    doc.addPage([420, 297], 'landscape');
+                }
+
+                const rrPageW = doc.internal.pageSize.getWidth();
+                const rrPageH = doc.internal.pageSize.getHeight();
+                const rrMargin = pdf.margin;
+
+                // Title
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(18);
+                doc.setTextColor(0);
+                doc.text('Restrisiko-Baum ' + (entry.id || '') + ': ' + (entry.rootName || ''), rrMargin, rrMargin);
+                doc.setFont('helvetica', 'normal');
+
+                // Watermark
+                try {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(56);
+                    doc.setTextColor(245);
+                    doc.text('Restrisiko', rrPageW / 2, rrPageH / 2, { align: 'center', angle: 35 });
+                } catch (_) { /* noop */ }
+                doc.setTextColor(0);
+                doc.setFont('helvetica', 'normal');
+
+                const rrTopY = rrMargin + 10;
+                const rrAvailW = rrPageW - rrMargin * 2;
+                const rrAvailH = rrPageH - rrTopY - rrMargin;
+
+                if (rrSvgText && rrSvgText.includes('<svg')) {
+                    let png = null;
+                    try { png = await _svgTextToPng(rrSvgText, 3800); } catch (e) { png = null; }
+                    if (png && png.dataUrl) {
+                        const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
+                        let drawW = rrAvailW;
+                        let drawH = drawW / imgRatio;
+                        if (drawH > rrAvailH) {
+                            drawH = rrAvailH;
+                            drawW = drawH * imgRatio;
+                        }
+                        const x = rrMargin + (rrAvailW - drawW) / 2;
+                        const y = rrTopY + (rrAvailH - drawH) / 2;
+                        try {
+                            doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
+                        } catch (_) {
+                            doc.setFontSize(11);
+                            doc.text('Restrisiko-Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', rrMargin, rrTopY);
+                        }
+                    } else {
+                        doc.setFontSize(11);
+                        doc.text('Restrisiko-Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', rrMargin, rrTopY);
+                    }
+                } else {
+                    doc.setFontSize(11);
+                    doc.text('Restrisiko-Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', rrMargin, rrTopY);
+                }
+            }
+
+            // Reset builder state (next section switches to A4 explicitly)
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'normal');
+            pdf.setY(pdf.margin);
+        }
+
+// Freigabe (neue Seite): Unterschriften + Datum
         // Freigabe wieder in A4 Hochformat
         try {
             doc.addPage('a4', 'portrait');

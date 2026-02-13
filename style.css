@@ -510,3 +510,66 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
         grid-template-columns: 1fr 1fr;
     }
 }
+
+
+/* =============================================================
+   Attack Tree Editor V2 (Cards / Einrückung / Tooltips)
+   ============================================================= */
+
+.at-tree-editor { margin-top: 10px; }
+
+.at-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.at-root-card { background:#f0f0f0; }
+
+.at-card-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+
+.at-hint { font-size:0.85em; color:#666; display:inline-flex; gap:6px; align-items:center; }
+
+.at-card-header { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+.at-root-input, .at-node-title, .at-impact-text {
+  flex: 1 1 320px;
+  min-width: 240px;
+  font-weight: 600;
+}
+
+.at-breadcrumb {
+  font-size: 0.8em;
+  color: #777;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.at-node-card {
+  margin-left: 18px;
+  border-left: 4px solid #e6e6e6;
+}
+
+.at-node-card[data-depth="1"] { border-left-color: #d6eaf8; }
+.at-node-card[data-depth="2"] { border-left-color: #d5f5e3; }
+.at-node-card[data-depth="3"] { border-left-color: #fcf3cf; }
+.at-node-card[data-depth="4"] { border-left-color: #fadbd8; }
+
+.at-impact-card {
+  margin-left: 36px;
+  border-left: 4px dashed #ececec;
+}
+
+.at-node-actions-row {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top: 8px;
+}
+
+.at-delete-inline { margin-left: auto; }
+
+.at-max-note { font-size: 0.85em; color:#888; }

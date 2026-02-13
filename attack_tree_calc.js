@@ -5,11 +5,18 @@ function _parseKSTUValue(val) {
 
 function _getTreeDepthForData(treeData) {
     const d = parseInt(treeData?.treeDepth, 10);
-    // Ab jetzt: 1 oder 2 (alte 3 wird als 2 interpretiert)
+    // 1: Root -> Pfad -> Leaves
+    // 2: Root -> Pfad -> Zwischenpfad(e) (parallel) -> Leaves
+    // 3: Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Leaves
     if (d === 1) return 1;
-    if (d === 2 || d === 3) return 2;
+    if (d === 2) return 2;
+    if (d === 3) {
+        // Abwärtskompatibel: alte depth=3 Eintraege waren "2. Zwischenpfad"
+        return (treeData?.useThirdIntermediate === true) ? 3 : 2;
+    }
     return treeData?.useDeepTree ? 2 : 1;
 }
+
 
 function _kstuWorstCase(items) {
     const res = { k: null, s: null, t: null, u: null };
@@ -106,10 +113,11 @@ function _normalizeParallelIntermediate(treeData) {
 
 
 function applyWorstCaseInheritance(treeData) {
+    if (treeData && treeData.treeV2) return applyWorstCaseInheritanceV2(treeData);
     if (!treeData || !treeData.branches) return treeData;
 
     const depth = _getTreeDepthForData(treeData);
-    _normalizeParallelIntermediate(treeData);
+    if (depth === 2) _normalizeParallelIntermediate(treeData);
 
     treeData.branches.forEach(branch => {
         if (!branch) return;
@@ -119,18 +127,34 @@ function applyWorstCaseInheritance(treeData) {
             return;
         }
 
-        const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
-        nodes.forEach(node => {
-            node.kstu = _kstuWorstCase((node && node.leaves) ? node.leaves : []);
-        });
+        if (depth === 2) {
+            const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
+            nodes.forEach(node => {
+                node.kstu = _kstuWorstCase((node && node.leaves) ? node.leaves : []);
+            });
+            // Branch-Worst-Case über die Zwischenpfade
+            branch.kstu = _kstuWorstCase(nodes.map(n => n.kstu));
+            return;
+        }
 
-        // Branch-Worst-Case über die Zwischenpfade
-        branch.kstu = _kstuWorstCase(nodes.map(n => n.kstu));
+        // depth === 3: linear (l2_node -> l3_node -> leaves)
+        branch.l2_node = branch.l2_node || { name: '' };
+        branch.l3_node = branch.l3_node || { name: '' };
+
+        const leaves = Array.isArray(branch.leaves)
+            ? branch.leaves
+            : (branch.l3_node && Array.isArray(branch.l3_node.leaves) ? branch.l3_node.leaves : []);
+
+        branch.l3_node.kstu = _kstuWorstCase(leaves);
+        // linear: l2 nimmt Worst-Case vom einzigen Child
+        branch.l2_node.kstu = _kstuWorstCase([branch.l3_node.kstu]);
+        branch.kstu = _kstuWorstCase([branch.l2_node.kstu]);
     });
 
     treeData.kstu = _kstuWorstCase(treeData.branches.map(b => b.kstu));
     return treeData;
 }
+
 
 function _parseImpactValue(val) {
     const num = parseFloat(val);
@@ -138,10 +162,11 @@ function _parseImpactValue(val) {
 }
 
 function applyImpactInheritance(treeData, analysis) {
+    if (treeData && treeData.treeV2) return applyImpactInheritanceV2(treeData, analysis);
     if (!treeData || !treeData.branches) return treeData;
 
     const depth = _getTreeDepthForData(treeData);
-    _normalizeParallelIntermediate(treeData);
+    if (depth === 2) _normalizeParallelIntermediate(treeData);
 
     treeData.branches.forEach(branch => {
         if (!branch) return;
@@ -164,33 +189,62 @@ function applyImpactInheritance(treeData, analysis) {
             return;
         }
 
-        const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
-        nodes.forEach(node => {
-            (node.leaves || []).forEach(leaf => {
-                const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
-                leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+        if (depth === 2) {
+            const nodes = Array.isArray(branch.l2_nodes) ? branch.l2_nodes : [];
+            nodes.forEach(node => {
+                (node.leaves || []).forEach(leaf => {
+                    const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
+                    leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+                });
+
+                let nMax = 0.0;
+                let nFound = false;
+                (node.leaves || []).forEach(leaf => {
+                    const v = _parseImpactValue(leaf?.i_norm);
+                    if (v === null) return;
+                    if (v > nMax) nMax = v;
+                    nFound = true;
+                });
+                node.i_norm = nFound ? nMax.toFixed(2) : '';
             });
 
-            let nMax = 0.0;
-            let nFound = false;
-            (node.leaves || []).forEach(leaf => {
-                const v = _parseImpactValue(leaf?.i_norm);
+            let bMax = 0.0;
+            let bFound = false;
+            nodes.forEach(node => {
+                const v = _parseImpactValue(node?.i_norm);
                 if (v === null) return;
-                if (v > nMax) nMax = v;
-                nFound = true;
+                if (v > bMax) bMax = v;
+                bFound = true;
             });
-            node.i_norm = nFound ? nMax.toFixed(2) : '';
+            branch.i_norm = bFound ? bMax.toFixed(2) : '';
+            return;
+        }
+
+        // depth === 3
+        branch.l2_node = branch.l2_node || { name: '' };
+        branch.l3_node = branch.l3_node || { name: '' };
+
+        const leaves = Array.isArray(branch.leaves)
+            ? branch.leaves
+            : (branch.l3_node && Array.isArray(branch.l3_node.leaves) ? branch.l3_node.leaves : []);
+
+        leaves.forEach(leaf => {
+            const dsList = (leaf && Array.isArray(leaf.ds)) ? leaf.ds : [];
+            leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
         });
 
-        let bMax = 0.0;
-        let bFound = false;
-        nodes.forEach(node => {
-            const v = _parseImpactValue(node?.i_norm);
+        let l3Max = 0.0;
+        let l3Found = false;
+        leaves.forEach(leaf => {
+            const v = _parseImpactValue(leaf?.i_norm);
             if (v === null) return;
-            if (v > bMax) bMax = v;
-            bFound = true;
+            if (v > l3Max) l3Max = v;
+            l3Found = true;
         });
-        branch.i_norm = bFound ? bMax.toFixed(2) : '';
+        branch.l3_node.i_norm = l3Found ? l3Max.toFixed(2) : '';
+        // linear
+        branch.l2_node.i_norm = branch.l3_node.i_norm;
+        branch.i_norm = branch.l2_node.i_norm;
     });
 
     // Root Impact: max über branches
@@ -206,6 +260,7 @@ function applyImpactInheritance(treeData, analysis) {
 
     return treeData;
 }
+
 
 function _renderNodeSummaryHTML(kstu, iNorm) {
     const valK = parseFloat(kstu?.k) || 0;
@@ -253,14 +308,16 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
 }
 
 function updateAttackTreeKSTUSummariesFromForm() {
+    if (window.atV2 && typeof window.atV2.updateSummaries === "function") { window.atV2.updateSummaries(); return; }
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
     const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
-    const treeDepth = (depthRaw === 2 || depthRaw === 3) ? 2 : 1;
+    const treeDepth = (depthRaw === 3) ? 3 : ((depthRaw === 2) ? 2 : 1);
     const useDeepTree = treeDepth >= 2;
 
-    const secondOn = (document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true';
+    const secondOn = (treeDepth === 2) && ((document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true');
+    const thirdOn = (treeDepth === 3);
 
     const getLeafDs = (idx) => readLeafDsFromDOM(idx);
     const getLeafKSTU = (idx) => ({
@@ -292,6 +349,8 @@ function updateAttackTreeKSTUSummariesFromForm() {
     const formValues = {
         treeDepth: treeDepth,
         useDeepTree: useDeepTree,
+        useSecondIntermediate: secondOn,
+        useThirdIntermediate: thirdOn,
         branches: [
             {},
             {}
@@ -300,6 +359,10 @@ function updateAttackTreeKSTUSummariesFromForm() {
 
     // Branch 1
     if (treeDepth === 1) {
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[0].l2_node = {};
+        formValues.branches[0].l3_node = {};
         formValues.branches[0].leaves = mkLeaves(bases['1a']);
     } else {
         formValues.branches[0].l2_nodes = [
@@ -312,6 +375,10 @@ function updateAttackTreeKSTUSummariesFromForm() {
 
     // Branch 2
     if (treeDepth === 1) {
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[1].l2_node = {};
+        formValues.branches[1].l3_node = {};
         formValues.branches[1].leaves = mkLeaves(bases['2a']);
     } else {
         formValues.branches[1].l2_nodes = [
@@ -335,7 +402,7 @@ function updateAttackTreeKSTUSummariesFromForm() {
         const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
         if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
 
-        if (treeDepth >= 2) {
+        if (treeDepth === 2) {
             const nodeA = (branchData.l2_nodes && branchData.l2_nodes[0]) ? branchData.l2_nodes[0] : null;
             const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
             if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
@@ -343,6 +410,20 @@ function updateAttackTreeKSTUSummariesFromForm() {
             const nodeB = (branchData.l2_nodes && branchData.l2_nodes[1]) ? branchData.l2_nodes[1] : null;
             const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
             if (elL2B) elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = '';
+        }
+
+        if (treeDepth === 3) {
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData?.l2_node?.kstu, branchData?.l2_node?.i_norm);
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = _renderNodeSummaryHTML(branchData?.l3_node?.kstu, branchData?.l3_node?.i_norm);
+
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = '';
         }
     });
 
@@ -350,14 +431,14 @@ function updateAttackTreeKSTUSummariesFromForm() {
     for (let idx = 1; idx <= 20; idx++) {
         const leafObj = (() => {
             // Ermittlung: welche Branch/Gruppe gehört idx?
-            if (idx >= 1 && idx <= 5) return (treeDepth === 1 ? formValues.branches[0].leaves[idx-1] : formValues.branches[0].l2_nodes[0].leaves[idx-1]);
-            if (idx >= 6 && idx <= 10) return (treeDepth === 1 ? formValues.branches[1].leaves[idx-6] : formValues.branches[1].l2_nodes[0].leaves[idx-6]);
+            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0].l2_nodes[0].leaves[idx-1] : formValues.branches[0].leaves[idx-1]);
+            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1].l2_nodes[0].leaves[idx-6] : formValues.branches[1].leaves[idx-6]);
             if (idx >= 11 && idx <= 15) {
-                if (treeDepth === 1 || !secondOn) return null;
+                if (treeDepth !== 2 || !secondOn) return null;
                 return formValues.branches[0].l2_nodes[1].leaves[idx-11];
             }
             if (idx >= 16 && idx <= 20) {
-                if (treeDepth === 1 || !secondOn) return null;
+                if (treeDepth !== 2 || !secondOn) return null;
                 return formValues.branches[1].l2_nodes[1].leaves[idx-16];
             }
             return null;
@@ -399,3 +480,67 @@ function generateNextRiskID(analysis) {
 
 // --- GRAPHVIZ GENERATOR (WASM) ---
 
+
+
+
+/* ============================================================
+   Attack Tree Calc V2 (treeV2)
+   - Unterstützt Baum-Editor (Cards) mit variierender Tiefe
+   - Vererbung: i_norm (max) und KSTU worst-case (pro Dimension)
+   ============================================================ */
+
+function applyImpactInheritanceV2(treeData, analysis) {
+    if (!treeData || !treeData.treeV2) return treeData;
+    const root = treeData.treeV2;
+
+    const walk = (node) => {
+        if (!node) return '';
+        let maxI = null;
+
+        // Leaves
+        (node.impacts || []).forEach(leaf => {
+            const dsList = Array.isArray(leaf.ds) ? leaf.ds : [];
+            leaf.i_norm = computeLeafImpactNorm(dsList, analysis);
+            const v = _parseImpactValue(leaf.i_norm);
+            if (v === null) return;
+            if (maxI === null || v > maxI) maxI = v;
+        });
+
+        // Children
+        (node.children || []).forEach(ch => {
+            walk(ch);
+            const v = _parseImpactValue(ch && ch.i_norm);
+            if (v === null) return;
+            if (maxI === null || v > maxI) maxI = v;
+        });
+
+        node.i_norm = (maxI === null) ? '' : maxI.toFixed(2);
+        return node.i_norm;
+    };
+
+    walk(root);
+    treeData.i_norm = root.i_norm || '';
+    return treeData;
+}
+
+function applyWorstCaseInheritanceV2(treeData) {
+    if (!treeData || !treeData.treeV2) return treeData;
+    const root = treeData.treeV2;
+
+    const walk = (node) => {
+        if (!node) return;
+        (node.children || []).forEach(walk);
+
+        const items = [];
+        // Leaves: leaf has k/s/t/u directly (supported by _kstuWorstCase)
+        (node.impacts || []).forEach(leaf => items.push(leaf));
+        // Children: provide as {kstu: child.kstu}
+        (node.children || []).forEach(ch => items.push({ kstu: ch.kstu }));
+
+        node.kstu = _kstuWorstCase(items);
+    };
+
+    walk(root);
+    treeData.kstu = root.kstu || _kstuWorstCase([]);
+    return treeData;
+}

@@ -70,6 +70,37 @@
 
     // Iteriert ueber alle Leaves eines Baums und liefert Meta-Infos.
     function rrIterateLeaves(entry, cb) {
+        if (entry && entry.treeV2) {
+            // treeV2: rekursiv traversieren und Breadcrumbs liefern, damit die Benennung im UI eindeutig bleibt.
+            const walk = (node, bNum, parts) => {
+                const nodeTitle = (node && (node.title || node.name)) ? String(node.title || node.name) : '';
+                const nextParts = nodeTitle ? parts.concat([nodeTitle]) : parts;
+                (node.impacts || []).forEach((leaf, lIdx) => {
+                    const leafUid = leaf.uid || ('leaf_' + (lIdx + 1));
+                    const nodeUid = node.uid || 'node';
+                    const leafKey = `B${bNum}|N${nodeUid}|L${leafUid}`;
+                    const branchName = nextParts.length ? nextParts[0] : `Pfad B${bNum}`;
+                    const nodeName = nodeTitle || branchName;
+                    cb({
+                        leaf,
+                        leafKey,
+                        // Kompatibel: branch/node Objekte liefern name-Property
+                        branch: { name: branchName },
+                        node: { name: nodeName, title: nodeTitle },
+                        breadcrumb: nextParts.length ? nextParts.join(' › ') : `Pfad B${bNum}`,
+                        bNum,
+                        nNum: nodeUid,
+                        lNum: lIdx + 1
+                    });
+                });
+                (node.children || []).forEach(ch => walk(ch, bNum, nextParts));
+            };
+            (entry.treeV2.children || []).forEach((pathNode, idx) => {
+                const bNum = idx + 1;
+                walk(pathNode, bNum, []);
+            });
+            return;
+        }
         if (!entry || !entry.branches) return;
         const depth = rrGetDepth(entry);
 
@@ -83,6 +114,18 @@
                     const lNum = lIdx + 1;
                     const leafKey = rrMakeLeafKey(bNum, 1, lNum);
                     cb({ leaf, leafKey, branch, node: null, bNum, nNum: 1, lNum });
+                });
+                return;
+            }
+
+            if (depth === 3) {
+                // Linear: Root -> Pfad -> L2 -> L3 -> Leaves
+                const leaves = Array.isArray(branch.leaves) ? branch.leaves : (Array.isArray(branch?.l3_node?.leaves) ? branch.l3_node.leaves : []);
+                leaves.forEach((leaf, lIdx) => {
+                    const lNum = lIdx + 1;
+                    // Leaf-Key bleibt kompatibel: ein Node-Slot (N1) für den linearen Pfad
+                    const leafKey = rrMakeLeafKey(bNum, 1, lNum);
+                    cb({ leaf, leafKey, branch, node: (branch && branch.l3_node) ? branch.l3_node : null, bNum, nNum: 1, lNum });
                 });
                 return;
             }

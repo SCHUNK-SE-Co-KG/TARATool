@@ -12,7 +12,7 @@
 //  - Bei Mitigiert: Eingabe K/S/T/U (analog Risikoanalyse)
 //  - Green-Check Logik:
 //      * Akzeptiert/Delegiert: Check wenn Anmerkung gesetzt
-//      * Mitigiert: Check wenn Anmerkung + Massnahme + K/S/T/U gesetzt
+//      * Mitigiert: Check wenn Massnahme + K/S/T/U gesetzt (Anmerkung optional)
 // =============================================================
 
 (function () {
@@ -152,7 +152,8 @@
             const s = (rr.s || '').trim();
             const t = (rr.t || '').trim();
             const u = (rr.u || '').trim();
-            return note.length > 0 && sec.length > 0 && k && s && t && u;
+            // Anmerkung ist bei Mitigation optional
+            return sec.length > 0 && k && s && t && u;
         }
         return false;
     }
@@ -222,20 +223,35 @@
     }
 
     function rrBuildLeafLabel(meta) {
-        const bName = meta?.branch?.name ? String(meta.branch.name) : '';
-        const nName = meta?.node?.name ? String(meta.node.name) : '';
-        const leafText = meta?.leaf?.text ? String(meta.leaf.text) : '';
+        const leafText = meta?.leaf?.text
+            ? String(meta.leaf.text)
+            : (meta?.leaf?.name ? String(meta.leaf.name) : (meta?.leaf?.label ? String(meta.leaf.label) : ''));
+
+        // treeV2 liefert Breadcrumb direkt (vollstaendige Benennung)
+        if (meta?.breadcrumb) {
+            return {
+                path: String(meta.breadcrumb),
+                text: leafText
+            };
+        }
+
+        const bName = meta?.branch?.name
+            ? String(meta.branch.name)
+            : (meta?.branch?.title ? String(meta.branch.title) : '');
+
+        const nName = meta?.node?.name
+            ? String(meta.node.name)
+            : (meta?.node?.title ? String(meta.node.title) : '');
 
         // kompakt, aber eindeutig
         const parts = [];
         if (bName) parts.push(bName);
-        if (nName) parts.push(nName);
-        const path = parts.length ? parts.join(' › ') : `Pfad B${meta.bNum}` + (meta.nNum ? `/N${meta.nNum}` : '');
+        if (nName && nName !== bName) parts.push(nName);
+        const path = parts.length
+            ? parts.join(' › ')
+            : `Pfad B${meta.bNum}` + (meta.nNum ? `/N${meta.nNum}` : '');
 
-        return {
-            path,
-            text: leafText
-        };
+        return { path, text: leafText };
     }
 
     function rrOpenModalForTree(residualEntry) {
@@ -342,7 +358,7 @@
                                         <div class="rr-mitigate-placeholder ${isMit ? 'rr-hidden' : ''}" style="color:#7f8c8d;">-</div>
                                     </td>
                                     <td>
-                                        <textarea class="rr-note rr-textarea" placeholder="Anmerkungen...">${note}</textarea>
+                                        <textarea class="rr-note rr-textarea" placeholder="Anmerkungen (optional bei Mitigiert)...">${note}</textarea>
                                     </td>
                                     <td>
                                         <textarea class="rr-security rr-textarea" placeholder="Maßnahme aus Security Konzept...">${sec}</textarea>
