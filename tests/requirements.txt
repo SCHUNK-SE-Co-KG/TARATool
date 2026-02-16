@@ -1,0 +1,6 @@
+pytest>=8.0
+pytest-playwright>=0.5
+playwright>=1.40
+pytest-html>=4.0
+pytest-xdist>=3.5
+pytest-timeout>=2.2
