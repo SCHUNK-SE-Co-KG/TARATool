@@ -19,6 +19,26 @@ function _atGetTreeDepth() {
     return 1;
 }
 
+/**
+ * Centralized UI state refresh: rowspans, add/remove button states, leaf delete buttons.
+ * Replaces repeated try-catch blocks across _atSetSecondIntermediateEnabled and setTreeDepth.
+ */
+function _atRefreshUIState() {
+    const _safe = (fn, label) => {
+        try { fn(); } catch (e) { console.warn(`[AT Structure] ${label}:`, e.message || e); }
+    };
+    _safe(() => _atRecomputeAllRowspans(), '_atRecomputeAllRowspans');
+    [1, 2].forEach(b => {
+        ['a', 'b'].forEach(g => {
+            _safe(() => _atUpdateAddImpactButtonState(b, g), `_atUpdateAddImpactButtonState(${b},'${g}')`);
+            _safe(() => _atUpdateRemoveImpactButtonState(b, g), `_atUpdateRemoveImpactButtonState(${b},'${g}')`);
+        });
+    });
+    updateAttackTreeKSTUSummariesFromForm();
+    _safe(() => _atEnsureLeafDeleteButtons(), '_atEnsureLeafDeleteButtons');
+    _safe(() => _atUpdateAllLeafDeleteButtonsState(), '_atUpdateAllLeafDeleteButtonsState');
+}
+
 
 
 function _atIsSecondIntermediateEnabled() {
@@ -67,22 +87,7 @@ function _atSetSecondIntermediateEnabled(enabled) {
         }
     });
 
-    // Recalculate rowspans
-    try { _atRecomputeAllRowspans(); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(1, 'a'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(2, 'a'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(1, 'b'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(2, 'b'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(1, 'a'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(2, 'a'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(1, 'b'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(2, 'b'); } catch(e) {}
-
-    updateAttackTreeKSTUSummariesFromForm();
-
-    // Leaf delete buttons per row (visible/disabled) update
-    try { _atEnsureLeafDeleteButtons(); } catch(e) {}
-    try { _atUpdateAllLeafDeleteButtonsState(); } catch(e) {}
+    _atRefreshUIState();
 }
 
 function setTreeDepth(depth) {
@@ -189,21 +194,7 @@ function setTreeDepth(depth) {
         b.style.display = _shouldShowButton(b, false) ? 'inline-flex' : 'none';
     });
 
-    // Rowspans / button states update
-    try { _atRecomputeAllRowspans(); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(1, 'a'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(2, 'a'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(1, 'b'); } catch(e) {}
-    try { _atUpdateAddImpactButtonState(2, 'b'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(1, 'a'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(2, 'a'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(1, 'b'); } catch(e) {}
-    try { _atUpdateRemoveImpactButtonState(2, 'b'); } catch(e) {}
-
-    updateAttackTreeKSTUSummariesFromForm();
-
-    try { _atEnsureLeafDeleteButtons(); } catch(e) {}
-    try { _atUpdateAllLeafDeleteButtonsState(); } catch(e) {}
+    _atRefreshUIState();
 }
 
 

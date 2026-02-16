@@ -48,7 +48,7 @@ function generateDotString(analysis, specificTreeId = null) {
         const p = _pStr(kstu);
         const i = _fmt(iNorm);
         const r = _calcR(i, kstu);
-        const cleanText = (text || '').replace(/[\{\}<>|\"]/g, "'");
+        const cleanText = (text || '').replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };
 
@@ -392,11 +392,11 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
     try {
         if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
         else if (typeof syncResidualRiskFromRiskAnalysis === 'function') syncResidualRiskFromRiskAnalysis(analysis, false);
-    } catch (_) {}
+    } catch (e) { console.warn('[DOT RR] sync error:', e.message || e); }
 
     const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
 
-    const _cleanText = (s) => (s || '').toString().replace(/[\{\}<>|\"]/g, "'");
+    const _cleanText = (s) => (s || '').toString().replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
 
         // JS-Helper: robust float parse (dot/comma)
     const _toNum = (v) => {
@@ -462,7 +462,7 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
 const _buildResidualClone = (baseEntry) => {
     // IMPORTANT: always clone from the risk analysis (baseEntry) so original KSTU/I/R are preserved.
     // Residual risk entry (rrEntry) only provides treatment + optionally mitigated KSTU overrides.
-    const clone = JSON.parse(JSON.stringify(baseEntry || {}));
+    const clone = structuredClone(baseEntry || {});
 
     const rrEntry = rrEntries.find(e => e && e.uid && baseEntry && e.uid === baseEntry.uid) || null;
 
@@ -471,7 +471,7 @@ const _buildResidualClone = (baseEntry) => {
     const collectRR = (node) => {
         if (!node) return;
         (node.impacts || []).forEach(l => {
-            if (l && l.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {}));
+            if (l && l.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
         });
         (node.children || []).forEach(collectRR);
     };
@@ -480,9 +480,9 @@ const _buildResidualClone = (baseEntry) => {
     } else if (rrEntry && Array.isArray(rrEntry.branches)) {
         // Legacy fallback
         (rrEntry.branches || []).forEach(b => {
-            (b?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); });
-            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); }));
-            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); });
+            (b?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
+            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); }));
+            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
         });
     }
 
@@ -533,8 +533,8 @@ const _buildResidualClone = (baseEntry) => {
         });
     }
 
-    try { if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis); } catch (_) {}
-    try { if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone); } catch (_) {}
+    try { if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis); } catch (e) { console.warn('[DOT RR] applyImpactInheritance:', e.message || e); }
+    try { if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone); } catch (e) { console.warn('[DOT RR] applyWorstCaseInheritance:', e.message || e); }
 
     return clone;
 };
