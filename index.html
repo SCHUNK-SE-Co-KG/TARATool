@@ -1,3 +1,11 @@
+<!--
+  @file        index.html
+  @description TARATool – Threat Analysis and Risk Assessment single-page application
+  @author      Nico Peper
+  @organization SCHUNK SE & Co. KG
+  @copyright   2026 SCHUNK SE & Co. KG
+  @license     GPL-3.0
+-->
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -5,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TARA Analysis Tool</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
     
     <script type="module">
         import { Graphviz } from "https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.js";
@@ -401,27 +409,38 @@
     
     <div id="toastContainer"></div>
 
-    <script src="globals.js"></script>
-    <script src="utils.js"></script>
-    <script src="analysis_core.js"></script>
-    <script src="assets.js"></script>
-    <script src="damage_scenarios.js"></script>
-    <script src="impact_matrix.js"></script>
-    <script src="security_goals.js"></script>
-    <script src="risk_analysis.js"></script>
-    <script src="attack_tree_ui.js"></script>
-    <script src="attack_tree_editor_v2.js"></script>
-    <script src="attack_tree_calc.js"></script>
-    <script src="dot_export.js"></script>
-    <script src="versioning.js"></script>
+    <!-- Core -->
+    <script src="js/core/globals.js"></script>
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/analysis_core.js"></script>
+
+    <!-- Modules -->
+    <script src="js/modules/assets.js"></script>
+    <script src="js/modules/damage_scenarios.js"></script>
+    <script src="js/modules/impact_matrix.js"></script>
+    <script src="js/modules/security_goals.js"></script>
+    <script src="js/modules/risk_analysis.js"></script>
+
+    <!-- Attack Tree -->
+    <script src="js/attack_tree/attack_tree_ui.js"></script>
+    <script src="js/attack_tree/attack_tree_editor_v2.js"></script>
+    <script src="js/attack_tree/attack_tree_calc.js"></script>
+    <script src="js/attack_tree/dot_export.js"></script>
+
+    <!-- Versioning -->
+    <script src="js/modules/versioning.js"></script>
+
+    <!-- Report (PDF) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="report_export.js?v=26"></script>
-    <script src="residual_risk_data.js"></script>
-    <script src="residual_risk_ui.js"></script>
-    <!-- <script src="residual_risk_structure.js?v=27"></script>
-    <script src="residual_risk_calc.js?v=27"></script>
-    <script src="residual_risk_pdf.js?v=27"></script>
-    <script src="residual_risk_ui.js?v=27"></script> -->
-    <script src="init.js"></script>
+    <script src="js/report/report_pdf_helpers.js"></script>
+    <script src="js/report/report_pdf_builder.js"></script>
+    <script src="js/report/report_export.js"></script>
+
+    <!-- Residual Risk -->
+    <script src="js/residual_risk/residual_risk_data.js"></script>
+    <script src="js/residual_risk/residual_risk_ui.js"></script>
+
+    <!-- Init (muss zuletzt geladen werden) -->
+    <script src="js/core/init.js"></script>
 </body>
 </html>

@@ -1,0 +1,579 @@
+/**
+ * @file        style.css
+ * @description Global stylesheet for the TARATool application
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
+/* Globale Einstellungen */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    font-size: 14px;
+    overflow-y: auto; 
+}
+
+.app-container {
+    display: flex; 
+    flex-direction: column;
+    min-height: 100vh; 
+    width: 100%; 
+}
+
+/* --- HEADER --- */
+.header-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    padding: 8px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    gap: 20px;
+    height: 50px;
+}
+
+.header-nav h1 {
+    font-size: 1.4em;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.action-nav {
+    display: flex; align-items: center; gap: 15px; flex-grow: 1;
+}
+
+.utility-actions {
+    display: flex; gap: 10px;
+}
+
+/* --- MAIN CONTENT --- */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    overflow: visible; /* WICHTIG: Damit der Hintergrund mitwächst */
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding-bottom: 60px; /* Platz für Footer */
+}
+
+.main-header {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+/* --- TABS --- */
+.tab-navigation {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 0;
+}
+
+.tab-button {
+    padding: 10px 20px;
+    background: #e0e0e0;
+    border: none;
+    border-radius: 5px 5px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    color: #555;
+    transition: background 0.2s;
+}
+
+.tab-button.active {
+    background: #3498db;
+    color: white;
+}
+
+.tab-content {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none; 
+    padding: 20px;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    /* FIX: Clearfix und Overflow Handling für Hintergrundhöhe */
+    overflow: visible; 
+    height: auto;
+    min-height: 400px; /* Mindesthöhe damit es nicht leer aussieht */
+    display: block; /* Sicherstellen, dass es Block-Element ist */
+}
+
+/* --- DASHBOARD / ÜBERSICHT --- */
+.dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stats-row {
+    display: grid;
+    /* Flexible: allows adding more stat-cards without breaking layout */
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 15px;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    border-left: 4px solid #ccc;
+    padding: 10px 15px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label { font-size: 0.85em; color: #666; font-weight: 600; }
+.stat-value { font-size: 1.4em; font-weight: bold; color: #2c3e50; }
+
+.meta-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* --- BUTTONS --- */
+button { cursor: pointer; }
+.primary-button {
+    background-color: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 500;
+}
+.primary-button:hover { background-color: #2980b9; }
+
+.action-button {
+    background-color: #ecf0f1; color: #2c3e50; border: 1px solid #bdc3c7; padding: 8px 12px; border-radius: 4px;
+}
+.action-button:hover { background-color: #bdc3c7; }
+
+.action-button.small { padding: 4px 8px; font-size: 0.85em; }
+.action-button.dangerous { color: #c0392b; border-color: #e74c3c; }
+.action-button.dangerous:hover { background: #fee; }
+
+/* Bestätigungs-Buttons im selben Look&Feel wie die übrigen Buttons,
+   aber mit klarer "Löschen"-Signalfarbe (ohne Layoutänderung). */
+.primary-button.dangerous {
+    background: #e74c3c;
+    border-color: #c0392b;
+}
+.primary-button.dangerous:hover {
+    background: #c0392b;
+}
+
+/* --- FORMS --- */
+.form-group { margin-bottom: 10px; }
+.form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.9em; }
+
+input[type="text"], textarea, select {
+    width: 100%; 
+    padding: 8px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    box-sizing: border-box; 
+    font-family: inherit;
+}
+
+textarea { resize: none; }
+
+/* --- ASSET CARDS (GRID FIX) --- */
+.cards-grid {
+    display: grid; 
+    /* Auto-Fill für responsive Spalten */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+    gap: 20px; 
+    /* WICHTIG: Stretch sorgt für gleiche Höhe, aber kein Overlap */
+    align-items: stretch; 
+    padding-bottom: 20px; /* Abstand zum unteren Rand */
+}
+
+.asset-card {
+    border: 1px solid #ddd; 
+    border-radius: 6px; 
+    background: #fff; 
+    padding: 15px;
+    border-top: 3px solid #3498db; 
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    /* FIX: Keine fixe Höhe von 100%, sondern auto, damit Grid die Höhe regelt */
+    height: auto; 
+    min-height: 100%; /* Füllt die Grid-Zelle */
+    box-sizing: border-box;
+}
+
+.asset-card:hover { 
+    transform: translateY(-2px); 
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1); 
+}
+
+/* Kopfbereich Asset */
+.asset-card-header { 
+    font-weight: bold; 
+    font-size: 1.1em; 
+    margin-bottom: 4px;  
+    border-bottom: 1px solid #eee; 
+    padding-bottom: 4px;
+    min-height: 35px; 
+}
+
+/* Beschreibung Asset */
+.asset-description-area {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 8px; 
+    flex-grow: 1; /* Drückt den Footer nach unten */
+}
+
+/* CIA Werte Bereich */
+.asset-cia-area {
+    background: #f9f9f9;
+    padding: 5px;
+    border-radius: 4px;
+    margin-bottom: 15px; 
+    min-height: 60px; 
+}
+
+/* Footer (Buttons) */
+.asset-card-footer {
+    margin-top: auto; 
+    padding-top: 10px;
+    border-top: 1px dashed #eee;
+    text-align: right;
+}
+
+/* --- SECURITY GOALS (SCROLL AREA) --- */
+#securityGoalsScrollArea {
+    /* Nur scrollbar, wenn die Kacheln nicht auf die Seite passen */
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* --- DAMAGE SCENARIOS (LISTE - NEUES LAYOUT) --- */
+.ds-list { list-style: none; padding: 0; margin: 0; }
+
+.ds-list li { 
+    border: 1px solid #ddd; 
+    padding: 15px; 
+    margin-bottom: 15px; 
+    border-radius: 6px; 
+    background: #fff; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Zeile 1: Titel + Buttons */
+.ds-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* FIX: Schriftgröße angepasst */
+.ds-col-id-name {
+    font-size: 1.0em; /* Etwas kleiner wie gewünscht */
+    color: #2c3e50;
+    margin-top: 2px;
+}
+
+/* Neue Klasse für Zeile 2 im Header (Short + Standard) */
+.ds-subtitle-row {
+    font-size: 0.9em;
+    color: #7f8c8d;
+    margin-top: 2px;
+}
+
+/* Button Gruppe */
+.ds-actions {
+    display: flex;
+    flex-direction: column; 
+    gap: 8px; 
+    min-width: 120px; 
+}
+
+.ds-actions button {
+    width: 100%; 
+    text-align: center;
+}
+
+/* Zeile 2: Beschreibung */
+.ds-col-description {
+    width: 100%;
+    font-size: 0.95em;
+    color: #555;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+    line-height: 1.4;
+}
+
+/* --- MATRICES & TABLES --- */
+.two-column-layout { display: flex; gap: 20px; }
+.column-left { flex: 1; }
+.column-right { flex: 2; overflow-x: auto; }
+
+.impact-matrix-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.impact-matrix-table th, .impact-matrix-table td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+.impact-matrix-table th { background: #f4f4f4; }
+.vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100px; }
+
+.impact-matrix-table .asset-col {
+    text-align: left;
+    padding-left: 10px;
+}
+
+select.impact-high { background-color: rgba(231, 76, 60, 0.4); color: #000; font-weight: bold; }
+select.impact-medium { background-color: rgba(241, 196, 15, 0.4); color: #000; font-weight: bold; }
+select.impact-low { background-color: rgba(46, 204, 113, 0.4); color: #000; font-weight: bold; }
+select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-weight: bold; }
+
+/* --- ATTACK TREE TABLE STYLES --- */
+.tree-structure-table { margin-top: 15px; overflow-x: auto; }
+.tree-structure-table table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; }
+.tree-structure-table th { background-color: #ecf0f1; text-align: left; padding: 8px; border: 1px solid #ccc; font-size: 0.9em; }
+.tree-structure-table td { padding: 8px; border: 1px solid #ccc; vertical-align: top; background: #fff; }
+.branch-separator td { background-color: #f0f3f5; padding: 4px 8px; font-size: 0.85em; color: #555; border-top: 2px solid #ccc; }
+.cell-l1, .cell-l2 { width: 25%; background: #fafafa; }
+.cell-leaf { width: auto; }
+
+.leaf-container { display: flex; flex-direction: column; gap: 8px; }
+.ds-checks { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85em; background: #f9f9f9; padding: 4px; border-radius: 4px; }
+.kstu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.kstu-select { padding: 2px; font-size: 0.85em; width: 100%; }
+
+.node-stats-box { margin-top: 5px; background: #fdfdfd; border: 1px solid #bbb; font-family: monospace; font-size: 0.8em; padding: 0; }
+.ns-row { display: flex; justify-content: space-between; padding: 2px 5px; border-bottom: 1px solid #ddd; }
+.ns-row:last-child { border-bottom: none; }
+.risk-val-critical { color: #c0392b; font-weight: bold; }
+.risk-val-high { color: #e67e22; font-weight: bold; }
+.risk-val-medium { color: #f39c12; font-weight: bold; }
+.risk-val-low { color: #27ae60; font-weight: bold; }
+
+/* Modals */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;}
+.modal-content {
+    background: #fff;
+    margin: 5vh auto;
+    padding: 20px;
+    width: 500px;
+    border-radius: 8px;
+    position: relative;
+    /* Wenn die Viewport-Höhe klein ist, soll der Dialog selbst scrollen */
+    max-height: 90vh;
+    overflow-y: auto;
+}
+.large-modal .modal-content { width: 90%; max-width: 1200px; }
+.close-button { float: right; font-size: 1.5em; cursor: pointer; }
+
+/* Toast */
+#toastContainer { position: fixed; bottom: 20px; right: 20px; z-index: 2000; }
+.custom-toast { background: #333; color: #fff; padding: 10px 20px; border-radius: 4px; margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
+.custom-toast.show { opacity: 1; }
+.custom-toast.success { border-left: 4px solid #2ecc71; }
+.custom-toast.error { border-left: 4px solid #e74c3c; }
+
+/* Footer fixieren unten */
+.status-bar {
+    background: #333; color: #fff; padding: 4px 20px; font-size: 0.8em; 
+    margin-top: auto; 
+}
+
+/* --- RESIDUAL RISK ANALYSIS (SCROLL AREA) --- */
+#residualRiskScrollArea {
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+    padding-right: 6px;
+}
+
+/* --- RESIDUAL RISK ANALYSIS (OVERVIEW) --- */
+.rr-overview-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.rr-tree-check {
+    font-size: 1.15em;
+    color: #27ae60;
+}
+
+.rr-tree-check.incomplete {
+    color: #bdc3c7;
+}
+
+/* --- RESIDUAL RISK ANALYSIS (LEAF EDITOR) --- */
+.rr-leaf-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.rr-leaf-table th, .rr-leaf-table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; background:#fff; }
+.rr-leaf-table th { background: #f4f4f4; }
+
+.rr-leaf-check { font-size: 1.2em; color: #27ae60; }
+.rr-leaf-check.incomplete { color: #bdc3c7; }
+
+.rr-leaf-row-complete td { background: rgba(46, 204, 113, 0.08); }
+
+.rr-hidden { display: none; }
+
+.rr-field { width: 100%; min-height: 34px; }
+.rr-textarea { width: 100%; min-height: 70px; resize: vertical; }
+.rr-textarea:disabled { background: #f2f2f2; color: #7f8c8d; }
+.rr-disabled { background: #f2f2f2 !important; color: #7f8c8d !important; }
+
+.rr-kstu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+
+.rr-select-invalid { border: 1px solid #e74c3c !important; }
+
+.rr-text-invalid { border: 1px solid #e74c3c !important; }
+
+.rr-risk-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.rr-risk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+}
+
+.rr-leaf-block {
+    border: 1px dashed #e5e5e5;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+    background: #fafafa;
+}
+
+.rr-leaf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.rr-leaf-title {
+    font-weight: 600;
+}
+
+.rr-check {
+    font-size: 1.1em;
+    color: #27ae60;
+}
+
+.rr-check.incomplete {
+    color: #bdc3c7;
+}
+
+.rr-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .rr-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+.rr-mitigation-box {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #fff;
+}
+
+.rr-kstu-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 900px) {
+    .rr-kstu-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+/* =============================================================
+   Attack Tree Editor V2 (Cards / Einrückung / Tooltips)
+   ============================================================= */
+
+.at-tree-editor { margin-top: 10px; }
+
+.at-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.at-root-card { background:#f0f0f0; }
+
+.at-card-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+
+.at-hint { font-size:0.85em; color:#666; display:inline-flex; gap:6px; align-items:center; }
+
+.at-card-header { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+.at-root-input, .at-node-title, .at-impact-text {
+  flex: 1 1 320px;
+  min-width: 240px;
+  font-weight: 600;
+}
+
+.at-breadcrumb {
+  font-size: 0.8em;
+  color: #777;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.at-node-card {
+  margin-left: 18px;
+  border-left: 4px solid #e6e6e6;
+}
+
+.at-node-card[data-depth="1"] { border-left-color: #d6eaf8; }
+.at-node-card[data-depth="2"] { border-left-color: #d5f5e3; }
+.at-node-card[data-depth="3"] { border-left-color: #fcf3cf; }
+.at-node-card[data-depth="4"] { border-left-color: #fadbd8; }
+
+.at-impact-card {
+  margin-left: 36px;
+  border-left: 4px dashed #ececec;
+}
+
+.at-node-actions-row {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+  margin-top: 8px;
+}
+
+.at-delete-inline { margin-left: auto; }
+
+.at-max-note { font-size: 0.85em; color:#888; }
