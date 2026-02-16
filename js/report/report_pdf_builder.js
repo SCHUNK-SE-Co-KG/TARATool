@@ -153,6 +153,39 @@
             doc.line(margin, y - 4, doc.internal.pageSize.getWidth() - margin, y - 4);
 
             // Rows
+            doc.setFontSize(fontSizeCell);
+            rows.forEach(r => {
+                const cells = Array.isArray(r) ? r : [r];
+                const wrapped = cells.map((c, idx) => {
+                    const w = widths[idx] - cellPadding * 2;
+                    return doc.splitTextToSize(String(c ?? ''), w);
+                });
+                const rowH = Math.max(...wrapped.map(a => a.length)) * lineH;
+                ensureSpace(rowH + 2);
+
+                for (let i = 0; i < headers.length; i++) {
+                    doc.text(wrapped[i] || [''], xPos[i] + cellPadding, y);
+                }
+                y += rowH;
+                y += 2;
+            });
+
+            y += 2;
+        };
+
+
+        // Table renderer with borders (grid), repeated header and zebra striping.
+        // Uses the full page width (within PDF margins) and optimizes for readability.
+        const addTableGrid = (headers, rows, colWidths, options = {}) => {
+            if (!Array.isArray(headers) || headers.length === 0) return;
+            if (!Array.isArray(rows)) rows = [];
+
+            const totalW = doc.internal.pageSize.getWidth() - margin * 2;
+            const widths = Array.isArray(colWidths) && colWidths.length === headers.length
+                ? colWidths
+                : headers.map(() => totalW / headers.length);
+
+            // Scale column widths to available page width (use full page)
             const sumW = widths.reduce((a, b) => a + b, 0);
             if (sumW > 0 && Math.abs(sumW - totalW) > 0.5) {
                 const scale = totalW / sumW;
