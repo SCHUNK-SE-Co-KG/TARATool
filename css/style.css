@@ -1,7 +1,11 @@
-
-/* =============================================================
-   --- TARA ANALYSIS TOOL: GLOBALES STYLING ---
-   ============================================================= */
+/**
+ * @file        style.css
+ * @description Global stylesheet for the TARATool application
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 /* Globale Einstellungen */
 body {

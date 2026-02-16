@@ -1,3 +1,12 @@
+/**
+ * @file        impact_matrix.js
+ * @description Impact matrix rendering and color-coded assessment grid
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
 // Explicit DOM reference (more robust than implicit window ID globals)
 const dsMatrixContainer = document.getElementById('dsMatrixContainer');
 

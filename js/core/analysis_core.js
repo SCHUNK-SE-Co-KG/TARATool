@@ -1,7 +1,11 @@
-
-// =============================================================
-// --- ANALYSIS MANAGEMENT (SWITCH, CREATE, IMPORT, EXPORT) ---
-// =============================================================
+/**
+ * @file        analysis_core.js
+ * @description Analysis management – create, switch, delete, import/export
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 function activateAnalysis(id) {
     const analysis = analysisData.find(a => a.id === id);

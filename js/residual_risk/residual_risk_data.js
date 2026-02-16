@@ -1,19 +1,11 @@
-// =============================================================
-// --- RESIDUAL RISK ANALYSIS: DATA STRUCTURE & SYNC ---
-//
-// Purpose:
-//  - Separate data structure (analysis.residualRisk.entries) as deep clone of analysis.riskEntries
-//  - Per leaf additionally:
-//      * Treatment: "Akzeptiert" | "Delegiert" | "Mitigiert"
-//      * Note (text)
-//      * Measure from security concept (text)
-//      * Residual risk assessment (K/S/T/U) (only relevant for "Mitigiert")
-//  - Updates in the risk analysis should be transferred into the residual risk structure
-//    without losing residual risk information.
-//
-// Note: Leaves currently do not have their own stable UIDs. Therefore a leaf key
-// is formed position-based: B<Branch>|N<Node>|L<Leaf>
-// =============================================================
+/**
+ * @file        residual_risk_data.js
+ * @description Residual risk analysis – data structure, sync, and computation
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (function () {
     'use strict';

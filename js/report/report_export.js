@@ -1,9 +1,11 @@
-// =============================================================
-// --- REPORT_EXPORT.JS: PDF Report Generation (Orchestrator) ---
-// =============================================================
-// Requires: report_pdf_helpers.js (ReportHelpers)
-//           report_pdf_builder.js (ReportPdfBuilder)
-//           jsPDF (UMD) via CDN in index.html
+/**
+ * @file        report_export.js
+ * @description PDF report generation orchestrator
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (function () {
     'use strict';

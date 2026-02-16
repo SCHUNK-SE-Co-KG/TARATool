@@ -1,3 +1,12 @@
+/**
+ * @file        dot_export.js
+ * @description Graphviz DOT export for attack trees and residual risk trees
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
 function generateDotString(analysis, specificTreeId = null) {
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
         return null;

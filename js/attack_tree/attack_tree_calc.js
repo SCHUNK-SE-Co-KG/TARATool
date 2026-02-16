@@ -1,3 +1,12 @@
+/**
+ * @file        attack_tree_calc.js
+ * @description Attack tree calculation – KSTU worst-case inheritance and impact propagation
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
 function _parseKSTUValue(val) {
     const num = parseFloat(val);
     return isNaN(num) ? null : num;

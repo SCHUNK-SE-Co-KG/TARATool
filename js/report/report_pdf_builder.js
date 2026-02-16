@@ -1,8 +1,11 @@
-// =============================================================
-// --- REPORT_PDF_BUILDER.JS: PDF Layout Engine ---
-// =============================================================
-// Provides the PDF builder (layout primitives).
-// Requires jsPDF (UMD) via CDN in index.html.
+/**
+ * @file        report_pdf_builder.js
+ * @description PDF layout engine – primitives for document construction
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (function () {
     'use strict';

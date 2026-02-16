@@ -1,6 +1,11 @@
-/* ============================================================
-   Attack Tree Editor V2 (Cards / recursive / Mixed Depth)
-   ============================================================ */
+/**
+ * @file        attack_tree_editor_v2.js
+ * @description Attack tree editor V2 – recursive card-based editor with variable depth
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 (function () {
   "use strict";
 

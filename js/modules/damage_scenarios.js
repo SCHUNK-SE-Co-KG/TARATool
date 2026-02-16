@@ -1,6 +1,11 @@
-// =============================================================
-// --- DAMAGE SCENARIO LOGIC (CRUD & MATRIX) ---
-// =============================================================
+/**
+ * @file        damage_scenarios.js
+ * @description Damage scenario management – CRUD, modal forms, and UI wiring
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 // Explicit DOM references (more robust than implicit window ID globals)
 const dsManagementContainer = document.getElementById('dsManagementContainer');

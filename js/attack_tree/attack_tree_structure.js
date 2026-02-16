@@ -1,3 +1,12 @@
+/**
+ * @file        attack_tree_structure.js
+ * @description Attack tree structure – depth management, intermediate levels, and dynamic impact rows
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
 function _atGetTreeDepth() {
     // 1 = Root -> Path -> Impacts
     // 2 = Root -> Path -> Intermediate level(s) -> Impacts (optionally parallel)

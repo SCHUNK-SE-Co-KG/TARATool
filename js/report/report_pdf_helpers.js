@@ -1,8 +1,11 @@
-// =============================================================
-// --- REPORT_PDF_HELPERS.JS: Graphviz Rendering & Utility Functions ---
-// =============================================================
-// Provides utility functions for the PDF report.
-// Used by report_pdf_builder.js and report_export.js.
+/**
+ * @file        report_pdf_helpers.js
+ * @description Graphviz rendering and utility functions for PDF reports
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (function () {
     'use strict';

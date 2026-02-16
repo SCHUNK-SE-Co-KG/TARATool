@@ -1,6 +1,11 @@
-// =============================================================
-// --- GLOBALS.JS: CONFIGURATION & DATA STRUCTURES ---
-// =============================================================
+/**
+ * @file        globals.js
+ * @description Global configuration, constants, and shared data structures
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 const INITIAL_VERSION = '0.1'; 
 const todayISO = new Date().toISOString().substring(0, 10);

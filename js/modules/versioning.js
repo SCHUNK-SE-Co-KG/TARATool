@@ -1,6 +1,11 @@
-// =============================================================
-// --- VERSION CONTROL LOGIC ---
-// =============================================================
+/**
+ * @file        versioning.js
+ * @description Version control and analysis history management
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 function renderHistoryTable(analysis) {
     if (!historyTableBody) return;

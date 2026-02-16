@@ -1,16 +1,11 @@
-// =============================================================
-// --- SECURITY OBJECTIVES (CRUD + Reference to Attack Target/Root) ---
-// =============================================================
-//
-// Requirements:
-// - New tab "Security Objectives" with cards (look & feel like Assets)
-// - CRUD: New/Edit/Delete (Modal + Confirmation Modal)
-// - Attack target referencing happens in the edit dialog (Modal)
-// - Scrollbar when cards don't fit on one page (CSS: #securityGoalsScrollArea)
-//
-// Note:
-// - Attack targets are read from analysis.riskEntries (attack trees).
-// - The ID (Rxx) is stored as value, display: "Rxx: Root-Name".
+/**
+ * @file        security_goals.js
+ * @description Security objectives – CRUD with attack tree referencing
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (() => {
     // Explicit DOM references (more robust than implicit window ID globals)

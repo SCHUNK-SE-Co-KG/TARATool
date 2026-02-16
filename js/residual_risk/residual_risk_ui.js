@@ -1,19 +1,11 @@
-// =============================================================
-// --- RESIDUAL RISK ANALYSIS (UI) ---
-//
-// Overview:
-//  - One card per attack tree (like risk analysis)
-//  - Edit opens modal with tabular leaf editing
-//
-// Leaf editor:
-//  - Display risk score and I(N)
-//  - Treatment: Accepted / Delegated / Mitigated (must be selected)
-//  - Note, measure from security concept
-//  - For Mitigated: input K/S/T/U (analogous to risk analysis)
-//  - Green check logic:
-//      * Accepted/Delegated: check when note is set
-//      * Mitigated: check when measure + K/S/T/U are set (note optional)
-// =============================================================
+/**
+ * @file        residual_risk_ui.js
+ * @description Residual risk analysis – UI rendering, modal editor, and card overview
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 (function () {
     'use strict';

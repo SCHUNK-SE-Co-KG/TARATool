@@ -1,6 +1,11 @@
-// =============================================================
-// --- STORAGE & LOAD FUNCTIONS ---
-// =============================================================
+/**
+ * @file        utils.js
+ * @description Storage, persistence, data migration, and general utility functions
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 function saveAnalyses() {
     try {

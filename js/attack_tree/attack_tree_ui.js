@@ -1,3 +1,12 @@
+/**
+ * @file        attack_tree_ui.js
+ * @description Attack tree form UI – dropdowns, save/load, and DOM helpers
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
+
 function populateAttackTreeDropdowns() {
     const selects = document.querySelectorAll('.kstu-select');
     selects.forEach(select => {

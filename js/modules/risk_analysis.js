@@ -1,6 +1,11 @@
-// =============================================================
-// --- RISK ANALYSIS & ATTACK TREE LOGIC ---
-// =============================================================
+/**
+ * @file        risk_analysis.js
+ * @description Risk analysis overview and attack tree card rendering
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 function renderRiskAnalysis() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);

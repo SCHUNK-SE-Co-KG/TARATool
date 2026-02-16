@@ -1,7 +1,11 @@
-
-// =============================================================
-// --- EVENT LISTENERS & INIT ---
-// =============================================================
+/**
+ * @file        init.js
+ * @description Application initialization and DOM event listener setup
+ * @author      Nico Peper
+ * @organization SCHUNK SE & Co. KG
+ * @copyright   2026 SCHUNK SE & Co. KG
+ * @license     GPL-3.0
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
     
