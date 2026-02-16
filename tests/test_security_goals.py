@@ -1,6 +1,12 @@
 """
-Tests for Security Goals (CRUD, attack tree referencing).
-Covers: security_goals.js
+@file        test_security_goals.py
+@description Tests for Security Goals management including CRUD operations
+             and attack tree referencing.
+@covers      security_goals.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

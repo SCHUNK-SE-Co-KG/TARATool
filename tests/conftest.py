@@ -1,7 +1,11 @@
 """
-TARATool – Test Framework
-=========================
-Shared fixtures and configuration for all Playwright-based E2E tests.
+@file        conftest.py
+@description Shared fixtures, helper functions, and configuration for all
+             Playwright-based E2E tests of the TARATool application.
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import json

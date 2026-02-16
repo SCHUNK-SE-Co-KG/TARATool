@@ -1,6 +1,12 @@
 """
-Tests for application startup, navigation, and core lifecycle.
-Covers: init.js, globals.js, utils.js, analysis_core.js
+@file        test_core.py
+@description Tests for application startup, tab navigation, analysis CRUD
+             lifecycle, data persistence, export/import, and overview metadata.
+@covers      init.js, globals.js, utils.js, analysis_core.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

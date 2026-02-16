@@ -1,6 +1,12 @@
 """
-Tests for Asset management (CRUD, CIA ratings, card rendering).
-Covers: assets.js
+@file        test_assets.py
+@description Tests for Asset management including CRUD operations,
+             CIA rating assignments, card rendering, and overview statistics.
+@covers      assets.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

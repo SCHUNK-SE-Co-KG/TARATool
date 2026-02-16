@@ -1,5 +1,13 @@
 """
-End-to-end workflow test: full TARA lifecycle from analysis creation to report.
+@file        test_e2e_workflow.py
+@description End-to-end workflow tests covering the full TARA lifecycle
+             from analysis creation through assets, damage scenarios,
+             risk analysis, and report generation.
+@covers      All application modules (integration test)
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

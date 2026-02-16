@@ -1,8 +1,12 @@
 """
-Tests for Damage Scenario management and Impact Matrix.
-Covers: damage_scenarios.js, impact_matrix.js
-
-NOTE: Every new analysis starts with 5 default damage scenarios (DS1–DS5).
+@file        test_damage_scenarios.py
+@description Tests for Damage Scenario management (CRUD) and Impact Matrix.
+             Every new analysis starts with 5 default damage scenarios (DS1-DS5).
+@covers      damage_scenarios.js, impact_matrix.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

@@ -1,7 +1,13 @@
 """
-Tests for Risk Analysis and Attack Tree functionality.
-Covers: risk_analysis.js, attack_tree_ui.js, attack_tree_structure.js,
-        attack_tree_calc.js, attack_tree_editor_v2.js
+@file        test_risk_analysis.py
+@description Tests for Risk Analysis and Attack Tree functionality including
+             tree creation, KSTU parameter calculation, and DOT export.
+@covers      risk_analysis.js, attack_tree_ui.js, attack_tree_structure.js,
+             attack_tree_calc.js, attack_tree_editor_v2.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

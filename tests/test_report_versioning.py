@@ -1,6 +1,12 @@
 """
-Tests for PDF Report generation and Version Control.
-Covers: report_export.js, report_pdf_builder.js, report_pdf_helpers.js, versioning.js
+@file        test_report_versioning.py
+@description Tests for PDF Report generation and Version Control including
+             report download triggers, version modal, and version history.
+@covers      report_export.js, report_pdf_builder.js, report_pdf_helpers.js, versioning.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest

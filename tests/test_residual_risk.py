@@ -1,6 +1,12 @@
 """
-Tests for Residual Risk Analysis (sync, data model, UI).
-Covers: residual_risk_data.js, residual_risk_ui.js
+@file        test_residual_risk.py
+@description Tests for Residual Risk Analysis including entry synchronization,
+             data model integrity, and UI rendering.
+@covers      residual_risk_data.js, residual_risk_ui.js
+@author      Nico Peper
+@organization SCHUNK SE & Co. KG
+@copyright   2026 SCHUNK SE & Co. KG
+@license     GPL-3.0
 """
 
 import pytest
