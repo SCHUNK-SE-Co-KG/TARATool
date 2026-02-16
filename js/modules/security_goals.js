@@ -1,19 +1,19 @@
 // =============================================================
-// --- SECURITY ZIELE (CRUD + Referenz auf Angriffsziel/Root) ---
+// --- SECURITY OBJECTIVES (CRUD + Reference to Attack Target/Root) ---
 // =============================================================
 //
-// Anforderungen:
-// - Neuer Tab "Security Ziele" mit Kacheln (Look & Feel wie Assets)
-// - CRUD: Neu/Bearbeiten/Löschen (Modal + Confirmation Modal)
-// - Referenzierung der Angriffsziele erfolgt im Bearbeiten-Dialog (Modal)
-// - Scrollbar, wenn Kacheln nicht auf eine Seite passen (CSS: #securityGoalsScrollArea)
+// Requirements:
+// - New tab "Security Objectives" with cards (look & feel like Assets)
+// - CRUD: New/Edit/Delete (Modal + Confirmation Modal)
+// - Attack target referencing happens in the edit dialog (Modal)
+// - Scrollbar when cards don't fit on one page (CSS: #securityGoalsScrollArea)
 //
-// Hinweis:
-// - Angriffsziele werden aus analysis.riskEntries (Angriffsbäume) gelesen.
-// - Es wird die ID (Rxx) als Value gespeichert, Anzeige: "Rxx: Root-Name".
+// Note:
+// - Attack targets are read from analysis.riskEntries (attack trees).
+// - The ID (Rxx) is stored as value, display: "Rxx: Root-Name".
 
 (() => {
-    // Explizite DOM-Referenzen (robuster als implizite Window-ID-Globals)
+    // Explicit DOM references (more robust than implicit window ID globals)
     const container = document.getElementById('securityGoalsCardContainer');
     const btnAdd = document.getElementById('btnAddSecurityGoal');
 
@@ -36,7 +36,7 @@
             analysis.securityGoals = [];
         }
 
-        // Backwards compatibility: In earlier iterations Security Ziele used the
+        // Backwards compatibility: In earlier iterations Security Objectives used the
         // prefix "SG". The UI should show "SO" + number.
         // We normalize persisted IDs here to keep edit/delete stable.
         const used = new Set();
@@ -90,7 +90,7 @@
         entries.sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
 
         if (entries.length === 0) {
-            // Leerer Select wird disabled gerendert im Card-Markup.
+            // Empty select is rendered as disabled in the card markup.
             return '';
         }
 

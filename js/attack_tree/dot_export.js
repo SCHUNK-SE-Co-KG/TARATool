@@ -97,7 +97,7 @@ function generateDotString(analysis, specificTreeId = null) {
         out += nodes.join('');
         out += edges.join('');
 
-        // Ranking: Root oben, jede Ebene in rank=same
+        // Ranking: Root at top, each level in rank=same
         out += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k,10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
@@ -117,7 +117,7 @@ function generateDotString(analysis, specificTreeId = null) {
         return entry?.useDeepTree ? 2 : 1;
     };
 
-    // Normalisiert Zwischenpfade für depth=2 (parallel) inkl. Legacy-Fällen.
+    // Normalizes intermediate paths for depth=2 (parallel) including legacy cases.
     const _normDepth2Nodes = (entry, branch) => {
         if (!branch) return [];
 
@@ -131,7 +131,7 @@ function generateDotString(analysis, specificTreeId = null) {
             }));
         }
 
-        // Legacy: depth=3 alt (l2_node + l3_node, Leaves hängen an branch.leaves unter "2. Zwischenpfad")
+        // Legacy: depth=3 old (l2_node + l3_node, leaves attached to branch.leaves under "2nd intermediate path")
         const rawDepth = parseInt(entry?.treeDepth, 10);
         const isLegacyThird = (rawDepth === 3) && (entry?.useThirdIntermediate !== true) && branch.l2_node && branch.l3_node;
         if (isLegacyThird) {
@@ -166,7 +166,7 @@ function generateDotString(analysis, specificTreeId = null) {
             ];
         }
 
-        // Fallback: keine Zwischenstruktur vorhanden
+        // Fallback: no intermediate structure present
         return [
             {
                 name: '',
@@ -367,14 +367,14 @@ function generateDotString(analysis, specificTreeId = null) {
 
 
 // =============================================================
-// --- RESIDUAL RISK DOT EXPORT (Restrisiko-Bäume) ---
+// --- RESIDUAL RISK DOT EXPORT ---
 // =============================================================
-// Erzeugt eine DOT-Visualisierung analog zur Risikoanalyse, jedoch mit
+// Generates a DOT visualization analogous to the risk analysis, but with
 // - R (Original)
 // - RR (Residual Risk)
-// - P(RR) (K/S/T/U nach Mitigation; nur angezeigt bei Behandlung "Mitigiert")
-// - zusaetzliche Zeile: Behandlung (Akzeptiert, Delegiert, Mitigiert, ...)
-// Die Farbe richtet sich nach RR.
+// - P(RR) (K/S/T/U after mitigation; only shown for treatment "Mitigated")
+// - additional line: Treatment (Accepted, Delegated, Mitigated, ...)
+// The color is based on RR.
 function generateResidualRiskDotString(analysis, specificTreeId = null) {
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
         return null;
@@ -451,8 +451,8 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
 
     
 const _buildResidualClone = (baseEntry) => {
-    // WICHTIG: immer von der Risikoanalyse (baseEntry) klonen, damit Original-KSTU/I/R vorhanden sind.
-    // Restrisiko-Eintrag (rrEntry) liefert nur Behandlung + ggf. mitigierte KSTU-Overrides.
+    // IMPORTANT: always clone from the risk analysis (baseEntry) so original KSTU/I/R are preserved.
+    // Residual risk entry (rrEntry) only provides treatment + optionally mitigated KSTU overrides.
     const clone = JSON.parse(JSON.stringify(baseEntry || {}));
 
     const rrEntry = rrEntries.find(e => e && e.uid && baseEntry && e.uid === baseEntry.uid) || null;
@@ -485,14 +485,14 @@ const _buildResidualClone = (baseEntry) => {
     const applyRRAndMitigation = (leaf) => {
         if (!leaf) return;
 
-        // rr state übernehmen (falls vorhanden), sonst leer belassen
+        // rr state: apply if present, otherwise leave empty
         if (leaf.uid && Object.prototype.hasOwnProperty.call(rrLeafMap, leaf.uid)) {
             leaf.rr = rrLeafMap[leaf.uid] || {};
         } else {
             leaf.rr = leaf.rr || {};
         }
 
-        // Nur bei Mitigiert werden KSTU überschrieben (fehlende Dimensionen fallen auf Original zurück)
+        // Only for "Mitigated" are KSTU overridden (missing dimensions fall back to original)
         const rr = leaf.rr || {};
         if (!_isMitigatedLocal(rr.treatment)) return;
 
@@ -516,7 +516,7 @@ const _buildResidualClone = (baseEntry) => {
     if (clone && clone.treeV2) {
         (clone.treeV2.children || []).forEach(walkV2);
     } else if (clone && Array.isArray(clone.branches)) {
-        // Legacy fallback: nur Leaves anpassen
+        // Legacy fallback: only adjust leaves
         (clone.branches || []).forEach(b => {
             (b?.leaves || []).forEach(applyRRAndMitigation);
             (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(applyRRAndMitigation));
@@ -579,7 +579,7 @@ const _normTreatment = (t) => String(t || '').trim().toLowerCase();
 
 const _isNoMitigation = (t) => {
     const s = _normTreatment(t);
-    // auch kein Eintrag / '-' = keine Restrisikoangabe => RR=R
+    // also no entry / '-' = no residual risk specified => RR=R
     if (!s || s === '-') return true;
     return (s === 'akzeptiert' || s === 'accepted' || s === 'delegiert' || s === 'delegated');
 };
@@ -651,7 +651,7 @@ const _isMitigated = (t) => {
         dot += nodes.join('');
         dot += edges.join('');
 
-        // Ranking: Root oben, jede Ebene in rank=same
+        // Ranking: Root at top, each level in rank=same
         dot += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k, 10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
@@ -665,9 +665,9 @@ const _isMitigated = (t) => {
     return dot;
 }
 
-// Alias fuer PDF und Tool
+// Alias for PDF and tool
 window.exportResidualRiskToDot = generateResidualRiskDotString;
-// Wir definieren exportRiskAnalysisToDot als Alias für generateDotString
+// Define exportRiskAnalysisToDot as alias for generateDotString
 window.exportRiskAnalysisToDot = generateDotString;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -681,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =============================================================
-// --- EXPORT TRIGGER FÜR .DOT DATEI ---
+// --- EXPORT TRIGGER FOR .DOT FILE ---
 // =============================================================
 
 window.downloadDotFile = function() {
@@ -709,7 +709,7 @@ window.downloadDotFile = function() {
         document.body.appendChild(a);
         a.click();
 
-        // Aufräumen
+        // Cleanup
         setTimeout(() => {
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
@@ -719,7 +719,7 @@ window.downloadDotFile = function() {
             showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
         }
     } catch (err) {
-        console.error('Fehler beim DOT-Export:', err);
+        console.error('Error during DOT export:', err);
         if (typeof showToast === 'function') {
             showToast('Export fehlgeschlagen.', 'error');
         }

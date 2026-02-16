@@ -1,5 +1,5 @@
 // =============================================================
-// --- ASSETS LOGIK ---
+// --- ASSETS LOGIC ---
 // =============================================================
 
 function renderAssets(analysis) {
@@ -55,7 +55,7 @@ function saveAsset(e) {
         return;
     }
 
-    // CIA Werte auslesen
+    // Read CIA values
     const getRadioVal = (name) => {
         const el = document.querySelector(`input[name="${name}"]:checked`);
         return el ? el.value : '-';
@@ -67,7 +67,7 @@ function saveAsset(e) {
         a: getRadioVal('authenticity') 
     };
 
-    // Schutzbedarf ermitteln (höchster Wert)
+    // Determine protection level (highest value)
     let levels = { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
     let maxLevel = Math.max(levels[cia.c], levels[cia.i], levels[cia.a]);
     let schutzbedarf = '-';
@@ -92,7 +92,7 @@ function saveAsset(e) {
             showToast(`Asset ${assetId} aktualisiert.`, 'success');
         }
     } else {
-        // Neu
+        // New
         if (!analysis.assets) analysis.assets = [];
         const existingIds = analysis.assets.map(a => parseInt(a.id.replace('A', ''))).filter(n => !isNaN(n));
         const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
@@ -129,7 +129,7 @@ window.editAsset = (id) => {
     document.getElementById('assetType').value = asset.type || '';
     document.getElementById('assetDescription').value = asset.description || '';
 
-    // Radio Buttons setzen
+    // Set radio buttons
     const setRadio = (name, val) => {
         const els = document.querySelectorAll(`input[name="${name}"]`);
         els.forEach(el => {
@@ -149,15 +149,15 @@ window.removeAsset = (id) => {
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
-    // FIX: Explizite DOM-Elemente holen (verhindert ReferenceError)
+    // FIX: Fetch DOM elements explicitly (prevents ReferenceError)
     const modal = document.getElementById('confirmationModal');
-    const title = document.getElementById('confirmationTitle'); // Benötigt das korrigierte HTML!
+    const title = document.getElementById('confirmationTitle'); // Requires the corrected HTML!
     const msg = document.getElementById('confirmationMessage');
     const btnConfirm = document.getElementById('btnConfirmAction');
     const btnCancel = document.getElementById('btnCancelConfirmation');
     const btnClose = document.getElementById('closeConfirmationModal');
 
-    // Sicherstellen, dass das Element existiert, um Abstürze zu vermeiden
+    // Ensure element exists to prevent crashes
     if (title) title.textContent = 'Asset löschen';
     
     msg.innerHTML = `Möchten Sie das Asset <b>${asset.name} (${asset.id})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`;
@@ -167,7 +167,7 @@ window.removeAsset = (id) => {
 
     modal.style.display = 'block';
 
-    // Events bereinigen
+    // Clear events
     btnConfirm.onclick = null;
     btnCancel.onclick = null;
     btnClose.onclick = null;
@@ -175,7 +175,7 @@ window.removeAsset = (id) => {
     btnConfirm.onclick = () => {
         analysis.assets = analysis.assets.filter(a => a.id !== id);
         
-        // Bereinige Impact Matrix
+        // Clean up impact matrix
         if (analysis.impactMatrix && analysis.impactMatrix[id]) {
             delete analysis.impactMatrix[id];
         }

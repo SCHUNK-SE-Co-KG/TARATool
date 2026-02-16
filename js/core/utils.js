@@ -1,5 +1,5 @@
 // =============================================================
-// --- SPEICHER & LADEFUNKTIONEN ---
+// --- STORAGE & LOAD FUNCTIONS ---
 // =============================================================
 
 function saveAnalyses() {
@@ -16,7 +16,7 @@ function loadAnalyses() {
     if (data) {
         analysisData = JSON.parse(data);
         
-        // Migration/Sicherstellung neuer Felder
+        // Migration: ensure new fields exist
         analysisData.forEach(analysis => {
             if (!analysis.damageScenarios) {
                 analysis.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
@@ -40,13 +40,13 @@ function loadAnalyses() {
                 analysis.residualRisk.treeNotes = {};
             }
 
-            // --- Migration: stabile Risk-UIDs (damit Restrisiko-Daten nicht durch Reindexing verloren gehen)
+            // --- Migration: stable Risk-UIDs (so residual risk data is not lost through reindexing)
             if (!analysis.riskEntries) analysis.riskEntries = [];
             analysis.riskEntries.forEach(entry => {
                 if (!entry.uid) entry.uid = generateUID('risk');
             });
 
-            // --- Migration: alte Restrisiko-Keys (Prefix = Risk-ID) soweit moeglich auf UID umhaengen
+            // --- Migration: remap old residual risk keys (Prefix = Risk-ID) to UID where possible
             try {
                 const leaves = analysis.residualRisk.leaves || {};
                 const converted = {};
@@ -66,7 +66,7 @@ function loadAnalyses() {
                 analysis.residualRisk.leaves = converted;
             } catch (e) {}
 
-            // --- Sync: Risikoanalyse -> Restrisiko-Struktur (entries)
+            // --- Sync: Risk analysis -> Residual risk structure (entries)
             try {
                 if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
                     syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -95,8 +95,8 @@ function saveCurrentAnalysisState() {
 // --- ID / UID HELPERS ---
 // =============================================================
 
-// Stabiler UID-Generator fuer interne Zuordnungen (z.B. Restrisiko-Keys).
-// Nutzt crypto.randomUUID() wenn verfuegbar, sonst Fallback.
+// Stable UID generator for internal assignments (e.g., residual risk keys).
+// Uses crypto.randomUUID() if available, otherwise falls back.
 function generateUID(prefix = 'uid') {
     try {
         if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -109,7 +109,7 @@ function generateUID(prefix = 'uid') {
 }
 
 // =============================================================
-// --- ALLGEMEINE FUNKTIONEN ---
+// --- GENERAL FUNCTIONS ---
 // =============================================================
 
 function showToast(message, type = 'info') {

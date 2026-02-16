@@ -1,5 +1,5 @@
 // =============================================================
-// --- VERSIONSKONTROLLE LOGIK ---
+// --- VERSION CONTROL LOGIC ---
 // =============================================================
 
 function renderHistoryTable(analysis) {
@@ -9,7 +9,7 @@ function renderHistoryTable(analysis) {
     const currentVersion = (analysis && analysis.metadata) ? analysis.metadata.version : '';
     const history = Array.isArray(analysis.history) ? analysis.history : [];
 
-    // Sortierung: neueste zuerst (major/minor numerisch)
+    // Sorting: newest first (major/minor numerically)
     const sorted = history.slice().sort((a, b) => {
         const [aMajor, aMinor] = String(a.version || '0.0').split('.').map(n => parseInt(n, 10) || 0);
         const [bMajor, bMinor] = String(b.version || '0.0').split('.').map(n => parseInt(n, 10) || 0);
@@ -75,7 +75,7 @@ window.revertToVersion = (analysisId, version) => {
         
         analysis.riskEntries = entry.state.riskEntries;
 
-        // Security Ziele (neu)
+        // Security Objectives (new)
         analysis.securityGoals = entry.state.securityGoals || [];
         analysis.residualRisk = entry.state.residualRisk || { leaves: {}, entries: [], treeNotes: {} };
         if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
@@ -124,7 +124,7 @@ window.revertToVersion = (analysisId, version) => {
 };
 
 
-// Modal zum Anlegen einer neuen Version oeffnen
+// Open modal for creating a new version
 window.openVersionCommentModal = () => {
     if (!activeAnalysisId) return;
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -138,7 +138,7 @@ window.openVersionCommentModal = () => {
         inputVersionComment.focus();
     }
 
-    // Default: inkrementell
+    // Default: incremental
     try {
         const radios = document.querySelectorAll('input[name="versionType"]');
         radios.forEach(r => {
@@ -152,7 +152,7 @@ window.openVersionCommentModal = () => {
 };
 
 
-// Die Hauptfunktion zum Erstellen einer neuen Version (mit Major/Minor Auswahl)
+// Main function for creating a new version (with major/minor selection)
 function createNewVersion(comment) {
     if (!activeAnalysisId) return;
 
@@ -175,7 +175,7 @@ function createNewVersion(comment) {
     const currentVersion = String((analysis.metadata && analysis.metadata.version) ? analysis.metadata.version : '0.0');
     let [major, minor] = currentVersion.split('.').map(n => parseInt(n, 10) || 0);
 
-    // Naechste freie Version bestimmen (keine Duplikate)
+    // Determine next free version (no duplicates)
     let newVersion = '';
     if (versionType === 'major') {
         let m = major + 1;
@@ -220,7 +220,7 @@ function createNewVersion(comment) {
     if (versionControlModal) versionControlModal.style.display = 'none';
 }
 
-// Event Listener für Modals
+// Event listeners for modals
 if (closeVersionControlModal) {
     closeVersionControlModal.onclick = () => versionControlModal.style.display = 'none';
 }

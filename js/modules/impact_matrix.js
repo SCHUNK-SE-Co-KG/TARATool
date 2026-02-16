@@ -1,4 +1,4 @@
-// Explizite DOM-Referenz (robuster als implizite Window-ID-Globals)
+// Explicit DOM reference (more robust than implicit window ID globals)
 const dsMatrixContainer = document.getElementById('dsMatrixContainer');
 
 function getImpactColorClass(val) {
@@ -20,7 +20,7 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     
     analysis.impactMatrix[assetId][dsId] = newValue;
     
-    // Farbe live aktualisieren
+    // Update color live
     if (selectElement) {
         selectElement.className = 'impact-select ' + getImpactColorClass(newValue);
     }
@@ -89,7 +89,7 @@ function renderImpactMatrix() {
             const colorClass = getImpactColorClass(currentScore);
             
             html += '<td class="score-cell">';
-            // Übergebe 'this' an die Funktion, um direkten DOM-Zugriff zu haben
+            // Pass 'this' to the function for direct DOM access
             html += `<select 
                 data-asset-id="${asset.id}" 
                 data-ds-id="${ds.id}" 

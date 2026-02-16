@@ -1,16 +1,16 @@
 // =============================================================
-// --- DAMAGE SCENARIO LOGIK (CRUD & MATRIX) ---
+// --- DAMAGE SCENARIO LOGIC (CRUD & MATRIX) ---
 // =============================================================
 
-// Explizite DOM-Referenzen (robuster als die impliziten Window-ID-Globals)
+// Explicit DOM references (more robust than implicit window ID globals)
 const dsManagementContainer = document.getElementById('dsManagementContainer');
 const btnAddDamageScenario = document.getElementById('btnAddDamageScenario');
 const damageScenarioModal = document.getElementById('damageScenarioModal');
 const closeDamageScenarioModal = document.getElementById('closeDamageScenarioModal');
 const damageScenarioForm = document.getElementById('damageScenarioForm');
 
-// Default-IDs zentral (wird in mehreren Funktionen benötigt).
-// Wichtig: Nicht im Scope von renderDamageScenarios() definieren, sonst sind Edit/Delete Handler fehlerhaft.
+// Default IDs centrally defined (needed in multiple functions).
+// Important: Do not define in scope of renderDamageScenarios(), otherwise edit/delete handlers break.
 const DEFAULT_DS_IDS = new Set(
     (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS)
         ? DEFAULT_DAMAGE_SCENARIOS
@@ -46,9 +46,9 @@ function renderDamageScenarios() {
     dsList.forEach(ds => {
         const isDefault = DEFAULT_DS_IDS.has(ds.id);
         
-        // NEUES LAYOUT:
-        // Zeile 1: ID und Name
-        // Zeile 2: (Short) (Standard) -> Zeilenumbruch hier
+        // NEW LAYOUT:
+        // Row 1: ID and Name
+        // Row 2: (Short) (Standard) -> line break here
         
         html += `<li data-id="${ds.id}">
             
@@ -81,7 +81,7 @@ function renderDamageScenarios() {
     dsManagementContainer.innerHTML = html;
 }
 
-// Funktionen explizit ans Window binden, damit sie im HTML onclick funktionieren
+// Bind functions explicitly to window so they work in HTML onclick
 window.saveDamageScenario = function(e) {
     if (e) e.preventDefault();
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -100,14 +100,14 @@ window.saveDamageScenario = function(e) {
     if (!analysis.damageScenarios) analysis.damageScenarios = [];
 
     if (dsId) {
-        // EDITIEREN
+        // EDIT
         const index = analysis.damageScenarios.findIndex(ds => ds.id === dsId);
         if (index !== -1) {
             analysis.damageScenarios[index] = { id: dsId, name, short, description };
             showToast(`Schadensszenario ${dsId} aktualisiert.`, 'success');
         }
     } else {
-        // NEU ERSTELLEN
+        // CREATE NEW
         const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...analysis.damageScenarios];
         const existingIds = allDS.map(ds => parseInt(ds.id.replace('DS', ''))).filter(n => !isNaN(n));
         const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
@@ -221,12 +221,12 @@ window.removeDamageScenario = function(dsId) {
 // --- UI WIRING (Button/Modal/Form) ---
 // =============================================================
 
-// Formular-Submit (neu + bearbeiten)
+// Form submit (new + edit)
 if (damageScenarioForm) {
     damageScenarioForm.onsubmit = window.saveDamageScenario;
 }
 
-// "Neu" Button in der Verwaltung
+// "New" button in the management view
 if (btnAddDamageScenario) {
     btnAddDamageScenario.onclick = () => {
         if (!activeAnalysisId) {
@@ -239,7 +239,7 @@ if (btnAddDamageScenario) {
         if (titleEl) titleEl.textContent = 'Neues Schadensszenario';
         if (idField) idField.value = '';
 
-        // Felder zurücksetzen
+        // Reset fields
         if (damageScenarioForm) damageScenarioForm.reset();
         const desc = document.getElementById('dsDescription');
         if (desc) desc.value = '';
@@ -255,4 +255,4 @@ if (closeDamageScenarioModal) {
     };
 }
 
-// Hilfsfunktion für Farben
+// Helper function for colors

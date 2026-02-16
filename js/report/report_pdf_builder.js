@@ -1,8 +1,8 @@
 // =============================================================
 // --- REPORT_PDF_BUILDER.JS: PDF Layout Engine ---
 // =============================================================
-// Stellt den PDF-Builder (Layout-Primitives) bereit.
-// Benötigt jsPDF (UMD) via CDN in index.html.
+// Provides the PDF builder (layout primitives).
+// Requires jsPDF (UMD) via CDN in index.html.
 
 (function () {
     'use strict';
@@ -18,7 +18,7 @@
         const margin = 15;
         let y = margin;
 
-        // Globale Abstaende (PDF) – bewusst etwas luftiger, ohne das Web-Layout zu beeinflussen
+        // Global spacings (PDF) – intentionally a bit more airy without affecting the web layout
         const sectionGapH1 = 6;
         const sectionGapH2 = 3;
         const lineGapTop = 5;
@@ -31,7 +31,7 @@
         };
 
         const hLine = (top = lineGapTop, bottom = lineGapBottom) => {
-            // mehr Abstand um Trennlinien (bessere Lesbarkeit)
+            // more spacing around separator lines (better readability)
             ensureSpace(top + bottom + 1);
             y += top;
             doc.setDrawColor(220);
@@ -49,7 +49,7 @@
         };
 
         const addH1 = (text) => {
-            // Abstand zu vorherigem Kapitel (bewusst etwas groesser)
+            // Spacing before chapter (intentionally a bit larger)
             const pre = (y > margin + 0.5) ? sectionGapH1 : 0;
             ensureSpace(pre + 10);
             y += pre;
@@ -91,8 +91,8 @@
             const v = value === null || value === undefined || value === '' ? '-' : String(value);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(10);
-            // Dynamische Spaltenbreite fuer den Key (verhindert Ueberlappung bei langen Labels,
-            // z.B. "Autor / Verantwortlich")
+            // Dynamic column width for the key (prevents overlap with long labels,
+            // e.g. "Autor / Verantwortlich")
             const keyText = k + ':';
             const keyW = Math.min(60, Math.max(28, doc.getTextWidth(keyText) + 3));
             const valX = margin + keyW + 2;
@@ -114,7 +114,7 @@
             y += needed;
         };
 
-        // Minimaler, robuster Tabellenrenderer (ohne AutoTable)
+        // Minimal, robust table renderer (without AutoTable)
         const addTable = (headers, rows, colWidths) => {
             if (!Array.isArray(headers) || headers.length === 0) return;
             if (!Array.isArray(rows)) rows = [];
@@ -124,7 +124,7 @@
                 ? colWidths
                 : headers.map(() => totalW / headers.length);
 
-            // Skaliere Spaltenbreiten auf verfügbare Seitenbreite (ganze Seite nutzen)
+            // Scale column widths to available page width (use full page)
             const sumW = widths.reduce((a, b) => a + b, 0);
             if (sumW > 0 && Math.abs(sumW - totalW) > 0.5) {
                 const scale = totalW / sumW;
@@ -153,39 +153,6 @@
             doc.line(margin, y - 4, doc.internal.pageSize.getWidth() - margin, y - 4);
 
             // Rows
-            doc.setFontSize(fontSizeCell);
-            rows.forEach(r => {
-                const cells = Array.isArray(r) ? r : [r];
-                const wrapped = cells.map((c, idx) => {
-                    const w = widths[idx] - cellPadding * 2;
-                    return doc.splitTextToSize(String(c ?? ''), w);
-                });
-                const rowH = Math.max(...wrapped.map(a => a.length)) * lineH;
-                ensureSpace(rowH + 2);
-
-                for (let i = 0; i < headers.length; i++) {
-                    doc.text(wrapped[i] || [''], xPos[i] + cellPadding, y);
-                }
-                y += rowH;
-                y += 2;
-            });
-
-            y += 2;
-        };
-
-
-        // Tabellenrenderer mit Rahmen (grid), wiederholtem Header und Zebra-Striping
-        // Nutzt die gesamte Seitenbreite (innerhalb der PDF-Margins) und optimiert auf Lesbarkeit.
-        const addTableGrid = (headers, rows, colWidths, options = {}) => {
-            if (!Array.isArray(headers) || headers.length === 0) return;
-            if (!Array.isArray(rows)) rows = [];
-
-            const totalW = doc.internal.pageSize.getWidth() - margin * 2;
-            const widths = Array.isArray(colWidths) && colWidths.length === headers.length
-                ? colWidths
-                : headers.map(() => totalW / headers.length);
-
-            // Skaliere Spaltenbreiten auf verfügbare Seitenbreite (ganze Seite nutzen)
             const sumW = widths.reduce((a, b) => a + b, 0);
             if (sumW > 0 && Math.abs(sumW - totalW) > 0.5) {
                 const scale = totalW / sumW;
@@ -247,17 +214,17 @@
                 doc.setDrawColor(...opt.borderColor);
 
                 for (let i = 0; i < headers.length; i++) {
-                    // Hintergrund (hell) + Rahmen
+                    // Background (light) + border
                     doc.setFillColor(...opt.headerFill);
                     doc.rect(xPos[i], y, widths[i], headerH, 'F');
                     doc.rect(xPos[i], y, widths[i], headerH, 'S');
 
-                    // Text (explizit dunkel)
+                    // Text (explicitly dark)
                     doc.setTextColor(...opt.headerTextColor);
                     doc.text(headerLines[i] || [''], xPos[i] + opt.cellPadX, y + opt.cellPadY + opt.lineH - 0.8);
                 }
 
-                // zurück auf Standard-Textfarbe
+                // reset to default text color
                 doc.setTextColor(0);
                 y += headerH;
 
@@ -298,7 +265,7 @@
 
                 for (let i = 0; i < headers.length; i++) {
                     doc.setFillColor(...fill);
-                    // Hintergrund + Rahmen (pro Zelle) -> druckfreundlich, keine "schwarzen Kästen"
+                    // Background + border (per cell) -> print-friendly, no "black boxes"
                     doc.rect(xPos[i], y, widths[i], rowH, 'F');
                     doc.rect(xPos[i], y, widths[i], rowH, 'S');
 
@@ -313,13 +280,13 @@
             y += 2;
         };
 
-        // Schadensauswirkungsmatrix als farbige Tabelle (Assets x Schadensszenarien)
+        // Impact matrix as colored table (assets x damage scenarios)
         // - Y: Assets (ID + Name)
-        // - X: Damage Szenarien (ID + Name)
-        // - Zellen: Wert + Label (High/Medium/Low/N/A) mit Hintergrundfarbe wie im UI
-        // Schadensauswirkungsmatrix – dynamisch skaliert fuer 1-10+ DS-Spalten.
-        // Alle DS werden IMMER in einer einzigen Tabelle dargestellt (kein Block-Splitting).
-        // Schriftgroesse, Spaltenbreiten und Zeilenhoehen passen sich dynamisch an.
+        // - X: Damage scenarios (ID + Name)
+        // - Cells: Value + Label (High/Medium/Low/N/A) with background color like in UI
+        // Impact matrix – dynamically scaled for 1-10+ DS columns.
+        // All DS are ALWAYS displayed in a single table (no block splitting).
+        // Font size, column widths and row heights adapt dynamically.
         const addImpactMatrixTable = (assets, dsList, impactMatrix) => {
             if (!Array.isArray(assets) || assets.length === 0) return;
             if (!Array.isArray(dsList) || dsList.length === 0) return;
@@ -327,8 +294,8 @@
             const totalW = doc.internal.pageSize.getWidth() - margin * 2;
             const dsCount = dsList.length;
 
-            // --- Dynamische Dimensionierung ---
-            // Asset-Spalte: bei wenigen DS breiter, bei vielen schmaler
+            // --- Dynamic sizing ---
+            // Asset column: wider with few DS, narrower with many
             const assetW = (dsCount <= 5) ? 55
                          : (dsCount <= 7) ? 45
                          : (dsCount <= 9) ? 38
@@ -336,7 +303,7 @@
 
             const dsW = (totalW - assetW) / dsCount;
 
-            // Schriftgroessen dynamisch: je mehr Spalten, desto kleiner
+            // Font sizes dynamic: the more columns, the smaller
             const headerFontSize = (dsCount <= 5) ? 6.5
                                  : (dsCount <= 7) ? 5.8
                                  : (dsCount <= 9) ? 5.2
@@ -352,7 +319,7 @@
                                 : (dsCount <= 9) ? 6
                                 :                  5.5;
 
-            // Zeilenhoehen dynamisch
+            // Row heights dynamic
             const headerH = (dsCount <= 5) ? 14
                           : (dsCount <= 7) ? 12
                           :                  10;
@@ -363,13 +330,13 @@
 
             const cellPad = (dsCount <= 7) ? 1.2 : 0.8;
 
-            // Maximale Zeichenlaenge fuer Asset-Label
+            // Max character length for asset label
             const assetMaxChars = (dsCount <= 5) ? 45
                                 : (dsCount <= 7) ? 35
                                 : (dsCount <= 9) ? 28
                                 :                  22;
 
-            // Zell-Text: bei schmalen Spalten nur Ziffer, bei breiten "3 High" etc.
+            // Cell text: with narrow columns only digit, with wide columns "3 High" etc.
             const useShortLabels = (dsW < 20);
 
             const impactStyle = (val) => {
@@ -385,7 +352,7 @@
                 return t.length > n ? (t.substring(0, Math.max(0, n - 1)) + '\u2026') : t;
             };
 
-            // --- Legende ---
+            // --- Legend ---
             const drawLegend = () => {
                 const topGap = 9;
                 ensureSpace(topGap + 10);
@@ -420,7 +387,7 @@
                 y += 9;
             };
 
-            // --- Header zeichnen (wird auch bei Seitenumbruch wiederholt) ---
+            // --- Draw header (also repeated on page break) ---
             const drawHeader = () => {
                 const pre = (y > margin + 1) ? 2 : 0;
                 ensureSpace(pre + headerH + rowH);
@@ -439,7 +406,7 @@
                 doc.text('Asset', margin + cellPad, y0 + headerH * 0.3);
                 doc.text('(ID: Name)', margin + cellPad, y0 + headerH * 0.65);
 
-                // DS Header – einzeilig, Schrift wird passend skaliert
+                // DS Header – single line, font scaled accordingly
                 for (let i = 0; i < dsCount; i++) {
                     const ds = dsList[i];
                     const x0 = margin + assetW + i * dsW;
@@ -448,7 +415,7 @@
                     doc.rect(x0, y0, dsW, headerH, 'F');
                     doc.rect(x0, y0, dsW, headerH, 'S');
 
-                    // Label: bei engen Spalten nur ID + Short, sonst ID + Name
+                    // Label: with narrow columns only ID + Short, otherwise ID + Name
                     const shortLabel = ds.short || '';
                     const fullLabel = `${ds.id} ${ds.name || shortLabel}`.trim();
                     const maxLabelW = dsW - 2 * cellPad;
@@ -456,33 +423,33 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(headerFontSize);
 
-                    // Passende Schriftgroesse finden, damit Label ohne Umbruch passt
+                    // Find appropriate font size so label fits without wrapping
                     let usedLabel = fullLabel;
                     let usedFontSize = headerFontSize;
                     const minFs = 3.5;
 
-                    // Versuche volle Beschriftung; falls zu breit: kuerzen auf ID + Short
+                    // Try full label; if too wide: shorten to ID + Short
                     if (doc.getTextWidth(usedLabel) > maxLabelW && shortLabel) {
                         usedLabel = `${ds.id} ${shortLabel}`.trim();
                     }
-                    // Falls immer noch zu breit: nur ID
+                    // If still too wide: only ID
                     if (doc.getTextWidth(usedLabel) > maxLabelW) {
                         usedLabel = String(ds.id || '');
                     }
-                    // Falls ID selbst zu breit: Schrift weiter verkleinern
+                    // If ID itself is too wide: reduce font further
                     while (doc.getTextWidth(usedLabel) > maxLabelW && usedFontSize > minFs) {
                         usedFontSize -= 0.3;
                         doc.setFontSize(usedFontSize);
                     }
 
-                    // Zentriert in Zelle
+                    // Centered in cell
                     doc.text(usedLabel, x0 + dsW / 2, y0 + headerH / 2 + 0.5, { align: 'center' });
                 }
 
                 y += headerH;
             };
 
-            // --- Datenzeile zeichnen ---
+            // --- Draw data row ---
             const drawRow = (asset) => {
                 ensureSpace(rowH + 1);
 
@@ -518,10 +485,10 @@
                 y += rowH;
             };
 
-            // --- Rendern ---
+            // --- Render ---
             drawLegend();
 
-            // Neue Seite, falls kaum Platz
+            // New page if barely any space left
             if (y + headerH + rowH > doc.internal.pageSize.getHeight() - margin) {
                 doc.addPage();
                 y = margin;

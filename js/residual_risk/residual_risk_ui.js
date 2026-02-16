@@ -1,18 +1,18 @@
 // =============================================================
-// --- RESTRISIKOANALYSE (UI) ---
+// --- RESIDUAL RISK ANALYSIS (UI) ---
 //
-// Uebersicht:
-//  - pro Angriffsbaum eine Kachel (wie Risikoanalyse)
-//  - Bearbeiten oeffnet Modal mit tabellarischer Leaf-Bearbeitung
+// Overview:
+//  - One card per attack tree (like risk analysis)
+//  - Edit opens modal with tabular leaf editing
 //
-// Leaf-Editor:
-//  - Anzeige Risiko-Score und I(N)
-//  - Behandlung: Akzeptiert / Delegiert / Mitigiert (muss gewaehlt werden)
-//  - Anmerkung, Massnahme aus Security Konzept
-//  - Bei Mitigiert: Eingabe K/S/T/U (analog Risikoanalyse)
-//  - Green-Check Logik:
-//      * Akzeptiert/Delegiert: Check wenn Anmerkung gesetzt
-//      * Mitigiert: Check wenn Massnahme + K/S/T/U gesetzt (Anmerkung optional)
+// Leaf editor:
+//  - Display risk score and I(N)
+//  - Treatment: Accepted / Delegated / Mitigated (must be selected)
+//  - Note, measure from security concept
+//  - For Mitigated: input K/S/T/U (analogous to risk analysis)
+//  - Green check logic:
+//      * Accepted/Delegated: check when note is set
+//      * Mitigated: check when measure + K/S/T/U are set (note optional)
 // =============================================================
 
 (function () {
@@ -59,7 +59,7 @@
 
         const close = () => {
             modal.style.display = 'none';
-            // Refresh Uebersicht (damit evtl. spaeter Status/Counts sichtbar werden koennen)
+            // Refresh overview (so that status/counts can become visible later)
             const analysis = (typeof analysisData !== 'undefined')
                 ? (analysisData || []).find(a => a.id === activeAnalysisId)
                 : null;
@@ -111,7 +111,7 @@
     }
 
     function rrComputeResidualLeafRiskValue(leaf) {
-        // I(N) bleibt gleich; bei Mitigiert wird rr.K/S/T/U verwendet.
+        // I(N) stays the same; for Mitigated, rr.K/S/T/U is used.
         const iNorm = leaf?.i_norm;
         const i = parseFloat(iNorm);
         if (isNaN(i)) return null;
@@ -152,7 +152,7 @@
             const s = (rr.s || '').trim();
             const t = (rr.t || '').trim();
             const u = (rr.u || '').trim();
-            // Anmerkung ist bei Mitigation optional
+            // Note is optional for mitigation
             return sec.length > 0 && k && s && t && u;
         }
         return false;
@@ -200,7 +200,7 @@
             gridWrap.classList.toggle('rr-hidden', !isMit);
         }
 
-        // Security-Konzept-Maßnahme nur bei Mitigiert editierbar
+        // Security concept measure only editable for Mitigated
         const taSec = row.querySelector('.rr-security');
         if (taSec) {
             taSec.disabled = !isMit;
@@ -212,7 +212,7 @@
             ph.classList.toggle('rr-hidden', isMit);
         }
 
-        // Restrisiko-Risiko-Wert unter Neubewertung anzeigen
+        // Show residual risk value under reassessment
         const rv = row.querySelector('.rr-residual-leaf-value');
         if (rv) {
             rv.classList.toggle('rr-hidden', !isMit);
@@ -227,7 +227,7 @@
             ? String(meta.leaf.text)
             : (meta?.leaf?.name ? String(meta.leaf.name) : (meta?.leaf?.label ? String(meta.leaf.label) : ''));
 
-        // treeV2 liefert Breadcrumb direkt (vollstaendige Benennung)
+        // treeV2 provides breadcrumb directly (full naming)
         if (meta?.breadcrumb) {
             return {
                 path: String(meta.breadcrumb),
@@ -243,7 +243,7 @@
             ? String(meta.node.name)
             : (meta?.node?.title ? String(meta.node.title) : '');
 
-        // kompakt, aber eindeutig
+        // compact but unambiguous
         const parts = [];
         if (bName) parts.push(bName);
         if (nName && nName !== bName) parts.push(nName);
@@ -262,8 +262,8 @@
             : null;
         if (!analysis) return;
 
-        // Sicherstellen, dass die Restrisiko-Struktur aktuell ist
-        // Achtung: Sync kann Objekte neu clonen -> danach Entry erneut holen (uid-basiert)
+        // Ensure that the residual risk structure is up to date
+        // Note: Sync may re-clone objects -> fetch entry again afterwards (uid-based)
         const entryUid = residualEntry?.uid || '';
         try {
             if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
@@ -391,7 +391,7 @@
                 const kstuSelects = tr.querySelectorAll('select.rr-kstu');
 
                 const persist = () => {
-                    // Legacy-Dict live mitziehen, damit beide Zugriffspfade konsistent bleiben
+                    // Keep legacy dict in sync so both access paths remain consistent
                     try {
                         if (analysis?.residualRisk?.leaves && liveEntry?.uid) {
                             analysis.residualRisk.leaves[`${liveEntry.uid}|${leafKey}`] = JSON.parse(JSON.stringify(leaf.rr || {}));
@@ -405,7 +405,7 @@
                 if (sel) {
                     sel.addEventListener('change', () => {
                         leaf.rr.treatment = sel.value || '';
-                        // wenn nicht mitigiert: keine Pflicht, aber Grid ausblenden
+                        // if not mitigated: not required, but hide grid
                         rrUpdateRowUI(tr, leaf);
                         persist();
                     });
@@ -492,17 +492,17 @@
 
         const resMeta = rrGetRiskMeta(resVal);
 
-        // Baum-Anmerkung (Pflicht bei Kritisch/Hoch im Restrisiko)
+        // Tree note (required for Critical/High in residual risk)
         const notesDict = analysis?.residualRisk?.treeNotes || {};
         const treeNote = (notesDict && entry?.uid && notesDict[entry.uid] !== undefined) ? String(notesDict[entry.uid] || '') : '';
         const noteRequired = (resMeta.label === 'Kritisch' || resMeta.label === 'Hoch');
 
-        // Completion-Check: alle Blaetter + ggf. Pflicht-Anmerkung
+        // Completion check: all leaves + required note if applicable
         const allLeavesOk = rrTreeAllLeavesComplete(entry);
         const noteOk = (!noteRequired) || (treeNote.trim().length > 0);
         const treeComplete = allLeavesOk && noteOk;
 
-        // In der Restrisiko-Uebersicht soll die Randfarbe das Restrisiko widerspiegeln
+        // In the residual risk overview, the border color should reflect the residual risk
         const borderColor = resMeta.color;
 
         return `
@@ -594,7 +594,7 @@
             });
         });
 
-        // Tree-Anmerkungen persistieren + Pflichtlogik + Check aktualisieren
+        // Persist tree notes + required logic + update check
         container.querySelectorAll('textarea.rr-tree-note').forEach(ta => {
             ta.addEventListener('input', () => {
                 const uid = ta.dataset.rrTreeUid;
@@ -603,13 +603,13 @@
                 if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
                 analysis.residualRisk.treeNotes[uid] = ta.value;
 
-                // Pflicht-Markierung
+                // Required marker
                 const required = ta.dataset.rrNoteRequired === '1';
                 const allLeavesOk = ta.dataset.rrAllleaves === '1';
                 const noteOk = (!required) || (ta.value || '').trim().length > 0;
                 ta.classList.toggle('rr-text-invalid', required && !noteOk);
 
-                // Tree-Check
+                // Tree check
                 const card = ta.closest('.rr-risk-card');
                 const ico = card ? card.querySelector('.rr-tree-check') : null;
                 if (ico) {

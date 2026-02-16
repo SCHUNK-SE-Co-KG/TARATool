@@ -1,7 +1,7 @@
 // =============================================================
-// --- REPORT_EXPORT.JS: PDF Report-Generierung (Orchestrator) ---
+// --- REPORT_EXPORT.JS: PDF Report Generation (Orchestrator) ---
 // =============================================================
-// Benötigt: report_pdf_helpers.js (ReportHelpers)
+// Requires: report_pdf_helpers.js (ReportHelpers)
 //           report_pdf_builder.js (ReportPdfBuilder)
 //           jsPDF (UMD) via CDN in index.html
 
@@ -41,7 +41,7 @@
         const risks = Array.isArray(analysis.riskEntries) ? analysis.riskEntries : [];
 
         // =============================================================
-        // Kapitel 1: Projektbeschreibung
+        // Chapter 1: Project Description
         // =============================================================
         pdf.addTitle('Bedrohungs- und Risikoanalyse');
         pdf.addText('Projektbeschreibung', 12, 6);
@@ -58,7 +58,7 @@
         pdf.addKeyValue('Report erstellt', generatedAt);
 
         // =============================================================
-        // Kapitel 2: Management-Zusammenfassung
+        // Chapter 2: Management Summary
         // =============================================================
         pdf.addSpacer(6);
 
@@ -105,7 +105,7 @@
         }
 
         // =============================================================
-        // Kapitel 3: Assets
+        // Chapter 3: Assets
         // =============================================================
         pdf.ensureSpace(12);
         doc.addPage();
@@ -135,7 +135,7 @@
         }
 
         // =============================================================
-        // Kapitel 4: Schadensszenarien
+        // Chapter 4: Damage Scenarios
         // =============================================================
         pdf.addH1('Schadensszenarien');
         if (dsList.length === 0) {
@@ -149,7 +149,7 @@
         }
 
         // =============================================================
-        // Kapitel 5: Schadensauswirkungsmatrix
+        // Chapter 5: Impact Matrix
         // =============================================================
         doc.addPage();
         pdf.setY(pdf.margin);
@@ -163,7 +163,7 @@
         }
 
         // =============================================================
-        // Kapitel 6: Risikoanalyse & Angriffsbäume
+        // Chapter 6: Risk Analysis & Attack Trees
         // =============================================================
         doc.addPage();
         pdf.setY(pdf.margin);
@@ -184,7 +184,7 @@
         }
 
         // =============================================================
-        // Visualisierung Angriffsbäume (A3 Querformat)
+        // Attack Tree Visualization (A3 Landscape)
         // =============================================================
         if (risks.length > 0) {
             const sortedTrees = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
@@ -274,7 +274,7 @@
         }
 
         // =============================================================
-        // Kapitel 7: Security Objectives
+        // Chapter 7: Security Objectives
         // =============================================================
         try {
             doc.addPage('a4', 'portrait');
@@ -306,7 +306,7 @@
         }
 
         // =============================================================
-        // Kapitel 8: Restrisikoanalyse
+        // Chapter 8: Residual Risk Analysis
         // =============================================================
         try {
             if (typeof ensureResidualRiskSynced === 'function') {
@@ -375,7 +375,7 @@
                     const oRnum = h.riskNum(iNorm, oLeaf.k, oLeaf.s, oLeaf.t, oLeaf.u);
                     const oR = isNaN(oRnum) ? '-' : h.fmtNumComma(oRnum, 2);
 
-                    // Residual: bei Mitigiert -> rr.K/S/T/U sofern gesetzt
+                    // Residual: for "Mitigiert" -> rr.K/S/T/U if set
                     const pick = (orig, rrVal) => {
                         const rrs = (rrVal === null || rrVal === undefined) ? '' : String(rrVal).trim();
                         if (treatment === 'Mitigiert' && rrs) return rrs;
@@ -396,7 +396,7 @@
                     const treeRefId = h.sanitizePdfText(treeId);
                     const impactText = h.sanitizePdfText(String(impactName || ''));
 
-                    // RR: bei Akzeptiert/Delegiert/leer soll RR = R sein
+                    // RR: for Accepted/Delegated/empty, RR should equal R
                     const rrTxt = (treatment === 'Mitigiert') ? String(rrVal || '-') : String(oR || '-');
 
                     rows.push([
@@ -425,7 +425,7 @@
         }
 
         // =============================================================
-        // Visualisierung Restrisiko-Bäume (Querformat)
+        // Residual Risk Tree Visualization (Landscape)
         // =============================================================
         if (risks.length > 0) {
             const sortedTrees = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
@@ -515,7 +515,7 @@
         }
 
         // =============================================================
-        // Freigabe-Seite (Unterschriften)
+        // Signature Page (Approval)
         // =============================================================
         try {
             doc.addPage('a4', 'portrait');
@@ -541,11 +541,11 @@
             doc.setFontSize(11);
             doc.text(String(roleLabel || ''), leftX, y0);
 
-            // Unterschrift-Linie
+            // Signature line
             doc.setDrawColor(0);
             doc.line(signX1, y0 + 1.5, signX2, y0 + 1.5);
 
-            // Datum
+            // Date
             doc.setFontSize(10);
             doc.text('Datum', dateLabelX, y0);
             doc.line(dateX1, y0 + 1.5, dateX2, y0 + 1.5);
@@ -558,7 +558,7 @@
         drawSignatureRow('3. Genehmiger');
 
         // =============================================================
-        // Seitenzahlen (Seite X von Y)
+        // Page Numbers (Page X of Y)
         // =============================================================
         try {
             const pageCount = doc.getNumberOfPages();
@@ -575,7 +575,7 @@
         } catch (_) { /* noop */ }
 
         // =============================================================
-        // PDF speichern
+        // Save PDF
         // =============================================================
         const fname = h.sanitizeFilename(`Bedrohungs_und_Risikoanalyse_${analysis.name || analysis.id}_${now.toISOString().substring(0, 10)}`) + '.pdf';
         doc.save(fname);

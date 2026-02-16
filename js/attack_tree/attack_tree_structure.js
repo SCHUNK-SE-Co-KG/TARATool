@@ -1,8 +1,8 @@
 function _atGetTreeDepth() {
-    // 1 = Root -> Pfad -> Auswirkungen
-    // 2 = Root -> Pfad -> Zwischenebene(n) -> Auswirkungen (optional parallel moeglich)
-    // 3 = Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Auswirkungen (optional parallel moeglich)
-    // 4 = Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Zwischenknoten 3 -> Auswirkungen (optional parallel moeglich)
+    // 1 = Root -> Path -> Impacts
+    // 2 = Root -> Path -> Intermediate level(s) -> Impacts (optionally parallel)
+    // 3 = Root -> Path -> Intermediate node -> Intermediate node 2 -> Impacts (optionally parallel)
+    // 4 = Root -> Path -> Intermediate node -> Intermediate node 2 -> Intermediate node 3 -> Impacts (optionally parallel)
     const v = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
     if (v === 4) return 4;
     if (v === 3) return 3;
@@ -26,7 +26,7 @@ function _atSetSecondIntermediateEnabled(enabled) {
     const showL3 = depth >= 3;
     const showL4 = depth >= 4;
 
-    // L2B/L3B/L4B Zellen + Rows pro Branch ein-/ausblenden
+    // L2B/L3B/L4B cells + rows per branch show/hide
     [1,2].forEach(branchNum => {
         const on = enabled && showL2;
 
@@ -51,14 +51,14 @@ function _atSetSecondIntermediateEnabled(enabled) {
         });
 
         if (on) {
-            // Default: 2 Auswirkungen sichtbar, Extra hidden
+            // Default: 2 impacts visible, extra hidden
             document.querySelectorAll(
                 `tr.l2b-row[data-branch="${branchNum}"][data-impact="3"], tr.l2b-row[data-branch="${branchNum}"][data-impact="4"], tr.l2b-row[data-branch="${branchNum}"][data-impact="5"]`
             ).forEach(r => { if (r) r.style.display = 'none'; });
         }
     });
 
-    // Rowspans neu berechnen
+    // Recalculate rowspans
     try { _atRecomputeAllRowspans(); } catch(e) {}
     try { _atUpdateAddImpactButtonState(1, 'a'); } catch(e) {}
     try { _atUpdateAddImpactButtonState(2, 'a'); } catch(e) {}
@@ -71,7 +71,7 @@ function _atSetSecondIntermediateEnabled(enabled) {
 
     updateAttackTreeKSTUSummariesFromForm();
 
-    // Leaf-Delete Buttons pro Zeile (sichtbar/disabled) aktualisieren
+    // Leaf delete buttons per row (visible/disabled) update
     try { _atEnsureLeafDeleteButtons(); } catch(e) {}
     try { _atUpdateAllLeafDeleteButtonsState(); } catch(e) {}
 }
@@ -111,7 +111,7 @@ function setTreeDepth(depth) {
             : '<i class="fas fa-layer-group"></i> Zwischenknoten 1 anzeigen';
     }
 
-    // Zweiter Zwischenpfad: ab Tiefe >=2 moeglich
+    // Second intermediate path: possible from depth >= 2
     if (btnSecond) {
         btnSecond.style.display = showL2 ? 'inline-flex' : 'none';
         btnSecond.innerHTML = _atIsSecondIntermediateEnabled()
@@ -119,7 +119,7 @@ function setTreeDepth(depth) {
             : '<i class="fas fa-layer-group"></i> Alternativen Ast (B) hinzufügen';
     }
 
-    // Dritte Zwischenebene Button: Toggle zwischen Tiefe 2 und 3
+    // Third intermediate level button: toggle between depth 2 and 3
     if (btnThird) {
         btnThird.style.display = showL2 ? 'inline-flex' : 'none';
         btnThird.innerHTML = (depth >= 3)
@@ -127,7 +127,7 @@ function setTreeDepth(depth) {
             : '<i class="fas fa-layer-group"></i> Zwischenknoten 2 anzeigen';
     }
 
-    // Vierte Zwischenebene Button: Toggle zwischen Tiefe 3 und 4
+    // Fourth intermediate level button: toggle between depth 3 and 4
     if (btnFourth) {
         btnFourth.style.display = showL3 ? 'inline-flex' : 'none';
         btnFourth.innerHTML = (depth === 4)
@@ -135,11 +135,11 @@ function setTreeDepth(depth) {
             : '<i class="fas fa-layer-group"></i> Zwischenknoten 3 anzeigen';
     }
 
-    // Wenn Zwischenebene aus: auch 2. Zwischenpfad aus
+    // If intermediate level off: also turn off 2nd intermediate path
     if (!showL2) {
         _atSetSecondIntermediateEnabled(false);
     } else {
-        // Re-apply, damit L3B/L4B Zellen korrekt auf Tiefe reagieren
+        // Re-apply so L3B/L4B cells react correctly to depth
         _atSetSecondIntermediateEnabled(_atIsSecondIntermediateEnabled());
     }
 
@@ -171,7 +171,7 @@ function setTreeDepth(depth) {
         return (group === 'a' && isL4) || (group === 'b' && isL4B);
     };
 
-    // "Auswirkung hinzufügen" / "Auswirkung entfernen" Buttons je nach Tiefe
+    // "Add impact" / "Remove impact" buttons per depth
     document.querySelectorAll('button.add-impact-btn').forEach(b => {
         b.style.display = _shouldShowButton(b, true) ? 'inline-flex' : 'none';
     });
@@ -180,7 +180,7 @@ function setTreeDepth(depth) {
         b.style.display = _shouldShowButton(b, false) ? 'inline-flex' : 'none';
     });
 
-    // Rowspans / Button-States aktualisieren
+    // Rowspans / button states update
     try { _atRecomputeAllRowspans(); } catch(e) {}
     try { _atUpdateAddImpactButtonState(1, 'a'); } catch(e) {}
     try { _atUpdateAddImpactButtonState(2, 'a'); } catch(e) {}
@@ -200,15 +200,15 @@ function setTreeDepth(depth) {
 
 
 // =============================================================
-// --- DYNAMIC IMPACT (AUSWIRKUNG) ROWS PER PATH / ZWISCHENPFAD ---
+// --- DYNAMIC IMPACT ROWS PER PATH / INTERMEDIATE PATH ---
 // =============================================================
 const AT_MAX_IMPACTS_PER_PATH = 5;
 
-// Leaf-Index Mapping:
-// - Branch 1, Gruppe A (Zwischenpfad 1 oder direkt): 1..5
-// - Branch 2, Gruppe A: 6..10
-// - Branch 1, Gruppe B (Zwischenpfad 2): 11..15
-// - Branch 2, Gruppe B: 16..20
+// Leaf index mapping:
+// - Branch 1, Group A (Intermediate path 1 or direct): 1..5
+// - Branch 2, Group A: 6..10
+// - Branch 1, Group B (Intermediate path 2): 11..15
+// - Branch 2, Group B: 16..20
 const AT_LEAF_BASE = {
     '1a': 1,
     '2a': 6,
@@ -342,7 +342,7 @@ function _atUpdateAddImpactButtonState(branchNum, group) {
                 if (!secondOn || !isL2B) { btn.style.display = 'none'; return; }
             }
         } else {
-            // depth === 3: nur Gruppe A am L3
+            // depth === 3: only group A at L3
             if (g !== 'a' || !isL3) { btn.style.display = 'none'; return; }
         }
 
@@ -381,7 +381,7 @@ function _atUpdateRemoveImpactButtonState(branchNum, group) {
                 if (!secondOn || !isL2B) { btn.style.display = 'none'; return; }
             }
         } else {
-            // depth === 3: nur Gruppe A am L3
+            // depth === 3: only group A at L3
             if (g !== 'a' || !isL3) { btn.style.display = 'none'; return; }
         }
 
@@ -412,7 +412,7 @@ function _atClearLeafFields(leafIdx) {
 }
 
 // =============================================================
-// --- PER-LEAF DELETE: Einzelne Auswirkungen gezielt entfernen ---
+// --- PER-LEAF DELETE: Remove individual impacts selectively ---
 // =============================================================
 
 function _atReadLeafFields(leafIdx) {
@@ -478,7 +478,7 @@ function _atWriteLeafFields(leafIdx, data) {
     const iInp = document.querySelector(`input[name="${prefix}_i"]`);
     if (iInp) iInp.value = data.i || '';
 
-    // Summary wird über updateAttackTreeKSTUSummariesFromForm() neu berechnet
+    // Summary is recalculated via updateAttackTreeKSTUSummariesFromForm()
     const sum = document.getElementById(`${prefix}_summary`);
     if (sum) sum.innerHTML = '';
 }
@@ -490,13 +490,13 @@ function _atCopyLeafFields(srcLeafIdx, dstLeafIdx) {
 }
 
 function _atEnsureLeafDeleteButtons() {
-    // Füge pro Auswirkung einen kleinen "-" Button hinzu (einmalig).
+    // Add a small "-" button per impact (once).
     document.querySelectorAll('tr.impact-row').forEach(row => {
         if (!row) return;
         const leafContainer = row.querySelector('.leaf-container');
         if (!leafContainer) return;
 
-        // Button wird in der DS-Zeile platziert (stabil, kein Input-Layout verändern).
+        // Button is placed in the DS row (stable, doesn't change input layout).
         const dsChecks = leafContainer.querySelector('.ds-checks');
         if (!dsChecks) return;
         if (dsChecks.querySelector('button.leaf-delete-btn')) return;
@@ -509,7 +509,7 @@ function _atEnsureLeafDeleteButtons() {
         btn.style.marginLeft = 'auto';
         btn.innerHTML = '<i class="fas fa-minus"></i>';
 
-        // Kontext: Branch/Group/Pos aus Row übernehmen
+        // Context: inherit branch/group/pos from row
         btn.setAttribute('data-branch', row.getAttribute('data-branch') || '');
         btn.setAttribute('data-group', row.getAttribute('data-group') || 'a');
         btn.setAttribute('data-impact', row.getAttribute('data-impact') || '');
@@ -544,7 +544,7 @@ function _atUpdateAllLeafDeleteButtonsState() {
 
 
 function _atResetImpactRows() {
-    // Gruppe A: extra impacts ausblenden
+    // Group A: hide extra impacts
     [1, 2].forEach(branchNum => {
         for (let i = 3; i <= 5; i++) {
             const r = _atGetImpactRow(branchNum, 'a', i);
@@ -552,17 +552,17 @@ function _atResetImpactRows() {
         }
     });
 
-    // Gruppe B komplett ausblenden
+    // Group B: completely hidden
     _atSetSecondIntermediateEnabled(false);
 
-    // Standard: Gruppe A hat 2 visible
+    // Standard: Group A has 2 visible
     _atRecomputeAllRowspans();
     _atUpdateAddImpactButtonState(1, 'a');
     _atUpdateAddImpactButtonState(2, 'a');
     _atUpdateRemoveImpactButtonState(1, 'a');
     _atUpdateRemoveImpactButtonState(2, 'a');
 
-    // Leaf-Delete Buttons (pro Zeile) aktualisieren
+    // Leaf delete buttons (per row) update
     _atEnsureLeafDeleteButtons();
     _atUpdateAllLeafDeleteButtonsState();
 }
@@ -595,7 +595,7 @@ function initAttackTreeImpactAdders() {
             if (!branchNum) return;
             const group = (btn.getAttribute('data-group') || 'a');
 
-            // Gruppe B nur wenn aktiv
+            // Group B only when active
             if (group === 'b' && !_atIsSecondIntermediateEnabled()) return;
 
             const visible = _atGetVisibleImpactCount(branchNum, group);
@@ -630,7 +630,7 @@ function initAttackTreeImpactRemovers() {
             const visible = _atGetVisibleImpactCount(branchNum, group);
             if (visible <= 1) return;
 
-            // Letzte sichtbare Auswirkung entfernen
+            // Remove last visible impact
             const leafIdx = _atLeafIndex(branchNum, group, visible);
             const leafData = _atReadLeafFields(leafIdx);
             if (!_atLeafDataIsEmpty(leafData)) {
@@ -674,7 +674,7 @@ function initAttackTreeLeafRemovers() {
             if (visible <= 1) return; // Minimum 1
             if (impactPos > visible) return;
 
-            // Confirm wenn nicht leer
+            // Confirm if not empty
             const delIdx = _atLeafIndex(branchNum, group, impactPos);
             const delData = _atReadLeafFields(delIdx);
             if (!_atLeafDataIsEmpty(delData)) {
@@ -682,14 +682,14 @@ function initAttackTreeLeafRemovers() {
                 if (!ok) return;
             }
 
-            // Werte nach oben schieben (damit keine Lücken entstehen)
+            // Shift values up (to avoid gaps)
             for (let pos = impactPos; pos < visible; pos++) {
                 const srcIdx = _atLeafIndex(branchNum, group, pos + 1);
                 const dstIdx = _atLeafIndex(branchNum, group, pos);
                 _atCopyLeafFields(srcIdx, dstIdx);
             }
 
-            // Letztes Leaf leeren + letzte sichtbare Zeile ausblenden
+            // Clear last leaf + hide last visible row
             const lastIdx = _atLeafIndex(branchNum, group, visible);
             _atClearLeafFields(lastIdx);
             const lastRow = _atGetImpactRow(branchNum, group, visible);

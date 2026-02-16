@@ -1,5 +1,5 @@
 /* ============================================================
-   Attack Tree Editor V2 (Cards / rekursiv / Mixed Depth)
+   Attack Tree Editor V2 (Cards / recursive / Mixed Depth)
    ============================================================ */
 (function () {
   "use strict";

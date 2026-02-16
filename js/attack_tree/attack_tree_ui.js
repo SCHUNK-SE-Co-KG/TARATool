@@ -16,7 +16,7 @@ function populateAttackTreeDropdowns() {
 
             const emptyOpt = document.createElement('option');
             emptyOpt.value = '';
-            emptyOpt.textContent = type; // Zeigt Buchstaben
+            emptyOpt.textContent = type; // Display letter
             emptyOpt.style.fontWeight = 'bold';
             emptyOpt.style.color = '#888';
             select.appendChild(emptyOpt);
@@ -48,7 +48,7 @@ function openAttackTreeModal(existingEntry = null) {
     const previewContainer = document.getElementById('graph-preview-container');
     if (previewContainer) previewContainer.innerHTML = '';
 
-    // Delete button (ganzer Baum)
+    // Delete button (entire tree)
     const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
     if (delBtn) {
         if (existingEntry && existingEntry.id) {
@@ -60,7 +60,7 @@ function openAttackTreeModal(existingEntry = null) {
         }
     }
 
-    // Editor öffnen
+    // Open editor
     if (window.atV2 && typeof window.atV2.open === 'function') {
         window.atV2.open(existingEntry);
     }
@@ -157,7 +157,7 @@ function extractLeafData(formData, index) {
 
 // --- CALCULATION LOGIC ---
 
-// Initialisiere "Auswirkung hinzufügen" Buttons
+// Initialize "Add impact" buttons
 document.addEventListener('DOMContentLoaded', () => {
     try { initAttackTreeImpactAdders(); } catch (e) {}
     try { initAttackTreeImpactRemovers(); } catch (e) {}

@@ -1,8 +1,8 @@
 // =============================================================
-// --- REPORT_PDF_HELPERS.JS: Graphviz-Rendering & Hilfsfunktionen ---
+// --- REPORT_PDF_HELPERS.JS: Graphviz Rendering & Utility Functions ---
 // =============================================================
-// Stellt Utility-Funktionen für den PDF-Report bereit.
-// Wird von report_pdf_builder.js und report_export.js verwendet.
+// Provides utility functions for the PDF report.
+// Used by report_pdf_builder.js and report_export.js.
 
 (function () {
     'use strict';
@@ -105,7 +105,7 @@
     // Graphviz SVG is converted to PNG via canvas and embedded using doc.addImage.
 
     // =============================================================
-    // Allgemeine Hilfsfunktionen
+    // General Utility Functions
     // =============================================================
 
     function getActiveAnalysis() {
@@ -127,7 +127,7 @@
 
     function formatDate(iso) {
         if (!iso) return '';
-        // Erwartet YYYY-MM-DD
+        // Expects YYYY-MM-DD
         const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
         if (!m) return String(iso);
         return `${m[3]}.${m[2]}.${m[1]}`;

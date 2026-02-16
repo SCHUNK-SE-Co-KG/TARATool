@@ -1,18 +1,18 @@
 // =============================================================
-// --- RESTRISIKOANALYSE: DATENSTRUKTUR & SYNC ---
+// --- RESIDUAL RISK ANALYSIS: DATA STRUCTURE & SYNC ---
 //
-// Ziel:
-//  - Separate Datenstruktur (analysis.residualRisk.entries) als Deep-Clone von analysis.riskEntries
-//  - Pro Leaf zusaetzlich:
-//      * Behandlung: "Akzeptiert" | "Delegiert" | "Mitigiert"
-//      * Anmerkung (Text)
-//      * Massnahme aus Security Konzept (Text)
-//      * Restrisiko-Bewertung (K/S/T/U) (nur relevant bei "Mitigiert")
-//  - Updates in der Risikoanalyse sollen in die Restrisiko-Struktur uebernommen werden,
-//    ohne dass Restrisiko-Informationen verloren gehen.
+// Purpose:
+//  - Separate data structure (analysis.residualRisk.entries) as deep clone of analysis.riskEntries
+//  - Per leaf additionally:
+//      * Treatment: "Akzeptiert" | "Delegiert" | "Mitigiert"
+//      * Note (text)
+//      * Measure from security concept (text)
+//      * Residual risk assessment (K/S/T/U) (only relevant for "Mitigiert")
+//  - Updates in the risk analysis should be transferred into the residual risk structure
+//    without losing residual risk information.
 //
-// Hinweis: Leaves haben aktuell keine eigenen stabilen UIDs. Daher wird ein Leaf-Key
-// positionsbasiert gebildet:  B<Branch>|N<Node>|L<Leaf>
+// Note: Leaves currently do not have their own stable UIDs. Therefore a leaf key
+// is formed position-based: B<Branch>|N<Node>|L<Leaf>
 // =============================================================
 
 (function () {
@@ -59,7 +59,7 @@
     }
 
     function rrGetDepth(entry) {
-        // kompatibel zu bestehender Logik
+        // compatible with existing logic
         try {
             if (typeof _getTreeDepthForData === 'function') return _getTreeDepthForData(entry);
         } catch (_) {}
@@ -68,10 +68,10 @@
         return 1;
     }
 
-    // Iteriert ueber alle Leaves eines Baums und liefert Meta-Infos.
+    // Iterates over all leaves of a tree and provides meta info.
     function rrIterateLeaves(entry, cb) {
         if (entry && entry.treeV2) {
-            // treeV2: rekursiv traversieren und Breadcrumbs liefern, damit die Benennung im UI eindeutig bleibt.
+            // treeV2: recursively traverse and provide breadcrumbs so the naming in the UI remains unambiguous.
             const walk = (node, bNum, parts) => {
                 const nodeTitle = (node && (node.title || node.name)) ? String(node.title || node.name) : '';
                 const nextParts = nodeTitle ? parts.concat([nodeTitle]) : parts;
@@ -84,7 +84,7 @@
                     cb({
                         leaf,
                         leafKey,
-                        // Kompatibel: branch/node Objekte liefern name-Property
+                        // Compatible: branch/node objects provide name property
                         branch: { name: branchName },
                         node: { name: nodeName, title: nodeTitle },
                         breadcrumb: nextParts.length ? nextParts.join(' › ') : `Pfad B${bNum}`,
@@ -119,11 +119,11 @@
             }
 
             if (depth === 3) {
-                // Linear: Root -> Pfad -> L2 -> L3 -> Leaves
+                // Linear: Root -> Path -> L2 -> L3 -> Leaves
                 const leaves = Array.isArray(branch.leaves) ? branch.leaves : (Array.isArray(branch?.l3_node?.leaves) ? branch.l3_node.leaves : []);
                 leaves.forEach((leaf, lIdx) => {
                     const lNum = lIdx + 1;
-                    // Leaf-Key bleibt kompatibel: ein Node-Slot (N1) für den linearen Pfad
+                    // Leaf key remains compatible: one node slot (N1) for the linear path
                     const leafKey = rrMakeLeafKey(bNum, 1, lNum);
                     cb({ leaf, leafKey, branch, node: (branch && branch.l3_node) ? branch.l3_node : null, bNum, nNum: 1, lNum });
                 });
@@ -162,7 +162,7 @@
             const key = rrLegacyKey(riskUid, leafKey);
             const v = legacy[key];
             if (!v) return;
-            // Erwartete Struktur: {treatment,note,securityConcept,k,s,t,u} oder kompatibel.
+            // Expected structure: {treatment,note,securityConcept,k,s,t,u} or compatible.
             const rr = rrDefaultLeafRR();
             rr.treatment = v.treatment || v.rrTreatment || v.status || '';
             rr.note = v.note || v.rrNote || v.anmerkung || '';
@@ -203,7 +203,7 @@
         return (analysis?.residualRisk?.entries || []).find(e => e?.uid === uid) || null;
     };
 
-    // Sync-Funktion: Risikoanalyse -> Restrisiko-Datenstruktur
+    // Sync function: Risk Analysis -> Residual Risk data structure
     window.syncResidualRiskFromRiskAnalysis = function (analysis, saveAfter = false) {
         if (!analysis) return false;
         rrEnsureStructure(analysis);
@@ -219,7 +219,7 @@
         analysis.riskEntries.forEach(riskEntry => {
             if (!riskEntry) return;
             if (!riskEntry.uid) {
-                // sollte durch Migration bereits passieren, aber sicherheitshalber
+                // should already happen via migration, but as a safeguard
                 riskEntry.uid = (typeof generateUID === 'function') ? generateUID('risk') : ('risk_' + Date.now());
                 changed = true;
             }
@@ -227,11 +227,11 @@
             const existingResidual = prevByUid[riskEntry.uid];
             const rrMap = existingResidual ? rrBuildLeafRRMap(existingResidual) : {};
 
-            // Keys, die es im neuen Baum geben wird
+            // Keys that will exist in the new tree
             const desiredKeys = new Set();
             rrIterateLeaves(riskEntry, ({ leafKey }) => desiredKeys.add(leafKey));
 
-            // Legacy dict uebernehmen (falls vorhanden)
+            // Take over legacy dict (if present)
             rrMergeLegacyLeavesIntoMap(analysis, riskEntry.uid, rrMap, desiredKeys);
 
             const cloned = rrDeepClone(riskEntry);
@@ -244,7 +244,7 @@
             next.push(cloned);
         });
 
-        // changed detection (einfach)
+        // changed detection (simple)
         if ((analysis.residualRisk.entries || []).length !== next.length) changed = true;
         if (!changed) {
             const oldUids = (analysis.residualRisk.entries || []).map(e => e?.uid).join('|');
@@ -262,8 +262,8 @@
         return changed;
     };
 
-    // Komfort: stellt Struktur sicher und synced (ohne Save) 
-    // Komfort: stellt Struktur sicher und synced (ohne Save) 
+    // Convenience: ensures structure and syncs (without save)
+    // Convenience: ensures structure and syncs (without save)
     window.ensureResidualRiskSynced = function (analysis) {
         try {
             return window.syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -272,9 +272,9 @@
         }
     };
 
-    // Berechnet Restrisiko-Metriken fuer einen Angriffsbaum (Root)
-    // basierend auf den Leaf-Restrisikoangaben (Mitigiert -> rr.K/S/T/U).
-    // I(N) bleibt identisch zur Risikoanalyse.
+    // Computes residual risk metrics for an attack tree (root)
+    // based on the leaf residual risk data (Mitigated -> rr.K/S/T/U).
+    // I(N) remains identical to the risk analysis.
     window.computeResidualTreeMetrics = function (analysis, riskUid) {
         if (!analysis || !riskUid) return null;
         rrEnsureStructure(analysis);
@@ -285,7 +285,7 @@
 
         const clone = rrDeepClone(residual);
 
-        // Leaf K/S/T/U fuer Berechnung ersetzen (nur bei Mitigiert)
+        // Replace leaf K/S/T/U for calculation (only for "Mitigiert")
         rrIterateLeaves(clone, ({ leaf }) => {
             if (!leaf) return;
             const rr = leaf.rr || {};

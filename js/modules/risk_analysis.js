@@ -1,5 +1,5 @@
 // =============================================================
-// --- RISIKOANALYSE & ANGRIFFSBAUM LOGIK ---
+// --- RISK ANALYSIS & ATTACK TREE LOGIC ---
 // =============================================================
 
 function renderRiskAnalysis() {
@@ -53,7 +53,7 @@ function renderExistingRiskEntries(analysis) {
     analysis.riskEntries.forEach(entry => {
         const rootRisk = entry.rootRiskValue || '-';
         
-        // Berechnung Risikoklasse und Label
+        // Calculate risk class and label
         let rColor = '#7f8c8d';
         let rLabel = 'Unbekannt';
 
@@ -121,7 +121,7 @@ window.deleteAttackTree = function(riskId) {
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
-    // FIX: Explizite DOM-Elemente holen (ReferenceError Fix)
+    // FIX: Fetch DOM elements explicitly (ReferenceError fix)
     const modal = document.getElementById('confirmationModal');
     const title = document.getElementById('confirmationTitle');
     const msg = document.getElementById('confirmationMessage');
@@ -137,7 +137,7 @@ window.deleteAttackTree = function(riskId) {
 
     modal.style.display = 'block';
 
-    // Events bereinigen
+    // Clear events
     btnConfirm.onclick = null;
     btnCancel.onclick = null;
     btnClose.onclick = null;
@@ -146,7 +146,7 @@ window.deleteAttackTree = function(riskId) {
         analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
         reindexRiskIDs(analysis);
 
-        // Restrisiko-Struktur aktualisieren (getrennte Datenhaltung)
+        // Update residual risk structure (separate data management)
         try {
             if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
                 syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -154,7 +154,7 @@ window.deleteAttackTree = function(riskId) {
         } catch (e) {}
         saveAnalyses();
         
-        // Modal und AttackTree Modal schließen, falls offen
+        // Close modal and AttackTree modal if open
         if (typeof attackTreeModal !== 'undefined' && attackTreeModal) attackTreeModal.style.display = 'none';
         modal.style.display = 'none';
         

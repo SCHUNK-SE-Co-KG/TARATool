@@ -5,13 +5,13 @@ function _parseKSTUValue(val) {
 
 function _getTreeDepthForData(treeData) {
     const d = parseInt(treeData?.treeDepth, 10);
-    // 1: Root -> Pfad -> Leaves
-    // 2: Root -> Pfad -> Zwischenpfad(e) (parallel) -> Leaves
-    // 3: Root -> Pfad -> Zwischenknoten -> Zwischenknoten 2 -> Leaves
+    // 1: Root -> Path -> Leaves
+    // 2: Root -> Path -> Intermediate path(s) (parallel) -> Leaves
+    // 3: Root -> Path -> Intermediate node -> Intermediate node 2 -> Leaves
     if (d === 1) return 1;
     if (d === 2) return 2;
     if (d === 3) {
-        // Abwärtskompatibel: alte depth=3 Eintraege waren "2. Zwischenpfad"
+        // Backwards-compatible: old depth=3 entries were "2nd intermediate path"
         return (treeData?.useThirdIntermediate === true) ? 3 : 2;
     }
     return treeData?.useDeepTree ? 2 : 1;
@@ -78,7 +78,7 @@ function computeLeafImpactNorm(dsList, analysis) {
 
 
 function _normalizeParallelIntermediate(treeData) {
-    // Sorgt dafür, dass bei depth=2 eine einheitliche Struktur vorliegt:
+    // Ensures a uniform structure exists for depth=2:
     // branch.l2_nodes = [{name, leaves}, {name, leaves}?]
     const depth = _getTreeDepthForData(treeData);
     if (!treeData || !treeData.branches) return treeData;
@@ -87,7 +87,7 @@ function _normalizeParallelIntermediate(treeData) {
     treeData.branches.forEach(branch => {
         if (!branch) return;
 
-        // Neu: bereits vorhanden
+        // New format: already present
         if (Array.isArray(branch.l2_nodes) && branch.l2_nodes.length > 0) return;
 
         // Legacy single intermediate: l2_node + leaves
@@ -99,7 +99,7 @@ function _normalizeParallelIntermediate(treeData) {
             return;
         }
 
-        // Legacy v7 nested depth=3: l2_node + l3_node + leaves hängen unter l3
+        // Legacy v7 nested depth=3: l2_node + l3_node + leaves attached under l3
         if (branch.l2_node && branch.l3_node) {
             branch.l2_nodes = [
                 { name: branch.l2_node?.name || '', leaves: [] },
@@ -132,7 +132,7 @@ function applyWorstCaseInheritance(treeData) {
             nodes.forEach(node => {
                 node.kstu = _kstuWorstCase((node && node.leaves) ? node.leaves : []);
             });
-            // Branch-Worst-Case über die Zwischenpfade
+            // Branch worst-case across intermediate paths
             branch.kstu = _kstuWorstCase(nodes.map(n => n.kstu));
             return;
         }
@@ -146,7 +146,7 @@ function applyWorstCaseInheritance(treeData) {
             : (branch.l3_node && Array.isArray(branch.l3_node.leaves) ? branch.l3_node.leaves : []);
 
         branch.l3_node.kstu = _kstuWorstCase(leaves);
-        // linear: l2 nimmt Worst-Case vom einzigen Child
+        // linear: l2 takes worst-case from its only child
         branch.l2_node.kstu = _kstuWorstCase([branch.l3_node.kstu]);
         branch.kstu = _kstuWorstCase([branch.l2_node.kstu]);
     });
@@ -247,7 +247,7 @@ function applyImpactInheritance(treeData, analysis) {
         branch.i_norm = branch.l2_node.i_norm;
     });
 
-    // Root Impact: max über branches
+    // Root Impact: max across branches
     let rMax = 0.0;
     let rFound = false;
     treeData.branches.forEach(branch => {
@@ -427,10 +427,10 @@ function updateAttackTreeKSTUSummariesFromForm() {
         }
     });
 
-    // Leaf-Summaries für alle Slots (1..20). Hidden Rows sind ok.
+    // Leaf summaries for all slots (1..20). Hidden rows are OK.
     for (let idx = 1; idx <= 20; idx++) {
         const leafObj = (() => {
-            // Ermittlung: welche Branch/Gruppe gehört idx?
+            // Determine: which branch/group does idx belong to?
             if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0].l2_nodes[0].leaves[idx-1] : formValues.branches[0].leaves[idx-1]);
             if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1].l2_nodes[0].leaves[idx-6] : formValues.branches[1].leaves[idx-6]);
             if (idx >= 11 && idx <= 15) {
@@ -485,8 +485,8 @@ function generateNextRiskID(analysis) {
 
 /* ============================================================
    Attack Tree Calc V2 (treeV2)
-   - Unterstützt Baum-Editor (Cards) mit variierender Tiefe
-   - Vererbung: i_norm (max) und KSTU worst-case (pro Dimension)
+   - Supports tree editor (cards) with varying depth
+   - Inheritance: i_norm (max) and KSTU worst-case (per dimension)
    ============================================================ */
 
 function applyImpactInheritanceV2(treeData, analysis) {

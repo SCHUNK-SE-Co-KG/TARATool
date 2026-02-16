@@ -1,11 +1,11 @@
 
 // =============================================================
-// --- EVENT LISTENER & INIT ---
+// --- EVENT LISTENERS & INIT ---
 // =============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Initialisierung
+    // 1. Initialization
     if (typeof loadAnalyses === 'function') loadAnalyses();
     if (typeof renderAnalysisSelector === 'function') renderAnalysisSelector(); 
 
@@ -17,20 +17,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (statusBarMessage) statusBarMessage.textContent = 'Bitte starten Sie eine neue Analyse.';
     }
     
-    // 2. Listener für den Analysen-Selektor
+    // 2. Listener for the analysis selector
     if (analysisSelector) {
         analysisSelector.addEventListener('change', (e) => {
             if (typeof activateAnalysis === 'function') activateAnalysis(e.target.value);
         });
     }
     
-    // 3. Listener für Metadaten-Änderungen (Auto-Save)
+    // 3. Listener for metadata changes (auto-save)
     const metaInputs = document.querySelectorAll('#inputAnalysisName, #inputAuthorName, #inputDescription, #inputIntendedUse');
     metaInputs.forEach(input => {
         input.addEventListener('change', () => {
             if (typeof saveCurrentAnalysisState === 'function') saveCurrentAnalysisState();
             
-            // Wenn Name/Autor geändert, Header & Liste aktualisieren
+            // If name/author changed, update header & list
             if (input.id === 'inputAnalysisName' || input.id === 'inputAuthorName') {
                 const analysis = analysisData.find(a => a.id === activeAnalysisId);
                 if (analysis) {
@@ -45,16 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const tabs = document.querySelectorAll('.tab-navigation .tab-button');
     tabs.forEach(button => {
         button.addEventListener('click', (e) => {
-            // Speichern bevor gewechselt wird
+            // Save before switching
             if (activeAnalysisId && typeof saveCurrentAnalysisState === 'function') {
                 saveCurrentAnalysisState();
             }
 
-            // Buttons umschalten
+            // Toggle buttons
             tabs.forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
 
-            // Inhalte umschalten
+            // Toggle content
             document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
             const tabId = e.target.dataset.tab;
             const tabContent = document.getElementById(tabId);
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tabContent.style.display = 'block';
             }
             
-            // Render Funktionen aufrufen
+            // Call render functions
             const activeAnalysis = analysisData.find(a => a.id === activeAnalysisId);
             if (!activeAnalysis) return;
             

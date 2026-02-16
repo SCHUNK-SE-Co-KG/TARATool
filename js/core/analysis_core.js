@@ -1,6 +1,6 @@
 
 // =============================================================
-// --- ANALYSE VERWALTUNG (SWITCH, CREATE, IMPORT, EXPORT) ---
+// --- ANALYSIS MANAGEMENT (SWITCH, CREATE, IMPORT, EXPORT) ---
 // =============================================================
 
 function activateAnalysis(id) {
@@ -9,7 +9,7 @@ function activateAnalysis(id) {
     
     activeAnalysisId = id;
 
-    // Restrisiko-Struktur stets aktuell halten (Risikoanalyse -> Restrisiko)
+    // Keep residual risk structure up to date (risk analysis -> residual risk)
     try {
         if (typeof ensureResidualRiskSynced === 'function') {
             ensureResidualRiskSynced(analysis);
@@ -27,7 +27,7 @@ function activateAnalysis(id) {
     // Dropdown Sync
     if (analysisSelector) analysisSelector.value = id;
 
-    // Aktiven Tab neu rendern
+    // Re-render the active tab
     const activeTabBtn = document.querySelector('.tab-button.active');
     if (activeTabBtn) {
         const tabId = activeTabBtn.dataset.tab;
@@ -55,7 +55,7 @@ function activateAnalysis(id) {
 }
 
 // =============================================================
-// --- UI UPDATES & ALLGEMEINE FUNKTIONEN ---
+// --- UI UPDATES & GENERAL FUNCTIONS ---
 // =============================================================
 
 function renderAnalysisSelector() {
@@ -96,15 +96,15 @@ function fillAnalysisForm(analysis) {
         `;
     }
     
-    // Auch Übersicht aktualisieren, wenn gerade sichtbar
+    // Also update overview if currently visible
     renderOverview(analysis);
 }
 
-// NEU: Erweiterte Funktion für die Übersicht (Dashboard)
+// Extended function for the overview (dashboard)
 function renderOverview(analysis) {
     if (!analysis) return;
 
-    // 1. Einfache Zähler
+    // 1. Simple counters
     const elAssetCount = document.getElementById('statAssetCount');
     const elDSCount = document.getElementById('statDSCount');
     const elRiskCount = document.getElementById('statRiskCount');
@@ -115,7 +115,7 @@ function renderOverview(analysis) {
     const risks = analysis.riskEntries || [];
     if (elRiskCount) elRiskCount.textContent = risks.length;
 
-    // 2. Detaillierte Risiko-Kategorisierung
+    // 2. Detailed risk categorization
     let cCrit = 0;   // >= 2.0
     let cHigh = 0;   // >= 1.6
     let cMed = 0;    // >= 0.8
@@ -136,7 +136,7 @@ function renderOverview(analysis) {
         }
     });
 
-    // Werte in die neuen Felder schreiben
+    // Write values to the new fields
     const elCrit = document.getElementById('statCrit');
     const elHigh = document.getElementById('statHigh');
     const elMed = document.getElementById('statMed');
@@ -147,8 +147,8 @@ function renderOverview(analysis) {
     if (elMed) elMed.textContent = cMed;
     if (elLow) elLow.textContent = cLow;
 
-    // 3. Restrisiko-Verteilung (basierend auf Restrisiko-Root je Angriffsbaum)
-    // Falls Restrisiko noch nicht existiert, wird es automatisch gesynct.
+    // 3. Residual risk distribution (based on residual risk root per attack tree)
+    // If residual risk does not exist yet, it will be synced automatically.
     try {
         if (typeof ensureResidualRiskSynced === 'function') {
             ensureResidualRiskSynced(analysis);
@@ -198,7 +198,7 @@ function renderOverview(analysis) {
 
 
 // =============================================================
-// --- IMPORT / EXPORT LOGIK ---
+// --- IMPORT / EXPORT LOGIC ---
 // =============================================================
 
 function exportAnalysis() {
@@ -249,7 +249,7 @@ function executeImport() {
                 
                 analysisData.push(json);
 
-                // Import-Migration: Felder sicherstellen + Risk-UIDs + Restrisiko-Sync
+                // Import migration: ensure fields + risk UIDs + residual risk sync
                 try {
                     if (!json.damageScenarios) json.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
                     if (!json.impactMatrix) json.impactMatrix = {};
@@ -281,12 +281,12 @@ function executeImport() {
 }
 
 // =============================================================
-// --- NEUE ANALYSE LOGIK ---
+// --- NEW ANALYSIS LOGIC ---
 // =============================================================
 
 /**
- * Initialisiert den "Neue Analyse"-Dialog (Reset/Populate der Kopierauswahl).
- * Wird beim Öffnen und beim Schließen des Modals verwendet.
+ * Initializes the "New Analysis" dialog (reset/populate the copy selection).
+ * Used when opening and closing the modal.
  */
 function prepareNewAnalysisModal() {
     const group = document.getElementById('copyExistingAnalysisGroup');
@@ -298,7 +298,7 @@ function prepareNewAnalysisModal() {
 
     if (!select) return;
 
-    // Optionen neu aufbauen (aktuelle Liste der Analysen)
+    // Rebuild options (current list of analyses)
     select.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
@@ -306,7 +306,7 @@ function prepareNewAnalysisModal() {
     select.appendChild(placeholder);
 
     (analysisData || []).forEach(a => {
-        // Nur valide Analysen
+        // Only valid analyses
         if (!a || !a.id) return;
         const opt = document.createElement('option');
         opt.value = a.id;
@@ -326,9 +326,9 @@ function toggleCopyExistingAnalysisUI() {
 
     if (btn) btn.textContent = willShow ? 'Kopieren ausblenden' : 'Kopieren';
     if (willShow) {
-        // Beim ersten Öffnen sicherstellen, dass Optionen aktuell sind
+        // On first open, ensure options are up to date
         prepareNewAnalysisModal();
-        // Danach wieder sichtbar machen (prepareNewAnalysisModal blendet aus)
+        // Then make visible again (prepareNewAnalysisModal hides it)
         group.style.display = 'block';
         if (btn) btn.textContent = 'Kopieren ausblenden';
         if (select) select.focus();
@@ -340,17 +340,17 @@ function toggleCopyExistingAnalysisUI() {
 function createNewAnalysis(e) {
     e.preventDefault();
     
-    // Explizite Auswahl der Elemente zur Sicherheit
+    // Explicit element selection for safety
     const nameInput = document.getElementById('newAnalysisName');
     const modal = document.getElementById('newAnalysisModal');
     
     const newName = nameInput.value.trim();
     if (!newName) return;
 
-    // Eindeutige ID generieren
+    // Generate unique ID
     const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0') + '-' + Date.now().toString().slice(-4);
     
-    // Optional: aus bestehender Analyse kopieren
+    // Optional: copy from existing analysis
     const copyGroup = document.getElementById('copyExistingAnalysisGroup');
     const copySelect = document.getElementById('copyExistingAnalysisSelect');
     const copySourceId = (copyGroup && copyGroup.style.display !== 'none' && copySelect) ? (copySelect.value || '') : '';
@@ -366,18 +366,18 @@ function createNewAnalysis(e) {
         }
     }
 
-    // Fallback: Standardstruktur
+    // Fallback: default structure
     if (!newAnalysis) {
         newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
     }
     newAnalysis.id = newId;
     newAnalysis.name = newName;
-    // Metadaten/History für neue Analyse zurücksetzen
+    // Reset metadata/history for new analysis
     if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: 'Unbekannt', date: todayISO };
     newAnalysis.metadata.version = INITIAL_VERSION;
     newAnalysis.metadata.date = todayISO;
 
-    // History initialisieren (keine Übernahme der alten Historie)
+    // Initialize history (do not carry over old history)
     newAnalysis.history = [
         {
             version: INITIAL_VERSION,
@@ -399,35 +399,35 @@ function createNewAnalysis(e) {
         }
     ];
     
-    // Name in der initialen Historie konsistent halten
+    // Keep name consistent in initial history
     if (newAnalysis.history && newAnalysis.history[0] && newAnalysis.history[0].state) {
         newAnalysis.history[0].state.name = newName;
     }
     
-    // Daten speichern und UI aktualisieren
+    // Save data and update UI
     analysisData.push(newAnalysis);
     renderAnalysisSelector();
     activateAnalysis(newId);
     saveAnalyses();
     
-    // Modal schließen und Feedback geben
+    // Close modal and provide feedback
     if (modal) modal.style.display = 'none';
     showToast(`Analyse "${newName}" wurde erstellt.`, 'success');
 }
 
-// Event-Listener neu binden
+// Event listeners rebinding
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('newAnalysisForm');
     const modal = document.getElementById('newAnalysisModal');
     const closeBtn = document.getElementById('closeNewAnalysisModal');
     const btnToggleCopy = document.getElementById('btnToggleCopyExistingAnalysis');
 
-    // Submit-Handler (Erstellen)
+    // Submit handler (create)
     if (form) {
         form.onsubmit = createNewAnalysis;
     }
 
-    // X-Button schließen (Bugfix: zuvor fehlender Handler)
+    // X button close (bugfix: previously missing handler)
     if (closeBtn && modal) {
         closeBtn.onclick = () => {
             modal.style.display = 'none';
@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Klick auf den dunklen Hintergrund schließt ebenfalls
+    // Click on dark overlay also closes
     if (modal) {
         window.addEventListener('click', (ev) => {
             if (ev.target === modal) {
@@ -447,19 +447,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Kopieren-UI
+    // Copy UI
     if (btnToggleCopy) {
         btnToggleCopy.onclick = () => {
             toggleCopyExistingAnalysisUI();
         };
     }
 
-    // Initialer Reset
+    // Initial reset
     prepareNewAnalysisModal();
 });
 
 /**
- * Löscht die aktuell aktive Analyse nach Bestätigung durch den Benutzer.
+ * Deletes the currently active analysis after user confirmation.
  */
 function deleteActiveAnalysis() {
     if (!activeAnalysisId) return;
@@ -467,7 +467,7 @@ function deleteActiveAnalysis() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    // Vorhandenes Bestätigungs-Modal nutzen
+    // Use existing confirmation modal
     const modal = document.getElementById('confirmationModal');
     const title = document.getElementById('confirmationTitle');
     const msg = document.getElementById('confirmationMessage');
@@ -478,7 +478,7 @@ function deleteActiveAnalysis() {
     if (title) title.textContent = 'Gesamte Analyse löschen';
     if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${analysis.name}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
     
-    // Buttonzustand zurücksetzen (wichtig, da das Bestätigungs-Modal für mehrere Aktionen genutzt wird)
+    // Reset button state (important since the confirmation modal is used for multiple actions)
     if (btnConfirm) {
         btnConfirm.className = 'primary-button';
         btnConfirm.classList.add('dangerous');
@@ -487,25 +487,25 @@ function deleteActiveAnalysis() {
     
     modal.style.display = 'block';
 
-    // Vorherige Handler entfernen, damit es keine Überschneidungen mit anderen Bestätigungen gibt
+    // Remove previous handlers to prevent conflicts with other confirmations
     if (btnConfirm) btnConfirm.onclick = null;
     if (btnCancel) btnCancel.onclick = null;
     if (btnClose) btnClose.onclick = null;
 
-    // Event-Handler für Bestätigung
+    // Confirmation event handler
     if (btnConfirm) btnConfirm.onclick = () => {
-        // Aus der Liste entfernen
+        // Remove from list
         analysisData = analysisData.filter(a => a.id !== activeAnalysisId);
         
-        // Falls keine Analysen mehr übrig sind, leere Standard-Analyse erstellen
+        // If no analyses remain, create empty default analysis
         if (analysisData.length === 0) {
             analysisData = [JSON.parse(JSON.stringify(defaultAnalysis))];
         }
         
-        // Die nächste verfügbare Analyse wählen (die erste in der Liste)
+        // Select the next available analysis (first in list)
         const nextId = analysisData[0].id;
         
-        // Speichern und UI aktualisieren
+        // Save and update UI
         saveAnalyses();
         renderAnalysisSelector();
         activateAnalysis(nextId);
@@ -514,7 +514,7 @@ function deleteActiveAnalysis() {
         showToast('Analyse wurde erfolgreich gelöscht.', 'success');
     };
 
-    // Abbrechen
+    // Cancel
     if (btnCancel) btnCancel.onclick = () => {
         modal.style.display = 'none';
     };
