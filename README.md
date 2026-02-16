@@ -1,15 +1,16 @@
 # TARA Tool
 
-**Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA) nach ISO/SAE 21434**
+**Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA) im Kontext des EU Cyber Resilience Act (CRA)**
 
 ![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)
 
-TARA Tool führt strukturiert durch den gesamten TARA-Workflow: Assets definieren, Schadensszenarien bewerten, Angriffsbäume modellieren, Risiken nach der **SCHASAM-Methode** berechnen, Security-Ziele ableiten und Restrisiken analysieren – inklusive vollständiger PDF-Report-Generierung.
+Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit digitalen Elementen zu einer systematischen Cybersecurity-Risikobewertung über den gesamten Produktlebenszyklus. TARA Tool unterstützt diesen Prozess: Assets definieren, Schadensszenarien bewerten, Angriffsbäume modellieren, Risiken nach der **SCHASAM-Methode** berechnen, Security-Ziele ableiten und Restrisiken analysieren – inklusive vollständiger PDF-Report-Generierung.
 
 ---
 
 ## Inhaltsverzeichnis
 
+- [CRA-Kontext](#cra-kontext)
 - [Features](#features)
 - [Schnellstart](#schnellstart)
 - [SCHASAM-Methodik](#schasam-methodik)
@@ -19,6 +20,26 @@ TARA Tool führt strukturiert durch den gesamten TARA-Workflow: Assets definiere
 - [Screenshots](#screenshots)
 - [Mitwirken](#mitwirken)
 - [Lizenz](#lizenz)
+
+---
+
+## CRA-Kontext
+
+Der **Cyber Resilience Act (CRA)** – Verordnung (EU) 2024/2847 – ist seit Dezember 2024 in Kraft und stellt verbindliche Cybersecurity-Anforderungen an alle Produkte mit digitalen Elementen auf dem EU-Markt.
+
+**Relevante CRA-Anforderungen, die TARA Tool adressiert:**
+
+| CRA-Anforderung | Umsetzung im Tool |
+|---|---|
+| **Risikobewertung** (Anhang I, Teil 1) | Strukturierte TARA mit SCHASAM-Risikoberechnung |
+| **Dokumentation der Risikoanalyse** (Art. 13) | PDF-Report mit vollständiger Analysedokumentation |
+| **Identifikation von Schwachstellen & Bedrohungen** | Angriffsbäume mit mehrstufiger Bedrohungsmodellierung |
+| **Schutzbedarfsfeststellung** | CIA-Bewertung (Vertraulichkeit, Integrität, Verfügbarkeit) pro Asset |
+| **Bewertung der Auswirkungen** | Schadensauswirkungsmatrix (Safety, Financial, IP, Privacy, Legal) |
+| **Maßnahmenableitung** | Security-Ziele und Restrisikoanalyse mit Behandlungsoptionen |
+| **Versionierung & Nachvollziehbarkeit** | Snapshots, Rollback und Änderungshistorie |
+
+> **Hinweis:** TARA Tool ist ein unterstützendes Werkzeug für die Risikoanalyse. Die vollständige CRA-Konformität erfordert weitere organisatorische und technische Maßnahmen (z. B. Vulnerability Handling, Incident Reporting, SBOM).
 
 ---
 
