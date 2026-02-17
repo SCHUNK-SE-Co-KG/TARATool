@@ -1,0 +1,6 @@
+﻿============================= test session starts =============================
+collected 99 items
+
+test_core.py ......................                                      [ 22%]
+test_assets.py .........                                                 [ 31%]
+test_damage_scenarios.py ..

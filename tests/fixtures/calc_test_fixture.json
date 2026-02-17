@@ -1,0 +1,905 @@
+{
+  "id": "tara-calc-test",
+  "name": "Smart Home Gateway Analyse",
+  "description": "Anonymisierte Testdaten für umfassende Risiko- und Restrisiko-Berechnungstests. Deckt alle Behandlungstypen, Baumstrukturen und Grenzfälle ab.",
+  "intendedUse": "Automatisierte Tests der TARA-Risikoberechnungen",
+  "metadata": {
+    "version": "1.0",
+    "author": "Test Framework",
+    "date": "2026-02-17"
+  },
+  "history": [
+    {
+      "version": "1.0",
+      "date": "2026-02-17",
+      "author": "Test Framework",
+      "comment": "Initiale Erstellung für Berechnungstests",
+      "state": { "name": "Smart Home Gateway Analyse" }
+    }
+  ],
+  "assets": [
+    {
+      "id": "A01",
+      "name": "Sensor Module",
+      "type": "Hardware",
+      "description": "Environmental sensor array for temperature, humidity, and motion",
+      "confidentiality": "III",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A02",
+      "name": "Control Unit",
+      "type": "Software",
+      "description": "Central processing unit firmware and control logic",
+      "confidentiality": "II",
+      "integrity": "II",
+      "authenticity": "II",
+      "schutzbedarf": "II"
+    }
+  ],
+  "damageScenarios": [
+    {
+      "id": "DS1",
+      "name": "Safety Impact",
+      "short": "Safety",
+      "description": "Physical safety risk to persons in the environment"
+    },
+    {
+      "id": "DS2",
+      "name": "Financial Loss",
+      "short": "Finance",
+      "description": "Direct or indirect financial damage due to system compromise"
+    },
+    {
+      "id": "DS3",
+      "name": "Data Breach",
+      "short": "Data",
+      "description": "Unauthorized access to sensitive operational or personal data"
+    }
+  ],
+  "impactMatrix": {
+    "A01": { "DS1": "3", "DS2": "2", "DS3": "1" },
+    "A02": { "DS1": "2", "DS2": "3", "DS3": "2" }
+  },
+  "riskEntries": [
+    {
+      "id": "T01",
+      "uid": "risk_calc_0001",
+      "rootName": "Network Interface",
+      "treeV2": {
+        "uid": "node_t01_root",
+        "title": "Network Interface",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t01_pa",
+            "title": "Traffic Interception",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t01_pm",
+                "title": "Passive Monitoring",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Capture network packets",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t01_01"
+                  },
+                  {
+                    "text": "Protocol analysis and fingerprinting",
+                    "ds": ["DS3"],
+                    "k": "0.3", "s": "0.1", "t": "0.2", "u": "0.1",
+                    "i_norm": "0.48",
+                    "uid": "leaf_t01_02"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_t01_pb",
+            "title": "Active Injection",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t01_fi",
+                "title": "Frame Injection",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Inject spoofed data frames",
+                    "ds": ["DS1"],
+                    "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t01_03"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" },
+      "i_norm": "1.00",
+      "rootRiskValue": "1.50",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "T02",
+      "uid": "risk_calc_0002",
+      "rootName": "Physical Port",
+      "treeV2": {
+        "uid": "node_t02_root",
+        "title": "Physical Port",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t02_pa",
+            "title": "Debug Access",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t02_di",
+                "title": "Debug Interface Exploitation",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Memory dump via debug port",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t02_01"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_t02_pb",
+            "title": "Hardware Tamper",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1" },
+            "i_norm": "0.80",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t02_bm",
+                "title": "Board Modification",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1" },
+                "i_norm": "0.80",
+                "impacts": [
+                  {
+                    "text": "Flash chip replacement attack",
+                    "ds": ["DS2", "DS3"],
+                    "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1",
+                    "i_norm": "0.80",
+                    "uid": "leaf_t02_02"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+      "i_norm": "1.00",
+      "rootRiskValue": "1.80",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "T03",
+      "uid": "risk_calc_0003",
+      "rootName": "Remote Access",
+      "treeV2": {
+        "uid": "node_t03_root",
+        "title": "Remote Access",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t03_pa",
+            "title": "Software Exploit",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t03_bo",
+                "title": "Buffer Overflow",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Remote code execution via buffer overflow",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t03_01"
+                  },
+                  {
+                    "text": "Privilege escalation after initial access",
+                    "ds": ["DS2"],
+                    "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.3",
+                    "i_norm": "0.80",
+                    "uid": "leaf_t03_02"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_t03_pb",
+            "title": "Supply Chain Attack",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.3", "s": "0.5", "t": "0.3", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t03_tc",
+                "title": "Tainted Component",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.3", "s": "0.5", "t": "0.3", "u": "0.5" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Backdoor in third-party library",
+                    "ds": ["DS1", "DS3"],
+                    "k": "0.3", "s": "0.5", "t": "0.3", "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t03_03"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.20",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "T04",
+      "uid": "risk_calc_0004",
+      "rootName": "Update Channel",
+      "treeV2": {
+        "uid": "node_t04_root",
+        "title": "Update Channel",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t04_pa",
+            "title": "Firmware Download",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t04_ou",
+                "title": "Open Update Channel",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Install unsigned firmware package",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t04_01"
+                  },
+                  {
+                    "text": "Downgrade to vulnerable version",
+                    "ds": ["DS3"],
+                    "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3",
+                    "i_norm": "0.48",
+                    "uid": "leaf_t04_02"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.00",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "T05",
+      "uid": "risk_calc_0005",
+      "rootName": "Social Engineering",
+      "treeV2": {
+        "uid": "node_t05_root",
+        "title": "Social Engineering",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t05_pa",
+            "title": "Insider Threat",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t05_ph",
+                "title": "Phishing Attack",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Credential theft via targeted phishing",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t05_01"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" },
+      "i_norm": "1.00",
+      "rootRiskValue": "1.60",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "T06",
+      "uid": "risk_calc_0006",
+      "rootName": "Protocol Stack",
+      "treeV2": {
+        "uid": "node_t06_root",
+        "title": "Protocol Stack",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_t06_pa",
+            "title": "Protocol Attack",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t06_a1",
+                "title": "Message Forgery",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.3" },
+                "i_norm": "1.00",
+                "impacts": [],
+                "children": [
+                  {
+                    "uid": "node_t06_a1a",
+                    "title": "Replay Attack",
+                    "depth": 3,
+                    "collapsed": false,
+                    "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.3" },
+                    "i_norm": "1.00",
+                    "impacts": [
+                      {
+                        "text": "Replay old commands to trigger actions",
+                        "ds": ["DS1"],
+                        "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.3",
+                        "i_norm": "1.00",
+                        "uid": "leaf_t06_01"
+                      }
+                    ],
+                    "children": []
+                  },
+                  {
+                    "uid": "node_t06_a1b",
+                    "title": "Command Injection",
+                    "depth": 3,
+                    "collapsed": false,
+                    "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.1" },
+                    "i_norm": "1.00",
+                    "impacts": [
+                      {
+                        "text": "Inject malicious control commands",
+                        "ds": ["DS1", "DS2"],
+                        "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.1",
+                        "i_norm": "1.00",
+                        "uid": "leaf_t06_02"
+                      }
+                    ],
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "uid": "node_t06_a2",
+                "title": "Denial of Service",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.1", "s": "0.5", "t": "0.1", "u": "0.5" },
+                "i_norm": "0.80",
+                "impacts": [
+                  {
+                    "text": "Flood connection with malformed packets",
+                    "ds": ["DS2", "DS3"],
+                    "k": "0.1", "s": "0.5", "t": "0.1", "u": "0.5",
+                    "i_norm": "0.80",
+                    "uid": "leaf_t06_03"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_t06_pb",
+            "title": "Configuration Exploit",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": { "k": "0.7", "s": "0.3", "t": "0.3", "u": "0.3" },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_t06_b1",
+                "title": "Default Credentials",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": { "k": "0.7", "s": "0.3", "t": "0.3", "u": "0.3" },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Login with manufacturer default credentials",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.7", "s": "0.3", "t": "0.3", "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_t06_04"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.20",
+      "rootRiskLevel": ""
+    }
+  ],
+  "securityGoals": [],
+  "residualRisk": {
+    "leaves": {
+      "risk_calc_0001|B1|Nnode_t01_pm|Lleaf_t01_01": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Network segmentation and encryption",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0001|B1|Nnode_t01_pm|Lleaf_t01_02": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Protocol obfuscation",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0001|B2|Nnode_t01_fi|Lleaf_t01_03": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Frame authentication and filtering",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0002|B1|Nnode_t02_di|Lleaf_t02_01": {
+        "treatment": "Akzeptiert", "note": "Physical access required, acceptable risk",
+        "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0002|B2|Nnode_t02_bm|Lleaf_t02_02": {
+        "treatment": "Akzeptiert", "note": "Tamper-evident seals applied",
+        "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0003|B1|Nnode_t03_bo|Lleaf_t03_01": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Input validation and ASLR",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0003|B1|Nnode_t03_bo|Lleaf_t03_02": {
+        "treatment": "Akzeptiert", "note": "Monitored via IDS",
+        "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0003|B2|Nnode_t03_tc|Lleaf_t03_03": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Software Bill of Materials and integrity checks",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0004|B1|Nnode_t04_ou|Lleaf_t04_01": {
+        "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0004|B1|Nnode_t04_ou|Lleaf_t04_02": {
+        "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0005|B1|Nnode_t05_ph|Lleaf_t05_01": {
+        "treatment": "Delegiert", "note": "Delegated to organizational security team",
+        "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0006|B1|Nnode_t06_a1a|Lleaf_t06_01": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Nonce-based replay protection",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0006|B1|Nnode_t06_a1b|Lleaf_t06_02": {
+        "treatment": "Akzeptiert", "note": "Monitored via anomaly detection",
+        "securityConcept": "", "k": "", "s": "", "t": "", "u": ""
+      },
+      "risk_calc_0006|B1|Nnode_t06_a2|Lleaf_t06_03": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Rate limiting and connection throttling",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      },
+      "risk_calc_0006|B2|Nnode_t06_b1|Lleaf_t06_04": {
+        "treatment": "Mitigiert", "note": "", "securityConcept": "Mandatory credential change on first boot",
+        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+      }
+    },
+    "entries": [
+      {
+        "id": "T01", "uid": "risk_calc_0001", "rootName": "Network Interface",
+        "treeV2": {
+          "uid": "node_t01_root", "title": "Network Interface", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t01_pa", "title": "Traffic Interception", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t01_pm", "title": "Passive Monitoring", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Capture network packets", "ds": ["DS1","DS2"], "k":"0.5","s":"0.3","t":"0.4","u":"0.3", "i_norm":"1.00", "uid":"leaf_t01_01",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Network segmentation and encryption","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }},
+                    { "text": "Protocol analysis and fingerprinting", "ds": ["DS3"], "k":"0.3","s":"0.1","t":"0.2","u":"0.1", "i_norm":"0.48", "uid":"leaf_t01_02",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Protocol obfuscation","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                  ], "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_t01_pb", "title": "Active Injection", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t01_fi", "title": "Frame Injection", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.3" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Inject spoofed data frames", "ds": ["DS1"], "k":"0.3","s":"0.3","t":"0.3","u":"0.3", "i_norm":"1.00", "uid":"leaf_t01_03",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Frame authentication and filtering","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.4", "u": "0.3" }, "i_norm": "1.00", "rootRiskValue": "1.50", "rootRiskLevel": ""
+      },
+      {
+        "id": "T02", "uid": "risk_calc_0002", "rootName": "Physical Port",
+        "treeV2": {
+          "uid": "node_t02_root", "title": "Physical Port", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t02_pa", "title": "Debug Access", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t02_di", "title": "Debug Interface Exploitation", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Memory dump via debug port", "ds": ["DS1","DS2"], "k":"0.5","s":"0.3","t":"0.5","u":"0.5", "i_norm":"1.00", "uid":"leaf_t02_01",
+                      "rr": { "treatment":"Akzeptiert","note":"Physical access required","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                  ], "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_t02_pb", "title": "Hardware Tamper", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1" }, "i_norm": "0.80",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t02_bm", "title": "Board Modification", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1" }, "i_norm": "0.80",
+                  "impacts": [
+                    { "text": "Flash chip replacement attack", "ds": ["DS2","DS3"], "k":"0.3","s":"0.1","t":"0.3","u":"0.1", "i_norm":"0.80", "uid":"leaf_t02_02",
+                      "rr": { "treatment":"Akzeptiert","note":"Tamper-evident seals","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00", "rootRiskValue": "1.80", "rootRiskLevel": ""
+      },
+      {
+        "id": "T03", "uid": "risk_calc_0003", "rootName": "Remote Access",
+        "treeV2": {
+          "uid": "node_t03_root", "title": "Remote Access", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t03_pa", "title": "Software Exploit", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t03_bo", "title": "Buffer Overflow", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Remote code execution via buffer overflow", "ds": ["DS1","DS2","DS3"], "k":"0.7","s":"0.5","t":"0.5","u":"0.5", "i_norm":"1.00", "uid":"leaf_t03_01",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Input validation and ASLR","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }},
+                    { "text": "Privilege escalation after initial access", "ds": ["DS2"], "k":"0.5","s":"0.3","t":"0.3","u":"0.3", "i_norm":"0.80", "uid":"leaf_t03_02",
+                      "rr": { "treatment":"Akzeptiert","note":"Monitored via IDS","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                  ], "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_t03_pb", "title": "Supply Chain Attack", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.5", "t": "0.3", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t03_tc", "title": "Tainted Component", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.5", "t": "0.3", "u": "0.5" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Backdoor in third-party library", "ds": ["DS1","DS3"], "k":"0.3","s":"0.5","t":"0.3","u":"0.5", "i_norm":"1.00", "uid":"leaf_t03_03",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"SBOM and integrity checks","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00", "rootRiskValue": "2.20", "rootRiskLevel": ""
+      },
+      {
+        "id": "T04", "uid": "risk_calc_0004", "rootName": "Update Channel",
+        "treeV2": {
+          "uid": "node_t04_root", "title": "Update Channel", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t04_pa", "title": "Firmware Download", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t04_ou", "title": "Open Update Channel", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Install unsigned firmware package", "ds": ["DS1","DS2"], "k":"0.5","s":"0.5","t":"0.5","u":"0.5", "i_norm":"1.00", "uid":"leaf_t04_01",
+                      "rr": { "treatment":"","note":"","securityConcept":"","k":"","s":"","t":"","u":"" }},
+                    { "text": "Downgrade to vulnerable version", "ds": ["DS3"], "k":"0.3","s":"0.3","t":"0.3","u":"0.3", "i_norm":"0.48", "uid":"leaf_t04_02",
+                      "rr": { "treatment":"","note":"","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00", "rootRiskValue": "2.00", "rootRiskLevel": ""
+      },
+      {
+        "id": "T05", "uid": "risk_calc_0005", "rootName": "Social Engineering",
+        "treeV2": {
+          "uid": "node_t05_root", "title": "Social Engineering", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t05_pa", "title": "Insider Threat", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t05_ph", "title": "Phishing Attack", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Credential theft via targeted phishing", "ds": ["DS1","DS2","DS3"], "k":"0.3","s":"0.3","t":"0.5","u":"0.5", "i_norm":"1.00", "uid":"leaf_t05_01",
+                      "rr": { "treatment":"Delegiert","note":"Delegated to organizational security","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5" }, "i_norm": "1.00", "rootRiskValue": "1.60", "rootRiskLevel": ""
+      },
+      {
+        "id": "T06", "uid": "risk_calc_0006", "rootName": "Protocol Stack",
+        "treeV2": {
+          "uid": "node_t06_root", "title": "Protocol Stack", "depth": 0, "collapsed": false,
+          "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_t06_pa", "title": "Protocol Attack", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t06_a1", "title": "Message Forgery", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.3" }, "i_norm": "1.00",
+                  "impacts": [],
+                  "children": [
+                    {
+                      "uid": "node_t06_a1a", "title": "Replay Attack", "depth": 3, "collapsed": false,
+                      "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.3" }, "i_norm": "1.00",
+                      "impacts": [
+                        { "text": "Replay old commands to trigger actions", "ds": ["DS1"], "k":"0.3","s":"0.1","t":"0.3","u":"0.3", "i_norm":"1.00", "uid":"leaf_t06_01",
+                          "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Nonce-based replay protection","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                      ], "children": []
+                    },
+                    {
+                      "uid": "node_t06_a1b", "title": "Command Injection", "depth": 3, "collapsed": false,
+                      "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.1" }, "i_norm": "1.00",
+                      "impacts": [
+                        { "text": "Inject malicious control commands", "ds": ["DS1","DS2"], "k":"0.5","s":"0.3","t":"0.5","u":"0.1", "i_norm":"1.00", "uid":"leaf_t06_02",
+                          "rr": { "treatment":"Akzeptiert","note":"Monitored via anomaly detection","securityConcept":"","k":"","s":"","t":"","u":"" }}
+                      ], "children": []
+                    }
+                  ]
+                },
+                {
+                  "uid": "node_t06_a2", "title": "Denial of Service", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.1", "s": "0.5", "t": "0.1", "u": "0.5" }, "i_norm": "0.80",
+                  "impacts": [
+                    { "text": "Flood connection with malformed packets", "ds": ["DS2","DS3"], "k":"0.1","s":"0.5","t":"0.1","u":"0.5", "i_norm":"0.80", "uid":"leaf_t06_03",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Rate limiting and throttling","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                  ], "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_t06_pb", "title": "Configuration Exploit", "depth": 1, "collapsed": false,
+              "kstu": { "k": "0.7", "s": "0.3", "t": "0.3", "u": "0.3" }, "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_t06_b1", "title": "Default Credentials", "depth": 2, "collapsed": false,
+                  "kstu": { "k": "0.7", "s": "0.3", "t": "0.3", "u": "0.3" }, "i_norm": "1.00",
+                  "impacts": [
+                    { "text": "Login with manufacturer default credentials", "ds": ["DS1","DS2"], "k":"0.7","s":"0.3","t":"0.3","u":"0.3", "i_norm":"1.00", "uid":"leaf_t06_04",
+                      "rr": { "treatment":"Mitigiert","note":"","securityConcept":"Mandatory credential change on first boot","k":"0.1","s":"0.1","t":"0.1","u":"0.1" }}
+                  ], "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1, "useDeepTree": false, "useSecondIntermediate": false, "useThirdIntermediate": false, "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" }, "i_norm": "1.00", "rootRiskValue": "2.20", "rootRiskLevel": ""
+      }
+    ],
+    "treeNotes": {}
+  }
+}
