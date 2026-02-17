@@ -34,6 +34,7 @@
             <div class="utility-actions">
                 <button id="btnImportAnalysis" class="action-button small"><i class="fas fa-file-import"></i> Import</button>
                 <button id="btnExportAnalysis" class="action-button small"><i class="fas fa-file-export"></i> Export</button>
+                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="Über TARA Tool & SBOM"><i class="fas fa-info-circle"></i> About</button>
             </div>
         </div>
 
@@ -408,9 +409,17 @@
         </div>
     </div>
     
+    <div id="aboutModal" class="modal" style="display:none;">
+        <div class="modal-content about-modal-content">
+            <span class="close-button" onclick="closeAboutModal()">&times;</span>
+            <div id="aboutBodyContent"></div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
 
     <!-- Core -->
+    <script src="js/core/about.js"></script>
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/analysis_core.js"></script>

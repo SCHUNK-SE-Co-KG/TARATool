@@ -72,7 +72,7 @@ Der **Cyber Resilience Act (CRA)** – Verordnung (EU) 2024/2847 – ist seit De
 ### Starten
 
 ```
-git clone https://github.com/Bheowulf/TARATool.git
+git clone https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 cd TARATool
 ```
 
@@ -202,7 +202,7 @@ Dieses Projekt ist lizenziert unter der **GNU General Public License v3.0** – 
 
 ```
 TARA Tool – Browser-basierte Bedrohungs- und Risikoanalyse
-Copyright (C) 2026 Bheowulf
+Copyright (C) 2026 SCHUNK SE & Co. KG
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
