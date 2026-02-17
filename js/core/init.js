@@ -1,6 +1,7 @@
 /**
  * @file        init.js
- * @description Application initialization and DOM event listener setup
+ * @description Application initialization and DOM event listener setup.
+ *              Single, consolidated DOMContentLoaded handler for the entire core.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
@@ -8,6 +9,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // Refresh todayISO so it's current even if the page was loaded yesterday
+    todayISO = getTodayISO();
     
     // 1. Initialization
     if (typeof loadAnalyses === 'function') loadAnalyses();
@@ -17,13 +21,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstId = analysisData[0].id;
         if (typeof activateAnalysis === 'function') activateAnalysis(firstId); 
     } else {
-        if (typeof fillAnalysisForm === 'function') fillAnalysisForm(defaultAnalysis);
-        if (statusBarMessage) statusBarMessage.textContent = 'Bitte starten Sie eine neue Analyse.';
+        if (typeof fillAnalysisForm === 'function') fillAnalysisForm(createDefaultAnalysis());
+        const elStatus = document.getElementById('statusBarMessage');
+        if (elStatus) elStatus.textContent = 'Bitte starten Sie eine neue Analyse.';
     }
     
     // 2. Listener for the analysis selector
-    if (analysisSelector) {
-        analysisSelector.addEventListener('change', (e) => {
+    const elSelector = document.getElementById('analysisSelector');
+    if (elSelector) {
+        elSelector.addEventListener('change', (e) => {
             if (typeof activateAnalysis === 'function') activateAnalysis(e.target.value);
         });
     }
@@ -45,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // 4. TAB NAVIGATION
+    // 4. TAB NAVIGATION (uses shared renderActiveTab from globals.js)
     const tabs = document.querySelectorAll('.tab-navigation .tab-button');
     tabs.forEach(button => {
         button.addEventListener('click', (e) => {
@@ -66,78 +72,93 @@ document.addEventListener('DOMContentLoaded', () => {
                 tabContent.style.display = 'block';
             }
             
-            // Call render functions
+            // Render active tab content (shared function – DRY)
             const activeAnalysis = analysisData.find(a => a.id === activeAnalysisId);
-            if (!activeAnalysis) return;
-            
-            if (tabId === 'tabOverview') {
-                if (typeof renderOverview === 'function') renderOverview(activeAnalysis);
-            }
-            else if (tabId === 'tabAssets') {
-                if (typeof renderAssets === 'function') renderAssets(activeAnalysis);
-            } 
-            else if (tabId === 'tabDamageScenarios') {
-                if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
-                if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-            }
-            else if (tabId === 'tabSecurityGoals') {
-                if (typeof renderSecurityGoals === 'function') renderSecurityGoals(activeAnalysis);
-            }
-            else if (tabId === 'tabRiskAnalysis') {
-                if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
-            }
-            else if (tabId === 'tabResidualRisk') {
-                if (typeof renderResidualRisk === 'function') renderResidualRisk(activeAnalysis);
+            if (activeAnalysis) {
+                renderActiveTab(activeAnalysis, tabId);
             }
         });
     });
 
-    // 5. BUTTON EVENTS
+    // 5. BUTTON EVENTS (explicit getElementById for all buttons)
     const btnDeleteAnalysis = document.getElementById('btnDeleteAnalysis');
     if (btnDeleteAnalysis) {
         btnDeleteAnalysis.onclick = () => {
             if (typeof deleteActiveAnalysis === 'function') {
                 deleteActiveAnalysis();
             }
-    };
-}
+        };
+    }
 
-    if (btnExportAnalysis) {
-        btnExportAnalysis.onclick = () => {
+    const elBtnExport = document.getElementById('btnExportAnalysis');
+    if (elBtnExport) {
+        elBtnExport.onclick = () => {
             if (typeof exportAnalysis === 'function') exportAnalysis();
         };
     }
 
-    if (btnImportAnalysis) {
-        btnImportAnalysis.onclick = () => {
-            if (importFileInput) importFileInput.value = '';
-            if (importAnalysisModal) importAnalysisModal.style.display = 'block';
+    const elBtnImport = document.getElementById('btnImportAnalysis');
+    const elImportFile = document.getElementById('importFileInput');
+    const elImportModal = document.getElementById('importAnalysisModal');
+    if (elBtnImport) {
+        elBtnImport.onclick = () => {
+            if (elImportFile) elImportFile.value = '';
+            if (elImportModal) elImportModal.style.display = 'block';
         };
     }
     
-    if (btnNewAnalysis) {
-        btnNewAnalysis.onclick = () => {
-            if (newAnalysisForm) newAnalysisForm.reset();
-	            if (typeof prepareNewAnalysisModal === 'function') prepareNewAnalysisModal();
-            if (newAnalysisModal) newAnalysisModal.style.display = 'block';
+    const elBtnNew = document.getElementById('btnNewAnalysis');
+    const elNewForm = document.getElementById('newAnalysisForm');
+    const elNewModal = document.getElementById('newAnalysisModal');
+    if (elBtnNew) {
+        elBtnNew.onclick = () => {
+            if (elNewForm) elNewForm.reset();
+            if (typeof prepareNewAnalysisModal === 'function') prepareNewAnalysisModal();
+            if (elNewModal) elNewModal.style.display = 'block';
         };
     }
 
-    if (btnSave) {
-        btnSave.onclick = () => {
+    const elBtnSave = document.getElementById('btnSave');
+    if (elBtnSave) {
+        elBtnSave.onclick = () => {
             if (typeof saveCurrentAnalysisState === 'function') saveCurrentAnalysisState();
             if (typeof saveAnalyses === 'function') saveAnalyses();
             if (typeof showToast === 'function') showToast('Analyse gespeichert.', 'success');
         };
     }
     
-    if (btnShowVersionControl) {
-        btnShowVersionControl.onclick = () => {
-             const analysis = analysisData.find(a => a.id === activeAnalysisId);
-             if (analysis && typeof renderHistoryTable === 'function') {
-                 renderHistoryTable(analysis);
-                 if (versionControlModal) versionControlModal.style.display = 'block';
-             }
+    const elBtnVersions = document.getElementById('btnShowVersionControl');
+    const elVersionModal = document.getElementById('versionControlModal');
+    if (elBtnVersions) {
+        elBtnVersions.onclick = () => {
+            const analysis = analysisData.find(a => a.id === activeAnalysisId);
+            if (analysis && typeof renderHistoryTable === 'function') {
+                renderHistoryTable(analysis);
+                if (elVersionModal) elVersionModal.style.display = 'block';
+            }
+        };
+    }
+
+    // --- Export Baumdaten (ZIP) ---
+    const btnExportTreeData = document.getElementById("btnExportTreeData");
+    if (btnExportTreeData) {
+        btnExportTreeData.onclick = () => {
+            if (typeof window.downloadTreeDataZip === 'function') {
+                try {
+                    const p = window.downloadTreeDataZip();
+                    if (p && typeof p.then === 'function') {
+                        p.catch((e) => {
+                            console.error('[TreeExport]', e);
+                            if (typeof showToast === 'function') showToast('Baumdaten-Export fehlgeschlagen.', 'error');
+                        });
+                    }
+                } catch (e) {
+                    console.error('[TreeExport]', e);
+                    if (typeof showToast === 'function') showToast('Baumdaten-Export fehlgeschlagen.', 'error');
+                }
+            } else if (typeof showToast === 'function') {
+                showToast('Export-Funktion nicht verfügbar.', 'error');
+            }
         };
     }
 
@@ -163,6 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Report-Funktion nicht verfügbar (jsPDF fehlt?).", "error");
             }
         };
+    }
+
+    // 6. Initialize analysis_core modal listeners (consolidated from separate DOMContentLoaded)
+    if (typeof initAnalysisCoreListeners === 'function') {
+        initAnalysisCoreListeners();
     }
 
 });

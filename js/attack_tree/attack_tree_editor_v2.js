@@ -18,6 +18,9 @@
   const _qs = (sel, root = document) => root.querySelector(sel);
   const _qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  /** Escape user-provided text before embedding in innerHTML to prevent XSS (e.g. from imported JSON). */
+  const _escapeHtml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
   function _confirm({ title, html, confirmText = "Löschen", confirmClass = "primary-button dangerous", onConfirm }) {
     const modal = document.getElementById("confirmationModal");
     const t = document.getElementById("confirmationTitle");
@@ -227,7 +230,7 @@
     del.onclick = () => {
       _confirm({
         title: "Pfad löschen",
-        html: `Möchten Sie den Pfad <b>${(node.title || "(unbenannt)")}</b> wirklich löschen?`,
+        html: `Möchten Sie den Pfad <b>${_escapeHtml(node.title || "(unbenannt)")}</b> wirklich löschen?`,
         confirmText: "Löschen",
         onConfirm: () => {
           const idx = parent.children.findIndex((c) => c.uid === node.uid);
@@ -319,7 +322,7 @@
     del.onclick = () => {
       _confirm({
         title: "Auswirkung löschen",
-        html: `Möchten Sie die Auswirkung <b>${(imp.text || "(unbenannt)")}</b> wirklich löschen?`,
+        html: `Möchten Sie die Auswirkung <b>${_escapeHtml(imp.text || "(unbenannt)")}</b> wirklich löschen?`,
         confirmText: "Löschen",
         onConfirm: () => {
           const idx = node.impacts.findIndex((x) => x.uid === imp.uid);
@@ -400,14 +403,14 @@
     const analysis = editor.analysis;
     if (!analysis) return;
 
-    try { if (typeof populateAttackTreeDropdowns === "function") populateAttackTreeDropdowns(); } catch (_) {}
+    try { if (typeof populateAttackTreeDropdowns === "function") populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT V2] populateAttackTreeDropdowns:', e.message || e); }
 
     const entry = editor.getEntryData({ computeOnly: true });
 
     try {
       if (typeof applyImpactInheritance === "function") applyImpactInheritance(entry, analysis);
       if (typeof applyWorstCaseInheritance === "function") applyWorstCaseInheritance(entry);
-    } catch (_) {}
+    } catch (e) { console.warn('[AT V2] inheritance calc:', e.message || e); }
 
     const rootSum = document.getElementById("at_root_kstu_summary");
     if (rootSum && typeof _renderNodeSummaryHTML === "function") {
@@ -454,7 +457,7 @@
         const rootInput = _qs('input[name="at_root"]');
         if (rootInput) rootInput.value = existingEntry?.rootName || "";
 
-        if (existingEntry?.treeV2) this.root = JSON.parse(JSON.stringify(existingEntry.treeV2));
+        if (existingEntry?.treeV2) this.root = structuredClone(existingEntry.treeV2);
         else if (existingEntry) this.root = legacyToV2(existingEntry);
         else this.root = newNode("", 0);
 
@@ -478,7 +481,7 @@
         render(this, this.root);
         this.updateBreadcrumbs();
 
-        try { if (typeof populateAttackTreeDropdowns === "function") populateAttackTreeDropdowns(); } catch (_) {}
+        try { if (typeof populateAttackTreeDropdowns === "function") populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT V2] populateAttackTreeDropdowns:', e.message || e); }
         this.updateSummaries();
       },
 
@@ -506,7 +509,7 @@
       getEntryData({ computeOnly = false } = {}) {
         const analysis = this.analysis;
 
-        const treeV2 = JSON.parse(JSON.stringify(this.root || newNode("", 0)));
+        const treeV2 = structuredClone(this.root || newNode("", 0));
         if (!treeV2.uid) treeV2.uid = _uid("node");
 
         const entryId = computeOnly
@@ -535,11 +538,8 @@
         try {
           if (analysis && typeof applyImpactInheritance === "function") applyImpactInheritance(entry, analysis);
           if (typeof applyWorstCaseInheritance === "function") applyWorstCaseInheritance(entry);
-          const rk = entry.kstu || {k:"",s:"",t:"",u:""};
-          const rootI = parseFloat(entry.i_norm) || 0;
-          const sumP = (parseFloat(rk.k)||0)+(parseFloat(rk.s)||0)+(parseFloat(rk.t)||0)+(parseFloat(rk.u)||0);
-          entry.rootRiskValue = (rootI * sumP).toFixed(2);
-        } catch (_) {}
+          entry.rootRiskValue = _computeRiskScore(entry.kstu, entry.i_norm).toFixed(2);
+        } catch (e) { console.warn('[AT V2] getEntryData calc:', e.message || e); }
 
         return entry;
       },

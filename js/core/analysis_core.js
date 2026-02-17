@@ -18,44 +18,25 @@ function activateAnalysis(id) {
         if (typeof ensureResidualRiskSynced === 'function') {
             ensureResidualRiskSynced(analysis);
         }
-    } catch (e) {}
+    } catch (e) {
+        console.warn('[activateAnalysis] Residual risk sync error:', e);
+    }
     
     // UI Update
     fillAnalysisForm(analysis);
     
     // Status Bar Update
-    if (statusBarMessage) {
-        statusBarMessage.textContent = `Aktiv: ${analysis.name} (v${analysis.metadata.version})`;
+    const elStatusBar = document.getElementById('statusBarMessage');
+    if (elStatusBar) {
+        elStatusBar.textContent = `Aktiv: ${analysis.name} (v${analysis.metadata.version})`;
     }
     
     // Dropdown Sync
-    if (analysisSelector) analysisSelector.value = id;
+    const elSelector = document.getElementById('analysisSelector');
+    if (elSelector) elSelector.value = id;
 
-    // Re-render the active tab
-    const activeTabBtn = document.querySelector('.tab-button.active');
-    if (activeTabBtn) {
-        const tabId = activeTabBtn.dataset.tab;
-        
-        if (tabId === 'tabOverview') {
-            renderOverview(analysis);
-        }
-        else if (tabId === 'tabAssets' && typeof renderAssets === 'function') {
-            renderAssets(analysis);
-        }
-        else if (tabId === 'tabDamageScenarios') {
-            if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
-            if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-        }
-        else if (tabId === 'tabSecurityGoals') {
-            if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
-        }
-        else if (tabId === 'tabRiskAnalysis') {
-            if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
-        }
-        else if (tabId === 'tabResidualRisk') {
-            if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
-        }
-    }
+    // Re-render the active tab (using shared function from globals.js)
+    renderActiveTab(analysis);
 }
 
 // =============================================================
@@ -63,14 +44,15 @@ function activateAnalysis(id) {
 // =============================================================
 
 function renderAnalysisSelector() {
-    if (!analysisSelector) return;
-    analysisSelector.innerHTML = '';
+    const elSelector = document.getElementById('analysisSelector');
+    if (!elSelector) return;
+    elSelector.innerHTML = '';
     
     if (analysisData.length === 0) {
         const option = document.createElement('option');
         option.textContent = 'Keine Analysen vorhanden';
         option.value = '';
-        analysisSelector.appendChild(option);
+        elSelector.appendChild(option);
         return;
     }
 
@@ -81,19 +63,26 @@ function renderAnalysisSelector() {
         if (analysis.id === activeAnalysisId) {
             option.selected = true;
         }
-        analysisSelector.appendChild(option);
+        elSelector.appendChild(option);
     });
 }
 
 function fillAnalysisForm(analysis) {
-    if (analysisNameDisplay) analysisNameDisplay.textContent = analysis.name;
-    if (inputAnalysisName) inputAnalysisName.value = analysis.name;
-    if (inputDescription) inputDescription.value = analysis.description;
-    if (inputIntendedUse) inputIntendedUse.value = analysis.intendedUse;
-    if (inputAuthorName) inputAuthorName.value = analysis.metadata.author; 
+    const elNameDisplay = document.getElementById('analysisNameDisplay');
+    const elName     = document.getElementById('inputAnalysisName');
+    const elDesc     = document.getElementById('inputDescription');
+    const elUse      = document.getElementById('inputIntendedUse');
+    const elAuthor   = document.getElementById('inputAuthorName');
+    const elMetadata = document.getElementById('analysisMetadata');
+
+    if (elNameDisplay) elNameDisplay.textContent = analysis.name;
+    if (elName)     elName.value = analysis.name;
+    if (elDesc)     elDesc.value = analysis.description;
+    if (elUse)      elUse.value = analysis.intendedUse;
+    if (elAuthor)   elAuthor.value = analysis.metadata.author; 
     
-    if (analysisMetadata) {
-        analysisMetadata.innerHTML = `
+    if (elMetadata) {
+        elMetadata.innerHTML = `
             <span>Version: ${analysis.metadata.version}</span> | 
             <span>Autor: ${analysis.metadata.author}</span> | 
             <span>Datum: ${analysis.metadata.date}</span>
@@ -119,25 +108,14 @@ function renderOverview(analysis) {
     const risks = analysis.riskEntries || [];
     if (elRiskCount) elRiskCount.textContent = risks.length;
 
-    // 2. Detailed risk categorization
-    let cCrit = 0;   // >= 2.0
-    let cHigh = 0;   // >= 1.6
-    let cMed = 0;    // >= 0.8
-    let cLow = 0;    // < 0.8
+    // 2. Detailed risk categorization (uses global RISK_THRESHOLDS via getRiskMeta)
+    const dist = { 'Kritisch': 0, 'Hoch': 0, 'Mittel': 0, 'Niedrig': 0 };
 
     risks.forEach(r => {
         const val = parseFloat(r.rootRiskValue);
         if (isNaN(val)) return;
-
-        if (val >= 2.0) {
-            cCrit++;
-        } else if (val >= 1.6) {
-            cHigh++;
-        } else if (val >= 0.8) {
-            cMed++;
-        } else {
-            cLow++;
-        }
+        const label = getRiskMeta(val).label;
+        if (label in dist) dist[label]++;
     });
 
     // Write values to the new fields
@@ -146,10 +124,10 @@ function renderOverview(analysis) {
     const elMed = document.getElementById('statMed');
     const elLow = document.getElementById('statLow');
 
-    if (elCrit) elCrit.textContent = cCrit;
-    if (elHigh) elHigh.textContent = cHigh;
-    if (elMed) elMed.textContent = cMed;
-    if (elLow) elLow.textContent = cLow;
+    if (elCrit) elCrit.textContent = dist['Kritisch'];
+    if (elHigh) elHigh.textContent = dist['Hoch'];
+    if (elMed) elMed.textContent = dist['Mittel'];
+    if (elLow) elLow.textContent = dist['Niedrig'];
 
     // 3. Residual risk distribution (based on residual risk root per attack tree)
     // If residual risk does not exist yet, it will be synced automatically.
@@ -157,12 +135,11 @@ function renderOverview(analysis) {
         if (typeof ensureResidualRiskSynced === 'function') {
             ensureResidualRiskSynced(analysis);
         }
-    } catch (_) {}
+    } catch (e) {
+        console.warn('[renderOverview] Residual risk sync error:', e);
+    }
 
-    let rrCrit = 0;
-    let rrHigh = 0;
-    let rrMed = 0;
-    let rrLow = 0;
+    const rrDist = { 'Kritisch': 0, 'Hoch': 0, 'Mittel': 0, 'Niedrig': 0 };
 
     risks.forEach(r => {
         if (!r?.uid) return;
@@ -172,21 +149,16 @@ function renderOverview(analysis) {
                 const m = computeResidualTreeMetrics(analysis, r.uid);
                 if (m && m.riskValue !== undefined) val = parseFloat(m.riskValue);
             }
-        } catch (_) {}
+        } catch (e) {
+            console.warn('[renderOverview] computeResidualTreeMetrics error for uid', r.uid, e);
+        }
         if (isNaN(val)) {
             val = parseFloat(r.rootRiskValue);
         }
         if (isNaN(val)) return;
 
-        if (val >= 2.0) {
-            rrCrit++;
-        } else if (val >= 1.6) {
-            rrHigh++;
-        } else if (val >= 0.8) {
-            rrMed++;
-        } else {
-            rrLow++;
-        }
+        const label = getRiskMeta(val).label;
+        if (label in rrDist) rrDist[label]++;
     });
 
     const elRRCrit = document.getElementById('statRRCrit');
@@ -194,10 +166,10 @@ function renderOverview(analysis) {
     const elRRMed = document.getElementById('statRRMed');
     const elRRLow = document.getElementById('statRRLow');
 
-    if (elRRCrit) elRRCrit.textContent = rrCrit;
-    if (elRRHigh) elRRHigh.textContent = rrHigh;
-    if (elRRMed) elRRMed.textContent = rrMed;
-    if (elRRLow) elRRLow.textContent = rrLow;
+    if (elRRCrit) elRRCrit.textContent = rrDist['Kritisch'];
+    if (elRRHigh) elRRHigh.textContent = rrDist['Hoch'];
+    if (elRRMed) elRRMed.textContent = rrDist['Mittel'];
+    if (elRRLow) elRRLow.textContent = rrDist['Niedrig'];
 }
 
 
@@ -228,23 +200,20 @@ function exportAnalysis() {
     showToast('Analyse exportiert.', 'success');
 }
 
-if (closeImportAnalysisModal) {
-    closeImportAnalysisModal.onclick = () => {
-        if (importAnalysisModal) importAnalysisModal.style.display = 'none';
-    };
-}
-
 function executeImport() {
-    const file = importFileInput.files[0];
-    if (!file) {
+    const elFileInput = document.getElementById('importFileInput');
+    const elModal     = document.getElementById('importAnalysisModal');
+
+    if (!elFileInput || !elFileInput.files[0]) {
         showToast('Bitte eine Datei auswählen.', 'warning');
         return;
     }
     
+    const file = elFileInput.files[0];
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = (ev) => {
         try {
-            const json = JSON.parse(e.target.result);
+            const json = JSON.parse(ev.target.result);
             if (json.id && json.metadata) {
                 if (analysisData.some(a => a.id === json.id)) {
                     json.id = json.id + '_imp_' + Date.now();
@@ -253,25 +222,14 @@ function executeImport() {
                 
                 analysisData.push(json);
 
-                // Import migration: ensure fields + risk UIDs + residual risk sync
-                try {
-                    if (!json.damageScenarios) json.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
-                    if (!json.impactMatrix) json.impactMatrix = {};
-                    if (!json.securityGoals) json.securityGoals = [];
-                    if (!json.residualRisk) json.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
-                    if (!json.residualRisk.leaves) json.residualRisk.leaves = {};
-                    if (!Array.isArray(json.residualRisk.entries)) json.residualRisk.entries = [];
-                    if (!json.residualRisk.treeNotes) json.residualRisk.treeNotes = {};
-                    if (!Array.isArray(json.riskEntries)) json.riskEntries = [];
-                    json.riskEntries.forEach(e => { if (e && !e.uid && typeof generateUID === 'function') e.uid = generateUID('risk'); });
-                    if (typeof syncResidualRiskFromRiskAnalysis === 'function') syncResidualRiskFromRiskAnalysis(json, false);
-                } catch (e) {}
+                // Use shared migration function (single source of truth)
+                migrateAnalysis(json);
 
                 saveAnalyses();
                 renderAnalysisSelector();
                 activateAnalysis(json.id);
                 
-                importAnalysisModal.style.display = 'none';
+                if (elModal) elModal.style.display = 'none';
                 showToast(`Analyse "${json.name}" erfolgreich importiert.`, 'success');
             } else {
                 showToast('Importfehler: Ungültige Datenstruktur.', 'error');
@@ -348,11 +306,11 @@ function createNewAnalysis(e) {
     const nameInput = document.getElementById('newAnalysisName');
     const modal = document.getElementById('newAnalysisModal');
     
-    const newName = nameInput.value.trim();
+    const newName = nameInput ? nameInput.value.trim() : '';
     if (!newName) return;
 
-    // Generate unique ID
-    const newId = 'tara-' + (analysisData.length + 1).toString().padStart(3, '0') + '-' + Date.now().toString().slice(-4);
+    // Generate collision-safe unique ID using UUID
+    const newId = 'tara-' + generateUID('id').replace('id_', '');
     
     // Optional: copy from existing analysis
     const copyGroup = document.getElementById('copyExistingAnalysisGroup');
@@ -372,25 +330,27 @@ function createNewAnalysis(e) {
 
     // Fallback: default structure
     if (!newAnalysis) {
-        newAnalysis = JSON.parse(JSON.stringify(defaultAnalysis));
+        newAnalysis = createDefaultAnalysis();
     }
+
+    const today = getTodayISO();
     newAnalysis.id = newId;
     newAnalysis.name = newName;
     // Reset metadata/history for new analysis
-    if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: 'Unbekannt', date: todayISO };
+    if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: 'Unbekannt', date: today };
     newAnalysis.metadata.version = INITIAL_VERSION;
-    newAnalysis.metadata.date = todayISO;
+    newAnalysis.metadata.date = today;
 
     // Initialize history (do not carry over old history)
     newAnalysis.history = [
         {
             version: INITIAL_VERSION,
-            date: todayISO,
+            date: today,
             author: (newAnalysis.metadata && newAnalysis.metadata.author) ? newAnalysis.metadata.author : 'System',
             comment: copySourceName ? `Kopie von: ${copySourceName}` : 'Initiale Erstellung',
             state: {
                 name: newName,
-                metadata: { ...(newAnalysis.metadata || {}), version: INITIAL_VERSION, date: todayISO },
+                metadata: { ...(newAnalysis.metadata || {}), version: INITIAL_VERSION, date: today },
                 description: newAnalysis.description || '',
                 intendedUse: newAnalysis.intendedUse || '',
                 assets: JSON.parse(JSON.stringify(newAnalysis.assets || [])),
@@ -419,12 +379,17 @@ function createNewAnalysis(e) {
     showToast(`Analyse "${newName}" wurde erstellt.`, 'success');
 }
 
-// Event listeners rebinding
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Initializes event listeners for analysis_core modals and buttons.
+ * Called from the central DOMContentLoaded handler in init.js.
+ */
+function initAnalysisCoreListeners() {
     const form = document.getElementById('newAnalysisForm');
     const modal = document.getElementById('newAnalysisModal');
     const closeBtn = document.getElementById('closeNewAnalysisModal');
     const btnToggleCopy = document.getElementById('btnToggleCopyExistingAnalysis');
+    const closeImport = document.getElementById('closeImportAnalysisModal');
+    const importModal = document.getElementById('importAnalysisModal');
 
     // Submit handler (create)
     if (form) {
@@ -458,9 +423,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Import modal close button (moved from top-level scope into DOMContentLoaded)
+    if (closeImport && importModal) {
+        closeImport.onclick = () => {
+            importModal.style.display = 'none';
+        };
+    }
+
     // Initial reset
     prepareNewAnalysisModal();
-});
+}
 
 /**
  * Deletes the currently active analysis after user confirmation.
@@ -478,6 +450,11 @@ function deleteActiveAnalysis() {
     const btnConfirm = document.getElementById('btnConfirmAction');
     const btnCancel = document.getElementById('btnCancelConfirmation');
     const btnClose = document.getElementById('closeConfirmationModal');
+
+    if (!modal) {
+        console.warn('[deleteActiveAnalysis] Confirmation modal not found in DOM.');
+        return;
+    }
 
     if (title) title.textContent = 'Gesamte Analyse löschen';
     if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${analysis.name}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
@@ -501,9 +478,9 @@ function deleteActiveAnalysis() {
         // Remove from list
         analysisData = analysisData.filter(a => a.id !== activeAnalysisId);
         
-        // If no analyses remain, create empty default analysis
+        // If no analyses remain, create fresh default analysis
         if (analysisData.length === 0) {
-            analysisData = [JSON.parse(JSON.stringify(defaultAnalysis))];
+            analysisData = [createDefaultAnalysis()];
         }
         
         // Select the next available analysis (first in list)

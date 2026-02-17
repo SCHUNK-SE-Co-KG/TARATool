@@ -13,6 +13,9 @@ import pytest
 from pathlib import Path
 from playwright.sync_api import Page, BrowserContext, expect
 
+# Prevent pytest from collecting non-Python files matching test_* patterns
+collect_ignore_glob = ["*.txt", "*.html", "*.json", "*.bat"]
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------

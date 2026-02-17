@@ -12,17 +12,49 @@ function _parseKSTUValue(val) {
     return isNaN(num) ? null : num;
 }
 
+// Alias: _parseImpactValue is identical to _parseKSTUValue (DRY)
+const _parseImpactValue = _parseKSTUValue;
+
+// --- Methodology Constants ---
+const PROTECTION_LEVEL_WEIGHTS = { 'I': 0.6, 'II': 0.8, 'III': 1.0 };
+const SEVERITY_LEVEL_FACTORS  = { '0': 0.0, '1': 0.3, '2': 0.6, '3': 1.0 };
+// Risk level thresholds for attack-tree classification (English labels)
+// NOTE: The global RISK_THRESHOLDS (array) in globals.js is for UI display (German labels).
+const _TREE_RISK_LEVELS = { critical: 2.0, high: 1.6, medium: 0.8 };
+
+// --- Centralized Risk Calculation Helpers ---
+function _computeRiskScore(kstu, iNorm) {
+    const valI = parseFloat(iNorm) || 0;
+    const sumP = (parseFloat(kstu?.k) || 0) + (parseFloat(kstu?.s) || 0)
+               + (parseFloat(kstu?.t) || 0) + (parseFloat(kstu?.u) || 0);
+    return valI * sumP;
+}
+
+function _getRiskLevel(riskScore) {
+    const R = parseFloat(riskScore) || 0;
+    if (R >= _TREE_RISK_LEVELS.critical) return 'critical';
+    if (R >= _TREE_RISK_LEVELS.high)     return 'high';
+    if (R >= _TREE_RISK_LEVELS.medium)   return 'medium';
+    return 'low';
+}
+
+function _getRiskCssClass(riskScore) {
+    return 'risk-val-' + _getRiskLevel(riskScore);
+}
+
 function _getTreeDepthForData(treeData) {
     const d = parseInt(treeData?.treeDepth, 10);
     // 1: Root -> Path -> Leaves
     // 2: Root -> Path -> Intermediate path(s) (parallel) -> Leaves
     // 3: Root -> Path -> Intermediate node -> Intermediate node 2 -> Leaves
+    // 4: Root -> Path -> Intermediate node -> Intermediate node 2 -> Intermediate node 3 -> Leaves
     if (d === 1) return 1;
     if (d === 2) return 2;
     if (d === 3) {
         // Backwards-compatible: old depth=3 entries were "2nd intermediate path"
         return (treeData?.useThirdIntermediate === true) ? 3 : 2;
     }
+    if (d === 4) return 4;
     return treeData?.useDeepTree ? 2 : 1;
 }
 
@@ -38,7 +70,11 @@ function _kstuWorstCase(items) {
         items.forEach(it => {
             if (!it) return;
             let raw = it[key];
-            if (it.kstu && it.kstu[key]) raw = it.kstu[key];
+            // Prefer kstu sub-object value if present (explicit null-check;
+            // previous truthiness check would skip valid '0' or 0 values)
+            if (it.kstu && it.kstu[key] !== undefined && it.kstu[key] !== null) {
+                raw = it.kstu[key];
+            }
             const v = _parseKSTUValue(raw);
             if (v === null) return;
             if (max === null || v > max) max = v;
@@ -60,17 +96,10 @@ function computeLeafImpactNorm(dsList, analysis) {
         const row = analysis.impactMatrix[asset.id];
         if (!row) return;
 
-        let gFactor = 0.6; 
-        if (asset.schutzbedarf === 'III') gFactor = 1.0;
-        else if (asset.schutzbedarf === 'II') gFactor = 0.8;
-        else if (asset.schutzbedarf === 'I') gFactor = 0.6;
+        const gFactor = PROTECTION_LEVEL_WEIGHTS[asset.schutzbedarf] || PROTECTION_LEVEL_WEIGHTS['I'];
         
         dsList.forEach(dsId => {
-            const rawVal = row[dsId]; 
-            let sFactor = 0.0;
-            if (rawVal === '3') sFactor = 1.0;       
-            else if (rawVal === '2') sFactor = 0.6;  
-            else if (rawVal === '1') sFactor = 0.3;  
+            const sFactor = SEVERITY_LEVEL_FACTORS[row[dsId]] || 0.0;
             
             if (sFactor > 0) {
                 const currentWeightedImpact = sFactor * gFactor;
@@ -164,11 +193,6 @@ function applyWorstCaseInheritance(treeData) {
     return treeData;
 }
 
-
-function _parseImpactValue(val) {
-    const num = parseFloat(val);
-    return isNaN(num) ? null : num;
-}
 
 function applyImpactInheritance(treeData, analysis) {
     if (treeData && treeData.treeV2) return applyImpactInheritanceV2(treeData, analysis);
@@ -272,27 +296,17 @@ function applyImpactInheritance(treeData, analysis) {
 
 
 function _renderNodeSummaryHTML(kstu, iNorm) {
-    const valK = parseFloat(kstu?.k) || 0;
-    const valS = parseFloat(kstu?.s) || 0;
-    const valT = parseFloat(kstu?.t) || 0;
-    const valU = parseFloat(kstu?.u) || 0;
-    const valI = parseFloat(iNorm) || 0;
-
-    const sumP = valK + valS + valT + valU;
-    const riskR = (valI * sumP).toFixed(2);
+    const riskScore = _computeRiskScore(kstu, iNorm);
+    const riskR = riskScore.toFixed(2);
     
-    const dispI = (iNorm === '' || iNorm === null) ? '-' : iNorm;
-    const dispK = (kstu?.k === null || kstu?.k === '') ? '-' : kstu.k;
-    const dispS = (kstu?.s === null || kstu?.s === '') ? '-' : kstu.s;
-    const dispT = (kstu?.t === null || kstu?.t === '') ? '-' : kstu.t;
-    const dispU = (kstu?.u === null || kstu?.u === '') ? '-' : kstu.u;
+    const _disp = (v) => (v === null || v === undefined || v === '') ? '-' : v;
+    const dispI = _disp(iNorm);
+    const dispK = _disp(kstu?.k);
+    const dispS = _disp(kstu?.s);
+    const dispT = _disp(kstu?.t);
+    const dispU = _disp(kstu?.u);
 
-    let riskClass = 'risk-val-low';
-    const R = parseFloat(riskR);
-    if (R >= 2.0) riskClass = 'risk-val-critical';
-    else if (R >= 1.6) riskClass = 'risk-val-high';
-    else if (R >= 0.8) riskClass = 'risk-val-medium';
-    else if (R > 0) riskClass = 'risk-val-low'; 
+    const riskClass = _getRiskCssClass(riskScore); 
 
     return `
         <div class="ns-row" style="background-color: #f0f0f0;">
@@ -440,15 +454,15 @@ function updateAttackTreeKSTUSummariesFromForm() {
     for (let idx = 1; idx <= 20; idx++) {
         const leafObj = (() => {
             // Determine: which branch/group does idx belong to?
-            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0].l2_nodes[0].leaves[idx-1] : formValues.branches[0].leaves[idx-1]);
-            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1].l2_nodes[0].leaves[idx-6] : formValues.branches[1].leaves[idx-6]);
+            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0]?.l2_nodes?.[0]?.leaves?.[idx-1] : formValues.branches[0]?.leaves?.[idx-1]);
+            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1]?.l2_nodes?.[0]?.leaves?.[idx-6] : formValues.branches[1]?.leaves?.[idx-6]);
             if (idx >= 11 && idx <= 15) {
                 if (treeDepth !== 2 || !secondOn) return null;
-                return formValues.branches[0].l2_nodes[1].leaves[idx-11];
+                return formValues.branches[0]?.l2_nodes?.[1]?.leaves?.[idx-11];
             }
             if (idx >= 16 && idx <= 20) {
                 if (treeDepth !== 2 || !secondOn) return null;
-                return formValues.branches[1].l2_nodes[1].leaves[idx-16];
+                return formValues.branches[1]?.l2_nodes?.[1]?.leaves?.[idx-16];
             }
             return null;
         })();
@@ -482,8 +496,16 @@ if (attackTreeForm) {
 }
 
 function generateNextRiskID(analysis) {
-    if (!analysis.riskEntries) return 'R01';
-    return 'R' + (analysis.riskEntries.length + 1).toString().padStart(2, '0');
+    if (!analysis || !analysis.riskEntries || analysis.riskEntries.length === 0) return 'R01';
+    let maxNum = 0;
+    analysis.riskEntries.forEach(entry => {
+        const m = (entry?.id || '').match(/^R(\d+)$/);
+        if (m) {
+            const n = parseInt(m[1], 10);
+            if (n > maxNum) maxNum = n;
+        }
+    });
+    return 'R' + (maxNum + 1).toString().padStart(2, '0');
 }
 
 

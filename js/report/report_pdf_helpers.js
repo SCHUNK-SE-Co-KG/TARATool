@@ -120,12 +120,9 @@
     }
 
     function riskClassFromValue(rVal) {
-        const v = parseFloat(rVal);
-        if (isNaN(v)) return { label: 'Unbekannt', color: [127, 140, 141] };
-        if (v >= 2.0) return { label: 'Kritisch', color: [192, 57, 43] };
-        if (v >= 1.6) return { label: 'Hoch', color: [230, 126, 34] };
-        if (v >= 0.8) return { label: 'Mittel', color: [243, 156, 18] };
-        return { label: 'Niedrig', color: [39, 174, 96] };
+        // Delegates to the global getRiskMeta() (utils.js) for single source of truth
+        const meta = getRiskMeta(rVal);
+        return { label: meta.label, color: meta.colorRGB || [127, 140, 141] };
     }
 
     function formatDate(iso) {

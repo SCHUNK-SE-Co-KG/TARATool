@@ -34,6 +34,7 @@
             <div class="utility-actions">
                 <button id="btnImportAnalysis" class="action-button small"><i class="fas fa-file-import"></i> Import</button>
                 <button id="btnExportAnalysis" class="action-button small"><i class="fas fa-file-export"></i> Export</button>
+                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="Über TARA Tool & SBOM"><i class="fas fa-info-circle"></i> About</button>
             </div>
         </div>
 
@@ -63,8 +64,9 @@
             </div>
 
             <div id="tabOverview" class="tab-content" style="display: block;">
-                <div class="overview-actions" style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                <div class="overview-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px;">
                     <button id="btnGenerateReport" class="action-button"><i class="fas fa-file-pdf"></i> Report (PDF)</button>
+                    <button id="btnExportTreeData" class="action-button"><i class="fas fa-file-archive"></i> Export Baumdaten</button>
                 </div>
 
                 <div class="dashboard-grid">
@@ -407,9 +409,17 @@
         </div>
     </div>
     
+    <div id="aboutModal" class="modal" style="display:none;">
+        <div class="modal-content about-modal-content">
+            <span class="close-button" onclick="closeAboutModal()">&times;</span>
+            <div id="aboutBodyContent"></div>
+        </div>
+    </div>
+
     <div id="toastContainer"></div>
 
     <!-- Core -->
+    <script src="js/core/about.js"></script>
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
     <script src="js/core/analysis_core.js"></script>
@@ -422,6 +432,7 @@
     <script src="js/modules/risk_analysis.js"></script>
 
     <!-- Attack Tree -->
+    <script src="js/attack_tree/attack_tree_structure.js"></script>
     <script src="js/attack_tree/attack_tree_ui.js"></script>
     <script src="js/attack_tree/attack_tree_editor_v2.js"></script>
     <script src="js/attack_tree/attack_tree_calc.js"></script>
@@ -429,6 +440,9 @@
 
     <!-- Versioning -->
     <script src="js/modules/versioning.js"></script>
+
+    <!-- ZIP export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <!-- Report (PDF) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>

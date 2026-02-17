@@ -8,16 +8,28 @@
  */
 
 const INITIAL_VERSION = '0.1'; 
-const todayISO = new Date().toISOString().substring(0, 10);
+
+/**
+ * Returns today's date as ISO string (YYYY-MM-DD).
+ * Use this function instead of a static constant so the date stays correct
+ * even when the browser tab remains open overnight.
+ */
+function getTodayISO() {
+    return new Date().toISOString().substring(0, 10);
+}
+
+// Legacy alias – kept for backward compatibility (e.g. versioning.js top-level references).
+// Prefer getTodayISO() in new code.
+let todayISO = getTodayISO();
 
 // Default damage scenarios
-const DEFAULT_DAMAGE_SCENARIOS = [
-    { id: 'DS1', name: 'Gefahr für Leib und Leben', short: 'Safety', description: 'Verletzung von Personen oder lebensbedrohliche Situationen.' },
-    { id: 'DS2', name: 'Finanzieller Schaden', short: 'Financial', description: 'Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).' },
-    { id: 'DS3', name: 'Verlust von geistigem Eigentum', short: 'IP loss', description: 'Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).' },
-    { id: 'DS4', name: 'Verlust Privatsphäre/Daten', short: 'Privacy', description: 'Verlust sensibler persönlicher oder technischer Daten.' },
-    { id: 'DS5', name: 'Rechtliche Konsequenzen', short: 'Legal', description: 'Verstoß gegen Gesetze oder Vorschriften.' }
-];
+const DEFAULT_DAMAGE_SCENARIOS = Object.freeze([
+    Object.freeze({ id: 'DS1', name: 'Gefahr für Leib und Leben', short: 'Safety', description: 'Verletzung von Personen oder lebensbedrohliche Situationen.' }),
+    Object.freeze({ id: 'DS2', name: 'Finanzieller Schaden', short: 'Financial', description: 'Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).' }),
+    Object.freeze({ id: 'DS3', name: 'Verlust von geistigem Eigentum', short: 'IP loss', description: 'Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).' }),
+    Object.freeze({ id: 'DS4', name: 'Verlust Privatsphäre/Daten', short: 'Privacy', description: 'Verlust sensibler persönlicher oder technischer Daten.' }),
+    Object.freeze({ id: 'DS5', name: 'Rechtliche Konsequenzen', short: 'Legal', description: 'Verstoß gegen Gesetze oder Vorschriften.' })
+]);
 
 // Corrected scalars (probability) according to methodology document
 // Sorting: High risk (high value) -> Low risk (low value)
@@ -53,8 +65,8 @@ const PROBABILITY_CRITERIA = {
             { value: '0.5', text: '0,5 - < 1 Woche' },
             { value: '0.4', text: '0,4 - < 4 Wochen' },
             { value: '0.2', text: '0,2 - < 3 Monate' },
-            { value: '0,1', text: '0,1 - > 3 Monate' } // Note: JS code uses '.' for decimal numbers in calculations, display ',' is fine in text
-        ].map(o => ({...o, value: o.value.replace(',', '.')})) // Ensure values use dots
+            { value: '0.1', text: '0,1 - > 3 Monate' }
+        ]
     },
     'U': { 
         label: 'U (Nutzen)',
@@ -68,32 +80,95 @@ const PROBABILITY_CRITERIA = {
     }
 };
 
+// Risk classification thresholds (single source of truth)
+const RISK_THRESHOLDS = Object.freeze([
+    { min: 2.0, label: 'Kritisch', color: '#c0392b', colorRGB: [192, 57, 43] },
+    { min: 1.6, label: 'Hoch',     color: '#e67e22', colorRGB: [230, 126, 34] },
+    { min: 0.8, label: 'Mittel',   color: '#f39c12', colorRGB: [243, 156, 18] },
+    { min: 0,   label: 'Niedrig',  color: '#27ae60', colorRGB: [39, 174, 96]  }
+]);
+
+const RISK_UNKNOWN = Object.freeze({ label: 'Unbekannt', color: '#7f8c8d', colorRGB: [127, 140, 141] });
+
+// Valid values for impact score selects
+const VALID_IMPACT_VALUES = Object.freeze(['N/A', '1', '2', '3']);
+
 let analysisData = []; 
 let activeAnalysisId = null;
 
-const defaultAnalysis = {
-    id: 'tara-001',
-    name: 'Neue Analyse',
-    description: '',
-    intendedUse: '',
-    metadata: {
-        version: INITIAL_VERSION,
-        author: 'Unbekannt',
-        date: todayISO
-    },
-    history: [
-        {
+/**
+ * Creates a fresh default analysis object with current date.
+ * Always returns a new deep-copied object.
+ */
+function createDefaultAnalysis() {
+    const today = getTodayISO();
+    return {
+        id: 'tara-001',
+        name: 'Neue Analyse',
+        description: '',
+        intendedUse: '',
+        metadata: {
             version: INITIAL_VERSION,
-            date: todayISO,
-            author: 'System',
-            comment: 'Initiale Erstellung',
-            state: null 
-        }
-    ],
-    assets: [],
-    damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
-    impactMatrix: {},
-    riskEntries: [],
-    securityGoals: [],
-    residualRisk: { leaves: {}, entries: [], treeNotes: {} }
-};
+            author: 'Unbekannt',
+            date: today
+        },
+        history: [
+            {
+                version: INITIAL_VERSION,
+                date: today,
+                author: 'System',
+                comment: 'Initiale Erstellung',
+                state: null 
+            }
+        ],
+        assets: [],
+        damageScenarios: JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS)),
+        impactMatrix: {},
+        riskEntries: [],
+        securityGoals: [],
+        residualRisk: { leaves: {}, entries: [], treeNotes: {} }
+    };
+}
+
+// Legacy alias – some code still references defaultAnalysis directly
+const defaultAnalysis = createDefaultAnalysis();
+
+// =============================================================
+// --- SHARED TAB RENDERING (DRY) ---
+// =============================================================
+
+/**
+ * Renders the content of the currently active tab for the given analysis.
+ * Extracted to avoid duplicated if/else-chains in init.js and analysis_core.js.
+ * @param {object} analysis - The analysis data object to render
+ * @param {string} [tabId] - Optional explicit tab ID. If omitted, reads from active tab button.
+ */
+function renderActiveTab(analysis, tabId) {
+    if (!analysis) return;
+
+    if (!tabId) {
+        const activeTabBtn = document.querySelector('.tab-button.active');
+        if (!activeTabBtn) return;
+        tabId = activeTabBtn.dataset.tab;
+    }
+
+    if (tabId === 'tabOverview') {
+        if (typeof renderOverview === 'function') renderOverview(analysis);
+    }
+    else if (tabId === 'tabAssets') {
+        if (typeof renderAssets === 'function') renderAssets(analysis);
+    }
+    else if (tabId === 'tabDamageScenarios') {
+        if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
+        if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+    }
+    else if (tabId === 'tabSecurityGoals') {
+        if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
+    }
+    else if (tabId === 'tabRiskAnalysis') {
+        if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+    }
+    else if (tabId === 'tabResidualRisk') {
+        if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
+    }
+}

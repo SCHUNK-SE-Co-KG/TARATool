@@ -62,7 +62,8 @@
         // =============================================================
         // Chapter 2: Management Summary
         // =============================================================
-        pdf.addSpacer(6);
+        doc.addPage();
+        pdf.currentY = pdf.marginTop;
 
         // Risk distribution
         const dist = { Kritisch: 0, Hoch: 0, Mittel: 0, Niedrig: 0, Unbekannt: 0 };

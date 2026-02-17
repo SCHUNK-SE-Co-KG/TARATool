@@ -16,9 +16,10 @@ function generateDotString(analysis, specificTreeId = null) {
     dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
     dot += '    edge [fontname="Arial", fontsize=9];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap = false;\n    splines = ortho;\n';
-    dot += '    nodesep = 0.8;\n    ranksep = 0.8;\n';
-    dot += '    ordering = out;\n\n';
+    dot += '    overlap=false;\n    splines=spline;\n';
+    dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
+    dot += '    concentrate=true;\n';
+    dot += '    ordering=out;\n\n';
 
     const _fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
@@ -48,7 +49,7 @@ function generateDotString(analysis, specificTreeId = null) {
         const p = _pStr(kstu);
         const i = _fmt(iNorm);
         const r = _calcR(i, kstu);
-        const cleanText = (text || '').replace(/[\{\}<>|\"]/g, "'");
+        const cleanText = (text || '').replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };
 
@@ -381,8 +382,8 @@ function generateDotString(analysis, specificTreeId = null) {
 // Generates a DOT visualization analogous to the risk analysis, but with
 // - R (Original)
 // - RR (Residual Risk)
-// - P(RR) (K/S/T/U after mitigation; only shown for treatment "Mitigated")
-// - additional line: Treatment (Accepted, Delegated, Mitigated, ...)
+// - P(RR) (K/S/T/U representing residual risk; always shown for all treatments)
+// - additional line: Treatment (Accepted, Delegated, Mitigated, Gemischt, ...)
 // The color is based on RR.
 function generateResidualRiskDotString(analysis, specificTreeId = null) {
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
@@ -392,11 +393,11 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
     try {
         if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
         else if (typeof syncResidualRiskFromRiskAnalysis === 'function') syncResidualRiskFromRiskAnalysis(analysis, false);
-    } catch (_) {}
+    } catch (e) { console.warn('[DOT RR] sync error:', e.message || e); }
 
     const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
 
-    const _cleanText = (s) => (s || '').toString().replace(/[\{\}<>|\"]/g, "'");
+    const _cleanText = (s) => (s || '').toString().replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
 
         // JS-Helper: robust float parse (dot/comma)
     const _toNum = (v) => {
@@ -462,7 +463,7 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
 const _buildResidualClone = (baseEntry) => {
     // IMPORTANT: always clone from the risk analysis (baseEntry) so original KSTU/I/R are preserved.
     // Residual risk entry (rrEntry) only provides treatment + optionally mitigated KSTU overrides.
-    const clone = JSON.parse(JSON.stringify(baseEntry || {}));
+    const clone = structuredClone(baseEntry || {});
 
     const rrEntry = rrEntries.find(e => e && e.uid && baseEntry && e.uid === baseEntry.uid) || null;
 
@@ -471,7 +472,7 @@ const _buildResidualClone = (baseEntry) => {
     const collectRR = (node) => {
         if (!node) return;
         (node.impacts || []).forEach(l => {
-            if (l && l.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {}));
+            if (l && l.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
         });
         (node.children || []).forEach(collectRR);
     };
@@ -480,9 +481,9 @@ const _buildResidualClone = (baseEntry) => {
     } else if (rrEntry && Array.isArray(rrEntry.branches)) {
         // Legacy fallback
         (rrEntry.branches || []).forEach(b => {
-            (b?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); });
-            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); }));
-            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(l => { if (l?.uid) rrLeafMap[l.uid] = JSON.parse(JSON.stringify(l.rr || {})); });
+            (b?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
+            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); }));
+            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
         });
     }
 
@@ -533,8 +534,8 @@ const _buildResidualClone = (baseEntry) => {
         });
     }
 
-    try { if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis); } catch (_) {}
-    try { if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone); } catch (_) {}
+    try { if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis); } catch (e) { console.warn('[DOT RR] applyImpactInheritance:', e.message || e); }
+    try { if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone); } catch (e) { console.warn('[DOT RR] applyWorstCaseInheritance:', e.message || e); }
 
     return clone;
 };
@@ -557,9 +558,10 @@ const _buildResidualClone = (baseEntry) => {
     dot += '    node [shape=record, fontname="Arial", fontsize=9];\n';
     dot += '    edge [fontname="Arial", fontsize=8];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=ortho;\n';
-    dot += '    nodesep = 0.8;\n    ranksep = 0.8;\n';
-    dot += '    ordering = out;\n\n';
+    dot += '    overlap=false;\n    splines=spline;\n';
+    dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
+    dot += '    concentrate=true;\n';
+    dot += '    ordering=out;\n\n';
 
     entriesToProcess.forEach(entry => {
         if (!entry) return;
@@ -601,7 +603,7 @@ const _isMitigated = (t) => {
         const rootTreatment = _treatmentNode(rrClone.treeV2);
         const rootNoMit = _isNoMitigation(rootTreatment);
         const rrRootKstuEff = rootNoMit ? (entry.kstu || rrRootKstu) : rrRootKstu;
-        const showPRR = rootNoMit ? _pStr(entry.kstu) : ((_isMitigated(rootTreatment)) ? _pStr(rrRootKstuEff) : '- / - / - / -');
+        const showPRR = _pStr(rrRootKstuEff);
         const rootLabel = `{${_cleanText(entry.rootName)} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | Behandlung: ${_cleanText(rootTreatment)}}`;
         const rootFill = _colorFromScore(_score(entry.i_norm, rrRootKstuEff));
 
@@ -617,7 +619,7 @@ const _isMitigated = (t) => {
             const tNode = rrNode ? _treatmentNode(rrNode) : '-';
             const nodeNoMit = _isNoMitigation(tNode);
             const rrKstuEff = nodeNoMit ? baseNode.kstu : rrKstu;
-            const showPRRNode = nodeNoMit ? _pStr(baseNode.kstu) : ((_isMitigated(tNode)) ? _pStr(rrKstuEff) : '- / - / - / -');
+            const showPRRNode = _pStr(rrKstuEff);
 
             const label = `{${_cleanText(baseNode.title)} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | Behandlung: ${_cleanText(tNode)}}`;
             const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
@@ -640,7 +642,7 @@ const _isMitigated = (t) => {
                 const trLeaf = rrLeaf ? _treatmentLeaf(rrLeaf) : _treatmentLeaf(leaf);
                 const leafNoMit = _isNoMitigation(trLeaf);
                 const rkstuEff = leafNoMit ? okstu : rkstu;
-                const showPRRLeaf = leafNoMit ? _pStr(okstu) : ((_isMitigated(trLeaf)) ? _pStr(rkstuEff) : '- / - / - / -');
+                const showPRRLeaf = _pStr(rkstuEff);
 
                 const leafText = _cleanText(leaf?.text ?? leaf?.name ?? leaf?.label ?? '');
                 const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | Behandlung: ${_cleanText(trLeaf)}}`;
@@ -692,6 +694,118 @@ document.addEventListener('DOMContentLoaded', () => {
 // =============================================================
 // --- EXPORT TRIGGER FOR .DOT FILE ---
 // =============================================================
+
+// =============================================================
+// --- TREE DATA ZIP EXPORT (.dot + .svg per tree) ---
+// =============================================================
+
+window.downloadTreeDataZip = async function() {
+    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
+        return;
+    }
+
+    if (typeof JSZip === 'undefined') {
+        if (typeof showToast === 'function') showToast('JSZip-Bibliothek nicht geladen.', 'error');
+        return;
+    }
+
+    const zip = new JSZip();
+    const h = window.ReportHelpers || {};
+    const analysisName = (analysis.name || analysis.id || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const entries = analysis.riskEntries;
+    let fileCount = 0;
+
+    if (typeof showToast === 'function') showToast('Erzeuge Baumdaten-Export…', 'info');
+
+    // --- Risk Analysis Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `risk/${treeId}_${treeName}`;
+
+        // DOT file
+        try {
+            const dot = typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
+            if (dot) {
+                zip.file(`${prefix}.dot`, dot);
+                fileCount++;
+
+                // SVG via Graphviz rendering
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(dot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Residual Risk Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `residual_risk/${treeId}_${treeName}_RR`;
+
+        try {
+            const rrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis, treeId) : null;
+            if (rrDot) {
+                zip.file(`${prefix}.dot`, rrDot);
+                fileCount++;
+
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(rrDot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Combined DOT (all trees in one file) ---
+    try {
+        const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+        if (allDot) { zip.file(`${analysisName}_alle_Baeume.dot`, allDot); fileCount++; }
+    } catch (_) {}
+
+    try {
+        const allRrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis) : null;
+        if (allRrDot) { zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot); fileCount++; }
+    } catch (_) {}
+
+    if (fileCount === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten zum Exportieren gefunden.', 'warning');
+        return;
+    }
+
+    // Generate and download ZIP
+    try {
+        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+
+        if (typeof showToast === 'function') showToast(`Baumdaten-Export erstellt (${fileCount} Dateien).`, 'success');
+    } catch (err) {
+        console.error('[TreeExport] ZIP generation failed:', err);
+        if (typeof showToast === 'function') showToast('ZIP-Export fehlgeschlagen.', 'error');
+    }
+};
 
 window.downloadDotFile = function() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);

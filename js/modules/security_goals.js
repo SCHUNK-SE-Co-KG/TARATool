@@ -119,14 +119,7 @@
         return Array.from(rootRefsSelect.selectedOptions || []).map(o => o.value);
     }
 
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
+    // escapeHtml() is provided globally via utils.js
 
     function openModal(goal, analysis) {
         if (!modal || !form) return;
@@ -280,44 +273,17 @@
         const goal = analysis.securityGoals.find(g => g.id === id);
         if (!goal) return;
 
-        const confModal = document.getElementById('confirmationModal');
-        const confTitle = document.getElementById('confirmationTitle');
-        const confMsg = document.getElementById('confirmationMessage');
-        const btnConfirm = document.getElementById('btnConfirmAction');
-        const btnCancel = document.getElementById('btnCancelConfirmation');
-        const btnClose = document.getElementById('closeConfirmationModal');
-
-        if (confTitle) confTitle.textContent = 'Security Ziel löschen';
-        if (confMsg) confMsg.innerHTML = `Möchten Sie das Security Ziel <b>${escapeHtml(goal.name)} (${escapeHtml(goal.id)})</b> wirklich löschen?`;
-
-        if (btnConfirm) {
-            btnConfirm.textContent = 'Löschen';
-            btnConfirm.className = 'primary-button dangerous';
-            btnConfirm.onclick = null;
-        }
-        if (btnCancel) btnCancel.onclick = null;
-        if (btnClose) btnClose.onclick = null;
-
-        if (confModal) confModal.style.display = 'block';
-
-        const closeFn = () => {
-            if (confModal) confModal.style.display = 'none';
-        };
-
-        if (btnConfirm) {
-            btnConfirm.onclick = () => {
+        showConfirmation({
+            title: 'Security Ziel löschen',
+            messageHtml: `Möchten Sie das Security Ziel <b>${escapeHtml(goal.name)} (${escapeHtml(goal.id)})</b> wirklich löschen?`,
+            confirmText: 'Löschen',
+            onConfirm: () => {
                 analysis.securityGoals = analysis.securityGoals.filter(g => g.id !== id);
                 if (typeof saveAnalyses === 'function') saveAnalyses();
-
                 renderSecurityGoals(analysis);
-                closeFn();
-
                 if (typeof showToast === 'function') showToast(`Security Ziel ${id} gelöscht.`, 'success');
-            };
-        }
-
-        if (btnCancel) btnCancel.onclick = closeFn;
-        if (btnClose) btnClose.onclick = closeFn;
+            }
+        });
     };
 
     // Bindings

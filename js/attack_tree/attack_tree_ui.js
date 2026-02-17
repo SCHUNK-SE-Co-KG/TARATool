@@ -52,7 +52,7 @@ function openAttackTreeModal(existingEntry = null) {
     // Reset form (browser-implicit global by id)
     if (window.attackTreeForm) window.attackTreeForm.reset();
 
-    try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) {}
+    try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT UI] populateAttackTreeDropdowns:', e.message || e); }
 
     const previewContainer = document.getElementById('graph-preview-container');
     if (previewContainer) previewContainer.innerHTML = '';
@@ -78,7 +78,7 @@ function openAttackTreeModal(existingEntry = null) {
     const rootInput = document.querySelector('input[name="at_root"]');
     if (rootInput) {
         rootInput.oninput = () => {
-            try { if (window.atV2) window.atV2.rerender(); } catch (_) {}
+            try { if (window.atV2) window.atV2.rerender(); } catch (e) { console.warn('[AT UI] atV2.rerender:', e.message || e); }
         };
     }
 
@@ -109,20 +109,20 @@ function saveAttackTree(e) {
         if (typeof showToast === 'function') showToast('Angriffsbaum hinzugefügt.', 'success');
     }
 
-    try { if (typeof reindexRiskIDs === 'function') reindexRiskIDs(analysis); } catch (_) {}
+    try { if (typeof reindexRiskIDs === 'function') reindexRiskIDs(analysis); } catch (e) { console.warn('[AT UI] reindexRiskIDs:', e.message || e); }
 
     try {
         if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
             syncResidualRiskFromRiskAnalysis(analysis, false);
         }
-    } catch (_) {}
+    } catch (e) { console.warn('[AT UI] syncResidualRisk:', e.message || e); }
 
-    try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (_) {}
+    try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (e) { console.warn('[AT UI] saveAnalyses:', e.message || e); }
 
     const modal = document.getElementById('attackTreeModal');
     if (modal) modal.style.display = 'none';
 
-    try { if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis(); } catch (_) {}
+    try { if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis(); } catch (e) { console.warn('[AT UI] renderRiskAnalysis:', e.message || e); }
 }
 
 function readLeafDsFromDOM(leafIndex) {
@@ -168,9 +168,9 @@ function extractLeafData(formData, index) {
 
 // Initialize "Add impact" buttons
 document.addEventListener('DOMContentLoaded', () => {
-    try { initAttackTreeImpactAdders(); } catch (e) {}
-    try { initAttackTreeImpactRemovers(); } catch (e) {}
-    try { initAttackTreeLeafRemovers(); } catch (e) {}
+    try { initAttackTreeImpactAdders(); } catch (e) { console.warn('[AT UI] initAttackTreeImpactAdders:', e.message || e); }
+    try { initAttackTreeImpactRemovers(); } catch (e) { console.warn('[AT UI] initAttackTreeImpactRemovers:', e.message || e); }
+    try { initAttackTreeLeafRemovers(); } catch (e) { console.warn('[AT UI] initAttackTreeLeafRemovers:', e.message || e); }
 });
 
 

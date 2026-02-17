@@ -14,31 +14,14 @@
     // Helpers
     // -----------------------------
 
+    // Delegates to global escapeHtml() in utils.js
     function rrEscapeHtml(str) {
-        return String(str ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+        return escapeHtml(str);
     }
 
+    // Delegates to global getRiskMeta() in utils.js
     function rrGetRiskMeta(rootRiskValue) {
-        const rVal = parseFloat(rootRiskValue);
-        let color = '#7f8c8d';
-        let label = 'Unbekannt';
-
-        if (!isNaN(rVal)) {
-            if (rVal >= 2.0) { color = '#c0392b'; label = 'Kritisch'; }
-            else if (rVal >= 1.6) { color = '#e67e22'; label = 'Hoch'; }
-            else if (rVal >= 0.8) { color = '#f39c12'; label = 'Mittel'; }
-            else { color = '#27ae60'; label = 'Niedrig'; }
-        }
-
-        const display = (rootRiskValue === undefined || rootRiskValue === null || String(rootRiskValue).trim() === '')
-            ? '-' : String(rootRiskValue);
-
-        return { color, label, display };
+        return getRiskMeta(rootRiskValue);
     }
 
     function rrEnsureModalWiring() {
@@ -480,7 +463,9 @@
                     resU = (rkstu.u === undefined || rkstu.u === null || String(rkstu.u).trim() === '') ? '-' : String(rkstu.u);
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[rrRenderTreeCard] computeResidualTreeMetrics error for uid', entry?.uid, e);
+        }
 
         const resMeta = rrGetRiskMeta(resVal);
 
@@ -564,7 +549,9 @@
 
         try {
             if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[renderResidualRisk] Sync error:', e);
+        }
 
         const entries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
             ? analysis.residualRisk.entries

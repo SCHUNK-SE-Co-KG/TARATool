@@ -21,6 +21,12 @@ function getImpactColorClass(val) {
 window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
+
+    // Validate input
+    if (!VALID_IMPACT_VALUES.includes(newValue)) {
+        showToast(`Ungültiger Impact-Wert: ${newValue}`, 'warning');
+        return;
+    }
     
     if (!analysis.impactMatrix) analysis.impactMatrix = {};
     if (!analysis.impactMatrix[assetId]) {
@@ -35,12 +41,13 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     }
 
     saveAnalyses();
-    showToast(`Impact für ${assetId}/${dsId} auf ${newValue} gesetzt.`, 'info');
+    showToast(`Impact für ${escapeHtml(assetId)}/${escapeHtml(dsId)} auf ${escapeHtml(newValue)} gesetzt.`, 'info');
     
-    if (document.getElementById('tabRiskAnalysis').classList.contains('active')) {
+    const riskTab = document.getElementById('tabRiskAnalysis');
+    if (riskTab && riskTab.classList.contains('active')) {
          renderRiskAnalysis();
     }
-}
+};
 
 function renderImpactMatrix() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
@@ -75,8 +82,12 @@ function renderImpactMatrix() {
     html += '<th class="asset-col">Asset (ID: Name)</th>';
     
     displayDS.forEach(ds => {
-        html += `<th class="ds-col" title="${ds.name}: ${ds.description}">
-            <div class="vertical-text">${ds.id} (${ds.short})</div>
+        const eDsName = escapeHtml(ds.name);
+        const eDsDesc = escapeHtml(ds.description);
+        const eDsId = escapeHtml(ds.id);
+        const eDsShort = escapeHtml(ds.short);
+        html += `<th class="ds-col" title="${eDsName}: ${eDsDesc}">
+            <div class="vertical-text">${eDsId} (${eDsShort})</div>
         </th>`;
     });
     
@@ -90,19 +101,21 @@ function renderImpactMatrix() {
             analysis.impactMatrix[asset.id] = {};
         }
 
+        const eAssetId = escapeHtml(asset.id);
+        const eAssetName = escapeHtml(asset.name);
+
         html += '<tr>';
-        html += `<td class="asset-col"><strong>${asset.id}: ${asset.name}</strong></td>`;
+        html += `<td class="asset-col"><strong>${eAssetId}: ${eAssetName}</strong></td>`;
         
         displayDS.forEach(ds => {
             const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
             const colorClass = getImpactColorClass(currentScore);
             
             html += '<td class="score-cell">';
-            // Pass 'this' to the function for direct DOM access
             html += `<select 
-                data-asset-id="${asset.id}" 
-                data-ds-id="${ds.id}" 
-                onchange="updateImpactScore('${asset.id}', '${ds.id}', this.value, this)"
+                data-asset-id="${eAssetId}" 
+                data-ds-id="${escapeHtml(ds.id)}" 
+                onchange="updateImpactScore('${eAssetId}', '${escapeHtml(ds.id)}', this.value, this)"
                 class="impact-select ${colorClass}">
                 <option value="N/A" ${currentScore === 'N/A' ? 'selected' : ''}>N/A</option>
                 <option value="1" ${currentScore === '1' ? 'selected' : ''}>1 (Low)</option>
@@ -117,5 +130,3 @@ function renderImpactMatrix() {
     html += '</tbody></table></div>';
     dsMatrixContainer.innerHTML = html;
 }
-
-
