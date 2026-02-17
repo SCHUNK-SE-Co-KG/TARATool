@@ -18,7 +18,9 @@ const _parseImpactValue = _parseKSTUValue;
 // --- Methodology Constants ---
 const PROTECTION_LEVEL_WEIGHTS = { 'I': 0.6, 'II': 0.8, 'III': 1.0 };
 const SEVERITY_LEVEL_FACTORS  = { '0': 0.0, '1': 0.3, '2': 0.6, '3': 1.0 };
-const RISK_THRESHOLDS = { critical: 2.0, high: 1.6, medium: 0.8 };
+// Risk level thresholds for attack-tree classification (English labels)
+// NOTE: The global RISK_THRESHOLDS (array) in globals.js is for UI display (German labels).
+const _TREE_RISK_LEVELS = { critical: 2.0, high: 1.6, medium: 0.8 };
 
 // --- Centralized Risk Calculation Helpers ---
 function _computeRiskScore(kstu, iNorm) {
@@ -30,9 +32,9 @@ function _computeRiskScore(kstu, iNorm) {
 
 function _getRiskLevel(riskScore) {
     const R = parseFloat(riskScore) || 0;
-    if (R >= RISK_THRESHOLDS.critical) return 'critical';
-    if (R >= RISK_THRESHOLDS.high)     return 'high';
-    if (R >= RISK_THRESHOLDS.medium)   return 'medium';
+    if (R >= _TREE_RISK_LEVELS.critical) return 'critical';
+    if (R >= _TREE_RISK_LEVELS.high)     return 'high';
+    if (R >= _TREE_RISK_LEVELS.medium)   return 'medium';
     return 'low';
 }
 

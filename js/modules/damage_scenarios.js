@@ -50,33 +50,33 @@ function renderDamageScenarios() {
     
     dsList.forEach(ds => {
         const isDefault = DEFAULT_DS_IDS.has(ds.id);
+        const eId = escapeHtml(ds.id);
+        const eName = escapeHtml(ds.name);
+        const eShort = escapeHtml(ds.short);
+        const eDesc = ds.description ? escapeHtml(ds.description) : '— Keine Beschreibung —';
         
-        // NEW LAYOUT:
-        // Row 1: ID and Name
-        // Row 2: (Short) (Standard) -> line break here
-        
-        html += `<li data-id="${ds.id}">
+        html += `<li data-id="${eId}">
             
             <div class="ds-header-row">
                 <div style="flex-grow: 1;">
                     <div class="ds-col-id-name">
-                        <strong>${ds.id}:</strong> ${ds.name} 
+                        <strong>${eId}:</strong> ${eName} 
                     </div>
                     <div class="ds-subtitle-row">
-                        (${ds.short})
+                        (${eShort})
                         ${isDefault ? `<span style="color: #2ecc71; margin-left: 5px; font-weight:600;">(Standard)</span>` : ''}
                     </div>
                 </div>
                 
                 ${isDefault ? '' : `
                 <div class="ds-actions">
-                    <button type="button" onclick="editDamageScenario('${ds.id}')" class="action-button small">Bearbeiten</button>
-                    <button type="button" onclick="removeDamageScenario('${ds.id}')" class="action-button small dangerous">Löschen</button>
+                    <button type="button" onclick="editDamageScenario('${eId}')" class="action-button small">Bearbeiten</button>
+                    <button type="button" onclick="removeDamageScenario('${eId}')" class="action-button small dangerous">Löschen</button>
                 </div>`}
             </div>
 
             <div class="ds-col-description">
-                ${ds.description || '— Keine Beschreibung —'}
+                ${eDesc}
             </div>
 
         </li>`;
@@ -125,8 +125,8 @@ window.saveDamageScenario = function(e) {
     saveAnalyses();
     renderDamageScenarios();
     renderImpactMatrix();
-    damageScenarioModal.style.display = 'none';
-}
+    if (damageScenarioModal) damageScenarioModal.style.display = 'none';
+};
 
 window.editDamageScenario = function(dsId) {
     if (DEFAULT_DS_IDS.has(dsId)) {
@@ -134,7 +134,6 @@ window.editDamageScenario = function(dsId) {
         return;
     }
 
-    console.log("Edit DS Triggered for:", dsId);
     if (!activeAnalysisId) return;
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
@@ -142,10 +141,7 @@ window.editDamageScenario = function(dsId) {
     let ds = analysis.damageScenarios ? analysis.damageScenarios.find(d => d.id === dsId) : null;
     if (!ds) ds = DEFAULT_DAMAGE_SCENARIOS.find(d => d.id === dsId);
 
-    if (!ds) {
-        console.error("DS not found:", dsId);
-        return;
-    }
+    if (!ds) return;
     
     const titleEl = document.getElementById('dsModalTitle');
     const idField = document.getElementById('dsIdField');
@@ -157,8 +153,7 @@ window.editDamageScenario = function(dsId) {
     document.getElementById('dsShort').value = ds.short;
     document.getElementById('dsDescription').value = ds.description;
 
-    const modal = document.getElementById('damageScenarioModal');
-    if (modal) modal.style.display = 'block';
+    if (damageScenarioModal) damageScenarioModal.style.display = 'block';
 };
 
 window.removeDamageScenario = function(dsId) {
@@ -167,60 +162,32 @@ window.removeDamageScenario = function(dsId) {
         return;
     }
 
-    console.log("Remove DS Triggered for:", dsId);
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-    
-    if (DEFAULT_DAMAGE_SCENARIOS.some(d => d.id === dsId)) {
-        showToast('Standard-Szenarien können nicht gelöscht werden.', 'error');
-        return;
-    }
 
     const ds = (analysis.damageScenarios || []).find(d => d.id === dsId);
-    if (!ds) {
-        console.error("DS to remove not found in custom list:", dsId);
-        return;
-    }
+    if (!ds) return;
     
-    const modal = document.getElementById('confirmationModal');
-    const title = document.getElementById('confirmationTitle');
-    const msg = document.getElementById('confirmationMessage');
-    const btnConfirm = document.getElementById('btnConfirmAction');
-    const btnCancel = document.getElementById('btnCancelConfirmation');
-    const btnClose = document.getElementById('closeConfirmationModal');
-
-    if(title) title.textContent = 'Schadensszenario löschen bestätigen';
-    msg.innerHTML = `Sind Sie sicher, dass Sie das Schadensszenario <b>${ds.name} (${dsId})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`;
-    
-    btnConfirm.textContent = 'Ja, DS löschen';
-    btnConfirm.className = 'primary-button dangerous'; 
-    
-    modal.style.display = 'block';
-
-    btnConfirm.onclick = null; 
-    btnCancel.onclick = null;
-    btnClose.onclick = null;
-    
-    btnConfirm.onclick = () => {
-        analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
-        
-        if (analysis.impactMatrix) {
-            for (const assetId in analysis.impactMatrix) {
-                delete analysis.impactMatrix[assetId][dsId];
+    showConfirmation({
+        title: 'Schadensszenario löschen bestätigen',
+        messageHtml: `Sind Sie sicher, dass Sie das Schadensszenario <b>${escapeHtml(ds.name)} (${escapeHtml(dsId)})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`,
+        confirmText: 'Ja, DS löschen',
+        onConfirm: () => {
+            analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
+            
+            if (analysis.impactMatrix) {
+                for (const assetId in analysis.impactMatrix) {
+                    delete analysis.impactMatrix[assetId][dsId];
+                }
             }
+
+            saveAnalyses();
+            renderDamageScenarios();
+            renderImpactMatrix();
+            showToast(`Schadensszenario ${dsId} gelöscht.`, 'success');
         }
-
-        saveAnalyses();
-        renderDamageScenarios();
-        renderImpactMatrix();
-        modal.style.display = 'none'; 
-        showToast(`Schadensszenario ${dsId} gelöscht.`, 'success');
-    };
-
-    const closeFn = () => { modal.style.display = 'none'; };
-    btnCancel.onclick = closeFn;
-    btnClose.onclick = closeFn;
-}
+    });
+};
 
 // =============================================================
 // --- UI WIRING (Button/Modal/Form) ---
@@ -259,5 +226,3 @@ if (closeDamageScenarioModal) {
         if (damageScenarioModal) damageScenarioModal.style.display = 'none';
     };
 }
-
-// Helper function for colors

@@ -108,25 +108,14 @@ function renderOverview(analysis) {
     const risks = analysis.riskEntries || [];
     if (elRiskCount) elRiskCount.textContent = risks.length;
 
-    // 2. Detailed risk categorization
-    let cCrit = 0;   // >= 2.0
-    let cHigh = 0;   // >= 1.6
-    let cMed = 0;    // >= 0.8
-    let cLow = 0;    // < 0.8
+    // 2. Detailed risk categorization (uses global RISK_THRESHOLDS via getRiskMeta)
+    const dist = { 'Kritisch': 0, 'Hoch': 0, 'Mittel': 0, 'Niedrig': 0 };
 
     risks.forEach(r => {
         const val = parseFloat(r.rootRiskValue);
         if (isNaN(val)) return;
-
-        if (val >= 2.0) {
-            cCrit++;
-        } else if (val >= 1.6) {
-            cHigh++;
-        } else if (val >= 0.8) {
-            cMed++;
-        } else {
-            cLow++;
-        }
+        const label = getRiskMeta(val).label;
+        if (label in dist) dist[label]++;
     });
 
     // Write values to the new fields
@@ -135,10 +124,10 @@ function renderOverview(analysis) {
     const elMed = document.getElementById('statMed');
     const elLow = document.getElementById('statLow');
 
-    if (elCrit) elCrit.textContent = cCrit;
-    if (elHigh) elHigh.textContent = cHigh;
-    if (elMed) elMed.textContent = cMed;
-    if (elLow) elLow.textContent = cLow;
+    if (elCrit) elCrit.textContent = dist['Kritisch'];
+    if (elHigh) elHigh.textContent = dist['Hoch'];
+    if (elMed) elMed.textContent = dist['Mittel'];
+    if (elLow) elLow.textContent = dist['Niedrig'];
 
     // 3. Residual risk distribution (based on residual risk root per attack tree)
     // If residual risk does not exist yet, it will be synced automatically.
@@ -150,10 +139,7 @@ function renderOverview(analysis) {
         console.warn('[renderOverview] Residual risk sync error:', e);
     }
 
-    let rrCrit = 0;
-    let rrHigh = 0;
-    let rrMed = 0;
-    let rrLow = 0;
+    const rrDist = { 'Kritisch': 0, 'Hoch': 0, 'Mittel': 0, 'Niedrig': 0 };
 
     risks.forEach(r => {
         if (!r?.uid) return;
@@ -171,15 +157,8 @@ function renderOverview(analysis) {
         }
         if (isNaN(val)) return;
 
-        if (val >= 2.0) {
-            rrCrit++;
-        } else if (val >= 1.6) {
-            rrHigh++;
-        } else if (val >= 0.8) {
-            rrMed++;
-        } else {
-            rrLow++;
-        }
+        const label = getRiskMeta(val).label;
+        if (label in rrDist) rrDist[label]++;
     });
 
     const elRRCrit = document.getElementById('statRRCrit');
@@ -187,10 +166,10 @@ function renderOverview(analysis) {
     const elRRMed = document.getElementById('statRRMed');
     const elRRLow = document.getElementById('statRRLow');
 
-    if (elRRCrit) elRRCrit.textContent = rrCrit;
-    if (elRRHigh) elRRHigh.textContent = rrHigh;
-    if (elRRMed) elRRMed.textContent = rrMed;
-    if (elRRLow) elRRLow.textContent = rrLow;
+    if (elRRCrit) elRRCrit.textContent = rrDist['Kritisch'];
+    if (elRRHigh) elRRHigh.textContent = rrDist['Hoch'];
+    if (elRRMed) elRRMed.textContent = rrDist['Mittel'];
+    if (elRRLow) elRRLow.textContent = rrDist['Niedrig'];
 }
 
 

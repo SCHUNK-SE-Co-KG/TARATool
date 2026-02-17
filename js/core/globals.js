@@ -80,6 +80,19 @@ const PROBABILITY_CRITERIA = {
     }
 };
 
+// Risk classification thresholds (single source of truth)
+const RISK_THRESHOLDS = Object.freeze([
+    { min: 2.0, label: 'Kritisch', color: '#c0392b', colorRGB: [192, 57, 43] },
+    { min: 1.6, label: 'Hoch',     color: '#e67e22', colorRGB: [230, 126, 34] },
+    { min: 0.8, label: 'Mittel',   color: '#f39c12', colorRGB: [243, 156, 18] },
+    { min: 0,   label: 'Niedrig',  color: '#27ae60', colorRGB: [39, 174, 96]  }
+]);
+
+const RISK_UNKNOWN = Object.freeze({ label: 'Unbekannt', color: '#7f8c8d', colorRGB: [127, 140, 141] });
+
+// Valid values for impact score selects
+const VALID_IMPACT_VALUES = Object.freeze(['N/A', '1', '2', '3']);
+
 let analysisData = []; 
 let activeAnalysisId = null;
 

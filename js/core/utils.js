@@ -159,6 +159,104 @@ function generateUID(prefix = 'uid') {
 // --- GENERAL FUNCTIONS ---
 // =============================================================
 
+// =============================================================
+// --- HTML ESCAPING ---
+// =============================================================
+
+/**
+ * Escapes HTML special characters to prevent XSS.
+ * Use in all innerHTML/template literal insertions of user data.
+ * @param {*} str - Value to escape
+ * @returns {string}
+ */
+function escapeHtml(str) {
+    return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// =============================================================
+// --- RISK CLASSIFICATION ---
+// =============================================================
+
+/**
+ * Returns risk metadata (color, label, display) for a given risk value.
+ * Uses the global RISK_THRESHOLDS constant – single source of truth.
+ * @param {*} rootRiskValue - The numeric risk score (string or number)
+ * @returns {{ color: string, label: string, display: string, colorRGB: number[] }}
+ */
+function getRiskMeta(rootRiskValue) {
+    const rVal = parseFloat(rootRiskValue);
+    let match = RISK_UNKNOWN;
+
+    if (!isNaN(rVal)) {
+        for (const t of RISK_THRESHOLDS) {
+            if (rVal >= t.min) { match = t; break; }
+        }
+    }
+
+    const display = (rootRiskValue === undefined || rootRiskValue === null || String(rootRiskValue).trim() === '')
+        ? '-' : String(rootRiskValue);
+
+    return { color: match.color, label: match.label, display, colorRGB: match.colorRGB };
+}
+
+// =============================================================
+// --- CONFIRMATION MODAL UTILITY ---
+// =============================================================
+
+/**
+ * Opens the shared confirmation modal with the given options.
+ * Eliminates duplicated modal-wiring boilerplate across modules.
+ * @param {object} opts
+ * @param {string} opts.title       - Modal heading
+ * @param {string} opts.messageHtml - Inner HTML for the message paragraph
+ * @param {string} [opts.confirmText='Löschen'] - Button label
+ * @param {string} [opts.confirmClass='primary-button dangerous'] - CSS class(es)
+ * @param {function} opts.onConfirm - Callback executed on confirmation
+ */
+function showConfirmation({ title, messageHtml, confirmText = 'Löschen', confirmClass = 'primary-button dangerous', onConfirm }) {
+    const modal     = document.getElementById('confirmationModal');
+    const titleEl   = document.getElementById('confirmationTitle');
+    const msgEl     = document.getElementById('confirmationMessage');
+    const btnOk     = document.getElementById('btnConfirmAction');
+    const btnCancel = document.getElementById('btnCancelConfirmation');
+    const btnClose  = document.getElementById('closeConfirmationModal');
+
+    if (!modal || !msgEl || !btnOk) return;
+
+    if (titleEl) titleEl.textContent = title || 'Bestätigung';
+    msgEl.innerHTML = messageHtml || '';
+    btnOk.textContent = confirmText;
+    btnOk.className = confirmClass;
+
+    modal.style.display = 'block';
+
+    // Clear previous handlers
+    btnOk.onclick = null;
+    if (btnCancel) btnCancel.onclick = null;
+    if (btnClose) btnClose.onclick = null;
+
+    const closeFn = () => {
+        modal.style.display = 'none';
+        btnOk.className = 'primary-button'; // reset class
+    };
+
+    btnOk.onclick = () => {
+        if (typeof onConfirm === 'function') onConfirm();
+        closeFn();
+    };
+    if (btnCancel) btnCancel.onclick = closeFn;
+    if (btnClose) btnClose.onclick = closeFn;
+}
+
+// =============================================================
+// --- TOAST NOTIFICATIONS ---
+// =============================================================
+
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
     if (!container) return;

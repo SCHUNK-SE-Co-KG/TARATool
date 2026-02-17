@@ -7,38 +7,53 @@
  * @license     GPL-3.0
  */
 
+// Explicit DOM references (robust against implicit window ID globals)
+const assetsCardContainerEl = document.getElementById('assetsCardContainer');
+const assetFormEl            = document.getElementById('assetForm');
+const assetModalEl           = document.getElementById('assetModal');
+const assetModalTitleEl      = document.getElementById('assetModalTitle');
+const closeAssetModalEl      = document.getElementById('closeAssetModal');
+const btnAddAssetEl          = document.getElementById('btnAddAsset');
+
 function renderAssets(analysis) {
-    if (!assetsCardContainer) return;
-    assetsCardContainer.innerHTML = '';
+    if (!assetsCardContainerEl) return;
+    assetsCardContainerEl.innerHTML = '';
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        assetsCardContainer.innerHTML = '<p style="color: #7f8c8d; grid-column: 1/-1; text-align: center;">Noch keine Assets vorhanden. Klicken Sie auf "Asset hinzufügen".</p>';
+        assetsCardContainerEl.innerHTML = '<p style="color: #7f8c8d; grid-column: 1/-1; text-align: center;">Noch keine Assets vorhanden. Klicken Sie auf "Asset hinzufügen".</p>';
         return;
     }
 
     analysis.assets.forEach(asset => {
         const card = document.createElement('div');
         card.className = 'asset-card';
+        const eName = escapeHtml(asset.name);
+        const eType = escapeHtml(asset.type || '-');
+        const eDesc = asset.description
+            ? escapeHtml(asset.description.substring(0, 100)) + (asset.description.length > 100 ? '...' : '')
+            : 'Keine Beschreibung';
+        const eId = escapeHtml(asset.id);
+
         card.innerHTML = `
-            <div class="asset-card-header">${asset.id}: ${asset.name}</div>
+            <div class="asset-card-header">${eId}: ${eName}</div>
             <div class="asset-description-area">
-                <strong>Typ:</strong> ${asset.type || '-'}<br><br>
-                ${asset.description ? asset.description.substring(0, 100) + (asset.description.length > 100 ? '...' : '') : 'Keine Beschreibung'}
+                <strong>Typ:</strong> ${eType}<br><br>
+                ${eDesc}
             </div>
             <div class="asset-cia-area">
                 <div style="font-weight:600; font-size:0.8em; margin-bottom:2px; text-transform:uppercase; color:#999;">Schutzbedarf</div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                    <span title="Confidentiality">C: ${asset.confidentiality || '-'}</span>
-                    <span title="Integrity">I: ${asset.integrity || '-'}</span>
-                    <span title="Availability">A: ${asset.authenticity || '-'}</span>
+                    <span title="Confidentiality">C: ${escapeHtml(asset.confidentiality || '-')}</span>
+                    <span title="Integrity">I: ${escapeHtml(asset.integrity || '-')}</span>
+                    <span title="Authenticity">A: ${escapeHtml(asset.authenticity || '-')}</span>
                 </div>
             </div>
             <div class="asset-card-footer">
-                <button onclick="editAsset('${asset.id}')" class="action-button small">Bearbeiten</button>
-                <button onclick="removeAsset('${asset.id}')" class="action-button small dangerous">Löschen</button>
+                <button onclick="editAsset('${eId}')" class="action-button small">Bearbeiten</button>
+                <button onclick="removeAsset('${eId}')" class="action-button small dangerous">Löschen</button>
             </div>
         `;
-        assetsCardContainer.appendChild(card);
+        assetsCardContainerEl.appendChild(card);
     });
 }
 
@@ -61,8 +76,8 @@ function saveAsset(e) {
     }
 
     // Read CIA values
-    const getRadioVal = (name) => {
-        const el = document.querySelector(`input[name="${name}"]:checked`);
+    const getRadioVal = (radioName) => {
+        const el = document.querySelector(`input[name="${radioName}"]:checked`);
         return el ? el.value : '-';
     };
     
@@ -73,8 +88,8 @@ function saveAsset(e) {
     };
 
     // Determine protection level (highest value)
-    let levels = { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
-    let maxLevel = Math.max(levels[cia.c], levels[cia.i], levels[cia.a]);
+    const levels = { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
+    const maxLevel = Math.max(levels[cia.c] || 0, levels[cia.i] || 0, levels[cia.a] || 0);
     let schutzbedarf = '-';
     if (maxLevel === 1) schutzbedarf = 'I';
     if (maxLevel === 2) schutzbedarf = 'II';
@@ -119,7 +134,7 @@ function saveAsset(e) {
     saveAnalyses();
     renderAssets(analysis);
     if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-    assetModal.style.display = 'none';
+    if (assetModalEl) assetModalEl.style.display = 'none';
 }
 
 window.editAsset = (id) => {
@@ -128,15 +143,15 @@ window.editAsset = (id) => {
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
-    if (assetModalTitle) assetModalTitle.textContent = `Asset ${asset.id} bearbeiten`;
+    if (assetModalTitleEl) assetModalTitleEl.textContent = `Asset ${asset.id} bearbeiten`;
     document.getElementById('assetIdField').value = asset.id;
     document.getElementById('assetName').value = asset.name;
     document.getElementById('assetType').value = asset.type || '';
     document.getElementById('assetDescription').value = asset.description || '';
 
     // Set radio buttons
-    const setRadio = (name, val) => {
-        const els = document.querySelectorAll(`input[name="${name}"]`);
+    const setRadio = (radioName, val) => {
+        const els = document.querySelectorAll(`input[name="${radioName}"]`);
         els.forEach(el => {
             el.checked = (el.value === val);
         });
@@ -145,7 +160,7 @@ window.editAsset = (id) => {
     setRadio('integrity', asset.integrity);
     setRadio('authenticity', asset.authenticity);
 
-    if (assetModal) assetModal.style.display = 'block';
+    if (assetModalEl) assetModalEl.style.display = 'block';
 };
 
 window.removeAsset = (id) => {
@@ -154,69 +169,45 @@ window.removeAsset = (id) => {
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
-    // FIX: Fetch DOM elements explicitly (prevents ReferenceError)
-    const modal = document.getElementById('confirmationModal');
-    const title = document.getElementById('confirmationTitle'); // Requires the corrected HTML!
-    const msg = document.getElementById('confirmationMessage');
-    const btnConfirm = document.getElementById('btnConfirmAction');
-    const btnCancel = document.getElementById('btnCancelConfirmation');
-    const btnClose = document.getElementById('closeConfirmationModal');
+    showConfirmation({
+        title: 'Asset löschen',
+        messageHtml: `Möchten Sie das Asset <b>${escapeHtml(asset.name)} (${escapeHtml(asset.id)})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`,
+        confirmText: 'Löschen',
+        onConfirm: () => {
+            analysis.assets = analysis.assets.filter(a => a.id !== id);
 
-    // Ensure element exists to prevent crashes
-    if (title) title.textContent = 'Asset löschen';
-    
-    msg.innerHTML = `Möchten Sie das Asset <b>${asset.name} (${asset.id})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`;
-    
-    btnConfirm.textContent = 'Löschen';
-    btnConfirm.className = 'primary-button dangerous';
+            // Clean up impact matrix
+            if (analysis.impactMatrix && analysis.impactMatrix[id]) {
+                delete analysis.impactMatrix[id];
+            }
 
-    modal.style.display = 'block';
-
-    // Clear events
-    btnConfirm.onclick = null;
-    btnCancel.onclick = null;
-    btnClose.onclick = null;
-
-    btnConfirm.onclick = () => {
-        analysis.assets = analysis.assets.filter(a => a.id !== id);
-        
-        // Clean up impact matrix
-        if (analysis.impactMatrix && analysis.impactMatrix[id]) {
-            delete analysis.impactMatrix[id];
+            saveAnalyses();
+            renderAssets(analysis);
+            if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+            showToast(`Asset ${id} gelöscht.`, 'success');
         }
-
-        saveAnalyses();
-        renderAssets(analysis);
-        if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-        
-        modal.style.display = 'none';
-        showToast(`Asset ${id} gelöscht.`, 'success');
-    };
-
-    const closeFn = () => { modal.style.display = 'none'; };
-    btnCancel.onclick = closeFn;
-    btnClose.onclick = closeFn;
+    });
 };
 
-if (assetForm) {
-    assetForm.onsubmit = saveAsset;
+if (assetFormEl) {
+    assetFormEl.onsubmit = saveAsset;
 }
 
-if (btnAddAsset) {
-    btnAddAsset.onclick = () => {
+if (btnAddAssetEl) {
+    btnAddAssetEl.onclick = () => {
         if (!activeAnalysisId) {
             showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
             return;
         }
-        if (assetModalTitle) assetModalTitle.textContent = 'Neues Asset';
-        assetForm.reset();
+        if (assetModalTitleEl) assetModalTitleEl.textContent = 'Neues Asset';
+        if (assetFormEl) assetFormEl.reset();
         document.getElementById('assetIdField').value = '';
-        if (assetModal) assetModal.style.display = 'block';
+        if (assetModalEl) assetModalEl.style.display = 'block';
     };
 }
 
-if (closeAssetModal) {
-    closeAssetModal.onclick = () => {
-        if (assetModal) assetModal.style.display = 'none';
+if (closeAssetModalEl) {
+    closeAssetModalEl.onclick = () => {
+        if (assetModalEl) assetModalEl.style.display = 'none';
     };
 }

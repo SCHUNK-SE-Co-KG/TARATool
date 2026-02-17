@@ -7,13 +7,16 @@
  * @license     GPL-3.0
  */
 
+// Explicit DOM reference
+const riskAnalysisContainerEl = document.getElementById('riskAnalysisContainer');
+
 function renderRiskAnalysis() {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
-    if (!riskAnalysisContainer) return; 
+    if (!riskAnalysisContainerEl) return; 
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        riskAnalysisContainer.innerHTML = `
+        riskAnalysisContainerEl.innerHTML = `
             <div class="warning-box">
                 <h4>Fehlende Daten: Assets</h4>
                 <p>Es wurden noch keine Schutzobjekte (Assets) im Reiter "Assets" erfasst.</p>
@@ -24,7 +27,7 @@ function renderRiskAnalysis() {
 
     const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...(analysis.damageScenarios || [])];
     if (allDS.length === 0) {
-        riskAnalysisContainer.innerHTML = `
+        riskAnalysisContainerEl.innerHTML = `
             <div class="warning-box">
                 <h4>Fehlende Daten: Schadensszenarien</h4>
                 <p>Bitte definieren Sie zuerst Schadensszenarien.</p>
@@ -33,7 +36,7 @@ function renderRiskAnalysis() {
         return;
     }
     
-    riskAnalysisContainer.innerHTML = `
+    riskAnalysisContainerEl.innerHTML = `
         <div class="success-box" style="margin-bottom:20px;">
             <div style="display:flex; gap:10px;">
                 <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
@@ -56,43 +59,24 @@ function renderExistingRiskEntries(analysis) {
 
     let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
     analysis.riskEntries.forEach(entry => {
-        const rootRisk = entry.rootRiskValue || '-';
-        
-        // Calculate risk class and label
-        let rColor = '#7f8c8d';
-        let rLabel = 'Unbekannt';
-
-        const rVal = parseFloat(rootRisk);
-        if(!isNaN(rVal)) {
-            if(rVal >= 2.0) {
-                rColor = '#c0392b';
-                rLabel = 'Kritisch';
-            } else if(rVal >= 1.6) {
-                rColor = '#e67e22';
-                rLabel = 'Hoch';
-            } else if(rVal >= 0.8) {
-                rColor = '#f39c12';
-                rLabel = 'Mittel';
-            } else {
-                rColor = '#27ae60';
-                rLabel = 'Niedrig';
-            }
-        }
+        const meta = getRiskMeta(entry.rootRiskValue);
+        const eId = escapeHtml(entry.id);
+        const eName = escapeHtml(entry.rootName);
 
         html += `
-            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${rColor};">
+            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${meta.color};">
                 <div>
-                    <strong>${entry.id}</strong>: ${entry.rootName} <br> 
+                    <strong>${eId}</strong>: ${eName} <br> 
                     <span style="color:#666; font-size:0.9em;">
-                        Risk Score (R): <b style="color:${rColor}">${rootRisk}</b> 
-                        <span style="margin-left:5px; padding:2px 6px; border-radius:3px; background:${rColor}; color:#fff; font-size:0.8em;">${rLabel}</span>
+                        Risk Score (R): <b style="color:${meta.color}">${escapeHtml(meta.display)}</b> 
+                        <span style="margin-left:5px; padding:2px 6px; border-radius:3px; background:${meta.color}; color:#fff; font-size:0.8em;">${escapeHtml(meta.label)}</span>
                     </span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
-                    <button onclick="editAttackTree('${entry.id}')" class="action-button small">
+                    <button onclick="editAttackTree('${eId}')" class="action-button small">
                         <i class="fas fa-edit"></i> Bearbeiten
                     </button>
-                    <button onclick="deleteAttackTree('${entry.id}')" class="action-button small dangerous">
+                    <button onclick="deleteAttackTree('${eId}')" class="action-button small dangerous">
                         <i class="fas fa-trash"></i> Löschen
                     </button>
                 </div>
@@ -126,50 +110,29 @@ window.deleteAttackTree = function(riskId) {
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
-    // FIX: Fetch DOM elements explicitly (ReferenceError fix)
-    const modal = document.getElementById('confirmationModal');
-    const title = document.getElementById('confirmationTitle');
-    const msg = document.getElementById('confirmationMessage');
-    const btnConfirm = document.getElementById('btnConfirmAction');
-    const btnCancel = document.getElementById('btnCancelConfirmation');
-    const btnClose = document.getElementById('closeConfirmationModal');
+    showConfirmation({
+        title: 'Angriffsbaum löschen',
+        messageHtml: `Möchten Sie den Angriffsbaum <b>${escapeHtml(entry.id)}: ${escapeHtml(entry.rootName)}</b> wirklich löschen?`,
+        confirmText: 'Löschen',
+        onConfirm: () => {
+            analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
+            reindexRiskIDs(analysis);
 
-    if(title) title.textContent = 'Angriffsbaum löschen';
-    msg.innerHTML = `Möchten Sie den Angriffsbaum <b>${entry.id}: ${entry.rootName}</b> wirklich löschen?`;
-
-    btnConfirm.textContent = 'Löschen';
-    btnConfirm.className = 'primary-button dangerous';
-
-    modal.style.display = 'block';
-
-    // Clear events
-    btnConfirm.onclick = null;
-    btnCancel.onclick = null;
-    btnClose.onclick = null;
-
-    btnConfirm.onclick = () => {
-        analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
-        reindexRiskIDs(analysis);
-
-        // Update residual risk structure (separate data management)
-        try {
-            if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
-                syncResidualRiskFromRiskAnalysis(analysis, false);
+            // Update residual risk structure (separate data management)
+            try {
+                if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+                    syncResidualRiskFromRiskAnalysis(analysis, false);
+                }
+            } catch (e) {
+                console.warn('[deleteAttackTree] Residual risk sync failed:', e);
             }
-        } catch (e) {}
-        saveAnalyses();
-        
-        // Close modal and AttackTree modal if open
-        if (typeof attackTreeModal !== 'undefined' && attackTreeModal) attackTreeModal.style.display = 'none';
-        modal.style.display = 'none';
-        
-        renderRiskAnalysis();
-        showToast(`Angriffsbaum gelöscht.`, 'success');
-    };
-
-    const closeFn = () => { modal.style.display = 'none'; };
-    btnCancel.onclick = closeFn;
-    btnClose.onclick = closeFn;
+            saveAnalyses();
+            
+            // Close AttackTree modal if open
+            if (typeof attackTreeModal !== 'undefined' && attackTreeModal) attackTreeModal.style.display = 'none';
+            
+            renderRiskAnalysis();
+            showToast('Angriffsbaum gelöscht.', 'success');
+        }
+    });
 };
-
-// UI HELPER: TOGGLE DEPTH

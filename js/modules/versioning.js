@@ -7,9 +7,19 @@
  * @license     GPL-3.0
  */
 
+// Explicit DOM references (robust against implicit window ID globals)
+const historyTableBodyEl       = document.getElementById('historyTableBody');
+const versionControlModalEl    = document.getElementById('versionControlModal');
+const closeVersionControlModalEl = document.getElementById('closeVersionControlModal');
+const versionCommentModalEl    = document.getElementById('versionCommentModal');
+const closeVersionCommentModalEl = document.getElementById('closeVersionCommentModal');
+const versionCommentFormEl     = document.getElementById('versionCommentForm');
+const inputVersionCommentEl    = document.getElementById('inputVersionComment');
+const currentVersionInModalEl  = document.getElementById('currentVersionInModal');
+
 function renderHistoryTable(analysis) {
-    if (!historyTableBody) return;
-    historyTableBody.innerHTML = '';
+    if (!historyTableBodyEl) return;
+    historyTableBodyEl.innerHTML = '';
 
     const currentVersion = (analysis && analysis.metadata) ? analysis.metadata.version : '';
     const history = Array.isArray(analysis.history) ? analysis.history : [];
@@ -27,20 +37,26 @@ function renderHistoryTable(analysis) {
         const isCurrent = entry.version === currentVersion;
         if (isCurrent) row.classList.add('is-current-version');
 
+        const eVersion = escapeHtml(entry.version || '-');
+        const eDate    = escapeHtml(entry.date || '-');
+        const eAuthor  = escapeHtml(entry.author || '-');
+        const eComment = escapeHtml(entry.comment || '');
+        const eAnalysisId = escapeHtml(analysis.id);
+
         row.innerHTML = `
-            <td>${entry.version || '-'}</td>
-            <td>${entry.date || '-'}</td>
-            <td>${entry.author || '-'}</td>
-            <td>${entry.comment || ''}</td>
+            <td>${eVersion}</td>
+            <td>${eDate}</td>
+            <td>${eAuthor}</td>
+            <td>${eComment}</td>
             <td>
-                <button onclick="revertToVersion('${analysis.id}', '${entry.version}')" 
+                <button onclick="revertToVersion('${eAnalysisId}', '${eVersion}')" 
                         class="action-button small" 
                         ${isCurrent ? 'disabled' : ''}>
                     ${isCurrent ? 'Aktuell' : 'Wiederherstellen'}
                 </button>
             </td>
         `;
-        historyTableBody.appendChild(row);
+        historyTableBodyEl.appendChild(row);
     });
 }
 
@@ -55,78 +71,50 @@ window.revertToVersion = (analysisId, version) => {
         showToast('Diese Version kann nicht wiederhergestellt werden (kein gespeicherter Zustand).', 'error');
         return;
     }
-    
-    confirmationTitle.textContent = 'Versionswiederherstellung';
-    confirmationMessage.innerHTML = `Sind Sie sicher, dass Sie zur Version <b>${version}</b> (${entry.comment}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`;
-    
-    btnConfirmAction.textContent = 'Ja, wiederherstellen';
-    btnConfirmAction.classList.add('dangerous'); 
-    
-    confirmationModal.style.display = 'block';
 
-    btnConfirmAction.onclick = null; 
-    btnCancelConfirmation.onclick = null;
-    closeConfirmationModal.onclick = null;
-    
-    btnConfirmAction.onclick = () => {
-        
-        analysis.name = entry.state.name;
-        analysis.description = entry.state.description;
-        analysis.intendedUse = entry.state.intendedUse;
-        analysis.assets = entry.state.assets;
-        
-        analysis.damageScenarios = entry.state.damageScenarios;
-        analysis.impactMatrix = entry.state.impactMatrix;
-        
-        analysis.riskEntries = entry.state.riskEntries;
+    showConfirmation({
+        title: 'Versionswiederherstellung',
+        messageHtml: `Sind Sie sicher, dass Sie zur Version <b>${escapeHtml(version)}</b> (${escapeHtml(entry.comment)}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`,
+        confirmText: 'Ja, wiederherstellen',
+        confirmClass: 'primary-button dangerous',
+        onConfirm: () => {
+            analysis.name = entry.state.name;
+            analysis.description = entry.state.description;
+            analysis.intendedUse = entry.state.intendedUse;
+            analysis.assets = entry.state.assets;
+            
+            analysis.damageScenarios = entry.state.damageScenarios;
+            analysis.impactMatrix = entry.state.impactMatrix;
+            
+            analysis.riskEntries = entry.state.riskEntries;
 
-        // Security Objectives (new)
-        analysis.securityGoals = entry.state.securityGoals || [];
-        analysis.residualRisk = entry.state.residualRisk || { leaves: {}, entries: [], treeNotes: {} };
-        if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
-        if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
-        if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
-        
-        analysis.metadata.version = entry.version;
-        analysis.metadata.author = entry.state.metadata.author;
-        analysis.metadata.date = entry.state.metadata.date;
+            // Security Objectives
+            analysis.securityGoals = entry.state.securityGoals || [];
+            analysis.residualRisk = entry.state.residualRisk || { leaves: {}, entries: [], treeNotes: {} };
+            if (!analysis.residualRisk.leaves) analysis.residualRisk.leaves = {};
+            if (!Array.isArray(analysis.residualRisk.entries)) analysis.residualRisk.entries = [];
+            if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
+            
+            analysis.metadata.version = entry.version;
+            analysis.metadata.author = entry.state.metadata.author;
+            analysis.metadata.date = entry.state.metadata.date;
 
-        fillAnalysisForm(analysis);
-        renderHistoryTable(analysis);
-        
-        const activeTab = document.querySelector('.tab-button.active');
-        if (activeTab && activeTab.dataset.tab === 'tabAssets' && typeof renderAssets === 'function') {
-            renderAssets(analysis);
-        } else if (activeTab && activeTab.dataset.tab === 'tabDamageScenarios' && typeof renderDamageScenarios === 'function' && typeof renderImpactMatrix === 'function') {
-            renderDamageScenarios();
-            renderImpactMatrix();
-        } else if (activeTab && activeTab.dataset.tab === 'tabSecurityGoals' && typeof renderSecurityGoals === 'function') {
-            renderSecurityGoals(analysis);
-        } else if (activeTab && activeTab.dataset.tab === 'tabRiskAnalysis' && typeof renderRiskAnalysis === 'function') {
-            renderRiskAnalysis();
-        } else if (activeTab && activeTab.dataset.tab === 'tabResidualRisk' && typeof renderResidualRisk === 'function') {
-            renderResidualRisk(analysis);
+            fillAnalysisForm(analysis);
+            renderHistoryTable(analysis);
+
+            // Re-render active tab using the shared utility
+            if (typeof renderActiveTab === 'function') {
+                renderActiveTab(analysis);
+            }
+
+            saveAnalyses();
+            if (versionControlModalEl) versionControlModalEl.style.display = 'none';
+            
+            showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
+            const elSB = document.getElementById('statusBarMessage');
+            if (elSB) elSB.textContent = `Version ${version} wiederhergestellt.`;
         }
-
-        saveAnalyses();
-        versionControlModal.style.display = 'none';
-        confirmationModal.style.display = 'none'; 
-        btnConfirmAction.classList.remove('dangerous');
-        
-        showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
-        const elSB = document.getElementById('statusBarMessage');
-        if (elSB) elSB.textContent = `Version ${version} wiederhergestellt.`;
-    };
-    
-    btnCancelConfirmation.onclick = () => {
-        confirmationModal.style.display = 'none';
-        btnConfirmAction.classList.remove('dangerous');
-    };
-    
-    closeConfirmationModal.onclick = () => {
-        confirmationModal.style.display = 'none';
-        btnConfirmAction.classList.remove('dangerous');
-    };
+    });
 };
 
 
@@ -136,12 +124,12 @@ window.openVersionCommentModal = () => {
     const analysis = analysisData.find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    if (typeof currentVersionInModal !== 'undefined' && currentVersionInModal) {
-        currentVersionInModal.textContent = analysis.metadata && analysis.metadata.version ? analysis.metadata.version : '-';
+    if (currentVersionInModalEl) {
+        currentVersionInModalEl.textContent = analysis.metadata && analysis.metadata.version ? analysis.metadata.version : '-';
     }
-    if (typeof inputVersionComment !== 'undefined' && inputVersionComment) {
-        inputVersionComment.value = '';
-        inputVersionComment.focus();
+    if (inputVersionCommentEl) {
+        inputVersionCommentEl.value = '';
+        inputVersionCommentEl.focus();
     }
 
     // Default: incremental
@@ -150,10 +138,10 @@ window.openVersionCommentModal = () => {
         radios.forEach(r => {
             r.checked = (r.value === 'minor');
         });
-    } catch (e) {}
+    } catch (e) { /* radio elements may not exist */ }
 
-    if (typeof versionCommentModal !== 'undefined' && versionCommentModal) {
-        versionCommentModal.style.display = 'block';
+    if (versionCommentModalEl) {
+        versionCommentModalEl.style.display = 'block';
     }
 };
 
@@ -176,7 +164,10 @@ function createNewVersion(comment) {
     const versionTypeElement = document.querySelector('input[name="versionType"]:checked');
     const versionType = versionTypeElement ? versionTypeElement.value : 'minor'; 
 
-    const existing = new Set((analysis.history || []).map(h => String(h.version || '').trim()).filter(Boolean));
+    // Ensure history array exists
+    if (!Array.isArray(analysis.history)) analysis.history = [];
+
+    const existing = new Set(analysis.history.map(h => String(h.version || '').trim()).filter(Boolean));
 
     const currentVersion = String((analysis.metadata && analysis.metadata.version) ? analysis.metadata.version : '0.0');
     let [major, minor] = currentVersion.split('.').map(n => parseInt(n, 10) || 0);
@@ -225,25 +216,25 @@ function createNewVersion(comment) {
     const elStatusBar = document.getElementById('statusBarMessage');
     if (elStatusBar) elStatusBar.textContent = `Neue Version ${newVersion} erstellt.`;
 
-    if (versionControlModal) versionControlModal.style.display = 'none';
+    if (versionControlModalEl) versionControlModalEl.style.display = 'none';
 }
 
 // Event listeners for modals
-if (closeVersionControlModal) {
-    closeVersionControlModal.onclick = () => versionControlModal.style.display = 'none';
+if (closeVersionControlModalEl) {
+    closeVersionControlModalEl.onclick = () => { if (versionControlModalEl) versionControlModalEl.style.display = 'none'; };
 }
 
-if (closeVersionCommentModal) {
-    closeVersionCommentModal.onclick = () => versionCommentModal.style.display = 'none';
+if (closeVersionCommentModalEl) {
+    closeVersionCommentModalEl.onclick = () => { if (versionCommentModalEl) versionCommentModalEl.style.display = 'none'; };
 }
 
-if (versionCommentForm) {
-    versionCommentForm.onsubmit = (e) => {
+if (versionCommentFormEl) {
+    versionCommentFormEl.onsubmit = (e) => {
         e.preventDefault();
-        const comment = inputVersionComment.value.trim();
+        const comment = inputVersionCommentEl ? inputVersionCommentEl.value.trim() : '';
         if (comment) {
             createNewVersion(comment); 
-            versionCommentModal.style.display = 'none';
+            if (versionCommentModalEl) versionCommentModalEl.style.display = 'none';
         } else {
             showToast('Bitte geben Sie einen Versionskommentar ein.', 'warning');
         }
