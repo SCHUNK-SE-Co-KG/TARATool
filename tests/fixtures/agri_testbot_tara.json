@@ -1,0 +1,2090 @@
+{
+  "id": "tara-test-4710",
+  "name": "Agri_TestBot Steuerungselektronik",
+  "description": "Diese Analyse beschreibt die Risiko- und Bedrohungsanalyse für die Steuerungselektronik des Agri_TestBot, einem autonomen Feldroboter für die Präzisionslandwirtschaft. Der Roboter verfügt über eine zentrale Steuerungseinheit, die Sensorik (LIDAR, Kamera, Bodensensoren), Aktorik (Fahrwerk, Werkzeugkopf) und Kommunikation (WLAN, LoRaWAN, GPS) koordiniert.\nDie Firmware steuert autonome Navigationspfade, Werkzeugeinsatz und übermittelt Erntedaten an ein Cloud-Backend. Eine mobile App ermöglicht Fernüberwachung und Parametrierung.",
+  "intendedUse": "Die Risikoanalyse betrachtet die Steuerungselektronik des Agri_TestBot für den Einsatz in der autonomen Feldbearbeitung (Aussaat, Unkrautbekämpfung, Erntehilfe).\nDas Produkt dient zur automatisierten Bearbeitung landwirtschaftlicher Flächen unter freiem Himmel. Details zum bestimmungsgemäßen Gebrauch sind in der technischen Dokumentation zu entnehmen.",
+  "metadata": {
+    "version": "0.2",
+    "author": "Test Framework",
+    "date": "2026-02-16"
+  },
+  "history": [
+    {
+      "version": "0.1",
+      "date": "2026-02-01",
+      "author": "System",
+      "comment": "Initiale Erstellung",
+      "state": {
+        "name": "Agri_TestBot Steuerungselektronik"
+      }
+    },
+    {
+      "version": "0.2",
+      "date": "2026-02-16",
+      "author": "Test Framework",
+      "comment": "Restrisiko-Bewertung ergänzt",
+      "state": {
+        "name": "Agri_TestBot Steuerungselektronik"
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "A01",
+      "name": "Navigationsdaten und Pfadplanung",
+      "type": "Software und Daten",
+      "description": "Interne GPS-Koordinaten, Wegpunkte und Routenplanung des Feldroboters",
+      "confidentiality": "II",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A02",
+      "name": "Steuerungsfirmware",
+      "type": "Software",
+      "description": "Firmware für Motorsteuerung, Werkzeugkopf-Regelung und Sensorauswertung",
+      "confidentiality": "III",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A03",
+      "name": "Ernte- und Ertragsdaten",
+      "type": "Daten",
+      "description": "Erfasste Erntemengen, Bodenbeschaffenheit und Ertragsprognosen",
+      "confidentiality": "II",
+      "integrity": "II",
+      "authenticity": "II",
+      "schutzbedarf": "II"
+    },
+    {
+      "id": "A04",
+      "name": "Kalibrierungsdaten Sensorik",
+      "type": "Daten",
+      "description": "Kalibrierungswerte für LIDAR, Kamera und Bodensensoren",
+      "confidentiality": "I",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A05",
+      "name": "Physische Schnittstellen",
+      "type": "Hardware",
+      "description": "Debug-Port (UART), USB-Wartungsanschluss und SD-Kartenslot am Steuerungsgehäuse",
+      "confidentiality": "I",
+      "integrity": "II",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A06",
+      "name": "Benutzerdaten und Zugangsdaten",
+      "type": "Daten",
+      "description": "Anmeldedaten für Cloud-Backend, App-Zugangsdaten und Betreiber-Informationen",
+      "confidentiality": "III",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    },
+    {
+      "id": "A07",
+      "name": "Drahtlose Kommunikation",
+      "type": "Funknetzwerke",
+      "description": "WLAN- und LoRaWAN-Kommunikationskanäle für Datenübertragung und Fernsteuerung",
+      "confidentiality": "III",
+      "integrity": "III",
+      "authenticity": "III",
+      "schutzbedarf": "III"
+    }
+  ],
+  "damageScenarios": [
+    {
+      "id": "DS1",
+      "name": "Gefahr für Leib und Leben",
+      "short": "Safety",
+      "description": "Verletzung von Personen durch unkontrollierte Bewegungen des Feldroboters."
+    },
+    {
+      "id": "DS2",
+      "name": "Finanzieller Schaden",
+      "short": "Financial",
+      "description": "Direkte oder indirekte finanzielle Verluste (Ernteschäden, Maschinenausfall)."
+    },
+    {
+      "id": "DS3",
+      "name": "Verlust Operationeller Betrieb",
+      "short": "Operational",
+      "description": "Der Feldroboter arbeitet nicht mehr wie vorgesehen oder fällt aus."
+    },
+    {
+      "id": "DS4",
+      "name": "Verlust Privatsphäre/Daten",
+      "short": "Privacy",
+      "description": "Verlust sensibler Betriebs-, Ernte- oder personenbezogener Daten."
+    },
+    {
+      "id": "DS5",
+      "name": "Rechtliche Konsequenzen",
+      "short": "Legal",
+      "description": "Verstoß gegen Gesetze, Vorschriften oder Zulassungsauflagen."
+    },
+    {
+      "id": "DS6",
+      "name": "Verfügbarkeit",
+      "short": "Reliab.",
+      "description": "Verfügbarkeit des Robotersystems und der Kommunikationsinfrastruktur."
+    }
+  ],
+  "impactMatrix": {
+    "A01": {
+      "DS1": "3",
+      "DS2": "2",
+      "DS3": "3",
+      "DS4": "1",
+      "DS5": "1",
+      "DS6": "2"
+    },
+    "A02": {
+      "DS1": "3",
+      "DS2": "3",
+      "DS3": "3",
+      "DS4": "1",
+      "DS5": "N/A"
+    },
+    "A03": {
+      "DS2": "2",
+      "DS3": "1",
+      "DS4": "2",
+      "DS5": "N/A"
+    },
+    "A04": {
+      "DS1": "2",
+      "DS2": "1",
+      "DS3": "2",
+      "DS5": "N/A"
+    },
+    "A05": {
+      "DS1": "N/A",
+      "DS3": "2",
+      "DS4": "1",
+      "DS5": "N/A"
+    },
+    "A06": {
+      "DS2": "1",
+      "DS3": "N/A",
+      "DS4": "2",
+      "DS5": "1"
+    },
+    "A07": {
+      "DS1": "1",
+      "DS2": "2",
+      "DS5": "1",
+      "DS6": "3"
+    }
+  },
+  "riskEntries": [
+    {
+      "id": "R01",
+      "uid": "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001",
+      "rootName": "WLAN-Schnittstelle",
+      "treeV2": {
+        "uid": "node_a0000001-0000-4000-8000-000000000001",
+        "title": "WLAN-Schnittstelle",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": {
+          "k": "0.7",
+          "s": "0.5",
+          "t": "0.4",
+          "u": "0.5"
+        },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_a0000001-0001-4000-8000-000000000001",
+            "title": "Zugriff auf Steuerungsfirmware",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.7",
+              "s": "0.3",
+              "t": "0.4",
+              "u": "0.3"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000001-0002-4000-8000-000000000001",
+                "title": "Firmware-Update manipulieren (OTA)",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.7",
+                  "s": "0.3",
+                  "t": "0.4",
+                  "u": "0.3"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Schadcode per OTA-Update einspielen",
+                    "ds": ["DS1", "DS2", "DS3", "DS5"],
+                    "k": "0.7",
+                    "s": "0.3",
+                    "t": "0.4",
+                    "u": "0.1",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000001-0001-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Kompromittierung des Maschinennetzes via Roboter",
+                    "ds": ["DS2", "DS4", "DS6"],
+                    "k": "0.3",
+                    "s": "0.1",
+                    "t": "0.4",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000001-0002-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000001-0003-4000-8000-000000000001",
+                "title": "Firmware extrahieren und analysieren",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.1",
+                  "t": "0.3",
+                  "u": "0.1"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Reverse Engineering der Steuerungslogik",
+                    "ds": ["DS3", "DS5"],
+                    "k": "0.5",
+                    "s": "0.1",
+                    "t": "0.3",
+                    "u": "0.1",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000001-0003-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000001-0004-4000-8000-000000000001",
+            "title": "Navigationsdaten abfangen",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.3",
+              "s": "0.5",
+              "t": "0.4",
+              "u": "0.5"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000001-0005-4000-8000-000000000001",
+                "title": "GPS-Koordinaten mitlesen",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.3",
+                  "s": "0.5",
+                  "t": "0.4",
+                  "u": "0.5"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Betriebsgeheimnisse via Positionstracking ableiten",
+                    "ds": ["DS4", "DS5"],
+                    "k": "0.3",
+                    "s": "0.5",
+                    "t": "0.4",
+                    "u": "0.5",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000001-0004-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000001-0006-4000-8000-000000000001",
+                "title": "Wegpunkte manipulieren",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.1",
+                  "s": "0.3",
+                  "t": "0.2",
+                  "u": "0.3"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Roboter in Gefahrenzone navigieren",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.1",
+                    "s": "0.3",
+                    "t": "0.2",
+                    "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000001-0005-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Ernterouten verfälschen",
+                    "ds": ["DS2", "DS3"],
+                    "k": "0.1",
+                    "s": "0.3",
+                    "t": "0.2",
+                    "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000001-0006-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": {
+        "k": "0.7",
+        "s": "0.5",
+        "t": "0.4",
+        "u": "0.5"
+      },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.10",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "R02",
+      "uid": "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002",
+      "rootName": "OTA-Update Kanal",
+      "treeV2": {
+        "uid": "node_a0000002-0000-4000-8000-000000000001",
+        "title": "OTA-Update Kanal",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": {
+          "k": "0.6",
+          "s": "0.5",
+          "t": "0.5",
+          "u": "0.5"
+        },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_a0000002-0001-4000-8000-000000000001",
+            "title": "Update-Paket abfangen",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.6",
+              "s": "0.5",
+              "t": "0.5",
+              "u": "0.3"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000002-0002-4000-8000-000000000001",
+                "title": "Man-in-the-Middle auf Update-Server",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.6",
+                  "s": "0.5",
+                  "t": "0.5",
+                  "u": "0.3"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Manipuliertes Firmware-Paket einspielen",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.6",
+                    "s": "0.5",
+                    "t": "0.5",
+                    "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000002-0001-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000002-0003-4000-8000-000000000001",
+                "title": "Update-Binaries aus Cloud extrahieren",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.5",
+                  "t": "0.4",
+                  "u": "0.3"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Analyse der Firmware-Binaries",
+                    "ds": ["DS3", "DS5"],
+                    "k": "0.5",
+                    "s": "0.5",
+                    "t": "0.4",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000002-0002-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Erstellung kompatibler Schad-Firmware",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.5",
+                    "s": "0.5",
+                    "t": "0.4",
+                    "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000002-0003-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000002-0004-4000-8000-000000000001",
+            "title": "Rollback auf verwundbare Version",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.3",
+              "s": "0.3",
+              "t": "0.3",
+              "u": "0.5"
+            },
+            "i_norm": "0.60",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000002-0005-4000-8000-000000000001",
+                "title": "Downgrade-Angriff auf Firmware",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.3",
+                  "s": "0.3",
+                  "t": "0.3",
+                  "u": "0.5"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Installation veralteter Firmware mit bekannten Schwachstellen",
+                    "ds": ["DS1", "DS3", "DS5"],
+                    "k": "0.3",
+                    "s": "0.3",
+                    "t": "0.3",
+                    "u": "0.5",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000002-0004-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Nutzung bekannter CVEs in Altversion",
+                    "ds": ["DS2", "DS3"],
+                    "k": "0.3",
+                    "s": "0.3",
+                    "t": "0.3",
+                    "u": "0.5",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000002-0005-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": {
+        "k": "0.6",
+        "s": "0.5",
+        "t": "0.5",
+        "u": "0.5"
+      },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.10",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "R03",
+      "uid": "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003",
+      "rootName": "Debug-Port (UART/USB)",
+      "treeV2": {
+        "uid": "node_a0000003-0000-4000-8000-000000000001",
+        "title": "Debug-Port (UART/USB)",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": {
+          "k": "0.5",
+          "s": "0.3",
+          "t": "0.5",
+          "u": "0.5"
+        },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_a0000003-0001-4000-8000-000000000001",
+            "title": "Speicher auslesen",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.5",
+              "s": "0.1",
+              "t": "0.5",
+              "u": "0.3"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000003-0002-4000-8000-000000000001",
+                "title": "Flash-Dump via Debug-Interface",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.1",
+                  "t": "0.5",
+                  "u": "0.3"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Vollständige Firmware-Kopie erstellen",
+                    "ds": ["DS3", "DS5"],
+                    "k": "0.5",
+                    "s": "0.1",
+                    "t": "0.5",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000003-0001-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Kryptographische Schlüssel extrahieren",
+                    "ds": ["DS2", "DS4", "DS5"],
+                    "k": "0.5",
+                    "s": "0.1",
+                    "t": "0.5",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000003-0002-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000003-0003-4000-8000-000000000001",
+                "title": "Laufzeitdaten über UART abgreifen",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.3",
+                  "s": "0.1",
+                  "t": "0.3",
+                  "u": "0.1"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Debug-Ausgaben mit Sensorwerten mitlesen",
+                    "ds": ["DS4"],
+                    "k": "0.3",
+                    "s": "0.1",
+                    "t": "0.3",
+                    "u": "0.1",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000003-0003-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000003-0004-4000-8000-000000000001",
+            "title": "Firmware flashen / überschreiben",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.5",
+              "s": "0.3",
+              "t": "0.5",
+              "u": "0.5"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000003-0005-4000-8000-000000000001",
+                "title": "Custom-Firmware über Debug-Port aufspielen",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.3",
+                  "t": "0.5",
+                  "u": "0.5"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Motorsteuerung manipulieren (Sicherheitsrisiko)",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.5",
+                    "s": "0.3",
+                    "t": "0.5",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000003-0004-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Garantieansprüche durch versteckte Manipulation",
+                    "ds": ["DS2", "DS5"],
+                    "k": "0.3",
+                    "s": "0.3",
+                    "t": "0.5",
+                    "u": "0.5",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000003-0005-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000003-0006-4000-8000-000000000001",
+                "title": "Boot-Konfiguration ändern",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.3",
+                  "s": "0.3",
+                  "t": "0.5",
+                  "u": "0.3"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Secure Boot umgehen",
+                    "ds": ["DS1", "DS3", "DS5"],
+                    "k": "0.3",
+                    "s": "0.3",
+                    "t": "0.5",
+                    "u": "0.3",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000003-0006-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000003-0007-4000-8000-000000000001",
+            "title": "Kalibrierung verfälschen",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.1",
+              "s": "0.3",
+              "t": "0.3",
+              "u": "0.3"
+            },
+            "i_norm": "0.60",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000003-0008-4000-8000-000000000001",
+                "title": "Sensor-Offsets überschreiben",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.1",
+                  "s": "0.3",
+                  "t": "0.3",
+                  "u": "0.3"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Fehlerhafte Hinderniserkennung durch verfälschte LIDAR-Werte",
+                    "ds": ["DS1", "DS2"],
+                    "k": "0.1",
+                    "s": "0.3",
+                    "t": "0.3",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000003-0007-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": {
+        "k": "0.5",
+        "s": "0.3",
+        "t": "0.5",
+        "u": "0.5"
+      },
+      "i_norm": "1.00",
+      "rootRiskValue": "1.80",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "R04",
+      "uid": "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004",
+      "rootName": "LoRaWAN-Funkstrecke",
+      "treeV2": {
+        "uid": "node_a0000004-0000-4000-8000-000000000001",
+        "title": "LoRaWAN-Funkstrecke",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": {
+          "k": "0.5",
+          "s": "0.3",
+          "t": "0.3",
+          "u": "0.5"
+        },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_a0000004-0001-4000-8000-000000000001",
+            "title": "Funkverkehr abhören",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.5",
+              "s": "0.1",
+              "t": "0.3",
+              "u": "0.3"
+            },
+            "i_norm": "0.60",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000004-0002-4000-8000-000000000001",
+                "title": "LoRaWAN-Pakete mit SDR empfangen",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.1",
+                  "t": "0.3",
+                  "u": "0.3"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Ertragsdaten und Telemetrie mitlesen",
+                    "ds": ["DS4"],
+                    "k": "0.5",
+                    "s": "0.1",
+                    "t": "0.3",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000004-0001-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Positionsdaten und Einsatzzeiten ableiten",
+                    "ds": ["DS4", "DS5"],
+                    "k": "0.5",
+                    "s": "0.1",
+                    "t": "0.3",
+                    "u": "0.1",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000004-0002-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000004-0003-4000-8000-000000000001",
+            "title": "Replay- und Jamming-Angriff",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.3",
+              "s": "0.3",
+              "t": "0.3",
+              "u": "0.5"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000004-0004-4000-8000-000000000001",
+                "title": "Replay alter Steuerbefehle",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.3",
+                  "s": "0.3",
+                  "t": "0.3",
+                  "u": "0.5"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Wiederholte Werkzeugaktivierung auf falscher Fläche",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.3",
+                    "s": "0.3",
+                    "t": "0.3",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000004-0003-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000004-0005-4000-8000-000000000001",
+                "title": "Funksignal stören (Jamming)",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.1",
+                  "s": "0.3",
+                  "t": "0.1",
+                  "u": "0.5"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Kommunikationsausfall zum Cloud-Backend",
+                    "ds": ["DS3", "DS6"],
+                    "k": "0.1",
+                    "s": "0.3",
+                    "t": "0.1",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000004-0004-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Verlust der Fernsteuerbarkeit",
+                    "ds": ["DS1", "DS3", "DS6"],
+                    "k": "0.1",
+                    "s": "0.3",
+                    "t": "0.1",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000004-0005-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": {
+        "k": "0.5",
+        "s": "0.3",
+        "t": "0.3",
+        "u": "0.5"
+      },
+      "i_norm": "1.00",
+      "rootRiskValue": "1.60",
+      "rootRiskLevel": ""
+    },
+    {
+      "id": "R05",
+      "uid": "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005",
+      "rootName": "Mobile App / Cloud-API",
+      "treeV2": {
+        "uid": "node_a0000005-0000-4000-8000-000000000001",
+        "title": "Mobile App / Cloud-API",
+        "depth": 0,
+        "collapsed": false,
+        "kstu": {
+          "k": "0.7",
+          "s": "0.5",
+          "t": "0.5",
+          "u": "0.5"
+        },
+        "i_norm": "1.00",
+        "impacts": [],
+        "children": [
+          {
+            "uid": "node_a0000005-0001-4000-8000-000000000001",
+            "title": "API-Schwachstellen ausnutzen",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.7",
+              "s": "0.5",
+              "t": "0.5",
+              "u": "0.5"
+            },
+            "i_norm": "1.00",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000005-0002-4000-8000-000000000001",
+                "title": "Ungesicherte REST-Endpunkte",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.7",
+                  "s": "0.5",
+                  "t": "0.5",
+                  "u": "0.5"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Fernsteuerung aller Roboter einer Flotte",
+                    "ds": ["DS1", "DS2", "DS3"],
+                    "k": "0.7",
+                    "s": "0.5",
+                    "t": "0.5",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000005-0001-4000-8000-100000000001"
+                  },
+                  {
+                    "text": "Massenhaftes Auslesen von Kundendaten",
+                    "ds": ["DS4", "DS5"],
+                    "k": "0.7",
+                    "s": "0.5",
+                    "t": "0.5",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000005-0002-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              },
+              {
+                "uid": "node_a0000005-0003-4000-8000-000000000001",
+                "title": "Token-Diebstahl aus mobiler App",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.5",
+                  "t": "0.3",
+                  "u": "0.5"
+                },
+                "i_norm": "1.00",
+                "impacts": [
+                  {
+                    "text": "Session-Übernahme eines Betreibers",
+                    "ds": ["DS2", "DS3", "DS4"],
+                    "k": "0.5",
+                    "s": "0.5",
+                    "t": "0.3",
+                    "u": "0.5",
+                    "i_norm": "1.00",
+                    "uid": "leaf_a0000005-0003-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          },
+          {
+            "uid": "node_a0000005-0004-4000-8000-000000000001",
+            "title": "Cloud-Datenleck",
+            "depth": 1,
+            "collapsed": false,
+            "kstu": {
+              "k": "0.5",
+              "s": "0.3",
+              "t": "0.3",
+              "u": "0.3"
+            },
+            "i_norm": "0.60",
+            "impacts": [],
+            "children": [
+              {
+                "uid": "node_a0000005-0005-4000-8000-000000000001",
+                "title": "Unverschlüsselte Datenbank-Exfiltration",
+                "depth": 2,
+                "collapsed": false,
+                "kstu": {
+                  "k": "0.5",
+                  "s": "0.3",
+                  "t": "0.3",
+                  "u": "0.3"
+                },
+                "i_norm": "0.60",
+                "impacts": [
+                  {
+                    "text": "Ertragsdaten aller Kunden exfiltrieren",
+                    "ds": ["DS2", "DS4", "DS5"],
+                    "k": "0.5",
+                    "s": "0.3",
+                    "t": "0.3",
+                    "u": "0.3",
+                    "i_norm": "0.60",
+                    "uid": "leaf_a0000005-0004-4000-8000-100000000001"
+                  }
+                ],
+                "children": []
+              }
+            ]
+          }
+        ]
+      },
+      "treeDepth": 1,
+      "useDeepTree": false,
+      "useSecondIntermediate": false,
+      "useThirdIntermediate": false,
+      "useFourthIntermediate": false,
+      "branches": [],
+      "kstu": {
+        "k": "0.7",
+        "s": "0.5",
+        "t": "0.5",
+        "u": "0.5"
+      },
+      "i_norm": "1.00",
+      "rootRiskValue": "2.20",
+      "rootRiskLevel": ""
+    }
+  ],
+  "securityGoals": [
+    {
+      "id": "SO01",
+      "name": "Integrität der Firmware sicherstellen",
+      "description": "Es ist sicherzustellen, dass nur authentifizierte und integritätsgeprüfte Firmware auf dem Steuerungsmodul betrieben wird.",
+      "rootRefs": ["R01", "R02", "R03"]
+    },
+    {
+      "id": "SO02",
+      "name": "Schutz der Kommunikationskanäle",
+      "description": "Alle drahtlosen Kommunikationskanäle (WLAN, LoRaWAN) müssen gegen Abhören, Manipulation und Replay-Angriffe geschützt werden.",
+      "rootRefs": ["R01", "R04"]
+    }
+  ],
+  "residualRisk": {
+    "leaves": {
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B1|Nnode_a0000001-0002-4000-8000-000000000001|Lleaf_a0000001-0001-4000-8000-100000000001": {
+        "treatment": "Mitigiert",
+        "note": "",
+        "securityConcept": "Signiertes OTA-Update mit Public-Key-Verifikation",
+        "k": "0.1",
+        "s": "0.1",
+        "t": "0.1",
+        "u": "0.1"
+      },
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B1|Nnode_a0000001-0002-4000-8000-000000000001|Lleaf_a0000001-0002-4000-8000-100000000001": {
+        "treatment": "Mitigiert",
+        "note": "",
+        "securityConcept": "Netzwerksegmentierung und Firewall-Regeln",
+        "k": "0.1",
+        "s": "0.1",
+        "t": "0.1",
+        "u": "0.1"
+      },
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B1|Nnode_a0000001-0003-4000-8000-000000000001|Lleaf_a0000001-0003-4000-8000-100000000001": {
+        "treatment": "Akzeptiert",
+        "note": "Reverse Engineering durch physischen Zugang bleibt möglich",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B2|Nnode_a0000001-0005-4000-8000-000000000001|Lleaf_a0000001-0004-4000-8000-100000000001": {
+        "treatment": "Mitigiert",
+        "note": "",
+        "securityConcept": "Verschlüsselung der GPS-Telemetrie (TLS 1.3)",
+        "k": "0.1",
+        "s": "0.1",
+        "t": "0.2",
+        "u": "0.3"
+      },
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B2|Nnode_a0000001-0006-4000-8000-000000000001|Lleaf_a0000001-0005-4000-8000-100000000001": {
+        "treatment": "Akzeptiert",
+        "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001|B2|Nnode_a0000001-0006-4000-8000-000000000001|Lleaf_a0000001-0006-4000-8000-100000000001": {
+        "treatment": "Akzeptiert",
+        "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002|B1|Nnode_a0000002-0002-4000-8000-000000000001|Lleaf_a0000002-0001-4000-8000-100000000001": {
+        "treatment": "Mitigiert",
+        "note": "",
+        "securityConcept": "Certificate Pinning und signierte Update-Pakete",
+        "k": "0.1",
+        "s": "0.1",
+        "t": "0.1",
+        "u": "0.1"
+      },
+      "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002|B1|Nnode_a0000002-0003-4000-8000-000000000001|Lleaf_a0000002-0002-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002|B1|Nnode_a0000002-0003-4000-8000-000000000001|Lleaf_a0000002-0003-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002|B2|Nnode_a0000002-0005-4000-8000-000000000001|Lleaf_a0000002-0004-4000-8000-100000000001": {
+        "treatment": "Mitigiert",
+        "note": "",
+        "securityConcept": "Anti-Rollback-Counter im Secure Element",
+        "k": "0.1",
+        "s": "0.1",
+        "t": "0.1",
+        "u": "0.1"
+      },
+      "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002|B2|Nnode_a0000002-0005-4000-8000-000000000001|Lleaf_a0000002-0005-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B1|Nnode_a0000003-0002-4000-8000-000000000001|Lleaf_a0000003-0001-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B1|Nnode_a0000003-0002-4000-8000-000000000001|Lleaf_a0000003-0002-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B1|Nnode_a0000003-0003-4000-8000-000000000001|Lleaf_a0000003-0003-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B2|Nnode_a0000003-0005-4000-8000-000000000001|Lleaf_a0000003-0004-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B2|Nnode_a0000003-0005-4000-8000-000000000001|Lleaf_a0000003-0005-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B2|Nnode_a0000003-0006-4000-8000-000000000001|Lleaf_a0000003-0006-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003|B3|Nnode_a0000003-0008-4000-8000-000000000001|Lleaf_a0000003-0007-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004|B1|Nnode_a0000004-0002-4000-8000-000000000001|Lleaf_a0000004-0001-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004|B1|Nnode_a0000004-0002-4000-8000-000000000001|Lleaf_a0000004-0002-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004|B2|Nnode_a0000004-0004-4000-8000-000000000001|Lleaf_a0000004-0003-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004|B2|Nnode_a0000004-0005-4000-8000-000000000001|Lleaf_a0000004-0004-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004|B2|Nnode_a0000004-0005-4000-8000-000000000001|Lleaf_a0000004-0005-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005|B1|Nnode_a0000005-0002-4000-8000-000000000001|Lleaf_a0000005-0001-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005|B1|Nnode_a0000005-0002-4000-8000-000000000001|Lleaf_a0000005-0002-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005|B1|Nnode_a0000005-0003-4000-8000-000000000001|Lleaf_a0000005-0003-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      },
+      "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005|B2|Nnode_a0000005-0005-4000-8000-000000000001|Lleaf_a0000005-0004-4000-8000-100000000001": {
+        "treatment": "",
+        "note": "",
+        "securityConcept": "",
+        "k": "",
+        "s": "",
+        "t": "",
+        "u": ""
+      }
+    },
+    "entries": [
+      {
+        "id": "R01",
+        "uid": "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001",
+        "rootName": "WLAN-Schnittstelle",
+        "treeV2": {
+          "uid": "node_a0000001-0000-4000-8000-000000000001",
+          "title": "WLAN-Schnittstelle",
+          "depth": 0,
+          "collapsed": false,
+          "kstu": { "k": "0.7", "s": "0.5", "t": "0.4", "u": "0.5" },
+          "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_a0000001-0001-4000-8000-000000000001",
+              "title": "Zugriff auf Steuerungsfirmware",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.7", "s": "0.3", "t": "0.4", "u": "0.3" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000001-0002-4000-8000-000000000001",
+                  "title": "Firmware-Update manipulieren (OTA)",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.7", "s": "0.3", "t": "0.4", "u": "0.3" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Schadcode per OTA-Update einspielen",
+                      "ds": ["DS1", "DS2", "DS3", "DS5"],
+                      "k": "0.7", "s": "0.3", "t": "0.4", "u": "0.1",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000001-0001-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Mitigiert",
+                        "note": "",
+                        "securityConcept": "Signiertes OTA-Update mit Public-Key-Verifikation",
+                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                      }
+                    },
+                    {
+                      "text": "Kompromittierung des Maschinennetzes via Roboter",
+                      "ds": ["DS2", "DS4", "DS6"],
+                      "k": "0.3", "s": "0.1", "t": "0.4", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000001-0002-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Mitigiert",
+                        "note": "",
+                        "securityConcept": "Netzwerksegmentierung und Firewall-Regeln",
+                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                      }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000001-0003-4000-8000-000000000001",
+                  "title": "Firmware extrahieren und analysieren",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.1" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Reverse Engineering der Steuerungslogik",
+                      "ds": ["DS3", "DS5"],
+                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000001-0003-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Akzeptiert",
+                        "note": "Reverse Engineering durch physischen Zugang bleibt möglich",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000001-0004-4000-8000-000000000001",
+              "title": "Navigationsdaten abfangen",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.5", "t": "0.4", "u": "0.5" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000001-0005-4000-8000-000000000001",
+                  "title": "GPS-Koordinaten mitlesen",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.5", "t": "0.4", "u": "0.5" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Betriebsgeheimnisse via Positionstracking ableiten",
+                      "ds": ["DS4", "DS5"],
+                      "k": "0.3", "s": "0.5", "t": "0.4", "u": "0.5",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000001-0004-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Mitigiert",
+                        "note": "",
+                        "securityConcept": "Verschlüsselung der GPS-Telemetrie (TLS 1.3)",
+                        "k": "0.1", "s": "0.1", "t": "0.2", "u": "0.3"
+                      }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000001-0006-4000-8000-000000000001",
+                  "title": "Wegpunkte manipulieren",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.1", "s": "0.3", "t": "0.2", "u": "0.3" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Roboter in Gefahrenzone navigieren",
+                      "ds": ["DS1", "DS2"],
+                      "k": "0.1", "s": "0.3", "t": "0.2", "u": "0.3",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000001-0005-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Akzeptiert",
+                        "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    },
+                    {
+                      "text": "Ernterouten verfälschen",
+                      "ds": ["DS2", "DS3"],
+                      "k": "0.1", "s": "0.3", "t": "0.2", "u": "0.3",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000001-0006-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Akzeptiert",
+                        "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1,
+        "useDeepTree": false,
+        "useSecondIntermediate": false,
+        "useThirdIntermediate": false,
+        "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.4", "u": "0.5" },
+        "i_norm": "1.00",
+        "rootRiskValue": "2.10",
+        "rootRiskLevel": ""
+      },
+      {
+        "id": "R02",
+        "uid": "risk_a1b2c3d4-2222-4aaa-bbbb-000000000002",
+        "rootName": "OTA-Update Kanal",
+        "treeV2": {
+          "uid": "node_a0000002-0000-4000-8000-000000000001",
+          "title": "OTA-Update Kanal",
+          "depth": 0,
+          "collapsed": false,
+          "kstu": { "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.5" },
+          "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_a0000002-0001-4000-8000-000000000001",
+              "title": "Update-Paket abfangen",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.3" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000002-0002-4000-8000-000000000001",
+                  "title": "Man-in-the-Middle auf Update-Server",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.3" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Manipuliertes Firmware-Paket einspielen",
+                      "ds": ["DS1", "DS2", "DS3"],
+                      "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.3",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000002-0001-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Mitigiert",
+                        "note": "",
+                        "securityConcept": "Certificate Pinning und signierte Update-Pakete",
+                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                      }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000002-0003-4000-8000-000000000001",
+                  "title": "Update-Binaries aus Cloud extrahieren",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.5", "t": "0.4", "u": "0.3" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Analyse der Firmware-Binaries",
+                      "ds": ["DS3", "DS5"],
+                      "k": "0.5", "s": "0.5", "t": "0.4", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000002-0002-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "",
+                        "note": "",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    },
+                    {
+                      "text": "Erstellung kompatibler Schad-Firmware",
+                      "ds": ["DS1", "DS2", "DS3"],
+                      "k": "0.5", "s": "0.5", "t": "0.4", "u": "0.3",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000002-0003-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "",
+                        "note": "",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000002-0004-4000-8000-000000000001",
+              "title": "Rollback auf verwundbare Version",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5" },
+              "i_norm": "0.60",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000002-0005-4000-8000-000000000001",
+                  "title": "Downgrade-Angriff auf Firmware",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Installation veralteter Firmware mit bekannten Schwachstellen",
+                      "ds": ["DS1", "DS3", "DS5"],
+                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000002-0004-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "Mitigiert",
+                        "note": "",
+                        "securityConcept": "Anti-Rollback-Counter im Secure Element",
+                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                      }
+                    },
+                    {
+                      "text": "Nutzung bekannter CVEs in Altversion",
+                      "ds": ["DS2", "DS3"],
+                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000002-0005-4000-8000-100000000001",
+                      "rr": {
+                        "treatment": "",
+                        "note": "",
+                        "securityConcept": "",
+                        "k": "", "s": "", "t": "", "u": ""
+                      }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1,
+        "useDeepTree": false,
+        "useSecondIntermediate": false,
+        "useThirdIntermediate": false,
+        "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "rootRiskValue": "2.10",
+        "rootRiskLevel": ""
+      },
+      {
+        "id": "R03",
+        "uid": "risk_a1b2c3d4-3333-4aaa-bbbb-000000000003",
+        "rootName": "Debug-Port (UART/USB)",
+        "treeV2": {
+          "uid": "node_a0000003-0000-4000-8000-000000000001",
+          "title": "Debug-Port (UART/USB)",
+          "depth": 0,
+          "collapsed": false,
+          "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+          "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_a0000003-0001-4000-8000-000000000001",
+              "title": "Speicher auslesen",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000003-0002-4000-8000-000000000001",
+                  "title": "Flash-Dump via Debug-Interface",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Vollständige Firmware-Kopie erstellen",
+                      "ds": ["DS3", "DS5"],
+                      "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000003-0001-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    },
+                    {
+                      "text": "Kryptographische Schlüssel extrahieren",
+                      "ds": ["DS2", "DS4", "DS5"],
+                      "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000003-0002-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000003-0003-4000-8000-000000000001",
+                  "title": "Laufzeitdaten über UART abgreifen",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Debug-Ausgaben mit Sensorwerten mitlesen",
+                      "ds": ["DS4"],
+                      "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000003-0003-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000003-0004-4000-8000-000000000001",
+              "title": "Firmware flashen / überschreiben",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000003-0005-4000-8000-000000000001",
+                  "title": "Custom-Firmware über Debug-Port aufspielen",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Motorsteuerung manipulieren (Sicherheitsrisiko)",
+                      "ds": ["DS1", "DS2", "DS3"],
+                      "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000003-0004-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    },
+                    {
+                      "text": "Garantieansprüche durch versteckte Manipulation",
+                      "ds": ["DS2", "DS5"],
+                      "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000003-0005-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000003-0006-4000-8000-000000000001",
+                  "title": "Boot-Konfiguration ändern",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.3" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Secure Boot umgehen",
+                      "ds": ["DS1", "DS3", "DS5"],
+                      "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.3",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000003-0006-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000003-0007-4000-8000-000000000001",
+              "title": "Kalibrierung verfälschen",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.1", "s": "0.3", "t": "0.3", "u": "0.3" },
+              "i_norm": "0.60",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000003-0008-4000-8000-000000000001",
+                  "title": "Sensor-Offsets überschreiben",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.1", "s": "0.3", "t": "0.3", "u": "0.3" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Fehlerhafte Hinderniserkennung durch verfälschte LIDAR-Werte",
+                      "ds": ["DS1", "DS2"],
+                      "k": "0.1", "s": "0.3", "t": "0.3", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000003-0007-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1,
+        "useDeepTree": false,
+        "useSecondIntermediate": false,
+        "useThirdIntermediate": false,
+        "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "rootRiskValue": "1.80",
+        "rootRiskLevel": ""
+      },
+      {
+        "id": "R04",
+        "uid": "risk_a1b2c3d4-4444-4aaa-bbbb-000000000004",
+        "rootName": "LoRaWAN-Funkstrecke",
+        "treeV2": {
+          "uid": "node_a0000004-0000-4000-8000-000000000001",
+          "title": "LoRaWAN-Funkstrecke",
+          "depth": 0,
+          "collapsed": false,
+          "kstu": { "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.5" },
+          "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_a0000004-0001-4000-8000-000000000001",
+              "title": "Funkverkehr abhören",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.3" },
+              "i_norm": "0.60",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000004-0002-4000-8000-000000000001",
+                  "title": "LoRaWAN-Pakete mit SDR empfangen",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.3" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Ertragsdaten und Telemetrie mitlesen",
+                      "ds": ["DS4"],
+                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000004-0001-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    },
+                    {
+                      "text": "Positionsdaten und Einsatzzeiten ableiten",
+                      "ds": ["DS4", "DS5"],
+                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000004-0002-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000004-0003-4000-8000-000000000001",
+              "title": "Replay- und Jamming-Angriff",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000004-0004-4000-8000-000000000001",
+                  "title": "Replay alter Steuerbefehle",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Wiederholte Werkzeugaktivierung auf falscher Fläche",
+                      "ds": ["DS1", "DS2", "DS3"],
+                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000004-0003-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000004-0005-4000-8000-000000000001",
+                  "title": "Funksignal stören (Jamming)",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.1", "s": "0.3", "t": "0.1", "u": "0.5" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Kommunikationsausfall zum Cloud-Backend",
+                      "ds": ["DS3", "DS6"],
+                      "k": "0.1", "s": "0.3", "t": "0.1", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000004-0004-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    },
+                    {
+                      "text": "Verlust der Fernsteuerbarkeit",
+                      "ds": ["DS1", "DS3", "DS6"],
+                      "k": "0.1", "s": "0.3", "t": "0.1", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000004-0005-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1,
+        "useDeepTree": false,
+        "useSecondIntermediate": false,
+        "useThirdIntermediate": false,
+        "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.5" },
+        "i_norm": "1.00",
+        "rootRiskValue": "1.60",
+        "rootRiskLevel": ""
+      },
+      {
+        "id": "R05",
+        "uid": "risk_a1b2c3d4-5555-4aaa-bbbb-000000000005",
+        "rootName": "Mobile App / Cloud-API",
+        "treeV2": {
+          "uid": "node_a0000005-0000-4000-8000-000000000001",
+          "title": "Mobile App / Cloud-API",
+          "depth": 0,
+          "collapsed": false,
+          "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+          "i_norm": "1.00",
+          "impacts": [],
+          "children": [
+            {
+              "uid": "node_a0000005-0001-4000-8000-000000000001",
+              "title": "API-Schwachstellen ausnutzen",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+              "i_norm": "1.00",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000005-0002-4000-8000-000000000001",
+                  "title": "Ungesicherte REST-Endpunkte",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Fernsteuerung aller Roboter einer Flotte",
+                      "ds": ["DS1", "DS2", "DS3"],
+                      "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000005-0001-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    },
+                    {
+                      "text": "Massenhaftes Auslesen von Kundendaten",
+                      "ds": ["DS4", "DS5"],
+                      "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000005-0002-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                },
+                {
+                  "uid": "node_a0000005-0003-4000-8000-000000000001",
+                  "title": "Token-Diebstahl aus mobiler App",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.5", "t": "0.3", "u": "0.5" },
+                  "i_norm": "1.00",
+                  "impacts": [
+                    {
+                      "text": "Session-Übernahme eines Betreibers",
+                      "ds": ["DS2", "DS3", "DS4"],
+                      "k": "0.5", "s": "0.5", "t": "0.3", "u": "0.5",
+                      "i_norm": "1.00",
+                      "uid": "leaf_a0000005-0003-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            },
+            {
+              "uid": "node_a0000005-0004-4000-8000-000000000001",
+              "title": "Cloud-Datenleck",
+              "depth": 1,
+              "collapsed": false,
+              "kstu": { "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.3" },
+              "i_norm": "0.60",
+              "impacts": [],
+              "children": [
+                {
+                  "uid": "node_a0000005-0005-4000-8000-000000000001",
+                  "title": "Unverschlüsselte Datenbank-Exfiltration",
+                  "depth": 2,
+                  "collapsed": false,
+                  "kstu": { "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.3" },
+                  "i_norm": "0.60",
+                  "impacts": [
+                    {
+                      "text": "Ertragsdaten aller Kunden exfiltrieren",
+                      "ds": ["DS2", "DS4", "DS5"],
+                      "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.3",
+                      "i_norm": "0.60",
+                      "uid": "leaf_a0000005-0004-4000-8000-100000000001",
+                      "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
+                    }
+                  ],
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        "treeDepth": 1,
+        "useDeepTree": false,
+        "useSecondIntermediate": false,
+        "useThirdIntermediate": false,
+        "useFourthIntermediate": false,
+        "branches": [],
+        "kstu": { "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5" },
+        "i_norm": "1.00",
+        "rootRiskValue": "2.20",
+        "rootRiskLevel": ""
+      }
+    ],
+    "treeNotes": {
+      "risk_a1b2c3d4-1111-4aaa-bbbb-000000000001": "Die Firmware-Extraktion über physischen Zugang wird als Restrisiko akzeptiert. Geofencing dient als sekundäre Schutzmaßnahme gegen Routenmanipulation."
+    }
+  }
+}

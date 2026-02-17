@@ -1,0 +1,9 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^cd c:\\\\Users\\\\R011239\\\\Documents\\\\Webapp\\\\TRA\\\\TARATool\\\\tests; python -m pytest --tb=short -q 2>&1 \\| Select-Object -First 80$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "&": true
+    }
+}

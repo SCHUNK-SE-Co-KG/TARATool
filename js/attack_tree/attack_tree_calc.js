@@ -68,7 +68,11 @@ function _kstuWorstCase(items) {
         items.forEach(it => {
             if (!it) return;
             let raw = it[key];
-            if (it.kstu && it.kstu[key]) raw = it.kstu[key];
+            // Prefer kstu sub-object value if present (explicit null-check;
+            // previous truthiness check would skip valid '0' or 0 values)
+            if (it.kstu && it.kstu[key] !== undefined && it.kstu[key] !== null) {
+                raw = it.kstu[key];
+            }
             const v = _parseKSTUValue(raw);
             if (v === null) return;
             if (max === null || v > max) max = v;

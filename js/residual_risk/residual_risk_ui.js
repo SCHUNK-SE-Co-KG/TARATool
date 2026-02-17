@@ -480,7 +480,9 @@
                     resU = (rkstu.u === undefined || rkstu.u === null || String(rkstu.u).trim() === '') ? '-' : String(rkstu.u);
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[rrRenderTreeCard] computeResidualTreeMetrics error for uid', entry?.uid, e);
+        }
 
         const resMeta = rrGetRiskMeta(resVal);
 
@@ -564,7 +566,9 @@
 
         try {
             if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[renderResidualRisk] Sync error:', e);
+        }
 
         const entries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
             ? analysis.residualRisk.entries

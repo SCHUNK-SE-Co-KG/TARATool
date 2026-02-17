@@ -114,7 +114,8 @@ window.revertToVersion = (analysisId, version) => {
         btnConfirmAction.classList.remove('dangerous');
         
         showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
-        statusBarMessage.textContent = `Version ${version} wiederhergestellt.`;
+        const elSB = document.getElementById('statusBarMessage');
+        if (elSB) elSB.textContent = `Version ${version} wiederhergestellt.`;
     };
     
     btnCancelConfirmation.onclick = () => {
@@ -192,14 +193,15 @@ function createNewVersion(comment) {
         newVersion = `${major}.${mi}`;
     }
 
+    const today = (typeof getTodayISO === 'function') ? getTodayISO() : todayISO;
     const newEntry = {
         version: newVersion,
         author: analysis.metadata.author, 
-        date: todayISO,
+        date: today,
         comment: comment.trim(), 
         state: {
             name: analysis.name,
-            metadata: { ...analysis.metadata, version: newVersion, date: todayISO },
+            metadata: { ...analysis.metadata, version: newVersion, date: today },
             description: analysis.description,
             intendedUse: analysis.intendedUse,
             assets: JSON.parse(JSON.stringify(analysis.assets)), 
@@ -214,13 +216,14 @@ function createNewVersion(comment) {
     analysis.history.push(newEntry);
     
     analysis.metadata.version = newVersion;
-    analysis.metadata.date = todayISO;
+    analysis.metadata.date = today;
     
     fillAnalysisForm(analysis);
     renderHistoryTable(analysis);
     saveAnalyses();
     showToast(`Neue Version ${newVersion} erstellt.`, 'success');
-    statusBarMessage.textContent = `Neue Version ${newVersion} erstellt.`;
+    const elStatusBar = document.getElementById('statusBarMessage');
+    if (elStatusBar) elStatusBar.textContent = `Neue Version ${newVersion} erstellt.`;
 
     if (versionControlModal) versionControlModal.style.display = 'none';
 }

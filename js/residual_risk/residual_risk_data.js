@@ -260,6 +260,7 @@
         try {
             return window.syncResidualRiskFromRiskAnalysis(analysis, false);
         } catch (e) {
+            console.warn('[ensureResidualRiskSynced] Sync error:', e);
             return false;
         }
     };
@@ -297,12 +298,36 @@
         try {
             if (typeof applyWorstCaseInheritance === 'function') {
                 applyWorstCaseInheritance(clone);
+            } else {
+                console.warn('[computeResidualTreeMetrics] applyWorstCaseInheritance is not defined!');
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('[computeResidualTreeMetrics] applyWorstCaseInheritance error for uid', riskUid, e);
+        }
 
         const iNorm = (base && base.i_norm !== undefined) ? base.i_norm : (clone.i_norm || '');
         const rootI = parseFloat(iNorm) || 0;
         const kstu = clone.kstu || { k:'', s:'', t:'', u:'' };
+
+        // Diagnostic: warn if kstu is all-null after inheritance (indicates propagation failure)
+        if (kstu.k === null && kstu.s === null && kstu.t === null && kstu.u === null) {
+            console.warn('[computeResidualTreeMetrics] KSTU all null after inheritance for uid', riskUid,
+                'clone.kstu:', JSON.stringify(clone.kstu),
+                'clone.treeV2?.kstu:', JSON.stringify(clone.treeV2?.kstu),
+                'clone has treeV2:', !!clone.treeV2,
+                'clone has branches:', !!clone.branches);
+            // Debug: dump the full V2 tree structure (kstu at each level)
+            if (clone.treeV2) {
+                const _dumpKstu = (node, depth) => {
+                    const indent = '  '.repeat(depth);
+                    console.warn(indent + 'Node:', node.title || node.uid, 'kstu:', JSON.stringify(node.kstu),
+                        'impacts:', (node.impacts || []).length, 'children:', (node.children || []).length);
+                    (node.children || []).forEach(ch => _dumpKstu(ch, depth + 1));
+                };
+                _dumpKstu(clone.treeV2, 0);
+            }
+        }
+
         const sumP = (parseFloat(kstu.k) || 0) + (parseFloat(kstu.s) || 0) + (parseFloat(kstu.t) || 0) + (parseFloat(kstu.u) || 0);
         const riskValue = (rootI * sumP).toFixed(2);
 
