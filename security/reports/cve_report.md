@@ -1,6 +1,6 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-02-18T12:12:34Z  
+**Scan-Zeitpunkt:** 2026-02-18T12:35:15Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 9  
 **Schwachstellen gefunden:** 7
@@ -26,7 +26,7 @@
 ### GHSA-8mvj-3j78-4qmw
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 7.5 🔴
+- **CVSS-Score:** 8.7 🔴
 - **Schweregrad:** CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H
 - **CVE:** CVE-2025-57810
 - **Beschreibung:** jsPDF Denial of Service (DoS)
