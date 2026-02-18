@@ -444,8 +444,7 @@
       init() { this.host = document.getElementById("atTreeEditorV2"); },
 
       open(existingEntry) {
-        // `analysisData` / `activeAnalysisId` are top-level `let` in globals.js (not on window).
-        const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find((a) => a.id === activeAnalysisId);
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         this.analysis = analysis || null;
 
         this.editingId = existingEntry?.id || "";

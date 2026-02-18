@@ -47,9 +47,7 @@ function populateAttackTreeDropdowns() {
 
 
 function openAttackTreeModal(existingEntry = null) {
-    // `analysisData` / `activeAnalysisId` are declared as top-level `let` in globals.js.
-    // Top-level `let` does NOT create a `window.*` property, so we must use the lexical globals.
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     // Reset form via explicit DOM lookup (ES-module-safe)
@@ -93,7 +91,7 @@ function openAttackTreeModal(existingEntry = null) {
 function saveAttackTree(e) {
     if (e) e.preventDefault();
 
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     if (!analysis.riskEntries) analysis.riskEntries = [];
@@ -413,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // =============================================================
 
 window.renderCurrentTreePreview = function() {
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     const previewContainer = document.getElementById('graph-preview-container');
     if (!analysis || !previewContainer) return;
 
@@ -436,7 +434,7 @@ window.renderCurrentTreePreview = function() {
 // =============================================================
 
 window.downloadTreeDataZip = async function() {
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
         if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
         return;

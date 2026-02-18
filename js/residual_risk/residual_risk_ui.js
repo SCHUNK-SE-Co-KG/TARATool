@@ -35,9 +35,7 @@
         const close = () => {
             modal.style.display = 'none';
             // Refresh overview (so that status/counts can become visible later)
-            const analysis = (typeof analysisData !== 'undefined')
-                ? (analysisData || []).find(a => a.id === activeAnalysisId)
-                : null;
+            const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
             if (analysis && typeof renderResidualRisk === 'function') {
                 renderResidualRisk(analysis);
             }
@@ -229,9 +227,7 @@
     function rrOpenModalForTree(residualEntry) {
         rrEnsureModalWiring();
 
-        const analysis = (typeof analysisData !== 'undefined')
-            ? (analysisData || []).find(a => a.id === activeAnalysisId)
-            : null;
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         if (!analysis) return;
 
         // Ensure that the residual risk structure is up to date
@@ -604,9 +600,7 @@
     };
 
     window.editResidualRiskTree = function (riskUid) {
-        const analysis = (typeof analysisData !== 'undefined')
-            ? (analysisData || []).find(a => a.id === activeAnalysisId)
-            : null;
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         if (!analysis) return;
 
         try {

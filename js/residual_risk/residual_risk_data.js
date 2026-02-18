@@ -260,7 +260,6 @@
     };
 
     // Convenience: ensures structure and syncs (without save)
-    // Convenience: ensures structure and syncs (without save)
     window.ensureResidualRiskSynced = function (analysis) {
         try {
             return window.syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -311,7 +310,6 @@
         }
 
         const iNorm = (base && base.i_norm !== undefined) ? base.i_norm : (clone.i_norm || '');
-        const rootI = parseFloat(iNorm) || 0;
         const kstu = clone.kstu || { k:'', s:'', t:'', u:'' };
 
         // Diagnostic: warn if kstu is all-null after inheritance (indicates propagation failure)
@@ -333,8 +331,8 @@
             }
         }
 
-        const sumP = (parseFloat(kstu.k) || 0) + (parseFloat(kstu.s) || 0) + (parseFloat(kstu.t) || 0) + (parseFloat(kstu.u) || 0);
-        const riskValue = (rootI * sumP).toFixed(2);
+        // Delegates to global computeRiskScore() (utils.js) — single source of truth
+        const riskValue = computeRiskScore(iNorm, kstu).toFixed(2);
 
         return {
             riskValue,
