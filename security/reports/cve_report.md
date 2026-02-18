@@ -1,6 +1,6 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-02-18T11:07:15Z  
+**Scan-Zeitpunkt:** 2026-02-18T12:12:34Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 9  
 **Schwachstellen gefunden:** 7
@@ -41,7 +41,7 @@
 ### GHSA-95fx-jjr5-f39c
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 7.5 🔴
+- **CVSS-Score:** 8.7 🔴
 - **Schweregrad:** CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N
 - **CVE:** CVE-2026-24133
 - **Beschreibung:** jsPDF Vulnerable to Denial of Service (DoS) via Unvalidated BMP Dimensions in BMPDecoder
@@ -56,7 +56,7 @@
 ### GHSA-cjw8-79x6-5cj4
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 5.0
+- **CVSS-Score:** 6.3
 - **Schweregrad:** CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N
 - **CVE:** CVE-2026-24040
 - **Beschreibung:** jsPDF has Shared State Race Condition in addJS Plugin
@@ -71,7 +71,7 @@
 ### GHSA-f8cm-6447-x5h2
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 9.0 🔴
+- **CVSS-Score:** 9.2 🔴
 - **Schweregrad:** CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:H/SI:N/SA:N
 - **CVE:** CVE-2025-68428
 - **Beschreibung:** jsPDF has Local File Inclusion/Path Traversal vulnerability
@@ -101,7 +101,7 @@
 ### GHSA-vm32-vv63-w422
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 5.0
+- **CVSS-Score:** 6.9
 - **Schweregrad:** CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:L/VA:N/SC:N/SI:L/SA:N
 - **CVE:** CVE-2026-24043
 - **Beschreibung:** jsPDF Vulnerable to Stored XMP Metadata Injection (Spoofing & Integrity Violation)
@@ -116,7 +116,7 @@
 ### GHSA-w532-jxjh-hjhj
 
 - **Paket:** npm:jspdf@2.5.1
-- **CVSS-Score:** 7.5 🔴
+- **CVSS-Score:** 8.7 🔴
 - **Schweregrad:** CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N
 - **CVE:** CVE-2025-29907
 - **Beschreibung:** jsPDF Bypass Regular Expression Denial of Service (ReDoS)

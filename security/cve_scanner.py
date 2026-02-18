@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import re
 import sys
@@ -111,7 +110,8 @@ class Dependency:
     source: str  # Datei, in der sie gefunden wurde
 
 
-# Severity-Label → geschätzter CVSS-Basiswert (NUR als letzter Fallback)
+# Severity-Label → geschätzter CVSS-Basiswert (NUR als letzter Fallback
+# wenn GitHub Advisory API nicht erreichbar ist)
 SEVERITY_LABEL_SCORES: dict[str, float] = {
     "CRITICAL": 9.0,
     "HIGH": 7.5,
@@ -120,113 +120,59 @@ SEVERITY_LABEL_SCORES: dict[str, float] = {
     "LOW": 2.5,
 }
 
-CVSS_HIGH_THRESHOLD = 7.0  # Ab diesem Wert wird ein Email-Alert ausgelöst
-
-
-# ── CVSS 3.1 Base Score Berechnung ──────────────────────────────────
-# Standard-Formel nach FIRST.org:
-# https://www.first.org/cvss/v3.1/specification-document
-
-_CVSS31_METRICS: dict[str, dict[str, float]] = {
-    "AV": {"N": 0.85, "A": 0.62, "L": 0.55, "P": 0.20},
-    "AC": {"L": 0.77, "H": 0.44},
-    "PR_U": {"N": 0.85, "L": 0.62, "H": 0.27},  # Scope Unchanged
-    "PR_C": {"N": 0.85, "L": 0.68, "H": 0.50},  # Scope Changed
-    "UI": {"N": 0.85, "R": 0.62},
-    "C": {"H": 0.56, "L": 0.22, "N": 0.0},
-    "I": {"H": 0.56, "L": 0.22, "N": 0.0},
-    "A": {"H": 0.56, "L": 0.22, "N": 0.0},
-}
-
-
-def _roundup(x: float) -> float:
-    """CVSS roundup: aufrunden auf nächste 0.1."""
-    return math.ceil(x * 10) / 10.0
-
-
-def _parse_cvss_vector(vector: str) -> dict[str, str]:
-    """Parst einen CVSS-Vektor-String in ein Dict."""
-    parts = vector.split("/")
-    result: dict[str, str] = {}
-    for part in parts:
-        if ":" in part:
-            key, val = part.split(":", 1)
-            result[key] = val
-    return result
-
-
-def compute_cvss31_score(vector: str) -> Optional[float]:
-    """Berechnet den CVSS 3.1 Base Score aus einem Vektor-String.
-
-    Gibt None zurück wenn der Vektor nicht parsbar ist.
-    Formel: https://www.first.org/cvss/v3.1/specification-document
-    """
-    metrics = _parse_cvss_vector(vector)
-
-    try:
-        av = _CVSS31_METRICS["AV"][metrics["AV"]]
-        ac = _CVSS31_METRICS["AC"][metrics["AC"]]
-        ui = _CVSS31_METRICS["UI"][metrics["UI"]]
-        scope = metrics["S"]
-
-        # PR hängt vom Scope ab
-        pr_key = "PR_C" if scope == "C" else "PR_U"
-        pr = _CVSS31_METRICS[pr_key][metrics["PR"]]
-
-        c = _CVSS31_METRICS["C"][metrics["C"]]
-        i = _CVSS31_METRICS["I"][metrics["I"]]
-        a = _CVSS31_METRICS["A"][metrics["A"]]
-    except KeyError:
-        return None
-
-    # Impact Sub Score
-    iss = 1 - ((1 - c) * (1 - i) * (1 - a))
-
-    if scope == "U":
-        impact = 6.42 * iss
-    else:
-        impact = 7.52 * (iss - 0.029) - 3.25 * (iss - 0.02) ** 15
-
-    if impact <= 0:
-        return 0.0
-
-    exploitability = 8.22 * av * ac * pr * ui
-
-    if scope == "U":
-        base = _roundup(min(impact + exploitability, 10))
-    else:
-        base = _roundup(min(1.08 * (impact + exploitability), 10))
-
-    return base
+CVSS_HIGH_THRESHOLD = 7.0  # Ab diesem Wert wird ein Alert ausgelöst
 
 
 def _fetch_ghsa_cvss_score(ghsa_id: str) -> Optional[float]:
-    """Holt den numerischen CVSS-Score von der GitHub Advisory API.
+    """Holt den offiziellen numerischen CVSS-Score für ein GitHub Advisory.
 
-    Funktioniert für CVSS 3.x und 4.0 Advisories.
-    Kein API-Token nötig für öffentliche Advisories.
+    Strategie:
+    1. GitHub REST API (/advisories/{id}) – liefert Score für CVSS 3.x
+    2. GitHub Advisory Webseite scrapen – liefert Score für CVSS 3.x UND 4.0
+       (Pattern: "X.X/ 10" auf der Advisory-Seite)
     """
+    # 1. REST API versuchen (schnell, strukturiert)
     url = f"https://api.github.com/advisories/{ghsa_id}"
     try:
         resp = requests.get(url, timeout=10, headers={
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         })
-        if resp.status_code != 200:
-            return None
-        data = resp.json()
-
-        # Versuche cvss_v4 zuerst, dann cvss (v3)
-        for field_name in ("cvss_v4", "cvss"):
-            cvss_data = data.get(field_name)
-            if cvss_data and isinstance(cvss_data, dict):
-                score = cvss_data.get("score")
-                if isinstance(score, (int, float)) and score > 0:
-                    return float(score)
-
-        return None
+        if resp.status_code == 200:
+            data = resp.json()
+            for field_name in ("cvss_v4", "cvss"):
+                cvss_data = data.get(field_name)
+                if cvss_data and isinstance(cvss_data, dict):
+                    score = cvss_data.get("score")
+                    if isinstance(score, (int, float)) and score > 0:
+                        return float(score)
     except requests.RequestException:
-        return None
+        pass
+
+    # 2. Advisory-Webseite scrapen (Fallback für CVSS 4.0)
+    #    Score und "/ 10" stehen in getrennten HTML-Elementen:
+    #      <span class="Button-label">9.2</span> ... <span class="ml-1">/ 10</span>
+    #    Daher suchen wir "/ 10" und nehmen die letzte Dezimalzahl im
+    #    HTML-Textinhalt (>X.X<) in den 300 Zeichen davor.
+    page_url = f"https://github.com/advisories/{ghsa_id}"
+    try:
+        resp = requests.get(page_url, timeout=10, headers={
+            "Accept": "text/html",
+            "User-Agent": "TARATool-CVE-Scanner/1.0",
+        })
+        if resp.status_code == 200:
+            idx = resp.text.find("/ 10")
+            if idx > 0:
+                window = resp.text[max(0, idx - 3000):idx]
+                # Nur Zahlen im HTML-Textinhalt (zwischen > und <),
+                # nicht in SVG-Pfaden oder Attributen
+                numbers = re.findall(r">(\d+\.\d+)<", window)
+                if numbers:
+                    return float(numbers[-1])
+    except requests.RequestException:
+        pass
+
+    return None
 
 
 @dataclass
@@ -419,45 +365,29 @@ def _extract_severity(vuln: dict) -> str:
 
 
 def _compute_cvss_score(vuln: dict, severity_str: str) -> float:
-    """Ermittelt einen numerischen CVSS-Score.
+    """Holt den offiziellen CVSS-Score von der GitHub Advisory API.
 
     Strategie (Priorität):
-    1. CVSS 3.1 Vektor-String → echte Berechnung nach FIRST.org-Formel
-    2. CVSS 4.0 Vektor-String → numerischer Score via GitHub Advisory API
-    3. Severity-Label aus database_specific.severity → Schätzwert (Fallback)
-    4. Fallback 0.0 (UNKNOWN)
+    1. GHSA-ID → GitHub Advisory API → offizieller numerischer Score
+    2. Severity-Label aus database_specific.severity → Fallback-Schätzwert
+    3. Fallback 0.0 (UNKNOWN)
     """
     vuln_id = vuln.get("id", "")
-    cvss_vector = ""
 
-    # CVSS-Vektor aus severity[] extrahieren
-    for s in vuln.get("severity", []):
-        raw = s.get("score", "")
-        if isinstance(raw, str) and raw.startswith("CVSS:"):
-            cvss_vector = raw
-            break
+    # 1. GHSA-ID ermitteln und offiziellen Score von GitHub holen
+    ghsa_id = vuln_id if vuln_id.startswith("GHSA-") else ""
+    if not ghsa_id:
+        for alias in vuln.get("aliases", []):
+            if alias.startswith("GHSA-"):
+                ghsa_id = alias
+                break
 
-    # 1. CVSS 3.x Vektor → echte Berechnung
-    if cvss_vector.startswith("CVSS:3"):
-        computed = compute_cvss31_score(cvss_vector)
-        if computed is not None:
-            return computed
+    if ghsa_id:
+        api_score = _fetch_ghsa_cvss_score(ghsa_id)
+        if api_score is not None:
+            return api_score
 
-    # 2. CVSS 4.0 Vektor → GitHub Advisory API für echten Score
-    if cvss_vector.startswith("CVSS:4"):
-        # GHSA-ID ermitteln (ist meist die vuln_id selbst)
-        ghsa_id = vuln_id if vuln_id.startswith("GHSA-") else ""
-        if not ghsa_id:
-            for alias in vuln.get("aliases", []):
-                if alias.startswith("GHSA-"):
-                    ghsa_id = alias
-                    break
-        if ghsa_id:
-            api_score = _fetch_ghsa_cvss_score(ghsa_id)
-            if api_score is not None:
-                return api_score
-
-    # 3. Fallback: Severity-Label → geschätzter Wert
+    # 2. Fallback: Severity-Label → geschätzter Wert
     db_severity = vuln.get("database_specific", {}).get("severity", "").upper()
     if db_severity in SEVERITY_LABEL_SCORES:
         return SEVERITY_LABEL_SCORES[db_severity]

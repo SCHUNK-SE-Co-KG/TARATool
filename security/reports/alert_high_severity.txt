@@ -1,7 +1,7 @@
 ⚠️ CVE-Alert: Kritische Schwachstellen in TARATool-Abhängigkeiten
 =================================================================
 
-Scan-Zeitpunkt: 2026-02-18T11:07:15Z
+Scan-Zeitpunkt: 2026-02-18T12:12:34Z
 Repository:     SCHUNK-SE-Co-KG/TARATool
 Schwachstellen: 7 gesamt, 5 mit CVSS >= 7.0
 
@@ -14,14 +14,14 @@ Schwachstellen: 7 gesamt, 5 mit CVSS >= 7.0
   jsPDF Denial of Service (DoS)
   → https://github.com/parallax/jsPDF/security/advisories/GHSA-8mvj-3j78-4qmw
 
-  GHSA-95fx-jjr5-f39c  (CVSS 7.5)
+  GHSA-95fx-jjr5-f39c  (CVSS 8.7)
   Paket:       npm:jspdf@2.5.1
   CVE:         CVE-2026-24133
   Fix-Version: 4.1.0
   jsPDF Vulnerable to Denial of Service (DoS) via Unvalidated BMP Dimensions in BMPDecoder
   → https://github.com/parallax/jsPDF/security/advisories/GHSA-95fx-jjr5-f39c
 
-  GHSA-f8cm-6447-x5h2  (CVSS 9.0)
+  GHSA-f8cm-6447-x5h2  (CVSS 9.2)
   Paket:       npm:jspdf@2.5.1
   CVE:         CVE-2025-68428
   Fix-Version: 4.0.0
@@ -35,7 +35,7 @@ Schwachstellen: 7 gesamt, 5 mit CVSS >= 7.0
   jsPDF has PDF Injection in AcroFormChoiceField that allows Arbitrary JavaScript Execution
   → https://github.com/parallax/jsPDF/security/advisories/GHSA-pqxr-3g65-p328
 
-  GHSA-w532-jxjh-hjhj  (CVSS 7.5)
+  GHSA-w532-jxjh-hjhj  (CVSS 8.7)
   Paket:       npm:jspdf@2.5.1
   CVE:         CVE-2025-29907
   Fix-Version: 3.0.1
