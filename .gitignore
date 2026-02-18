@@ -1,2 +1,2 @@
-# CVE-Scanner Reports (werden via GitHub Actions auf main generiert)
-security/reports/
+# CVE-Scanner Reports – werden via GitHub Actions auf main committed
+# (nicht ignorieren, damit der tägliche Scan sie committen kann)
