@@ -18,6 +18,7 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [Externe Abhängigkeiten](#externe-abhängigkeiten)
 - [Datenhaltung](#datenhaltung)
 - [Testsuite](#testsuite)
+- [Architektur-Verbesserungen](#architektur-verbesserungen-p1p5)
 - [Screenshots](#screenshots)
 - [Mitwirken](#mitwirken)
 - [Lizenz](#lizenz)
@@ -257,39 +258,18 @@ Beiträge sind willkommen! So kannst du mitmachen:
 
 ---
 
-## ES-Module Migrations-Roadmap
+## Architektur-Verbesserungen (P1–P5)
 
-Das Projekt nutzt aktuell eine **Script-Tag-Architektur** mit globaler Scope-Teilung (21 Dateien, ~7.200 LOC). Eine Migration zu ES-Modulen (`import`/`export`) ist langfristig wünschenswert, erfordert aber mehrere Vorarbeiten.
+Das Projekt nutzt eine **Script-Tag-Architektur** mit globaler Scope-Teilung (22 Dateien, ~7.900 LOC). Im Rahmen eines umfassenden Architektur-Reviews wurden folgende Verbesserungen umgesetzt:
 
-### Bereits erledigt (P1–P5)
-
-| Schritt | Status |
+| Maßnahme | Beschreibung |
 |---|---|
-| Zentrale Hilfsfunktionen (`getActiveAnalysis`, `computeRiskScore`) | ✅ |
-| UI-/Logik-Trennung (calc.js ↔ ui.js) | ✅ |
-| typeof-Guards an allen cross-module Aufrufen | ✅ |
-| IIFE-Kapselung stateful Module (structure, editor_v2, residual_risk_*) | ✅ |
-| `renderActiveTab()` aus globals.js extrahiert → `tab_dispatcher.js` | ✅ |
-| Implizite DOM-Globals durch `document.getElementById()` ersetzt | ✅ |
-
-### Offene Schritte für vollständige Migration
-
-1. **State-Kapselung** – `analysisData` (let) und `activeAnalysisId` (let) in globals.js werden von 10+ Dateien direkt gelesen/geschrieben. Top-Level `let` erzeugt kein `window.*`-Property → bei ES-Modulen nicht cross-module erreichbar. **Lösung:** Getter/Setter-API über ein `AppState`-Objekt.
-2. **Zirkuläre Abhängigkeiten** – 6 identifizierte Zyklen (s. unten). Müssen vor der Migration aufgelöst werden, da ES-Module zirkuläre Importe nur eingeschränkt unterstützen.
-3. **~130 Cross-Module-Referenzen umschreiben** – Jede globale Funktion, die von einer anderen Datei aufgerufen wird, muss als `export`/`import` deklariert werden.
-4. **Build-System einführen** – CDN-Bibliotheken (jsPDF, JSZip, @hpcc-js/wasm) benötigen [Import Maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) oder einen Bundler (Vite, esbuild).
-5. **Schrittweise Migration** – Empfohlene Reihenfolge: Blattdateien zuerst (about.js, dot_export.js, calc.js), dann Module, zuletzt Core.
-
-### Bekannte Zirkuläre Abhängigkeits-Zyklen
-
-| Zyklus | Dateien |
-|---|---|
-| 1 | globals.js → render* ↔ modules → globals.js |
-| 2 | analysis_core.js → renderActiveTab → tab_dispatcher → render* → analysis_core |
-| 3 | risk_analysis.js → openAttackTreeModal → attack_tree_ui → risk_analysis |
-| 4 | residual_risk_data.js ↔ residual_risk_ui.js (sync/persist) |
-| 5 | security_goals.js → attack_tree_calc → security_goals (via renderSecurityGoals) |
-| 6 | versioning.js → renderActiveTab → alle Module → versioning (via Snapshot-Rollback) |
+| Zentrale Hilfsfunktionen | `getActiveAnalysis()` und `computeRiskScore()` als Single Source of Truth in `utils.js` |
+| UI-/Logik-Trennung | Reine Berechnungslogik in `calc.js`, DOM-Zugriffe in `ui.js` |
+| typeof-Guards | Absicherung aller cross-module Aufrufe gegen Ladeordnungs-Abhängigkeiten |
+| IIFE-Kapselung | Stateful Module (`structure`, `editor_v2`, `residual_risk_*`, `report_*`) gekapselt |
+| Tab-Dispatcher | `renderActiveTab()` aus `globals.js` extrahiert → eigenständige `tab_dispatcher.js` |
+| DOM-Zugriffe | Implizite DOM-Globals durch explizite `document.getElementById()` ersetzt |
 
 ---
 
