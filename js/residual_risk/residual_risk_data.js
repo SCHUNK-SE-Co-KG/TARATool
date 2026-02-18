@@ -1,6 +1,10 @@
 /**
  * @file        residual_risk_data.js
- * @description Residual risk analysis – data structure, sync, and computation
+ * @description Residual risk analysis – data structure, sync, and computation.
+ *              Two parallel stores exist within analysis.residualRisk:
+ *                - entries[] (primary, hierarchical – tree clones with .rr per leaf)
+ *                - leaves{}  (legacy, flat dict – kept for migration of older formats only)
+ *              entries[] is the authoritative store; leaves{} is rebuilt from entries on each sync.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
@@ -186,6 +190,7 @@
 
     window.rrIterateLeaves = rrIterateLeaves;
     window.rrMakeLeafKey = rrMakeLeafKey;
+    window.rrLegacyKey = rrLegacyKey;
 
     window.getRiskEntryByUid = function (analysis, uid) {
         return (analysis?.riskEntries || []).find(e => e?.uid === uid) || null;

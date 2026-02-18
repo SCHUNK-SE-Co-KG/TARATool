@@ -1,10 +1,13 @@
 /**
  * @file        attack_tree_ui.js
- * @description Attack tree form UI – dropdowns, save/load, and DOM helpers
+ * @description Attack tree form UI – dropdowns, save/load, DOM helpers, live summaries,
+ *              event binding, DOT preview, and file download/export.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
  * @license     GPL-3.0
+ * @pattern     No IIFE – all functions are cross-module public API.
+ *              Requires: attack_tree_calc.js (loaded before this file).
  */
 
 function populateAttackTreeDropdowns() {
@@ -49,8 +52,9 @@ function openAttackTreeModal(existingEntry = null) {
     const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
     if (!analysis) return;
 
-    // Reset form (browser-implicit global by id)
-    if (window.attackTreeForm) window.attackTreeForm.reset();
+    // Reset form via explicit DOM lookup (ES-module-safe)
+    const attackTreeFormEl = document.getElementById('attackTreeForm');
+    if (attackTreeFormEl) attackTreeFormEl.reset();
 
     try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT UI] populateAttackTreeDropdowns:', e.message || e); }
 
@@ -58,7 +62,7 @@ function openAttackTreeModal(existingEntry = null) {
     if (previewContainer) previewContainer.innerHTML = '';
 
     // Delete button (entire tree)
-    const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
+    const delBtn = document.getElementById('btnDeleteAttackTree');
     if (delBtn) {
         if (existingEntry && existingEntry.id) {
             delBtn.style.display = 'inline-flex';
@@ -367,27 +371,47 @@ function updateAttackTreeKSTUSummariesFromForm() {
 // --- FORM EVENT BINDING (moved from attack_tree_calc.js) ---
 // =============================================================
 
-if (attackTreeForm) {
-    attackTreeForm.onsubmit = saveAttackTree;
+{
+    const attackTreeForm = document.getElementById('attackTreeForm');
+    if (attackTreeForm) {
+        attackTreeForm.onsubmit = saveAttackTree;
 
-    const _atShouldUpdate = (t) => {
-        if (!t) return false;
-        if (t.classList && t.classList.contains('kstu-select')) return true;
-        if (t.type === 'checkbox') return true;
-        if (t.closest && t.closest('.ds-checks')) return true; 
-        return false;
-    };
+        const _atShouldUpdate = (t) => {
+            if (!t) return false;
+            if (t.classList && t.classList.contains('kstu-select')) return true;
+            if (t.type === 'checkbox') return true;
+            if (t.closest && t.closest('.ds-checks')) return true; 
+            return false;
+        };
 
-    ['change','input','click'].forEach(evtName => {
-        attackTreeForm.addEventListener(evtName, (ev) => {
-            const t = ev && ev.target ? ev.target : null;
-            if (!_atShouldUpdate(t)) return;
-            updateAttackTreeKSTUSummariesFromForm();
+        ['change','input','click'].forEach(evtName => {
+            attackTreeForm.addEventListener(evtName, (ev) => {
+                const t = ev && ev.target ? ev.target : null;
+                if (!_atShouldUpdate(t)) return;
+                updateAttackTreeKSTUSummariesFromForm();
+            });
         });
-    });
+    }
 }
 
-// DOT Preview from current editor
+// =============================================================
+// --- ATTACK TREE MODAL CLOSE HANDLER ---
+// =============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeAttackTreeModal');
+    const modal = document.getElementById('attackTreeModal');
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+});
+
+// =============================================================
+// --- DOT PREVIEW from current editor ---
+// =============================================================
+
 window.renderCurrentTreePreview = function() {
     const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
     const previewContainer = document.getElementById('graph-preview-container');
@@ -405,4 +429,156 @@ window.renderCurrentTreePreview = function() {
     pre.style.whiteSpace = 'pre-wrap';
     pre.textContent = dot || '(DOT konnte nicht erzeugt werden)';
     previewContainer.appendChild(pre);
+};
+
+// =============================================================
+// --- DOT/ZIP FILE DOWNLOAD (moved from dot_export.js) ---
+// =============================================================
+
+window.downloadTreeDataZip = async function() {
+    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
+        return;
+    }
+
+    if (typeof JSZip === 'undefined') {
+        if (typeof showToast === 'function') showToast('JSZip-Bibliothek nicht geladen.', 'error');
+        return;
+    }
+
+    const zip = new JSZip();
+    const h = window.ReportHelpers || {};
+    const analysisName = (analysis.name || analysis.id || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const entries = analysis.riskEntries;
+    let fileCount = 0;
+
+    if (typeof showToast === 'function') showToast('Erzeuge Baumdaten-Export…', 'info');
+
+    // --- Risk Analysis Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `risk/${treeId}_${treeName}`;
+
+        try {
+            const dot = typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
+            if (dot) {
+                zip.file(`${prefix}.dot`, dot);
+                fileCount++;
+
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(dot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Residual Risk Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `residual_risk/${treeId}_${treeName}_RR`;
+
+        try {
+            const rrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis, treeId) : null;
+            if (rrDot) {
+                zip.file(`${prefix}.dot`, rrDot);
+                fileCount++;
+
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(rrDot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Combined DOT (all trees in one file) ---
+    try {
+        const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+        if (allDot) { zip.file(`${analysisName}_alle_Baeume.dot`, allDot); fileCount++; }
+    } catch (_) {}
+
+    try {
+        const allRrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis) : null;
+        if (allRrDot) { zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot); fileCount++; }
+    } catch (_) {}
+
+    if (fileCount === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten zum Exportieren gefunden.', 'warning');
+        return;
+    }
+
+    // Generate and download ZIP
+    try {
+        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+
+        if (typeof showToast === 'function') showToast(`Baumdaten-Export erstellt (${fileCount} Dateien).`, 'success');
+    } catch (err) {
+        console.error('[TreeExport] ZIP generation failed:', err);
+        if (typeof showToast === 'function') showToast('ZIP-Export fehlgeschlagen.', 'error');
+    }
+};
+
+window.downloadDotFile = function() {
+    const analysis = getActiveAnalysis();
+    const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+
+    if (!dotContent) {
+        if (typeof showToast === 'function') {
+            showToast('Keine Daten für den Export vorhanden.', 'warning');
+        } else {
+            alert('Keine Daten für den Export vorhanden.');
+        }
+        return;
+    }
+
+    try {
+        const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
+
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+
+        if (typeof showToast === 'function') {
+            showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
+        }
+    } catch (err) {
+        console.error('Error during DOT export:', err);
+        if (typeof showToast === 'function') {
+            showToast('Export fehlgeschlagen.', 'error');
+        }
+    }
 };

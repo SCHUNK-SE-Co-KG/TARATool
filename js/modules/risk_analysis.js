@@ -49,7 +49,7 @@ function renderRiskAnalysis() {
     `;
 
     const btn = document.getElementById('btnOpenAttackTreeModal');
-    if (btn) btn.onclick = () => openAttackTreeModal(); 
+    if (btn) btn.onclick = () => { if (typeof openAttackTreeModal === 'function') openAttackTreeModal(); }; 
 }
 
 function renderExistingRiskEntries(analysis) {
@@ -92,7 +92,7 @@ window.editAttackTree = function(riskId) {
     if (!analysis) return;
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
-    openAttackTreeModal(entry);
+    if (typeof openAttackTreeModal === 'function') openAttackTreeModal(entry);
 };
 
 function reindexRiskIDs(analysis) {
@@ -128,8 +128,9 @@ window.deleteAttackTree = function(riskId) {
             }
             saveAnalyses();
             
-            // Close AttackTree modal if open
-            if (typeof attackTreeModal !== 'undefined' && attackTreeModal) attackTreeModal.style.display = 'none';
+            // Close AttackTree modal if open (explicit DOM lookup, ES-module-safe)
+            const attackTreeModalEl = document.getElementById('attackTreeModal');
+            if (attackTreeModalEl) attackTreeModalEl.style.display = 'none';
             
             renderRiskAnalysis();
             showToast('Angriffsbaum gelöscht.', 'success');

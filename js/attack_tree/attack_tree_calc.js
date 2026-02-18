@@ -1,10 +1,13 @@
 /**
  * @file        attack_tree_calc.js
- * @description Attack tree calculation – KSTU worst-case inheritance and impact propagation
+ * @description Attack tree calculation – KSTU worst-case inheritance and impact propagation.
+ *              Pure computation, no DOM access.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
  * @license     GPL-3.0
+ * @pattern     No IIFE – functions prefixed with _ are cross-module public API
+ *              (used by attack_tree_editor_v2.js, attack_tree_ui.js, residual_risk_*.js).
  */
 
 function _parseKSTUValue(val) {

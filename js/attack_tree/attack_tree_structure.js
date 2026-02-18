@@ -1,11 +1,16 @@
 /**
  * @file        attack_tree_structure.js
- * @description Attack tree structure – depth management, intermediate levels, and dynamic impact rows
+ * @description Attack tree structure – depth management, intermediate levels, and dynamic impact rows.
+ *              All helpers are IIFE-private; only init* and setTreeDepth are exposed.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
  * @license     GPL-3.0
+ * @pattern     IIFE – 23 internal helpers privatised, 4 functions exposed via window.*
  */
+
+(function () {
+    'use strict';
 
 function _atGetTreeDepth() {
     // 1 = Root -> Path -> Impacts
@@ -708,4 +713,10 @@ function initAttackTreeLeafRemovers() {
     _atUpdateAllLeafDeleteButtonsState();
 }
 
+    // --- Public API ---
+    window.setTreeDepth = setTreeDepth;
+    window.initAttackTreeImpactAdders = initAttackTreeImpactAdders;
+    window.initAttackTreeImpactRemovers = initAttackTreeImpactRemovers;
+    window.initAttackTreeLeafRemovers = initAttackTreeLeafRemovers;
 
+})();

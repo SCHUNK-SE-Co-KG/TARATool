@@ -363,10 +363,13 @@
                 const kstuSelects = tr.querySelectorAll('select.rr-kstu');
 
                 const persist = () => {
-                    // Keep legacy dict in sync so both access paths remain consistent
+                    // Keep legacy dict in sync (needed for migration of older data formats)
                     try {
                         if (analysis?.residualRisk?.leaves && liveEntry?.uid) {
-                            analysis.residualRisk.leaves[`${liveEntry.uid}|${leafKey}`] = JSON.parse(JSON.stringify(leaf.rr || {}));
+                            const legacyK = (typeof rrLegacyKey === 'function')
+                                ? rrLegacyKey(liveEntry.uid, leafKey)
+                                : `${liveEntry.uid}|${leafKey}`;
+                            analysis.residualRisk.leaves[legacyK] = JSON.parse(JSON.stringify(leaf.rr || {}));
                         }
                     } catch (e) {}
                     try {
@@ -552,7 +555,7 @@
 
         const entries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
             ? analysis.residualRisk.entries
-            : (analysis.riskEntries || []);
+            : [];
 
         if (!entries || entries.length === 0) {
             container.innerHTML = '<p style="color:#7f8c8d;">Noch keine Angriffsbäume vorhanden (siehe Reiter "Risikoanalyse").</p>';
@@ -610,8 +613,7 @@
             if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
         } catch (_) {}
 
-        const entry = (analysis.residualRisk?.entries || []).find(r => r?.uid === riskUid)
-            || (analysis.riskEntries || []).find(r => r?.uid === riskUid);
+        const entry = (analysis.residualRisk?.entries || []).find(r => r?.uid === riskUid);
 
         if (!entry) {
             if (typeof showToast === 'function') showToast('Angriffsbaum nicht gefunden.', 'error');
