@@ -36,7 +36,7 @@ function activateAnalysis(id) {
     if (elSelector) elSelector.value = id;
 
     // Re-render the active tab (using shared function from globals.js)
-    renderActiveTab(analysis);
+    if (typeof renderActiveTab === 'function') renderActiveTab(analysis);
 }
 
 // =============================================================

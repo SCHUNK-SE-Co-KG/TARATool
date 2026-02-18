@@ -135,9 +135,9 @@ TARATool/
     │   ├── security_goals.js               # Security-Ziele (Referenz auf Angriffsbäume)
     │   └── versioning.js                   # Versionskontrolle (Snapshots, Rollback)
     ├── attack_tree/                        # Angriffsbaum-Logik
-    │   ├── attack_tree_ui.js               # Angriffsbaum-UI-Rendering
+    │   ├── attack_tree_calc.js             # SCHASAM-Berechnungsengine (KSTU + Impact), reine Logik ohne DOM
     │   ├── attack_tree_editor_v2.js        # Kartenbasierter Baum-Editor (v2)
-    │   ├── attack_tree_calc.js             # SCHASAM-Berechnungsengine (KSTU + Impact)
+    │   ├── attack_tree_ui.js               # Angriffsbaum-UI (Rendering, Form-Events, Live-Summaries)
     │   ├── attack_tree_structure.js        # Baumstruktur-Hilfsfunktionen
     │   └── dot_export.js                   # DOT/Graphviz-Export für Baumvisualisierung
     ├── report/                             # PDF-Report

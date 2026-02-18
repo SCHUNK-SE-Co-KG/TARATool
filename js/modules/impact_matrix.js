@@ -45,7 +45,7 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     
     const riskTab = document.getElementById('tabRiskAnalysis');
     if (riskTab && riskTab.classList.contains('active')) {
-         renderRiskAnalysis();
+         if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
     }
 };
 

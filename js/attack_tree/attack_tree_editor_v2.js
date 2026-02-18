@@ -18,8 +18,8 @@
   const _qs = (sel, root = document) => root.querySelector(sel);
   const _qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  /** Escape user-provided text before embedding in innerHTML to prevent XSS (e.g. from imported JSON). */
-  const _escapeHtml = (str) => String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  /** Delegates to global escapeHtml() in utils.js (single source of truth). */
+  const _escapeHtml = (str) => escapeHtml(str);
 
   function _confirm({ title, html, confirmText = "Löschen", confirmClass = "primary-button dangerous", onConfirm }) {
     const modal = document.getElementById("confirmationModal");

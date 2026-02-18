@@ -175,6 +175,218 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+// =============================================================
+// --- NODE SUMMARY HTML (moved from attack_tree_calc.js) ---
+// =============================================================
+
+function _renderNodeSummaryHTML(kstu, iNorm) {
+    const riskScore = _computeRiskScore(kstu, iNorm);
+    const riskR = riskScore.toFixed(2);
+    
+    const _disp = (v) => (v === null || v === undefined || v === '') ? '-' : v;
+    const dispI = _disp(iNorm);
+    const dispK = _disp(kstu?.k);
+    const dispS = _disp(kstu?.s);
+    const dispT = _disp(kstu?.t);
+    const dispU = _disp(kstu?.u);
+
+    const riskClass = _getRiskCssClass(riskScore); 
+
+    return `
+        <div class="ns-row" style="background-color: #f0f0f0;">
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label">R=</span>
+                <span class="ns-value ${riskClass}">${riskR}</span>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label" style="font-size:0.9em; min-width:auto; margin-left:10px;">I(N)=</span>
+                <span class="ns-value">${dispI}</span>
+            </div>
+        </div>
+        <div class="ns-row" style="border-bottom:none; font-size:0.8em; color:#666;">
+            <div class="ns-kstu">
+                <span>K:${dispK}</span>
+                <span>S:${dispS}</span>
+                <span>T:${dispT}</span>
+                <span>U:${dispU}</span>
+            </div>
+        </div>
+    `;
+}
+
+// =============================================================
+// --- LIVE KSTU SUMMARIES FROM FORM (moved from attack_tree_calc.js) ---
+// =============================================================
+
+function updateAttackTreeKSTUSummariesFromForm() {
+    if (window.atV2 && typeof window.atV2.updateSummaries === "function") { window.atV2.updateSummaries(); return; }
+    const analysis = getActiveAnalysis();
+    if (!analysis) return;
+
+    const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
+    const treeDepth = (depthRaw === 3) ? 3 : ((depthRaw === 2) ? 2 : 1);
+    const useDeepTree = treeDepth >= 2;
+
+    const secondOn = (treeDepth === 2) && ((document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true');
+    const thirdOn = (treeDepth === 3);
+
+    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
+    const getLeafKSTU = (idx) => ({
+        k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
+        s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
+        t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
+        u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
+    });
+
+    const max = 5;
+
+    // Indizes: 1..5 (B1A), 6..10 (B2A), 11..15 (B1B), 16..20 (B2B)
+    const bases = {
+        '1a': 1,
+        '2a': 6,
+        '1b': 11,
+        '2b': 16
+    };
+
+    const mkLeaves = (base) => {
+        const arr = [];
+        for (let i = 0; i < max; i++) {
+            const idx = base + i;
+            arr.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+        }
+        return arr;
+    };
+
+    const formValues = {
+        treeDepth: treeDepth,
+        useDeepTree: useDeepTree,
+        useSecondIntermediate: secondOn,
+        useThirdIntermediate: thirdOn,
+        branches: [
+            {},
+            {}
+        ]
+    };
+
+    // Branch 1
+    if (treeDepth === 1) {
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[0].l2_node = {};
+        formValues.branches[0].l3_node = {};
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else {
+        formValues.branches[0].l2_nodes = [
+            { leaves: mkLeaves(bases['1a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[0].l2_nodes.push({ leaves: mkLeaves(bases['1b']) });
+        }
+    }
+
+    // Branch 2
+    if (treeDepth === 1) {
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[1].l2_node = {};
+        formValues.branches[1].l3_node = {};
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else {
+        formValues.branches[1].l2_nodes = [
+            { leaves: mkLeaves(bases['2a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[1].l2_nodes.push({ leaves: mkLeaves(bases['2b']) });
+        }
+    }
+
+    applyImpactInheritance(formValues, analysis);
+    applyWorstCaseInheritance(formValues);
+
+    const elRoot = document.getElementById('at_root_kstu_summary');
+    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
+
+    [0, 1].forEach((bIdx) => {
+        const branchNum = bIdx + 1;
+        const branchData = formValues.branches[bIdx];
+
+        const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
+        if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
+
+        if (treeDepth === 2) {
+            const nodeA = (branchData.l2_nodes && branchData.l2_nodes[0]) ? branchData.l2_nodes[0] : null;
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
+
+            const nodeB = (branchData.l2_nodes && branchData.l2_nodes[1]) ? branchData.l2_nodes[1] : null;
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = '';
+        }
+
+        if (treeDepth === 3) {
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData?.l2_node?.kstu, branchData?.l2_node?.i_norm);
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = _renderNodeSummaryHTML(branchData?.l3_node?.kstu, branchData?.l3_node?.i_norm);
+
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = '';
+        }
+    });
+
+    // Leaf summaries for all slots (1..20). Hidden rows are OK.
+    for (let idx = 1; idx <= 20; idx++) {
+        const leafObj = (() => {
+            // Determine: which branch/group does idx belong to?
+            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0]?.l2_nodes?.[0]?.leaves?.[idx-1] : formValues.branches[0]?.leaves?.[idx-1]);
+            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1]?.l2_nodes?.[0]?.leaves?.[idx-6] : formValues.branches[1]?.leaves?.[idx-6]);
+            if (idx >= 11 && idx <= 15) {
+                if (treeDepth !== 2 || !secondOn) return null;
+                return formValues.branches[0]?.l2_nodes?.[1]?.leaves?.[idx-11];
+            }
+            if (idx >= 16 && idx <= 20) {
+                if (treeDepth !== 2 || !secondOn) return null;
+                return formValues.branches[1]?.l2_nodes?.[1]?.leaves?.[idx-16];
+            }
+            return null;
+        })();
+
+        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
+        if (inp) inp.value = leafObj ? (leafObj.i_norm || '') : '';
+
+        const elL = document.getElementById(`at_leaf_${idx}_summary`);
+        if (elL) elL.innerHTML = leafObj ? _renderNodeSummaryHTML(leafObj.kstu, leafObj.i_norm) : '';
+    }
+}
+
+// =============================================================
+// --- FORM EVENT BINDING (moved from attack_tree_calc.js) ---
+// =============================================================
+
+if (attackTreeForm) {
+    attackTreeForm.onsubmit = saveAttackTree;
+
+    const _atShouldUpdate = (t) => {
+        if (!t) return false;
+        if (t.classList && t.classList.contains('kstu-select')) return true;
+        if (t.type === 'checkbox') return true;
+        if (t.closest && t.closest('.ds-checks')) return true; 
+        return false;
+    };
+
+    ['change','input','click'].forEach(evtName => {
+        attackTreeForm.addEventListener(evtName, (ev) => {
+            const t = ev && ev.target ? ev.target : null;
+            if (!_atShouldUpdate(t)) return;
+            updateAttackTreeKSTUSummariesFromForm();
+        });
+    });
+}
+
 // DOT Preview from current editor
 window.renderCurrentTreePreview = function() {
     const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);

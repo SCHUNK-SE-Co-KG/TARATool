@@ -610,8 +610,8 @@ function initAttackTreeImpactAdders() {
             _atEnsureLeafDeleteButtons();
             _atUpdateLeafDeleteButtonsState(branchNum, group);
 
-            populateAttackTreeDropdowns();
-            updateAttackTreeKSTUSummariesFromForm();
+            try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT] populateAttackTreeDropdowns:', e.message || e); }
+            try { if (typeof updateAttackTreeKSTUSummariesFromForm === 'function') updateAttackTreeKSTUSummariesFromForm(); } catch (e) { console.warn('[AT] updateSummaries:', e.message || e); }
         };
     });
 }
@@ -649,8 +649,8 @@ function initAttackTreeImpactRemovers() {
             _atEnsureLeafDeleteButtons();
             _atUpdateLeafDeleteButtonsState(branchNum, group);
 
-            populateAttackTreeDropdowns();
-            updateAttackTreeKSTUSummariesFromForm();
+            try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT] populateAttackTreeDropdowns:', e.message || e); }
+            try { if (typeof updateAttackTreeKSTUSummariesFromForm === 'function') updateAttackTreeKSTUSummariesFromForm(); } catch (e) { console.warn('[AT] updateSummaries:', e.message || e); }
         };
     });
 }
@@ -700,8 +700,8 @@ function initAttackTreeLeafRemovers() {
             _atUpdateRemoveImpactButtonState(branchNum, group);
             _atUpdateLeafDeleteButtonsState(branchNum, group);
 
-            populateAttackTreeDropdowns();
-            updateAttackTreeKSTUSummariesFromForm();
+            try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT] populateAttackTreeDropdowns:', e.message || e); }
+            try { if (typeof updateAttackTreeKSTUSummariesFromForm === 'function') updateAttackTreeKSTUSummariesFromForm(); } catch (e) { console.warn('[AT] updateSummaries:', e.message || e); }
         };
     });
 
