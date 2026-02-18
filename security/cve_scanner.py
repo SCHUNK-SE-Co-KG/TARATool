@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import textwrap
@@ -103,6 +104,18 @@ class Dependency:
     source: str  # Datei, in der sie gefunden wurde
 
 
+# Severity-Label → geschätzter CVSS-Basiswert
+SEVERITY_LABEL_SCORES: dict[str, float] = {
+    "CRITICAL": 9.5,
+    "HIGH": 8.0,
+    "MODERATE": 5.5,
+    "MEDIUM": 5.5,
+    "LOW": 2.5,
+}
+
+CVSS_HIGH_THRESHOLD = 7.0  # Ab diesem Wert wird ein Email-Alert ausgelöst
+
+
 @dataclass
 class Vulnerability:
     """Eine gefundene Sicherheitslücke."""
@@ -110,6 +123,7 @@ class Vulnerability:
     vuln_id: str
     summary: str
     severity: str
+    cvss_score: float
     affected_package: str
     affected_versions: str
     fixed_version: str
@@ -125,6 +139,7 @@ class ScanResult:
     repository: str
     dependencies_scanned: int
     vulnerabilities_found: int
+    high_severity_count: int = 0
     dependencies: list[Dependency] = field(default_factory=list)
     vulnerabilities: list[Vulnerability] = field(default_factory=list)
 
@@ -290,6 +305,39 @@ def _extract_severity(vuln: dict) -> str:
     return "UNKNOWN"
 
 
+def _compute_cvss_score(vuln: dict, severity_str: str) -> float:
+    """Ermittelt einen numerischen CVSS-Score.
+
+    Strategie (Priorität):
+    1. CVSS v3.x / v4.0 base-score aus severity[].score (numerisch)
+    2. Severity-Label aus database_specific.severity → Schätzwert
+    3. Fallback 0.0 (UNKNOWN)
+    """
+    # 1. Numerischen Score aus CVSS-Daten versuchen
+    for s in vuln.get("severity", []):
+        # Manche APIs liefern 'score' als Zahl direkt
+        raw = s.get("score", "")
+        if isinstance(raw, (int, float)):
+            return float(raw)
+        # Oder als String "7.5"
+        try:
+            return float(raw)
+        except (ValueError, TypeError):
+            pass
+
+    # 2. Aus CVSS-Vektor via FIRST.org API oder Schätzung über Severity-Label
+    db_severity = vuln.get("database_specific", {}).get("severity", "").upper()
+    if db_severity in SEVERITY_LABEL_SCORES:
+        return SEVERITY_LABEL_SCORES[db_severity]
+
+    # 3. Severity-String prüfen (könnte "HIGH" etc. sein)
+    upper = severity_str.upper()
+    if upper in SEVERITY_LABEL_SCORES:
+        return SEVERITY_LABEL_SCORES[upper]
+
+    return 0.0
+
+
 def _extract_fixed_version(affected: dict) -> str:
     """Ermittelt die erste fixe Version aus affected-Ranges."""
     for rng in affected.get("ranges", []):
@@ -323,11 +371,14 @@ def parse_vulnerabilities(
 
         refs = [r.get("url", "") for r in v.get("references", []) if r.get("url")]
 
+        cvss_score = _compute_cvss_score(v, severity)
+
         results.append(
             Vulnerability(
                 vuln_id=vuln_id,
                 summary=summary[:300],
                 severity=severity,
+                cvss_score=cvss_score,
                 affected_package=f"{dep.ecosystem}:{dep.name}@{dep.version}",
                 affected_versions=affected_versions,
                 fixed_version=fixed_version,
@@ -386,6 +437,9 @@ def generate_markdown_report(result: ScanResult) -> str:
             lines.append(f"### {v.vuln_id}")
             lines.append("")
             lines.append(f"- **Paket:** {v.affected_package}")
+            score_display = f"{v.cvss_score:.1f}" if v.cvss_score > 0 else "–"
+            high_marker = " 🔴" if v.cvss_score >= CVSS_HIGH_THRESHOLD else ""
+            lines.append(f"- **CVSS-Score:** {score_display}{high_marker}")
             lines.append(f"- **Schweregrad:** {v.severity}")
             lines.append(f"- **CVE:** {cve_str}")
             lines.append(f"- **Beschreibung:** {v.summary}")
@@ -405,6 +459,66 @@ def generate_markdown_report(result: ScanResult) -> str:
     lines.append("")
 
     return "\n".join(lines)
+
+
+def generate_alert_email_body(result: ScanResult) -> str:
+    """Erzeugt den Email-Body für den High-Severity-Alert."""
+    high = [v for v in result.vulnerabilities if v.cvss_score >= CVSS_HIGH_THRESHOLD]
+    lines: list[str] = []
+    lines.append("⚠️ CVE-Alert: Kritische Schwachstellen in TARATool-Abhängigkeiten")
+    lines.append("=" * 65)
+    lines.append("")
+    lines.append(f"Scan-Zeitpunkt: {result.timestamp}")
+    lines.append(f"Repository:     {result.repository}")
+    lines.append(f"Schwachstellen: {result.vulnerabilities_found} gesamt, {len(high)} mit CVSS >= {CVSS_HIGH_THRESHOLD}")
+    lines.append("")
+    lines.append("-" * 65)
+
+    for v in high:
+        cve_aliases = [a for a in v.aliases if a.startswith("CVE-")]
+        cve_str = ", ".join(cve_aliases) if cve_aliases else "–"
+        lines.append("")
+        lines.append(f"  {v.vuln_id}  (CVSS {v.cvss_score:.1f})")
+        lines.append(f"  Paket:       {v.affected_package}")
+        lines.append(f"  CVE:         {cve_str}")
+        lines.append(f"  Fix-Version: {v.fixed_version}")
+        lines.append(f"  {v.summary[:200]}")
+        if v.references:
+            lines.append(f"  → {v.references[0]}")
+
+    lines.append("")
+    lines.append("-" * 65)
+    lines.append("Vollständiger Report: security/reports/cve_report.md")
+    lines.append("https://github.com/SCHUNK-SE-Co-KG/TARATool/blob/main/security/reports/cve_report.md")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_alert_output(result: ScanResult, report_dir: Path) -> None:
+    """Schreibt Alert-Dateien für GitHub Actions (Email-Trigger)."""
+    report_dir.mkdir(parents=True, exist_ok=True)
+    alert_flag_path = report_dir / "alert_high_severity.txt"
+
+    if result.high_severity_count > 0:
+        email_body = generate_alert_email_body(result)
+        alert_flag_path.write_text(email_body, encoding="utf-8")
+        print(f"📧 Alert-Datei: {alert_flag_path.relative_to(ROOT_DIR)}")
+
+        # GitHub Actions Output setzen (falls in CI)
+        gh_output = os.environ.get("GITHUB_OUTPUT")
+        if gh_output:
+            with open(gh_output, "a") as f:
+                f.write(f"high_severity=true\n")
+                f.write(f"high_count={result.high_severity_count}\n")
+                f.write(f"alert_subject=⚠️ CVE-Alert: {result.high_severity_count} kritische Schwachstelle(n) in TARATool\n")
+    else:
+        # Alte Alert-Datei entfernen, falls vorhanden
+        if alert_flag_path.exists():
+            alert_flag_path.unlink()
+        gh_output = os.environ.get("GITHUB_OUTPUT")
+        if gh_output:
+            with open(gh_output, "a") as f:
+                f.write("high_severity=false\n")
 
 
 def save_reports(result: ScanResult, report_dir: Path) -> tuple[Path, Path]:
@@ -465,11 +579,16 @@ def run_scan() -> ScanResult:
     if not all_vulns:
         print("   ✅ Keine Schwachstellen gefunden.")
 
+    high_sev = [v for v in all_vulns if v.cvss_score >= CVSS_HIGH_THRESHOLD]
+    if high_sev:
+        print(f"   🔴 {len(high_sev)} Schwachstelle(n) mit CVSS ≥ {CVSS_HIGH_THRESHOLD}!")
+
     result = ScanResult(
         timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         repository="SCHUNK-SE-Co-KG/TARATool",
         dependencies_scanned=len(all_deps),
         vulnerabilities_found=len(all_vulns),
+        high_severity_count=len(high_sev),
         dependencies=all_deps,
         vulnerabilities=all_vulns,
     )
@@ -498,6 +617,9 @@ def main() -> None:
     print()
     print(f"📄 JSON-Report: {json_path.relative_to(ROOT_DIR)}")
     print(f"📄 Markdown-Report: {md_path.relative_to(ROOT_DIR)}")
+
+    # Alert-Datei für GitHub Actions (Email-Trigger)
+    write_alert_output(result, REPORT_DIR)
     print()
 
     if result.vulnerabilities_found > 0:
@@ -505,6 +627,11 @@ def main() -> None:
             f"⚠️  {result.vulnerabilities_found} Schwachstelle(n) gefunden! "
             "Details im Report."
         )
+        if result.high_severity_count > 0:
+            print(
+                f"🔴 {result.high_severity_count} davon mit CVSS ≥ {CVSS_HIGH_THRESHOLD} "
+                "– Email-Alert wird ausgelöst."
+            )
         sys.exit(1)
     else:
         print("✅ Keine bekannten Schwachstellen – alles sicher.")
