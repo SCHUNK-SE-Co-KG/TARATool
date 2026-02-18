@@ -1,13 +1,13 @@
 ⚠️ CVE-Alert: Kritische Schwachstellen in TARATool-Abhängigkeiten
 =================================================================
 
-Scan-Zeitpunkt: 2026-02-18T12:12:34Z
+Scan-Zeitpunkt: 2026-02-18T12:35:15Z
 Repository:     SCHUNK-SE-Co-KG/TARATool
 Schwachstellen: 7 gesamt, 5 mit CVSS >= 7.0
 
 -----------------------------------------------------------------
 
-  GHSA-8mvj-3j78-4qmw  (CVSS 7.5)
+  GHSA-8mvj-3j78-4qmw  (CVSS 8.7)
   Paket:       npm:jspdf@2.5.1
   CVE:         CVE-2025-57810
   Fix-Version: 3.0.2

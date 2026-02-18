@@ -126,34 +126,17 @@ CVSS_HIGH_THRESHOLD = 7.0  # Ab diesem Wert wird ein Alert ausgelöst
 def _fetch_ghsa_cvss_score(ghsa_id: str) -> Optional[float]:
     """Holt den offiziellen numerischen CVSS-Score für ein GitHub Advisory.
 
-    Strategie:
-    1. GitHub REST API (/advisories/{id}) – liefert Score für CVSS 3.x
-    2. GitHub Advisory Webseite scrapen – liefert Score für CVSS 3.x UND 4.0
-       (Pattern: "X.X/ 10" auf der Advisory-Seite)
+    Strategie (Priorität):
+    1. GitHub Advisory Webseite scrapen – zeigt IMMER den aktuellsten Score
+       (CVSS 3.x oder 4.0), Pattern: ">X.X<" vor "/ 10"
+    2. GitHub REST API (/advisories/{id}) – Fallback, kann veraltete
+       CVSS 3.1 Scores liefern wenn Advisory auf CVSS 4.0 aktualisiert wurde
     """
-    # 1. REST API versuchen (schnell, strukturiert)
-    url = f"https://api.github.com/advisories/{ghsa_id}"
-    try:
-        resp = requests.get(url, timeout=10, headers={
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        })
-        if resp.status_code == 200:
-            data = resp.json()
-            for field_name in ("cvss_v4", "cvss"):
-                cvss_data = data.get(field_name)
-                if cvss_data and isinstance(cvss_data, dict):
-                    score = cvss_data.get("score")
-                    if isinstance(score, (int, float)) and score > 0:
-                        return float(score)
-    except requests.RequestException:
-        pass
-
-    # 2. Advisory-Webseite scrapen (Fallback für CVSS 4.0)
+    # 1. Advisory-Webseite scrapen (Primärquelle – immer aktuell)
     #    Score und "/ 10" stehen in getrennten HTML-Elementen:
     #      <span class="Button-label">9.2</span> ... <span class="ml-1">/ 10</span>
     #    Daher suchen wir "/ 10" und nehmen die letzte Dezimalzahl im
-    #    HTML-Textinhalt (>X.X<) in den 300 Zeichen davor.
+    #    HTML-Textinhalt (>X.X<) in den 3000 Zeichen davor.
     page_url = f"https://github.com/advisories/{ghsa_id}"
     try:
         resp = requests.get(page_url, timeout=10, headers={
@@ -169,6 +152,24 @@ def _fetch_ghsa_cvss_score(ghsa_id: str) -> Optional[float]:
                 numbers = re.findall(r">(\d+\.\d+)<", window)
                 if numbers:
                     return float(numbers[-1])
+    except requests.RequestException:
+        pass
+
+    # 2. REST API als Fallback (falls Scraping fehlschlägt)
+    url = f"https://api.github.com/advisories/{ghsa_id}"
+    try:
+        resp = requests.get(url, timeout=10, headers={
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        })
+        if resp.status_code == 200:
+            data = resp.json()
+            for field_name in ("cvss_v4", "cvss"):
+                cvss_data = data.get(field_name)
+                if cvss_data and isinstance(cvss_data, dict):
+                    score = cvss_data.get("score")
+                    if isinstance(score, (int, float)) and score > 0:
+                        return float(score)
     except requests.RequestException:
         pass
 
