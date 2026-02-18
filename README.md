@@ -16,6 +16,7 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [SCHASAM-Methodik](#schasam-methodik)
 - [Projektstruktur](#projektstruktur)
 - [Externe Abhängigkeiten](#externe-abhängigkeiten)
+- [CVE-Monitoring (Due Diligence)](#cve-monitoring-due-diligence)
 - [Datenhaltung](#datenhaltung)
 - [Testsuite](#testsuite)
 - [Architektur-Verbesserungen](#architektur-verbesserungen-p1p5)
@@ -175,6 +176,37 @@ Alle Abhängigkeiten werden über CDN geladen – es gibt **keine lokalen node_m
 Für die PDF-Angriffsbaumvisualisierung werden externe Render-Dienste genutzt:
 - [Kroki](https://kroki.io/) (primär)
 - [QuickChart](https://quickchart.io/graphviz) (Fallback)
+
+---
+
+## CVE-Monitoring (Due Diligence)
+
+Das Repository enthält einen **automatischen CVE-Scanner**, der alle Abhängigkeiten (JavaScript-CDN-Bibliotheken und Python-Testpakete) täglich gegen die [Google OSV-Datenbank](https://osv.dev) auf bekannte Sicherheitslücken prüft.
+
+### Funktionsweise
+
+| Komponente | Beschreibung |
+|---|---|
+| `security/cve_scanner.py` | Python-Scanner – extrahiert Abhängigkeiten aus `index.html` (CDN-URLs) und `tests/requirements.txt`, fragt die OSV-API ab |
+| `.github/workflows/cve-scan.yml` | GitHub Actions Workflow – läuft **täglich um 06:00 UTC** und bei manuellem Auslösen |
+| `security/reports/cve_report.md` | Markdown-Report mit Schwachstellen-Details (CVE-ID, CVSS, Fix-Version) |
+| `security/reports/cve_report.json` | Maschinenlesbarer JSON-Report |
+
+### Geprüfte Abhängigkeiten
+
+- **JavaScript (npm):** Font Awesome, JSZip, jsPDF (aus CDN-URLs in `index.html`)
+- **Python (PyPI):** pytest, playwright, pytest-html, pytest-xdist, pytest-timeout (aus `tests/requirements.txt`)
+
+### Manueller Scan
+
+```bash
+pip install -r security/requirements.txt
+python security/cve_scanner.py
+```
+
+Die Reports werden unter `security/reports/` abgelegt. Der GitHub Actions Workflow committet sie automatisch auf den `main`-Branch.
+
+> **CRA-Relevanz:** Der CRA fordert in Art. 13 (6) die Identifikation und Dokumentation von Schwachstellen in Komponenten Dritter. Der automatisierte CVE-Scan unterstützt diese **Due-Diligence-Pflicht** als kontinuierliches Monitoring.
 
 ---
 
