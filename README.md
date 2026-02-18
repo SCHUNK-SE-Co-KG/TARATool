@@ -189,12 +189,17 @@ Das Repository enthält einen **automatischen CVE-Scanner**, der alle Abhängigk
 |---|---|
 | `security/cve_scanner.py` | Python-Scanner – extrahiert Abhängigkeiten aus `index.html` (CDN-URLs) und `tests/requirements.txt`, fragt die OSV-API ab |
 | `.github/workflows/cve-scan.yml` | GitHub Actions Workflow – läuft **täglich um 06:00 UTC** und bei manuellem Auslösen |
+| `.github/workflows/cve-monthly-report.yml` | Monatlicher Report – erstellt am **1. Montag um 09:00 MEZ** ein GitHub Issue mit vollständigem CVE-Report |
 | `security/reports/cve_report.md` | Markdown-Report mit Schwachstellen-Details (CVE-ID, CVSS, Fix-Version) |
 | `security/reports/cve_report.json` | Maschinenlesbarer JSON-Report |
 
 ### Alert bei kritischen Schwachstellen
 
 Bei Schwachstellen mit **CVSS >= 7.0** wird automatisch ein **GitHub Issue** mit dem Label `cve-alert` erstellt und dem Maintainer zugewiesen. Benachrichtigungen erfolgen über GitHubs eigene Notification-Pipeline (E-Mail, Web, Mobile – je nach persönlicher Einstellung unter [github.com/settings/notifications](https://github.com/settings/notifications)).
+
+### Monatlicher Sicherheitsbericht
+
+Am **1. Montag jedes Monats um 09:00 Uhr (MEZ)** wird automatisch ein GitHub Issue mit dem Label `cve-monthly-report` erstellt, das den vollständigen CVE-Report enthält. Damit ist eine regelmäßige Übersicht über den Sicherheitsstatus aller Abhängigkeiten gewährleistet – auch wenn keine kritischen Schwachstellen vorliegen.
 
 ### Geprüfte Abhängigkeiten
 
