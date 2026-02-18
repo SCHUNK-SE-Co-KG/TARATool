@@ -22,9 +22,7 @@
     const descField = document.getElementById('sgDescription');
     const rootRefsSelect = document.getElementById('sgRootRefs');
 
-    function getActiveAnalysis() {
-        return analysisData.find(a => a.id === activeAnalysisId);
-    }
+    // Uses global getActiveAnalysis() from utils.js
 
     function ensureSecurityGoals(analysis) {
         if (!analysis.securityGoals || !Array.isArray(analysis.securityGoals)) {

@@ -1,6 +1,10 @@
 /**
  * @file        residual_risk_data.js
- * @description Residual risk analysis – data structure, sync, and computation
+ * @description Residual risk analysis – data structure, sync, and computation.
+ *              Two parallel stores exist within analysis.residualRisk:
+ *                - entries[] (primary, hierarchical – tree clones with .rr per leaf)
+ *                - leaves{}  (legacy, flat dict – kept for migration of older formats only)
+ *              entries[] is the authoritative store; leaves{} is rebuilt from entries on each sync.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
@@ -186,6 +190,7 @@
 
     window.rrIterateLeaves = rrIterateLeaves;
     window.rrMakeLeafKey = rrMakeLeafKey;
+    window.rrLegacyKey = rrLegacyKey;
 
     window.getRiskEntryByUid = function (analysis, uid) {
         return (analysis?.riskEntries || []).find(e => e?.uid === uid) || null;
@@ -255,7 +260,6 @@
     };
 
     // Convenience: ensures structure and syncs (without save)
-    // Convenience: ensures structure and syncs (without save)
     window.ensureResidualRiskSynced = function (analysis) {
         try {
             return window.syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -306,7 +310,6 @@
         }
 
         const iNorm = (base && base.i_norm !== undefined) ? base.i_norm : (clone.i_norm || '');
-        const rootI = parseFloat(iNorm) || 0;
         const kstu = clone.kstu || { k:'', s:'', t:'', u:'' };
 
         // Diagnostic: warn if kstu is all-null after inheritance (indicates propagation failure)
@@ -328,8 +331,8 @@
             }
         }
 
-        const sumP = (parseFloat(kstu.k) || 0) + (parseFloat(kstu.s) || 0) + (parseFloat(kstu.t) || 0) + (parseFloat(kstu.u) || 0);
-        const riskValue = (rootI * sumP).toFixed(2);
+        // Delegates to global computeRiskScore() (utils.js) — single source of truth
+        const riskValue = computeRiskScore(iNorm, kstu).toFixed(2);
 
         return {
             riskValue,

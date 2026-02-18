@@ -7,6 +7,45 @@
  * @license     GPL-3.0
  */
 
+// =============================================================
+// --- ACTIVE ANALYSIS ACCESSOR (Single Source of Truth) ---
+// =============================================================
+
+/**
+ * Returns the currently active analysis object, or null if none is active.
+ * Centralises the lookup that was previously duplicated 21+ times across the codebase.
+ * @returns {object|null}
+ */
+function getActiveAnalysis() {
+    if (!activeAnalysisId) return null;
+    return analysisData.find(a => a.id === activeAnalysisId) || null;
+}
+
+// =============================================================
+// --- RISK SCORE CALCULATION (Single Source of Truth) ---
+// =============================================================
+
+/**
+ * Computes the SCHASAM risk score: R = I_norm × (K + S + T + U).
+ * This is the single canonical implementation – all modules must use this function
+ * instead of inlining the formula.
+ * @param {number|string} iNorm - Normalised impact value
+ * @param {object} kstu  - Object with k, s, t, u properties (numbers or parseable strings)
+ * @returns {number} The raw risk score (not rounded)
+ */
+function computeRiskScore(iNorm, kstu) {
+    const valI = parseFloat(iNorm) || 0;
+    const sumP = (parseFloat(kstu?.k) || 0)
+               + (parseFloat(kstu?.s) || 0)
+               + (parseFloat(kstu?.t) || 0)
+               + (parseFloat(kstu?.u) || 0);
+    return valI * sumP;
+}
+
+// =============================================================
+// --- PERSISTENCE ---
+// =============================================================
+
 function saveAnalyses() {
     try {
         localStorage.setItem('taraAnalyses', JSON.stringify(analysisData));
@@ -120,9 +159,7 @@ function loadAnalyses() {
 }
 
 function saveCurrentAnalysisState() {
-    if (!activeAnalysisId) return;
-
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     const elName = document.getElementById('inputAnalysisName');

@@ -1,0 +1,33 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0
+rootdir: c:\Users\R011239\Documents\Webapp\TRA\TARATool\tests
+configfile: pytest.ini
+plugins: base-url-2.1.0, html-4.2.0, metadata-3.1.1, playwright-0.7.2, timeout-2.4.0, xdist-3.8.0
+timeout: 30.0s
+timeout method: thread
+timeout func_only: False
+collected 178 items
+
+tests\test_assets.py .........                                           [  5%]
+tests\test_calculations.py .......................                       [ 17%]
+tests\test_core.py ......................                                [ 30%]
+tests\test_damage_scenarios.py ..........                                [ 35%]
+tests\test_e2e_workflow.py ...                                           [ 37%]
+tests\test_report_versioning.py ......                                   [ 41%]
+tests\test_residual_debug.py ......                                      [ 44%]
+tests\test_residual_risk.py ....                                         [ 46%]
+tests\test_risk_analysis.py ...............                              [ 55%]
+tests\test_security_goals.py ....                                        [ 57%]
+tests\test_tree_export.py .....................                          [ 69%]
+tests\test_calculations.py ..........                                    [ 74%]
+tests\test_core.py .                                                     [ 75%]
+tests\test_calculations.py ..........                                    [ 80%]
+tests\test_core.py .                                                     [ 81%]
+tests\test_calculations.py ..........                                    [ 87%]
+tests\test_core.py .                                                     [ 87%]
+tests\test_calculations.py ..........                                    [ 93%]
+tests\test_core.py .                                                     [ 93%]
+tests\test_calculations.py ..........                                    [ 99%]
+tests\test_core.py .                                                     [100%]
+
+======================= 178 passed in 733.53s (0:12:13) =======================

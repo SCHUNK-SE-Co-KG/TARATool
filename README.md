@@ -17,6 +17,7 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [Projektstruktur](#projektstruktur)
 - [Externe Abhängigkeiten](#externe-abhängigkeiten)
 - [Datenhaltung](#datenhaltung)
+- [Testsuite](#testsuite)
 - [Screenshots](#screenshots)
 - [Mitwirken](#mitwirken)
 - [Lizenz](#lizenz)
@@ -121,9 +122,11 @@ TARATool/
 │   └── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
 └── js/
     ├── core/                               # Kern (Globals, Utils, Init)
+    │   ├── about.js                        # About-Modal, SBOM-Generierung, Versionsinformation
     │   ├── globals.js                      # Konstanten, KSTU-Skalen, Default-Datenstrukturen
-    │   ├── utils.js                        # localStorage, UID-Generierung, Hilfsfunktionen
+    │   ├── utils.js                        # localStorage, UID-Generierung, getActiveAnalysis(), computeRiskScore(), Hilfsfunktionen
     │   ├── analysis_core.js                # Analyse-CRUD, Import/Export, Dashboard
+    │   ├── tab_dispatcher.js               # renderActiveTab() – zentraler Tab-Router (nach allen Modulen geladen)
     │   └── init.js                         # Bootstrap, Tab-Navigation, Event-Wiring
     ├── modules/                            # Fachmodule
     │   ├── assets.js                       # Asset-Verwaltung (CRUD, CIA-Bewertung)
@@ -133,19 +136,28 @@ TARATool/
     │   ├── security_goals.js               # Security-Ziele (Referenz auf Angriffsbäume)
     │   └── versioning.js                   # Versionskontrolle (Snapshots, Rollback)
     ├── attack_tree/                        # Angriffsbaum-Logik
-    │   ├── attack_tree_ui.js               # Angriffsbaum-UI-Rendering
-    │   ├── attack_tree_editor_v2.js        # Kartenbasierter Baum-Editor (v2)
-    │   ├── attack_tree_calc.js             # SCHASAM-Berechnungsengine (KSTU + Impact)
-    │   ├── attack_tree_structure.js        # Baumstruktur-Hilfsfunktionen
-    │   └── dot_export.js                   # DOT/Graphviz-Export für Baumvisualisierung
+    │   ├── attack_tree_calc.js             # SCHASAM-Berechnungsengine (KSTU + Impact), reine Logik ohne DOM
+    │   ├── attack_tree_editor_v2.js        # Kartenbasierter Baum-Editor (v2, IIFE)
+    │   ├── attack_tree_ui.js               # Angriffsbaum-UI (Rendering, Form-Events, Live-Summaries, Download/Export)
+    │   ├── attack_tree_structure.js        # Baumstruktur-Tiefe, Impact-Rows (IIFE, 4 Fkt. exponiert)
+    │   └── dot_export.js                   # Reine DOT/Graphviz-Stringgenerierung (kein DOM)
     ├── report/                             # PDF-Report
     │   ├── report_pdf_helpers.js           # Graphviz-Rendering, Hilfsfunktionen
     │   ├── report_pdf_builder.js           # PDF-Layout-Engine (Tabellen, Matrix, etc.)
     │   └── report_export.js                # Report-Orchestrator (Kapitelstruktur)
     └── residual_risk/                      # Restrisikoanalyse
-        ├── residual_risk_data.js           # Datenmodell, Sync mit Risikoanalyse
-        └── residual_risk_ui.js             # UI (Behandlung, Neubewertung)
+        ├── residual_risk_data.js           # Datenmodell, Sync, Legacy-Dict-Migration (IIFE)
+        └── residual_risk_ui.js             # UI – Behandlung, Neubewertung (IIFE)
 ```
+
+### Architekturkonventionen
+
+| Konvention | Beschreibung |
+|---|---|
+| **IIFE-Pattern** | Dateien mit internem State/Closures nutzen IIFE (`structure`, `editor_v2`, `residual_risk_*`, `report_*`). Reine Funktionsdateien ohne internen State (calc, ui, modules) bleiben ohne IIFE, da alle Funktionen cross-module public API sind. |
+| **`_`-Prefix** | Markiert Funktionen als **intern konzipiert**, die aber aufgrund der globalen Script-Tag-Architektur dennoch cross-module genutzt werden. Alle Aufrufe sind mit `typeof`-Guards abgesichert. |
+| **Script-Reihenfolge** | `structure.js → calc.js → editor_v2.js → ui.js → dot_export.js` (in `index.html`). `tab_dispatcher.js` wird **nach allen Modulen** und **vor init.js** geladen. |
+| **DOM-Zugriffe** | Immer `document.getElementById()` verwenden, niemals implizite DOM-Globals (`window.elementId`) – Voraussetzung für ES-Module `strict mode`. |
 
 ---
 
@@ -177,6 +189,48 @@ Alle Analysedaten werden im **`localStorage`** des Browsers gespeichert (Schlüs
 
 ---
 
+## Testsuite
+
+Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (178 Tests).
+
+### Schnellstart
+
+```cmd
+cd tests
+run_tests.bat
+```
+
+Das Skript erstellt automatisch ein Virtual Environment, installiert alle Abhängigkeiten und führt die Tests aus.
+
+### Manuell
+
+```cmd
+cd tests
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium --with-deps
+pytest
+```
+
+### Testkategorien
+
+| Marker | Beschreibung | Befehl |
+|---|---|---|
+| `smoke` | Schnelle Basis-Checks | `pytest -m smoke` |
+| `core` | App-Startup, Navigation, Persistenz | `pytest -m core` |
+| `assets` | Asset-Verwaltung | `pytest -m assets` |
+| `damage_scenarios` | Schadensszenarien & Impact-Matrix | `pytest -m damage_scenarios` |
+| `risk_analysis` | Risikoanalyse & Angriffsbäume | `pytest -m risk_analysis` |
+| `security_goals` | Schutzziele | `pytest -m security_goals` |
+| `residual_risk` | Restrisikoanalyse | `pytest -m residual_risk` |
+| `report` | PDF-Report-Generierung | `pytest -m report` |
+| `e2e` | Vollständige Workflow-Tests | `pytest -m e2e` |
+
+> Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
+
+---
+
 ## Mitwirken
 
 Beiträge sind willkommen! So kannst du mitmachen:
@@ -184,8 +238,14 @@ Beiträge sind willkommen! So kannst du mitmachen:
 1. Forke das Repository
 2. Erstelle einen Feature-Branch (`git checkout -b feature/mein-feature`)
 3. Committe deine Änderungen (`git commit -m 'Neues Feature: ...'`)
-4. Pushe den Branch (`git push origin feature/mein-feature`)
-5. Erstelle einen Pull Request
+4. **Teste vor dem Push** – stelle sicher, dass alle Tests bestehen:
+   ```cmd
+   cd tests
+   pytest -x -q
+   ```
+   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle 178 Tests** bestehen.
+5. Pushe den Branch (`git push origin feature/mein-feature`)
+6. Erstelle einen Pull Request
 
 ### Richtlinien
 
@@ -193,6 +253,43 @@ Beiträge sind willkommen! So kannst du mitmachen:
 - Kein Build-System – alle JS-Dateien werden direkt als `<script>` eingebunden
 - Globale Variablen/Funktionen über `window.*` exponieren
 - Code-Kommentare bevorzugt auf Deutsch oder Englisch
+- **Keine Änderungen ohne erfolgreichen Testdurchlauf pushen**
+
+---
+
+## ES-Module Migrations-Roadmap
+
+Das Projekt nutzt aktuell eine **Script-Tag-Architektur** mit globaler Scope-Teilung (21 Dateien, ~7.200 LOC). Eine Migration zu ES-Modulen (`import`/`export`) ist langfristig wünschenswert, erfordert aber mehrere Vorarbeiten.
+
+### Bereits erledigt (P1–P5)
+
+| Schritt | Status |
+|---|---|
+| Zentrale Hilfsfunktionen (`getActiveAnalysis`, `computeRiskScore`) | ✅ |
+| UI-/Logik-Trennung (calc.js ↔ ui.js) | ✅ |
+| typeof-Guards an allen cross-module Aufrufen | ✅ |
+| IIFE-Kapselung stateful Module (structure, editor_v2, residual_risk_*) | ✅ |
+| `renderActiveTab()` aus globals.js extrahiert → `tab_dispatcher.js` | ✅ |
+| Implizite DOM-Globals durch `document.getElementById()` ersetzt | ✅ |
+
+### Offene Schritte für vollständige Migration
+
+1. **State-Kapselung** – `analysisData` (let) und `activeAnalysisId` (let) in globals.js werden von 10+ Dateien direkt gelesen/geschrieben. Top-Level `let` erzeugt kein `window.*`-Property → bei ES-Modulen nicht cross-module erreichbar. **Lösung:** Getter/Setter-API über ein `AppState`-Objekt.
+2. **Zirkuläre Abhängigkeiten** – 6 identifizierte Zyklen (s. unten). Müssen vor der Migration aufgelöst werden, da ES-Module zirkuläre Importe nur eingeschränkt unterstützen.
+3. **~130 Cross-Module-Referenzen umschreiben** – Jede globale Funktion, die von einer anderen Datei aufgerufen wird, muss als `export`/`import` deklariert werden.
+4. **Build-System einführen** – CDN-Bibliotheken (jsPDF, JSZip, @hpcc-js/wasm) benötigen [Import Maps](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) oder einen Bundler (Vite, esbuild).
+5. **Schrittweise Migration** – Empfohlene Reihenfolge: Blattdateien zuerst (about.js, dot_export.js, calc.js), dann Module, zuletzt Core.
+
+### Bekannte Zirkuläre Abhängigkeits-Zyklen
+
+| Zyklus | Dateien |
+|---|---|
+| 1 | globals.js → render* ↔ modules → globals.js |
+| 2 | analysis_core.js → renderActiveTab → tab_dispatcher → render* → analysis_core |
+| 3 | risk_analysis.js → openAttackTreeModal → attack_tree_ui → risk_analysis |
+| 4 | residual_risk_data.js ↔ residual_risk_ui.js (sync/persist) |
+| 5 | security_goals.js → attack_tree_calc → security_goals (via renderSecurityGoals) |
+| 6 | versioning.js → renderActiveTab → alle Module → versioning (via Snapshot-Rollback) |
 
 ---
 

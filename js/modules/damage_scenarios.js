@@ -24,7 +24,7 @@ const DEFAULT_DS_IDS = new Set(
 );
 
 function renderDamageScenarios() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     if (!dsManagementContainer) return;
 
@@ -89,7 +89,7 @@ function renderDamageScenarios() {
 // Bind functions explicitly to window so they work in HTML onclick
 window.saveDamageScenario = function(e) {
     if (e) e.preventDefault();
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     const dsId = document.getElementById('dsIdField').value; 
@@ -135,7 +135,7 @@ window.editDamageScenario = function(dsId) {
     }
 
     if (!activeAnalysisId) return;
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     let ds = analysis.damageScenarios ? analysis.damageScenarios.find(d => d.id === dsId) : null;
@@ -162,7 +162,7 @@ window.removeDamageScenario = function(dsId) {
         return;
     }
 
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     const ds = (analysis.damageScenarios || []).find(d => d.id === dsId);

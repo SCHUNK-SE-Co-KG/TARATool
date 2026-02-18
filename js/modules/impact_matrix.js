@@ -19,7 +19,7 @@ function getImpactColorClass(val) {
 }
 
 window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     // Validate input
@@ -45,12 +45,12 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     
     const riskTab = document.getElementById('tabRiskAnalysis');
     if (riskTab && riskTab.classList.contains('active')) {
-         renderRiskAnalysis();
+         if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
     }
 };
 
 function renderImpactMatrix() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     if (!dsMatrixContainer) return;
 

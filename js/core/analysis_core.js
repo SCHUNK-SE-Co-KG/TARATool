@@ -36,7 +36,7 @@ function activateAnalysis(id) {
     if (elSelector) elSelector.value = id;
 
     // Re-render the active tab (using shared function from globals.js)
-    renderActiveTab(analysis);
+    if (typeof renderActiveTab === 'function') renderActiveTab(analysis);
 }
 
 // =============================================================
@@ -178,7 +178,7 @@ function renderOverview(analysis) {
 // =============================================================
 
 function exportAnalysis() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) {
         showToast('Keine aktive Analyse zum Exportieren.', 'warning');
         return;
@@ -440,7 +440,7 @@ function initAnalysisCoreListeners() {
 function deleteActiveAnalysis() {
     if (!activeAnalysisId) return;
     
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     // Use existing confirmation modal

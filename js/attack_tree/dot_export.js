@@ -1,10 +1,12 @@
 /**
  * @file        dot_export.js
- * @description Graphviz DOT export for attack trees and residual risk trees
+ * @description Pure Graphviz DOT string generation for attack trees and residual risk trees.
+ *              No DOM interaction – download/export UI lives in attack_tree_ui.js.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
  * @license     GPL-3.0
+ * @pattern     No IIFE – all helpers are function-local closures inside the generate* functions.
  */
 
 function generateDotString(analysis, specificTreeId = null) {
@@ -35,14 +37,9 @@ function generateDotString(analysis, specificTreeId = null) {
         return `${k} / ${s} / ${t} / ${u}`;
     };
 
+    // Delegates to global computeRiskScore() (utils.js) — formatted for DOT labels
     const _calcR = (iNorm, kstu) => {
-        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
-        const k = parseFloat(kstu?.k) || 0;
-        const s = parseFloat(kstu?.s) || 0;
-        const t = parseFloat(kstu?.t) || 0;
-        const u = parseFloat(kstu?.u) || 0;
-        const pSum = k + s + t + u;
-        return _fmt((iVal * pSum).toFixed(2));
+        return _fmt(computeRiskScore(iNorm, kstu).toFixed(2));
     };
 
     const _lbl = (text, kstu, iNorm) => {
@@ -53,10 +50,9 @@ function generateDotString(analysis, specificTreeId = null) {
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };
 
+    // DOT-specific pastel fill colors based on risk score
     const _getColor = (iNorm, kstu) => {
-        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
-        const pSum = (parseFloat(kstu?.k) || 0) + (parseFloat(kstu?.s) || 0) + (parseFloat(kstu?.t) || 0) + (parseFloat(kstu?.u) || 0);
-        const r = iVal * pSum;
+        const r = computeRiskScore(iNorm, kstu);
         if (r >= 2.0) return '#ffcccc';
         if (r >= 1.6) return '#ffe0b3';
         if (r >= 0.8) return '#ffffcc';
@@ -422,10 +418,9 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
         return `${f(kstu.k)} / ${f(kstu.s)} / ${f(kstu.t)} / ${f(kstu.u)}`;
     };
 
+    // Delegates to global computeRiskScore() — formatted with comma decimal for DOT labels
     const _score = (iNorm, kstu) => {
-        const iVal = _toNum(iNorm);
-        const pSum = _toNum(kstu?.k) + _toNum(kstu?.s) + _toNum(kstu?.t) + _toNum(kstu?.u);
-        return (iVal * pSum).toFixed(2).replace('.', ',');
+        return computeRiskScore(iNorm, kstu).toFixed(2).replace('.', ',');
     };
 
     const _colorFromScore = (scoreStr) => {
@@ -681,170 +676,4 @@ window.exportResidualRiskToDot = generateResidualRiskDotString;
 // Define exportRiskAnalysisToDot as alias for generateDotString
 window.exportRiskAnalysisToDot = generateDotString;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('closeAttackTreeModal');
-    const modal = document.getElementById('attackTreeModal');
-    if (closeBtn && modal) {
-        closeBtn.onclick = () => {
-            modal.style.display = 'none';
-        };
-    }
-});
 
-// =============================================================
-// --- EXPORT TRIGGER FOR .DOT FILE ---
-// =============================================================
-
-// =============================================================
-// --- TREE DATA ZIP EXPORT (.dot + .svg per tree) ---
-// =============================================================
-
-window.downloadTreeDataZip = async function() {
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
-    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
-        if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
-        return;
-    }
-
-    if (typeof JSZip === 'undefined') {
-        if (typeof showToast === 'function') showToast('JSZip-Bibliothek nicht geladen.', 'error');
-        return;
-    }
-
-    const zip = new JSZip();
-    const h = window.ReportHelpers || {};
-    const analysisName = (analysis.name || analysis.id || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
-    const entries = analysis.riskEntries;
-    let fileCount = 0;
-
-    if (typeof showToast === 'function') showToast('Erzeuge Baumdaten-Export…', 'info');
-
-    // --- Risk Analysis Trees ---
-    for (const entry of entries) {
-        if (!entry || !entry.id) continue;
-        const treeId = entry.id;
-        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
-        const prefix = `risk/${treeId}_${treeName}`;
-
-        // DOT file
-        try {
-            const dot = typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
-            if (dot) {
-                zip.file(`${prefix}.dot`, dot);
-                fileCount++;
-
-                // SVG via Graphviz rendering
-                if (h.renderDotToSvg) {
-                    try {
-                        const svg = await h.renderDotToSvg(dot);
-                        if (svg && svg.includes('<svg')) {
-                            zip.file(`${prefix}.svg`, svg);
-                            fileCount++;
-                        }
-                    } catch (e) { console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e); }
-                }
-            }
-        } catch (e) { console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e); }
-    }
-
-    // --- Residual Risk Trees ---
-    for (const entry of entries) {
-        if (!entry || !entry.id) continue;
-        const treeId = entry.id;
-        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
-        const prefix = `residual_risk/${treeId}_${treeName}_RR`;
-
-        try {
-            const rrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis, treeId) : null;
-            if (rrDot) {
-                zip.file(`${prefix}.dot`, rrDot);
-                fileCount++;
-
-                if (h.renderDotToSvg) {
-                    try {
-                        const svg = await h.renderDotToSvg(rrDot);
-                        if (svg && svg.includes('<svg')) {
-                            zip.file(`${prefix}.svg`, svg);
-                            fileCount++;
-                        }
-                    } catch (e) { console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e); }
-                }
-            }
-        } catch (e) { console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e); }
-    }
-
-    // --- Combined DOT (all trees in one file) ---
-    try {
-        const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
-        if (allDot) { zip.file(`${analysisName}_alle_Baeume.dot`, allDot); fileCount++; }
-    } catch (_) {}
-
-    try {
-        const allRrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis) : null;
-        if (allRrDot) { zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot); fileCount++; }
-    } catch (_) {}
-
-    if (fileCount === 0) {
-        if (typeof showToast === 'function') showToast('Keine Baumdaten zum Exportieren gefunden.', 'warning');
-        return;
-    }
-
-    // Generate and download ZIP
-    try {
-        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-
-        if (typeof showToast === 'function') showToast(`Baumdaten-Export erstellt (${fileCount} Dateien).`, 'success');
-    } catch (err) {
-        console.error('[TreeExport] ZIP generation failed:', err);
-        if (typeof showToast === 'function') showToast('ZIP-Export fehlgeschlagen.', 'error');
-    }
-};
-
-window.downloadDotFile = function() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
-    const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
-
-    if (!dotContent) {
-        if (typeof showToast === 'function') {
-            showToast('Keine Daten für den Export vorhanden.', 'warning');
-        } else {
-            alert('Keine Daten für den Export vorhanden.');
-        }
-        return;
-    }
-
-    try {
-        const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-
-        const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
-
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-
-        // Cleanup
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 0);
-
-        if (typeof showToast === 'function') {
-            showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
-        }
-    } catch (err) {
-        console.error('Error during DOT export:', err);
-        if (typeof showToast === 'function') {
-            showToast('Export fehlgeschlagen.', 'error');
-        }
-    }
-};

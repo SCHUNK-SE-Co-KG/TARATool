@@ -1,10 +1,13 @@
 /**
  * @file        attack_tree_ui.js
- * @description Attack tree form UI – dropdowns, save/load, and DOM helpers
+ * @description Attack tree form UI – dropdowns, save/load, DOM helpers, live summaries,
+ *              event binding, DOT preview, and file download/export.
  * @author      Nico Peper
  * @organization SCHUNK SE & Co. KG
  * @copyright   2026 SCHUNK SE & Co. KG
  * @license     GPL-3.0
+ * @pattern     No IIFE – all functions are cross-module public API.
+ *              Requires: attack_tree_calc.js (loaded before this file).
  */
 
 function populateAttackTreeDropdowns() {
@@ -44,13 +47,12 @@ function populateAttackTreeDropdowns() {
 
 
 function openAttackTreeModal(existingEntry = null) {
-    // `analysisData` / `activeAnalysisId` are declared as top-level `let` in globals.js.
-    // Top-level `let` does NOT create a `window.*` property, so we must use the lexical globals.
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
-    // Reset form (browser-implicit global by id)
-    if (window.attackTreeForm) window.attackTreeForm.reset();
+    // Reset form via explicit DOM lookup (ES-module-safe)
+    const attackTreeFormEl = document.getElementById('attackTreeForm');
+    if (attackTreeFormEl) attackTreeFormEl.reset();
 
     try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT UI] populateAttackTreeDropdowns:', e.message || e); }
 
@@ -58,7 +60,7 @@ function openAttackTreeModal(existingEntry = null) {
     if (previewContainer) previewContainer.innerHTML = '';
 
     // Delete button (entire tree)
-    const delBtn = document.getElementById('btnDeleteAttackTree') || window.btnDeleteAttackTree;
+    const delBtn = document.getElementById('btnDeleteAttackTree');
     if (delBtn) {
         if (existingEntry && existingEntry.id) {
             delBtn.style.display = 'inline-flex';
@@ -89,7 +91,7 @@ function openAttackTreeModal(existingEntry = null) {
 function saveAttackTree(e) {
     if (e) e.preventDefault();
 
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     if (!analysis.riskEntries) analysis.riskEntries = [];
@@ -175,9 +177,241 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// DOT Preview from current editor
+// =============================================================
+// --- NODE SUMMARY HTML (moved from attack_tree_calc.js) ---
+// =============================================================
+
+function _renderNodeSummaryHTML(kstu, iNorm) {
+    const riskScore = _computeRiskScore(kstu, iNorm);
+    const riskR = riskScore.toFixed(2);
+    
+    const _disp = (v) => (v === null || v === undefined || v === '') ? '-' : v;
+    const dispI = _disp(iNorm);
+    const dispK = _disp(kstu?.k);
+    const dispS = _disp(kstu?.s);
+    const dispT = _disp(kstu?.t);
+    const dispU = _disp(kstu?.u);
+
+    const riskClass = _getRiskCssClass(riskScore); 
+
+    return `
+        <div class="ns-row" style="background-color: #f0f0f0;">
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label">R=</span>
+                <span class="ns-value ${riskClass}">${riskR}</span>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <span class="ns-label" style="font-size:0.9em; min-width:auto; margin-left:10px;">I(N)=</span>
+                <span class="ns-value">${dispI}</span>
+            </div>
+        </div>
+        <div class="ns-row" style="border-bottom:none; font-size:0.8em; color:#666;">
+            <div class="ns-kstu">
+                <span>K:${dispK}</span>
+                <span>S:${dispS}</span>
+                <span>T:${dispT}</span>
+                <span>U:${dispU}</span>
+            </div>
+        </div>
+    `;
+}
+
+// =============================================================
+// --- LIVE KSTU SUMMARIES FROM FORM (moved from attack_tree_calc.js) ---
+// =============================================================
+
+function updateAttackTreeKSTUSummariesFromForm() {
+    if (window.atV2 && typeof window.atV2.updateSummaries === "function") { window.atV2.updateSummaries(); return; }
+    const analysis = getActiveAnalysis();
+    if (!analysis) return;
+
+    const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
+    const treeDepth = (depthRaw === 3) ? 3 : ((depthRaw === 2) ? 2 : 1);
+    const useDeepTree = treeDepth >= 2;
+
+    const secondOn = (treeDepth === 2) && ((document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true');
+    const thirdOn = (treeDepth === 3);
+
+    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
+    const getLeafKSTU = (idx) => ({
+        k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
+        s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
+        t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
+        u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
+    });
+
+    const max = 5;
+
+    // Indizes: 1..5 (B1A), 6..10 (B2A), 11..15 (B1B), 16..20 (B2B)
+    const bases = {
+        '1a': 1,
+        '2a': 6,
+        '1b': 11,
+        '2b': 16
+    };
+
+    const mkLeaves = (base) => {
+        const arr = [];
+        for (let i = 0; i < max; i++) {
+            const idx = base + i;
+            arr.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+        }
+        return arr;
+    };
+
+    const formValues = {
+        treeDepth: treeDepth,
+        useDeepTree: useDeepTree,
+        useSecondIntermediate: secondOn,
+        useThirdIntermediate: thirdOn,
+        branches: [
+            {},
+            {}
+        ]
+    };
+
+    // Branch 1
+    if (treeDepth === 1) {
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[0].l2_node = {};
+        formValues.branches[0].l3_node = {};
+        formValues.branches[0].leaves = mkLeaves(bases['1a']);
+    } else {
+        formValues.branches[0].l2_nodes = [
+            { leaves: mkLeaves(bases['1a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[0].l2_nodes.push({ leaves: mkLeaves(bases['1b']) });
+        }
+    }
+
+    // Branch 2
+    if (treeDepth === 1) {
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else if (treeDepth === 3) {
+        formValues.branches[1].l2_node = {};
+        formValues.branches[1].l3_node = {};
+        formValues.branches[1].leaves = mkLeaves(bases['2a']);
+    } else {
+        formValues.branches[1].l2_nodes = [
+            { leaves: mkLeaves(bases['2a']) }
+        ];
+        if (secondOn) {
+            formValues.branches[1].l2_nodes.push({ leaves: mkLeaves(bases['2b']) });
+        }
+    }
+
+    applyImpactInheritance(formValues, analysis);
+    applyWorstCaseInheritance(formValues);
+
+    const elRoot = document.getElementById('at_root_kstu_summary');
+    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
+
+    [0, 1].forEach((bIdx) => {
+        const branchNum = bIdx + 1;
+        const branchData = formValues.branches[bIdx];
+
+        const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
+        if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
+
+        if (treeDepth === 2) {
+            const nodeA = (branchData.l2_nodes && branchData.l2_nodes[0]) ? branchData.l2_nodes[0] : null;
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
+
+            const nodeB = (branchData.l2_nodes && branchData.l2_nodes[1]) ? branchData.l2_nodes[1] : null;
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = '';
+        }
+
+        if (treeDepth === 3) {
+            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData?.l2_node?.kstu, branchData?.l2_node?.i_norm);
+
+            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+            if (elL3) elL3.innerHTML = _renderNodeSummaryHTML(branchData?.l3_node?.kstu, branchData?.l3_node?.i_norm);
+
+            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+            if (elL2B) elL2B.innerHTML = '';
+        }
+    });
+
+    // Leaf summaries for all slots (1..20). Hidden rows are OK.
+    for (let idx = 1; idx <= 20; idx++) {
+        const leafObj = (() => {
+            // Determine: which branch/group does idx belong to?
+            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0]?.l2_nodes?.[0]?.leaves?.[idx-1] : formValues.branches[0]?.leaves?.[idx-1]);
+            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1]?.l2_nodes?.[0]?.leaves?.[idx-6] : formValues.branches[1]?.leaves?.[idx-6]);
+            if (idx >= 11 && idx <= 15) {
+                if (treeDepth !== 2 || !secondOn) return null;
+                return formValues.branches[0]?.l2_nodes?.[1]?.leaves?.[idx-11];
+            }
+            if (idx >= 16 && idx <= 20) {
+                if (treeDepth !== 2 || !secondOn) return null;
+                return formValues.branches[1]?.l2_nodes?.[1]?.leaves?.[idx-16];
+            }
+            return null;
+        })();
+
+        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
+        if (inp) inp.value = leafObj ? (leafObj.i_norm || '') : '';
+
+        const elL = document.getElementById(`at_leaf_${idx}_summary`);
+        if (elL) elL.innerHTML = leafObj ? _renderNodeSummaryHTML(leafObj.kstu, leafObj.i_norm) : '';
+    }
+}
+
+// =============================================================
+// --- FORM EVENT BINDING (moved from attack_tree_calc.js) ---
+// =============================================================
+
+{
+    const attackTreeForm = document.getElementById('attackTreeForm');
+    if (attackTreeForm) {
+        attackTreeForm.onsubmit = saveAttackTree;
+
+        const _atShouldUpdate = (t) => {
+            if (!t) return false;
+            if (t.classList && t.classList.contains('kstu-select')) return true;
+            if (t.type === 'checkbox') return true;
+            if (t.closest && t.closest('.ds-checks')) return true; 
+            return false;
+        };
+
+        ['change','input','click'].forEach(evtName => {
+            attackTreeForm.addEventListener(evtName, (ev) => {
+                const t = ev && ev.target ? ev.target : null;
+                if (!_atShouldUpdate(t)) return;
+                updateAttackTreeKSTUSummariesFromForm();
+            });
+        });
+    }
+}
+
+// =============================================================
+// --- ATTACK TREE MODAL CLOSE HANDLER ---
+// =============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+    const closeBtn = document.getElementById('closeAttackTreeModal');
+    const modal = document.getElementById('attackTreeModal');
+    if (closeBtn && modal) {
+        closeBtn.onclick = () => {
+            modal.style.display = 'none';
+        };
+    }
+});
+
+// =============================================================
+// --- DOT PREVIEW from current editor ---
+// =============================================================
+
 window.renderCurrentTreePreview = function() {
-    const analysis = (typeof analysisData !== 'undefined' ? analysisData : []).find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     const previewContainer = document.getElementById('graph-preview-container');
     if (!analysis || !previewContainer) return;
 
@@ -193,4 +427,156 @@ window.renderCurrentTreePreview = function() {
     pre.style.whiteSpace = 'pre-wrap';
     pre.textContent = dot || '(DOT konnte nicht erzeugt werden)';
     previewContainer.appendChild(pre);
+};
+
+// =============================================================
+// --- DOT/ZIP FILE DOWNLOAD (moved from dot_export.js) ---
+// =============================================================
+
+window.downloadTreeDataZip = async function() {
+    const analysis = getActiveAnalysis();
+    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
+        return;
+    }
+
+    if (typeof JSZip === 'undefined') {
+        if (typeof showToast === 'function') showToast('JSZip-Bibliothek nicht geladen.', 'error');
+        return;
+    }
+
+    const zip = new JSZip();
+    const h = window.ReportHelpers || {};
+    const analysisName = (analysis.name || analysis.id || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const entries = analysis.riskEntries;
+    let fileCount = 0;
+
+    if (typeof showToast === 'function') showToast('Erzeuge Baumdaten-Export…', 'info');
+
+    // --- Risk Analysis Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `risk/${treeId}_${treeName}`;
+
+        try {
+            const dot = typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
+            if (dot) {
+                zip.file(`${prefix}.dot`, dot);
+                fileCount++;
+
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(dot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Residual Risk Trees ---
+    for (const entry of entries) {
+        if (!entry || !entry.id) continue;
+        const treeId = entry.id;
+        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
+        const prefix = `residual_risk/${treeId}_${treeName}_RR`;
+
+        try {
+            const rrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis, treeId) : null;
+            if (rrDot) {
+                zip.file(`${prefix}.dot`, rrDot);
+                fileCount++;
+
+                if (h.renderDotToSvg) {
+                    try {
+                        const svg = await h.renderDotToSvg(rrDot);
+                        if (svg && svg.includes('<svg')) {
+                            zip.file(`${prefix}.svg`, svg);
+                            fileCount++;
+                        }
+                    } catch (e) { console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e); }
+                }
+            }
+        } catch (e) { console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e); }
+    }
+
+    // --- Combined DOT (all trees in one file) ---
+    try {
+        const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+        if (allDot) { zip.file(`${analysisName}_alle_Baeume.dot`, allDot); fileCount++; }
+    } catch (_) {}
+
+    try {
+        const allRrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis) : null;
+        if (allRrDot) { zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot); fileCount++; }
+    } catch (_) {}
+
+    if (fileCount === 0) {
+        if (typeof showToast === 'function') showToast('Keine Baumdaten zum Exportieren gefunden.', 'warning');
+        return;
+    }
+
+    // Generate and download ZIP
+    try {
+        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+
+        if (typeof showToast === 'function') showToast(`Baumdaten-Export erstellt (${fileCount} Dateien).`, 'success');
+    } catch (err) {
+        console.error('[TreeExport] ZIP generation failed:', err);
+        if (typeof showToast === 'function') showToast('ZIP-Export fehlgeschlagen.', 'error');
+    }
+};
+
+window.downloadDotFile = function() {
+    const analysis = getActiveAnalysis();
+    const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+
+    if (!dotContent) {
+        if (typeof showToast === 'function') {
+            showToast('Keine Daten für den Export vorhanden.', 'warning');
+        } else {
+            alert('Keine Daten für den Export vorhanden.');
+        }
+        return;
+    }
+
+    try {
+        const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
+
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+
+        if (typeof showToast === 'function') {
+            showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
+        }
+    } catch (err) {
+        console.error('Error during DOT export:', err);
+        if (typeof showToast === 'function') {
+            showToast('Export fehlgeschlagen.', 'error');
+        }
+    }
 };

@@ -133,42 +133,6 @@ function createDefaultAnalysis() {
 // Legacy alias – some code still references defaultAnalysis directly
 const defaultAnalysis = createDefaultAnalysis();
 
-// =============================================================
-// --- SHARED TAB RENDERING (DRY) ---
-// =============================================================
-
-/**
- * Renders the content of the currently active tab for the given analysis.
- * Extracted to avoid duplicated if/else-chains in init.js and analysis_core.js.
- * @param {object} analysis - The analysis data object to render
- * @param {string} [tabId] - Optional explicit tab ID. If omitted, reads from active tab button.
- */
-function renderActiveTab(analysis, tabId) {
-    if (!analysis) return;
-
-    if (!tabId) {
-        const activeTabBtn = document.querySelector('.tab-button.active');
-        if (!activeTabBtn) return;
-        tabId = activeTabBtn.dataset.tab;
-    }
-
-    if (tabId === 'tabOverview') {
-        if (typeof renderOverview === 'function') renderOverview(analysis);
-    }
-    else if (tabId === 'tabAssets') {
-        if (typeof renderAssets === 'function') renderAssets(analysis);
-    }
-    else if (tabId === 'tabDamageScenarios') {
-        if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
-        if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-    }
-    else if (tabId === 'tabSecurityGoals') {
-        if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
-    }
-    else if (tabId === 'tabRiskAnalysis') {
-        if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
-    }
-    else if (tabId === 'tabResidualRisk') {
-        if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
-    }
-}
+// renderActiveTab() has been extracted to js/core/tab_dispatcher.js
+// to break the circular dependency where globals.js referenced render
+// functions from later-loaded modules.

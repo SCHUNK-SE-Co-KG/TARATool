@@ -111,13 +111,8 @@
     // General Utility Functions
     // =============================================================
 
-    function getActiveAnalysis() {
-        try {
-            return analysisData.find(a => a.id === activeAnalysisId) || null;
-        } catch (e) {
-            return null;
-        }
-    }
+    // Delegates to the global getActiveAnalysis() from utils.js
+    // (kept as local alias for backward-compatible ReportHelpers.getActiveAnalysis namespace)
 
     function riskClassFromValue(rVal) {
         // Delegates to the global getRiskMeta() (utils.js) for single source of truth
@@ -197,13 +192,9 @@
         return s;
     }
 
+    // Delegates to global computeRiskScore() (utils.js) — signature kept for backward compatibility
     function riskNum(iNorm, k, s, t, u) {
-        const i = parseFloat(String(iNorm ?? '').replace(',', '.')) || 0;
-        const kk = parseFloat(String(k ?? '').replace(',', '.')) || 0;
-        const ss = parseFloat(String(s ?? '').replace(',', '.')) || 0;
-        const tt = parseFloat(String(t ?? '').replace(',', '.')) || 0;
-        const uu = parseFloat(String(u ?? '').replace(',', '.')) || 0;
-        return i * (kk + ss + tt + uu);
+        return computeRiskScore(iNorm, { k, s, t, u });
     }
 
     // =============================================================

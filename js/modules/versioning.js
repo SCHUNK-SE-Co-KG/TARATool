@@ -121,7 +121,7 @@ window.revertToVersion = (analysisId, version) => {
 // Open modal for creating a new version
 window.openVersionCommentModal = () => {
     if (!activeAnalysisId) return;
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     if (currentVersionInModalEl) {
@@ -150,7 +150,7 @@ window.openVersionCommentModal = () => {
 function createNewVersion(comment) {
     if (!activeAnalysisId) return;
 
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     saveCurrentAnalysisState();

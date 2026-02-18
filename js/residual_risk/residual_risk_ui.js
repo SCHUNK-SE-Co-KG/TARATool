@@ -35,9 +35,7 @@
         const close = () => {
             modal.style.display = 'none';
             // Refresh overview (so that status/counts can become visible later)
-            const analysis = (typeof analysisData !== 'undefined')
-                ? (analysisData || []).find(a => a.id === activeAnalysisId)
-                : null;
+            const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
             if (analysis && typeof renderResidualRisk === 'function') {
                 renderResidualRisk(analysis);
             }
@@ -78,10 +76,8 @@
             return `<div class="node-stats-box">${_renderNodeSummaryHTML(kstu, iNorm)}</div>`;
         }
 
-        // Fallback
-        const valI = parseFloat(iNorm) || 0;
-        const sumP = (parseFloat(kstu.k) || 0) + (parseFloat(kstu.s) || 0) + (parseFloat(kstu.t) || 0) + (parseFloat(kstu.u) || 0);
-        const r = (valI * sumP).toFixed(2);
+        // Fallback – uses global computeRiskScore()
+        const r = computeRiskScore(iNorm, kstu).toFixed(2);
         return `<div class="node-stats-box"><div class="ns-row"><div>R=<b>${rrEscapeHtml(r)}</b></div><div>I(N)=<b>${rrEscapeHtml(iNorm || '-')}</b></div></div></div>`;
     }
 
@@ -98,8 +94,7 @@
         const u = parseFloat(rr.u);
         if ([k, s, t, u].some(v => Number.isNaN(v))) return null;
 
-        const sumP = k + s + t + u;
-        return (i * sumP).toFixed(2);
+        return computeRiskScore(iNorm, rr).toFixed(2);
     }
 
     function rrRenderResidualLeafRiskValueHTML(leaf) {
@@ -232,9 +227,7 @@
     function rrOpenModalForTree(residualEntry) {
         rrEnsureModalWiring();
 
-        const analysis = (typeof analysisData !== 'undefined')
-            ? (analysisData || []).find(a => a.id === activeAnalysisId)
-            : null;
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         if (!analysis) return;
 
         // Ensure that the residual risk structure is up to date
@@ -366,10 +359,13 @@
                 const kstuSelects = tr.querySelectorAll('select.rr-kstu');
 
                 const persist = () => {
-                    // Keep legacy dict in sync so both access paths remain consistent
+                    // Keep legacy dict in sync (needed for migration of older data formats)
                     try {
                         if (analysis?.residualRisk?.leaves && liveEntry?.uid) {
-                            analysis.residualRisk.leaves[`${liveEntry.uid}|${leafKey}`] = JSON.parse(JSON.stringify(leaf.rr || {}));
+                            const legacyK = (typeof rrLegacyKey === 'function')
+                                ? rrLegacyKey(liveEntry.uid, leafKey)
+                                : `${liveEntry.uid}|${leafKey}`;
+                            analysis.residualRisk.leaves[legacyK] = JSON.parse(JSON.stringify(leaf.rr || {}));
                         }
                     } catch (e) {}
                     try {
@@ -555,7 +551,7 @@
 
         const entries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries))
             ? analysis.residualRisk.entries
-            : (analysis.riskEntries || []);
+            : [];
 
         if (!entries || entries.length === 0) {
             container.innerHTML = '<p style="color:#7f8c8d;">Noch keine Angriffsbäume vorhanden (siehe Reiter "Risikoanalyse").</p>';
@@ -604,17 +600,14 @@
     };
 
     window.editResidualRiskTree = function (riskUid) {
-        const analysis = (typeof analysisData !== 'undefined')
-            ? (analysisData || []).find(a => a.id === activeAnalysisId)
-            : null;
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         if (!analysis) return;
 
         try {
             if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
         } catch (_) {}
 
-        const entry = (analysis.residualRisk?.entries || []).find(r => r?.uid === riskUid)
-            || (analysis.riskEntries || []).find(r => r?.uid === riskUid);
+        const entry = (analysis.residualRisk?.entries || []).find(r => r?.uid === riskUid);
 
         if (!entry) {
             if (typeof showToast === 'function') showToast('Angriffsbaum nicht gefunden.', 'error');
