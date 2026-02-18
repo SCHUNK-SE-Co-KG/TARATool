@@ -192,6 +192,10 @@ Das Repository enthält einen **automatischen CVE-Scanner**, der alle Abhängigk
 | `security/reports/cve_report.md` | Markdown-Report mit Schwachstellen-Details (CVE-ID, CVSS, Fix-Version) |
 | `security/reports/cve_report.json` | Maschinenlesbarer JSON-Report |
 
+### Alert bei kritischen Schwachstellen
+
+Bei Schwachstellen mit **CVSS >= 7.0** wird automatisch ein **GitHub Issue** mit dem Label `cve-alert` erstellt und dem Maintainer zugewiesen. Benachrichtigungen erfolgen über GitHubs eigene Notification-Pipeline (E-Mail, Web, Mobile – je nach persönlicher Einstellung unter [github.com/settings/notifications](https://github.com/settings/notifications)).
+
 ### Geprüfte Abhängigkeiten
 
 - **JavaScript (npm):** Font Awesome, JSZip, jsPDF (aus CDN-URLs in `index.html`)
