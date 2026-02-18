@@ -60,10 +60,10 @@
         pdf.addKeyValue('Report erstellt', generatedAt);
 
         // =============================================================
-        // Chapter 2: Management Summary
+        // Chapter 2: Management Summary (eigene Seite)
         // =============================================================
         doc.addPage();
-        pdf.currentY = pdf.marginTop;
+        pdf.setY(pdf.margin);
 
         // Risk distribution
         const dist = { Kritisch: 0, Hoch: 0, Mittel: 0, Niedrig: 0, Unbekannt: 0 };

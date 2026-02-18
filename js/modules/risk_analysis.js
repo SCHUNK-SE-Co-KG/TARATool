@@ -11,7 +11,7 @@
 const riskAnalysisContainerEl = document.getElementById('riskAnalysisContainer');
 
 function renderRiskAnalysis() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     if (!riskAnalysisContainerEl) return; 
 
@@ -88,7 +88,7 @@ function renderExistingRiskEntries(analysis) {
 }
 
 window.editAttackTree = function(riskId) {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
@@ -104,7 +104,7 @@ function reindexRiskIDs(analysis) {
 }
 
 window.deleteAttackTree = function(riskId) {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis || !analysis.riskEntries) return;
 
     const entry = analysis.riskEntries.find(r => r.id === riskId);

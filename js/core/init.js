@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // If name/author changed, update header & list
             if (input.id === 'inputAnalysisName' || input.id === 'inputAuthorName') {
-                const analysis = analysisData.find(a => a.id === activeAnalysisId);
+                const analysis = getActiveAnalysis();
                 if (analysis) {
                     fillAnalysisForm(analysis); 
                     renderAnalysisSelector();
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Render active tab content (shared function – DRY)
-            const activeAnalysis = analysisData.find(a => a.id === activeAnalysisId);
+            const activeAnalysis = getActiveAnalysis();
             if (activeAnalysis) {
                 renderActiveTab(activeAnalysis, tabId);
             }
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const elVersionModal = document.getElementById('versionControlModal');
     if (elBtnVersions) {
         elBtnVersions.onclick = () => {
-            const analysis = analysisData.find(a => a.id === activeAnalysisId);
+            const analysis = getActiveAnalysis();
             if (analysis && typeof renderHistoryTable === 'function') {
                 renderHistoryTable(analysis);
                 if (elVersionModal) elVersionModal.style.display = 'block';

@@ -78,10 +78,8 @@
             return `<div class="node-stats-box">${_renderNodeSummaryHTML(kstu, iNorm)}</div>`;
         }
 
-        // Fallback
-        const valI = parseFloat(iNorm) || 0;
-        const sumP = (parseFloat(kstu.k) || 0) + (parseFloat(kstu.s) || 0) + (parseFloat(kstu.t) || 0) + (parseFloat(kstu.u) || 0);
-        const r = (valI * sumP).toFixed(2);
+        // Fallback – uses global computeRiskScore()
+        const r = computeRiskScore(iNorm, kstu).toFixed(2);
         return `<div class="node-stats-box"><div class="ns-row"><div>R=<b>${rrEscapeHtml(r)}</b></div><div>I(N)=<b>${rrEscapeHtml(iNorm || '-')}</b></div></div></div>`;
     }
 
@@ -98,8 +96,7 @@
         const u = parseFloat(rr.u);
         if ([k, s, t, u].some(v => Number.isNaN(v))) return null;
 
-        const sumP = k + s + t + u;
-        return (i * sumP).toFixed(2);
+        return computeRiskScore(iNorm, rr).toFixed(2);
     }
 
     function rrRenderResidualLeafRiskValueHTML(leaf) {

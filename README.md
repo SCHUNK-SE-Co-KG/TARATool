@@ -17,6 +17,7 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [Projektstruktur](#projektstruktur)
 - [Externe Abhängigkeiten](#externe-abhängigkeiten)
 - [Datenhaltung](#datenhaltung)
+- [Testsuite](#testsuite)
 - [Screenshots](#screenshots)
 - [Mitwirken](#mitwirken)
 - [Lizenz](#lizenz)
@@ -121,8 +122,9 @@ TARATool/
 │   └── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
 └── js/
     ├── core/                               # Kern (Globals, Utils, Init)
+    │   ├── about.js                        # About-Modal, SBOM-Generierung, Versionsinformation
     │   ├── globals.js                      # Konstanten, KSTU-Skalen, Default-Datenstrukturen
-    │   ├── utils.js                        # localStorage, UID-Generierung, Hilfsfunktionen
+    │   ├── utils.js                        # localStorage, UID-Generierung, getActiveAnalysis(), computeRiskScore(), Hilfsfunktionen
     │   ├── analysis_core.js                # Analyse-CRUD, Import/Export, Dashboard
     │   └── init.js                         # Bootstrap, Tab-Navigation, Event-Wiring
     ├── modules/                            # Fachmodule
@@ -177,6 +179,48 @@ Alle Analysedaten werden im **`localStorage`** des Browsers gespeichert (Schlüs
 
 ---
 
+## Testsuite
+
+Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (178 Tests).
+
+### Schnellstart
+
+```cmd
+cd tests
+run_tests.bat
+```
+
+Das Skript erstellt automatisch ein Virtual Environment, installiert alle Abhängigkeiten und führt die Tests aus.
+
+### Manuell
+
+```cmd
+cd tests
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium --with-deps
+pytest
+```
+
+### Testkategorien
+
+| Marker | Beschreibung | Befehl |
+|---|---|---|
+| `smoke` | Schnelle Basis-Checks | `pytest -m smoke` |
+| `core` | App-Startup, Navigation, Persistenz | `pytest -m core` |
+| `assets` | Asset-Verwaltung | `pytest -m assets` |
+| `damage_scenarios` | Schadensszenarien & Impact-Matrix | `pytest -m damage_scenarios` |
+| `risk_analysis` | Risikoanalyse & Angriffsbäume | `pytest -m risk_analysis` |
+| `security_goals` | Schutzziele | `pytest -m security_goals` |
+| `residual_risk` | Restrisikoanalyse | `pytest -m residual_risk` |
+| `report` | PDF-Report-Generierung | `pytest -m report` |
+| `e2e` | Vollständige Workflow-Tests | `pytest -m e2e` |
+
+> Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
+
+---
+
 ## Mitwirken
 
 Beiträge sind willkommen! So kannst du mitmachen:
@@ -184,8 +228,14 @@ Beiträge sind willkommen! So kannst du mitmachen:
 1. Forke das Repository
 2. Erstelle einen Feature-Branch (`git checkout -b feature/mein-feature`)
 3. Committe deine Änderungen (`git commit -m 'Neues Feature: ...'`)
-4. Pushe den Branch (`git push origin feature/mein-feature`)
-5. Erstelle einen Pull Request
+4. **Teste vor dem Push** – stelle sicher, dass alle Tests bestehen:
+   ```cmd
+   cd tests
+   pytest -x -q
+   ```
+   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle 178 Tests** bestehen.
+5. Pushe den Branch (`git push origin feature/mein-feature`)
+6. Erstelle einen Pull Request
 
 ### Richtlinien
 
@@ -193,6 +243,7 @@ Beiträge sind willkommen! So kannst du mitmachen:
 - Kein Build-System – alle JS-Dateien werden direkt als `<script>` eingebunden
 - Globale Variablen/Funktionen über `window.*` exponieren
 - Code-Kommentare bevorzugt auf Deutsch oder Englisch
+- **Keine Änderungen ohne erfolgreichen Testdurchlauf pushen**
 
 ---
 

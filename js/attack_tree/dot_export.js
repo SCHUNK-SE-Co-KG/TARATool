@@ -35,14 +35,9 @@ function generateDotString(analysis, specificTreeId = null) {
         return `${k} / ${s} / ${t} / ${u}`;
     };
 
+    // Delegates to global computeRiskScore() (utils.js) — formatted for DOT labels
     const _calcR = (iNorm, kstu) => {
-        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
-        const k = parseFloat(kstu?.k) || 0;
-        const s = parseFloat(kstu?.s) || 0;
-        const t = parseFloat(kstu?.t) || 0;
-        const u = parseFloat(kstu?.u) || 0;
-        const pSum = k + s + t + u;
-        return _fmt((iVal * pSum).toFixed(2));
+        return _fmt(computeRiskScore(iNorm, kstu).toFixed(2));
     };
 
     const _lbl = (text, kstu, iNorm) => {
@@ -53,10 +48,9 @@ function generateDotString(analysis, specificTreeId = null) {
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };
 
+    // DOT-specific pastel fill colors based on risk score
     const _getColor = (iNorm, kstu) => {
-        const iVal = parseFloat(String(iNorm).replace(',', '.')) || 0;
-        const pSum = (parseFloat(kstu?.k) || 0) + (parseFloat(kstu?.s) || 0) + (parseFloat(kstu?.t) || 0) + (parseFloat(kstu?.u) || 0);
-        const r = iVal * pSum;
+        const r = computeRiskScore(iNorm, kstu);
         if (r >= 2.0) return '#ffcccc';
         if (r >= 1.6) return '#ffe0b3';
         if (r >= 0.8) return '#ffffcc';
@@ -422,10 +416,9 @@ function generateResidualRiskDotString(analysis, specificTreeId = null) {
         return `${f(kstu.k)} / ${f(kstu.s)} / ${f(kstu.t)} / ${f(kstu.u)}`;
     };
 
+    // Delegates to global computeRiskScore() — formatted with comma decimal for DOT labels
     const _score = (iNorm, kstu) => {
-        const iVal = _toNum(iNorm);
-        const pSum = _toNum(kstu?.k) + _toNum(kstu?.s) + _toNum(kstu?.t) + _toNum(kstu?.u);
-        return (iVal * pSum).toFixed(2).replace('.', ',');
+        return computeRiskScore(iNorm, kstu).toFixed(2).replace('.', ',');
     };
 
     const _colorFromScore = (scoreStr) => {
@@ -808,7 +801,7 @@ window.downloadTreeDataZip = async function() {
 };
 
 window.downloadDotFile = function() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
 
     if (!dotContent) {

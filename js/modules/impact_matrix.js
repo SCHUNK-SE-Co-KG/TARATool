@@ -19,7 +19,7 @@ function getImpactColorClass(val) {
 }
 
 window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     // Validate input
@@ -50,7 +50,7 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
 };
 
 function renderImpactMatrix() {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     if (!dsMatrixContainer) return;
 

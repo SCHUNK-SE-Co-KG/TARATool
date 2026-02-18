@@ -59,7 +59,7 @@ function renderAssets(analysis) {
 
 function saveAsset(e) {
     e.preventDefault();
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     const idField = document.getElementById('assetIdField');
@@ -138,7 +138,7 @@ function saveAsset(e) {
 }
 
 window.editAsset = (id) => {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
@@ -164,7 +164,7 @@ window.editAsset = (id) => {
 };
 
 window.removeAsset = (id) => {
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;

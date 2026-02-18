@@ -23,11 +23,9 @@ const SEVERITY_LEVEL_FACTORS  = { '0': 0.0, '1': 0.3, '2': 0.6, '3': 1.0 };
 const _TREE_RISK_LEVELS = { critical: 2.0, high: 1.6, medium: 0.8 };
 
 // --- Centralized Risk Calculation Helpers ---
+// Delegates to the global computeRiskScore() in utils.js (single source of truth)
 function _computeRiskScore(kstu, iNorm) {
-    const valI = parseFloat(iNorm) || 0;
-    const sumP = (parseFloat(kstu?.k) || 0) + (parseFloat(kstu?.s) || 0)
-               + (parseFloat(kstu?.t) || 0) + (parseFloat(kstu?.u) || 0);
-    return valI * sumP;
+    return computeRiskScore(iNorm, kstu);
 }
 
 function _getRiskLevel(riskScore) {
@@ -332,7 +330,7 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
 
 function updateAttackTreeKSTUSummariesFromForm() {
     if (window.atV2 && typeof window.atV2.updateSummaries === "function") { window.atV2.updateSummaries(); return; }
-    const analysis = analysisData.find(a => a.id === activeAnalysisId);
+    const analysis = getActiveAnalysis();
     if (!analysis) return;
 
     const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
