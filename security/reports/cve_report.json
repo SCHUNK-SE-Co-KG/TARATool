@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-18T12:12:34Z",
+  "timestamp": "2026-02-18T12:18:09Z",
   "repository": "SCHUNK-SE-Co-KG/TARATool",
   "dependencies_scanned": 9,
   "vulnerabilities_found": 7,
@@ -27,37 +27,37 @@
       "name": "pytest",
       "version": "8.0",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     },
     {
       "name": "pytest-playwright",
       "version": "0.5",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     },
     {
       "name": "playwright",
       "version": "1.40",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     },
     {
       "name": "pytest-html",
       "version": "4.0",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     },
     {
       "name": "pytest-xdist",
       "version": "3.5",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     },
     {
       "name": "pytest-timeout",
       "version": "2.2",
       "ecosystem": "PyPI",
-      "source": "tests\\requirements.txt"
+      "source": "tests/requirements.txt"
     }
   ],
   "vulnerabilities": [

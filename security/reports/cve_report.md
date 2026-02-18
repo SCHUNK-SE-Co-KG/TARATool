@@ -1,6 +1,6 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-02-18T12:12:34Z  
+**Scan-Zeitpunkt:** 2026-02-18T12:18:09Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 9  
 **Schwachstellen gefunden:** 7
@@ -14,12 +14,12 @@
 | @fortawesome/fontawesome-free | 6.5.1 | npm | index.html |
 | jszip | 3.10.1 | npm | index.html |
 | jspdf | 2.5.1 | npm | index.html |
-| pytest | 8.0 | PyPI | tests\requirements.txt |
-| pytest-playwright | 0.5 | PyPI | tests\requirements.txt |
-| playwright | 1.40 | PyPI | tests\requirements.txt |
-| pytest-html | 4.0 | PyPI | tests\requirements.txt |
-| pytest-xdist | 3.5 | PyPI | tests\requirements.txt |
-| pytest-timeout | 2.2 | PyPI | tests\requirements.txt |
+| pytest | 8.0 | PyPI | tests/requirements.txt |
+| pytest-playwright | 0.5 | PyPI | tests/requirements.txt |
+| playwright | 1.40 | PyPI | tests/requirements.txt |
+| pytest-html | 4.0 | PyPI | tests/requirements.txt |
+| pytest-xdist | 3.5 | PyPI | tests/requirements.txt |
+| pytest-timeout | 2.2 | PyPI | tests/requirements.txt |
 
 ## Gefundene Schwachstellen
 
