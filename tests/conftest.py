@@ -79,6 +79,14 @@ def browser_context_args(browser_context_args):
     }
 
 
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args):
+    """Allow XMLHttpRequest from file:// origins (needed by config_loader.js)."""
+    args = list(browser_type_launch_args.get("args", []))
+    args.append("--allow-file-access-from-files")
+    return {**browser_type_launch_args, "args": args}
+
+
 @pytest.fixture()
 def app(page: Page):
     """

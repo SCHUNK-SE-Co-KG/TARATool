@@ -10,12 +10,9 @@
 // Explicit DOM reference (more robust than implicit window ID globals)
 const dsMatrixContainer = document.getElementById('dsMatrixContainer');
 
+/* global IMPACT_CSS_CLASSES, VALID_IMPACT_VALUES, IMPACT_LABELS */
 function getImpactColorClass(val) {
-    if (val === '3') return 'impact-high';
-    if (val === '2') return 'impact-medium';
-    if (val === '1') return 'impact-low';
-    if (val === 'N/A') return 'impact-na';
-    return '';
+    return (typeof IMPACT_CSS_CLASSES !== 'undefined' && IMPACT_CSS_CLASSES[val]) || '';
 }
 
 window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
@@ -112,15 +109,19 @@ function renderImpactMatrix() {
             const colorClass = getImpactColorClass(currentScore);
             
             html += '<td class="score-cell">';
+            // Build <option> tags dynamically from config
+            const optionsHtml = VALID_IMPACT_VALUES.map(v => {
+                const lbl = IMPACT_LABELS[v] || v;
+                const display = (v === lbl) ? v : `${v} (${lbl})`;
+                const sel = (currentScore === v) ? ' selected' : '';
+                return `<option value="${escapeHtml(v)}"${sel}>${escapeHtml(display)}</option>`;
+            }).join('\n                ');
             html += `<select 
                 data-asset-id="${eAssetId}" 
                 data-ds-id="${escapeHtml(ds.id)}" 
                 onchange="updateImpactScore('${eAssetId}', '${escapeHtml(ds.id)}', this.value, this)"
                 class="impact-select ${colorClass}">
-                <option value="N/A" ${currentScore === 'N/A' ? 'selected' : ''}>N/A</option>
-                <option value="1" ${currentScore === '1' ? 'selected' : ''}>1 (Low)</option>
-                <option value="2" ${currentScore === '2' ? 'selected' : ''}>2 (Medium)</option>
-                <option value="3" ${currentScore === '3' ? 'selected' : ''}>3 (High)</option>
+                ${optionsHtml}
             </select>`;
             html += '</td>';
         });

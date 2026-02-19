@@ -88,7 +88,10 @@ function saveAsset(e) {
     };
 
     // Determine protection level (highest value)
-    const levels = { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
+    /* global PROTECTION_LEVEL_RANKING */
+    const levels = (typeof PROTECTION_LEVEL_RANKING !== 'undefined')
+        ? PROTECTION_LEVEL_RANKING
+        : { '-': 0, 'I': 1, 'II': 2, 'III': 3 };
     const maxLevel = Math.max(levels[cia.c] || 0, levels[cia.i] || 0, levels[cia.a] || 0);
     let schutzbedarf = '-';
     if (maxLevel === 1) schutzbedarf = 'I';
