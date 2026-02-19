@@ -19,11 +19,29 @@ function _parseKSTUValue(val) {
 const _parseImpactValue = _parseKSTUValue;
 
 // --- Methodology Constants ---
-const PROTECTION_LEVEL_WEIGHTS = { 'I': 0.6, 'II': 0.8, 'III': 1.0 };
-const SEVERITY_LEVEL_FACTORS  = { '0': 0.0, '1': 0.3, '2': 0.6, '3': 1.0 };
-// Risk level thresholds for attack-tree classification (English labels)
-// NOTE: The global RISK_THRESHOLDS (array) in globals.js is for UI display (German labels).
-const _TREE_RISK_LEVELS = { critical: 2.0, high: 1.6, medium: 0.8 };
+// PROTECTION_LEVEL_WEIGHTS and SEVERITY_LEVEL_FACTORS are now global
+// constants loaded from config/assessment_config.json (see globals.js).
+
+// Risk level thresholds for attack-tree classification (English labels).
+// Built from the global RISK_THRESHOLDS array using the labelEn field.
+// Excludes the lowest tier (label "low") because _getRiskLevel() falls
+// through to 'low' for any score below all thresholds.
+/* global RISK_THRESHOLDS, SEVERITY_LEVEL_FACTORS, PROTECTION_LEVEL_WEIGHTS */
+const _TREE_RISK_LEVELS = (() => {
+    const levels = {};
+    if (typeof RISK_THRESHOLDS !== 'undefined' && Array.isArray(RISK_THRESHOLDS)) {
+        RISK_THRESHOLDS.forEach(t => {
+            if (t.labelEn && t.min > 0) levels[t.labelEn] = t.min;
+        });
+    }
+    // Fallback if config was not loaded
+    if (Object.keys(levels).length === 0) {
+        levels.critical = 2.0;
+        levels.high = 1.6;
+        levels.medium = 0.8;
+    }
+    return Object.freeze(levels);
+})();
 
 // --- Centralized Risk Calculation Helpers ---
 // Delegates to the global computeRiskScore() in utils.js (single source of truth)
