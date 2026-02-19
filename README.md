@@ -20,7 +20,6 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [CVE-Monitoring (Due Diligence)](#cve-monitoring-due-diligence)
 - [Datenhaltung](#datenhaltung)
 - [Testsuite](#testsuite)
-- [Architektur-Verbesserungen](#architektur-verbesserungen-p1p5)
 - [Screenshots](#screenshots)
 - [Mitwirken](#mitwirken)
 - [Lizenz](#lizenz)
@@ -342,22 +341,6 @@ Beiträge sind willkommen! So kannst du mitmachen:
 - Globale Variablen/Funktionen über `window.*` exponieren
 - Code-Kommentare bevorzugt auf Deutsch oder Englisch
 - **Keine Änderungen ohne erfolgreichen Testdurchlauf pushen**
-
----
-
-## Architektur-Verbesserungen (P1–P5)
-
-Das Projekt nutzt eine **Script-Tag-Architektur** mit globaler Scope-Teilung (22 Dateien, ~7.900 LOC). Im Rahmen eines umfassenden Architektur-Reviews wurden folgende Verbesserungen umgesetzt:
-
-| Maßnahme | Beschreibung |
-|---|---|
-| Zentrale Hilfsfunktionen | `getActiveAnalysis()` und `computeRiskScore()` als Single Source of Truth in `utils.js` |
-| UI-/Logik-Trennung | Reine Berechnungslogik in `calc.js`, DOM-Zugriffe in `ui.js` |
-| typeof-Guards | Absicherung aller cross-module Aufrufe gegen Ladeordnungs-Abhängigkeiten |
-| IIFE-Kapselung | Stateful Module (`structure`, `editor_v2`, `residual_risk_*`, `report_*`) gekapselt |
-| Tab-Dispatcher | `renderActiveTab()` aus `globals.js` extrahiert → eigenständige `tab_dispatcher.js` |
-| DOM-Zugriffe | Implizite DOM-Globals durch explizite `document.getElementById()` ersetzt |
-| Externalisierte Konfiguration | Alle Bewertungsparameter (Impact-Skalen, Schweregradfaktoren, Schutzstufengewichte, Risikoschwellen, Default-Schadensszenarien) in `config/assessment_config.json` ausgelagert – ermöglicht jährliche Reviews ohne Codeänderungen |
 
 ---
 
