@@ -15,6 +15,7 @@ Der **EU Cyber Resilience Act (CRA)** verpflichtet Hersteller von Produkten mit 
 - [Schnellstart](#schnellstart)
 - [SCHASAM-Methodik](#schasam-methodik)
 - [Projektstruktur](#projektstruktur)
+- [Konfiguration (Assessment-Parameter)](#konfiguration-assessment-parameter)
 - [Externe Abhängigkeiten](#externe-abhängigkeiten)
 - [CVE-Monitoring (Due Diligence)](#cve-monitoring-due-diligence)
 - [Datenhaltung](#datenhaltung)
@@ -120,12 +121,15 @@ TARATool/
 ├── index.html                              # Single-Page-Application (Einstiegspunkt)
 ├── css/
 │   └── style.css                           # Alle Styles
+├── config/
+│   └── assessment_config.json              # Externalisierte Bewertungsparameter (jährlich reviewbar)
 ├── docs/
 │   └── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
 └── js/
-    ├── core/                               # Kern (Globals, Utils, Init)
+    ├── core/                               # Kern (Config, Globals, Utils, Init)
     │   ├── about.js                        # About-Modal, SBOM-Generierung, Versionsinformation
-    │   ├── globals.js                      # Konstanten, KSTU-Skalen, Default-Datenstrukturen
+    │   ├── config_loader.js                # Lädt assessment_config.json synchron vor allen anderen Modulen
+    │   ├── globals.js                      # Konstanten, KSTU-Skalen, Default-Datenstrukturen (config-driven mit Fallbacks)
     │   ├── utils.js                        # localStorage, UID-Generierung, getActiveAnalysis(), computeRiskScore(), Hilfsfunktionen
     │   ├── analysis_core.js                # Analyse-CRUD, Import/Export, Dashboard
     │   ├── tab_dispatcher.js               # renderActiveTab() – zentraler Tab-Router (nach allen Modulen geladen)
@@ -158,8 +162,49 @@ TARATool/
 |---|---|
 | **IIFE-Pattern** | Dateien mit internem State/Closures nutzen IIFE (`structure`, `editor_v2`, `residual_risk_*`, `report_*`). Reine Funktionsdateien ohne internen State (calc, ui, modules) bleiben ohne IIFE, da alle Funktionen cross-module public API sind. |
 | **`_`-Prefix** | Markiert Funktionen als **intern konzipiert**, die aber aufgrund der globalen Script-Tag-Architektur dennoch cross-module genutzt werden. Alle Aufrufe sind mit `typeof`-Guards abgesichert. |
-| **Script-Reihenfolge** | `structure.js → calc.js → editor_v2.js → ui.js → dot_export.js` (in `index.html`). `tab_dispatcher.js` wird **nach allen Modulen** und **vor init.js** geladen. |
+| **Script-Reihenfolge** | `config_loader.js → globals.js → utils.js → …` (in `index.html`). Im Attack-Tree-Bereich: `structure.js → calc.js → editor_v2.js → ui.js → dot_export.js`. `tab_dispatcher.js` wird **nach allen Modulen** und **vor init.js** geladen. |
 | **DOM-Zugriffe** | Immer `document.getElementById()` verwenden, niemals implizite DOM-Globals (`window.elementId`) – Voraussetzung für ES-Module `strict mode`. |
+
+---
+
+## Konfiguration (Assessment-Parameter)
+
+Alle bewertungsrelevanten Skalierungsfaktoren und Schwellenwerte sind in einer **zentralen Konfigurationsdatei** externalisiert, sodass sie bei jährlichen Reviews ohne Codeänderungen angepasst werden können:
+
+📄 **[`config/assessment_config.json`](config/assessment_config.json)**
+
+### Konfigurierte Parameter
+
+| Abschnitt | Inhalt |
+|---|---|
+| `impactScale` | Gültige Impact-Werte (0–3), Labels und CSS-Klassen für die Schadensauswirkungsmatrix |
+| `severityLevelFactors` | Schweregradfaktoren (0 → 0.0, 1 → 0.3, 2 → 0.6, 3 → 1.0) |
+| `protectionLevels` | Schutzstufengewichte (I=0.6, II=0.8, III=1.0) und Ranking (−=0, I=1, II=2, III=3) |
+| `probabilityCriteria` | KSTU-Parameter (Komplexität, Skalierung, Zeitaufwand, Nutzen) mit Min/Max und Labels |
+| `riskThresholds` | Risikoschwellen (Kritisch ≥ 2.5, Hoch ≥ 1.5, Mittel ≥ 0.5, Niedrig ≥ 0) mit Farben |
+| `defaultDamageScenarios` | Die fünf Standard-Schadensszenarien (Safety, Financial, IP Loss, Privacy, Legal) |
+
+### Architektur
+
+```
+config/assessment_config.json     ← Einzige Datei, die bei Reviews angepasst wird
+        ↓ (synchron geladen)
+js/core/config_loader.js          ← Validiert und setzt globales ASSESSMENT_CONFIG
+        ↓
+js/core/globals.js                ← Alle Konstanten config-driven mit Fallbacks
+        ↓
+Alle Module (impact_matrix, attack_tree_calc, assets, …)
+```
+
+`config_loader.js` wird in `index.html` **vor** `globals.js` geladen und verwendet einen synchronen XMLHttpRequest, damit die Konfiguration garantiert verfügbar ist, bevor andere Module initialisiert werden. Bei Ladefehlern greifen hardcodierte Fallbacks in `globals.js`.
+
+### Jährlicher Review-Prozess
+
+1. `config/assessment_config.json` im Editor öffnen
+2. Gewünschte Parameter anpassen (z. B. Schwellenwerte, Faktoren)
+3. Config-Tests ausführen: `pytest -m config`
+4. Vollständige Testsuite ausführen: `pytest`
+5. Änderung committen und PR erstellen
 
 ---
 
@@ -233,7 +278,7 @@ Alle Analysedaten werden im **`localStorage`** des Browsers gespeichert (Schlüs
 
 ## Testsuite
 
-Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (178 Tests).
+Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (238 Tests).
 
 ### Schnellstart
 
@@ -267,6 +312,7 @@ pytest
 | `security_goals` | Schutzziele | `pytest -m security_goals` |
 | `residual_risk` | Restrisikoanalyse | `pytest -m residual_risk` |
 | `report` | PDF-Report-Generierung | `pytest -m report` |
+| `config` | Konfigurationssystem & Parameter-Propagation | `pytest -m config` |
 | `e2e` | Vollständige Workflow-Tests | `pytest -m e2e` |
 
 > Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
@@ -285,7 +331,7 @@ Beiträge sind willkommen! So kannst du mitmachen:
    cd tests
    pytest -x -q
    ```
-   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle 178 Tests** bestehen.
+   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle 238 Tests** bestehen.
 5. Pushe den Branch (`git push origin feature/mein-feature`)
 6. Erstelle einen Pull Request
 
@@ -311,6 +357,7 @@ Das Projekt nutzt eine **Script-Tag-Architektur** mit globaler Scope-Teilung (22
 | IIFE-Kapselung | Stateful Module (`structure`, `editor_v2`, `residual_risk_*`, `report_*`) gekapselt |
 | Tab-Dispatcher | `renderActiveTab()` aus `globals.js` extrahiert → eigenständige `tab_dispatcher.js` |
 | DOM-Zugriffe | Implizite DOM-Globals durch explizite `document.getElementById()` ersetzt |
+| Externalisierte Konfiguration | Alle Bewertungsparameter (Impact-Skalen, Schweregradfaktoren, Schutzstufengewichte, Risikoschwellen, Default-Schadensszenarien) in `config/assessment_config.json` ausgelagert – ermöglicht jährliche Reviews ohne Codeänderungen |
 
 ---
 
