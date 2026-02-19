@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-  "timestamp": "2026-02-18T12:55:27Z",
-=======
-  "timestamp": "2026-02-18T12:48:11Z",
->>>>>>> 63f7a2fccb92ba984c5e0a5fdd7770da1074411d
+  "timestamp": "2026-02-19T06:58:41Z",
   "repository": "SCHUNK-SE-Co-KG/TARATool",
   "dependencies_scanned": 9,
   "vulnerabilities_found": 0,
