@@ -63,6 +63,7 @@ pytest -m risk_analysis  # Risikoanalyse & Angriffsbäume
 pytest -m security_goals # Schutzziele
 pytest -m residual_risk  # Restrisikoanalyse
 pytest -m report         # PDF-Report
+pytest -m config         # Konfigurationssystem
 pytest -m e2e            # Vollständige Workflow-Tests
 ```
 
@@ -109,11 +110,15 @@ tests/
 │
 ├── test_core.py              # App-Start, Tabs, Analyse-CRUD, Persistenz
 ├── test_assets.py            # Asset CRUD, CIA-Werte, Cards
+├── test_calculations.py      # SCHASAM-Berechnungstests (parametrisiert)
+├── test_config.py            # Config-Loading, Parameter-Propagation, Konsistenz
 ├── test_damage_scenarios.py  # Schadensszenarien CRUD, Impact-Matrix
 ├── test_risk_analysis.py     # Risikoanalyse, Angriffsbäume, KSTU, DOT
 ├── test_security_goals.py    # Schutzziele CRUD
 ├── test_residual_risk.py     # Restrisikoanalyse Sync & UI
+├── test_residual_debug.py    # Restrisiko-Debug & Diagnosetests
 ├── test_report_versioning.py # PDF-Report, Versionsverwaltung
+├── test_tree_export.py       # Angriffsbaum DOT/Graphviz-Export
 └── test_e2e_workflow.py      # Vollständiger Workflow-Durchlauf
 ```
 
@@ -123,13 +128,17 @@ tests/
 |----------------------|----------------------------|-------|
 | Startup & Navigation | `test_core.py`             | 27    |
 | Assets               | `test_assets.py`           | 9     |
+| Berechnungen         | `test_calculations.py`     | 73    |
+| Konfiguration        | `test_config.py`           | 60    |
 | Schadensszenarien     | `test_damage_scenarios.py` | 10    |
 | Risikoanalyse        | `test_risk_analysis.py`    | 15    |
 | Schutzziele          | `test_security_goals.py`   | 4     |
 | Restrisikoanalyse    | `test_residual_risk.py`    | 4     |
+| Restrisiko-Debug     | `test_residual_debug.py`   | 6     |
 | Report & Versioning  | `test_report_versioning.py`| 6     |
+| Baum-Export          | `test_tree_export.py`      | 21    |
 | E2E Workflow         | `test_e2e_workflow.py`     | 3     |
-| **Gesamt**           |                            | **78** |
+| **Gesamt**           |                            | **238** |
 
 ## Marker-Übersicht
 
@@ -143,12 +152,15 @@ tests/
 | `security_goals`   | Schutzziele                                     |
 | `residual_risk`    | Restrisikoanalyse                               |
 | `report`           | PDF-Report-Generierung                          |
+| `config`           | Konfigurationssystem & Parameter-Propagation    |
 | `e2e`              | Vollständige End-to-End-Workflows               |
 
 ## Konfiguration
 
 Die Test-URL wird automatisch aus dem Projektpfad berechnet (`file:///...index.html`).
 Es wird kein Webserver benötigt – Playwright öffnet die HTML-Datei direkt.
+
+Der Browser wird mit `--allow-file-access-from-files` gestartet (konfiguriert in `conftest.py`), damit der synchrone XMLHttpRequest für `assessment_config.json` über das `file://`-Protokoll funktioniert.
 
 ### Headless vs. Headed
 
