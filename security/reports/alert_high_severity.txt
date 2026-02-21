@@ -1,7 +1,7 @@
 ⚠️ CVE-Alert: Kritische Schwachstellen in TARATool-Abhängigkeiten
 =================================================================
 
-Scan-Zeitpunkt: 2026-02-20T06:54:59Z
+Scan-Zeitpunkt: 2026-02-21T06:39:42Z
 Repository:     SCHUNK-SE-Co-KG/TARATool
 Schwachstellen: 3 gesamt, 3 mit CVSS >= 7.0
 
