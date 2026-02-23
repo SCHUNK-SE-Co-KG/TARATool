@@ -1,6 +1,6 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-02-22T06:11:15Z  
+**Scan-Zeitpunkt:** 2026-02-23T06:18:40Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 9  
 **Schwachstellen gefunden:** 3
@@ -33,10 +33,10 @@
 - **Fix-Version:** 4.2.0
 - **Referenzen:**
   - https://github.com/parallax/jsPDF/security/advisories/GHSA-67pg-wm7f-q7fj
+  - https://nvd.nist.gov/vuln/detail/CVE-2026-25535
   - https://github.com/parallax/jsPDF/commit/2e5e156e284d92c7d134bce97e6418756941d5e6
   - https://github.com/ZeroXJacks/CVEs/blob/main/2026/CVE-2026-25535.md
   - https://github.com/parallax/jsPDF
-  - https://github.com/parallax/jsPDF/releases/tag/v4.2.0
 
 ### GHSA-9vjf-qc39-jprp
 
