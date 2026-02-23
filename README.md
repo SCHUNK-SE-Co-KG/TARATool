@@ -215,7 +215,7 @@ Alle Abhängigkeiten werden über CDN geladen – es gibt **keine lokalen node_m
 |---|---|---|
 | [Font Awesome](https://fontawesome.com/) | 6.5.1 | Icons |
 | [@hpcc-js/wasm (Graphviz)](https://github.com/nicedoc/hpcc-js-wasm) | latest | DOT-Rendering im Browser (Angriffsbäume) |
-| [jsPDF](https://github.com/parallax/jsPDF) | 2.5.1 | PDF-Report-Generierung |
+| [jsPDF](https://github.com/parallax/jsPDF) | 4.2.0 | PDF-Report-Generierung |
 
 Für die PDF-Angriffsbaumvisualisierung werden externe Render-Dienste genutzt:
 - [Kroki](https://kroki.io/) (primär)
