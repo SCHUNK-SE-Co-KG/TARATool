@@ -4,6 +4,29 @@
             "approve": true,
             "matchCommandLine": true
         },
-        "&": true
+        "&": true,
+        "/^docker --version 2>&1; trivy --version 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^wsl --list --verbose 2>&1; Get-Command docker\\* 2>\\$null; Test-Path \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\docker\\.exe\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^wsl -d Ubuntu-22\\.04 -- bash -c \"docker --version 2>&1; which trivy 2>&1\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^wsl -d Ubuntu-22\\.04 -- bash -c \"cat /etc/os-release \\| head -3; apt list --installed 2>/dev/null \\| grep -i docker; which pip3 2>/dev/null\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^cd C:\\\\Users\\\\R011239\\\\Documents\\\\Webapp\\\\schunk_mechatronic_gripper; git checkout -b Development$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "git commit": true,
+        "git push": true,
+        "gh": true
     }
 }
