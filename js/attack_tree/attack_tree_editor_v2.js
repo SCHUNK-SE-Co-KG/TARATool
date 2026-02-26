@@ -337,10 +337,12 @@
 
     const ds = document.createElement("div");
     ds.className = "ds-checks";
-    ds.title = "Auswirkungen auswählen (DS1..DS5).";
+    const allDsIds = (typeof getAllDamageScenarioIds === "function")
+      ? getAllDamageScenarioIds(editor.analysis) : ["DS1","DS2","DS3","DS4","DS5"];
+    ds.title = `Auswirkungen auswählen (${allDsIds[0]}..${allDsIds[allDsIds.length - 1]}).`;
     ds.innerHTML = `
       <span>Impact:</span>
-      ${["DS1","DS2","DS3","DS4","DS5"].map(id => {
+      ${allDsIds.map(id => {
         const checked = (imp.ds || []).includes(id) ? "checked" : "";
         return `<label title="${id}">${id}<input type="checkbox" data-ds="${id}" ${checked}></label>`;
       }).join("")}
@@ -459,6 +461,17 @@
         if (existingEntry?.treeV2) this.root = structuredClone(existingEntry.treeV2);
         else if (existingEntry) this.root = legacyToV2(existingEntry);
         else this.root = newNode("", 0);
+
+        // Sanitize orphan DS references (DS that were deleted since the tree was saved)
+        if (existingEntry && analysis && typeof sanitizeEntryDsReferences === "function") {
+          const validIds = new Set(
+            (typeof getAllDamageScenarioIds === "function") ? getAllDamageScenarioIds(analysis) : []
+          );
+          if (validIds.size > 0) {
+            const wrapper = { treeV2: this.root, branches: existingEntry.branches || [] };
+            sanitizeEntryDsReferences(wrapper, validIds);
+          }
+        }
 
         this.root.title = rootInput?.value || this.root.title || "";
 

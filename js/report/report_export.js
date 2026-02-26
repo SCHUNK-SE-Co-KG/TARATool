@@ -74,6 +74,41 @@
             return { ...r, _riskValueNum: isNaN(v) ? -1 : v, _riskLabel: cls.label };
         }).sort((a, b) => b._riskValueNum - a._riskValueNum);
 
+        // Residual risk distribution (same logic as renderOverview in analysis_core.js)
+        const rrDist = { Kritisch: 0, Hoch: 0, Mittel: 0, Niedrig: 0, Unbekannt: 0 };
+        let hasResidualData = false;
+
+        try {
+            if (typeof ensureResidualRiskSynced === 'function') {
+                ensureResidualRiskSynced(analysis);
+            }
+        } catch (e) { /* ignore */ }
+
+        const riskWithResidual = risks.map(r => {
+            let rrVal = NaN;
+            if (r?.uid) {
+                try {
+                    if (typeof computeResidualTreeMetrics === 'function') {
+                        const m = computeResidualTreeMetrics(analysis, r.uid);
+                        if (m && m.riskValue !== undefined) {
+                            rrVal = parseFloat(m.riskValue);
+                            hasResidualData = true;
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+            }
+            if (isNaN(rrVal)) {
+                rrVal = parseFloat(r.rootRiskValue);
+            }
+            const rrCls = h.riskClassFromValue(rrVal);
+            if (!isNaN(rrVal)) {
+                rrDist[rrCls.label] = (rrDist[rrCls.label] || 0) + 1;
+            }
+            return { ...r, _rrValueNum: isNaN(rrVal) ? -1 : rrVal, _rrLabel: rrCls.label };
+        });
+
+        const riskWithResidualSorted = [...riskWithResidual].sort((a, b) => b._rrValueNum - a._rrValueNum);
+
         pdf.addH1('Management-Zusammenfassung');
         pdf.addText(
             `Diese Zusammenfassung bietet einen Management-Überblick über die aktuelle Risikoanalyse. ` +
@@ -82,14 +117,22 @@
 
         pdf.addSpacer(1.8);
 
+        const summaryRows = [
+            ['Assets', String(assets.length)],
+            ['Schadensszenarien (gesamt)', String(dsList.length)],
+            ['Risiken / Angriffsbäume', String(risks.length)],
+            ['Risikoverteilung', `Kritisch: ${dist.Kritisch} | Hoch: ${dist.Hoch} | Mittel: ${dist.Mittel} | Niedrig: ${dist.Niedrig} | Unbekannt: ${dist.Unbekannt}`]
+        ];
+        if (hasResidualData) {
+            summaryRows.push([
+                'Risikoverteilung Restrisiko',
+                `Kritisch: ${rrDist.Kritisch} | Hoch: ${rrDist.Hoch} | Mittel: ${rrDist.Mittel} | Niedrig: ${rrDist.Niedrig} | Unbekannt: ${rrDist.Unbekannt}`
+            ]);
+        }
+
         pdf.addTable(
             ['Kennzahl', 'Wert'],
-            [
-                ['Assets', String(assets.length)],
-                ['Schadensszenarien (gesamt)', String(dsList.length)],
-                ['Risiken / Angriffsbäume', String(risks.length)],
-                ['Risikoverteilung', `Kritisch: ${dist.Kritisch} | Hoch: ${dist.Hoch} | Mittel: ${dist.Mittel} | Niedrig: ${dist.Niedrig} | Unbekannt: ${dist.Unbekannt}`]
-            ],
+            summaryRows,
             [55, (pdf.pageW - pdf.margin * 2) - 55]
         );
 
@@ -105,6 +148,22 @@
                 topN.map(r => [r.id || '-', r.rootName || '-', (r.rootRiskValue ?? '-').toString(), r._riskLabel || 'Unbekannt']),
                 [14, 110, 14, (pdf.pageW - pdf.margin * 2) - 14 - 110 - 14]
             );
+        }
+
+        // Top residual risks table (after risk treatment)
+        if (hasResidualData) {
+            pdf.addH2('Top Restrisiken (nach Risikobehandlung)');
+            const topRRHighCritical = riskWithResidualSorted.filter(r => r._rrLabel === 'Hoch' || r._rrLabel === 'Kritisch');
+            if (topRRHighCritical.length === 0) {
+                pdf.addText('Keine verbleibenden Restrisiken in den Klassen Hoch oder Kritisch vorhanden.');
+            } else {
+                const topRRN = topRRHighCritical.slice(0, 5);
+                pdf.addTable(
+                    ['ID', 'Beschreibung', 'R (Rest)', 'Klasse'],
+                    topRRN.map(r => [r.id || '-', r.rootName || '-', r._rrValueNum >= 0 ? r._rrValueNum.toFixed(2) : '-', r._rrLabel || 'Unbekannt']),
+                    [14, 110, 14, (pdf.pageW - pdf.margin * 2) - 14 - 110 - 14]
+                );
+            }
         }
 
         // =============================================================
