@@ -174,6 +174,97 @@ function saveCurrentAnalysisState() {
 }
 
 // =============================================================
+// --- DAMAGE SCENARIO HELPERS ---
+// =============================================================
+
+/**
+ * Returns all damage scenario IDs (default + custom) for the given analysis,
+ * sorted naturally (DS1, DS2, ... DS10, DS11, ...).
+ * Single source of truth – used by attack tree editor, reports, etc.
+ * @param {object} [analysis] - Analysis object (falls back to getActiveAnalysis())
+ * @returns {string[]} e.g. ["DS1","DS2","DS3","DS4","DS5","DS6"]
+ */
+function getAllDamageScenarioIds(analysis) {
+    if (!analysis) analysis = getActiveAnalysis();
+    const defaults = (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS))
+        ? DEFAULT_DAMAGE_SCENARIOS : [];
+    const custom = (analysis && Array.isArray(analysis.damageScenarios))
+        ? analysis.damageScenarios : [];
+    const defaultIds = new Set(defaults.map(d => d.id));
+    const ids = defaults.map(d => d.id);
+    custom.forEach(d => { if (d && d.id && !defaultIds.has(d.id)) ids.push(d.id); });
+    return ids.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+}
+
+/**
+ * Removes references to a deleted DS from all risk entries (attack trees).
+ * Walks both legacy (branches/leaves) and V2 (treeV2/impacts) structures.
+ * @param {object} analysis - The analysis object
+ * @param {string} dsId     - The DS id to purge (e.g. "DS6")
+ */
+function purgeDamageScenarioFromRiskEntries(analysis, dsId) {
+    if (!analysis || !dsId) return;
+    (analysis.riskEntries || []).forEach(entry => {
+        // V2 tree
+        if (entry.treeV2) {
+            const walkV2 = (node) => {
+                (node.impacts || []).forEach(leaf => {
+                    if (Array.isArray(leaf.ds)) {
+                        leaf.ds = leaf.ds.filter(id => id !== dsId);
+                    }
+                });
+                (node.children || []).forEach(walkV2);
+            };
+            walkV2(entry.treeV2);
+        }
+        // Legacy branches
+        (entry.branches || []).forEach(branch => {
+            const walkLegacy = (leaves) => {
+                (leaves || []).forEach(leaf => {
+                    if (Array.isArray(leaf.ds)) {
+                        leaf.ds = leaf.ds.filter(id => id !== dsId);
+                    }
+                });
+            };
+            walkLegacy(branch.leaves);
+            (branch.l2_nodes || []).forEach(n => walkLegacy(n.leaves));
+        });
+    });
+}
+
+/**
+ * Removes orphan DS references from a single risk entry (tree).
+ * Called when opening a tree for editing to clean stale DS selections.
+ * @param {object} entry     - The risk entry
+ * @param {Set<string>} validIds - Set of currently valid DS IDs
+ */
+function sanitizeEntryDsReferences(entry, validIds) {
+    if (!entry || !validIds) return;
+    if (entry.treeV2) {
+        const walkV2 = (node) => {
+            (node.impacts || []).forEach(leaf => {
+                if (Array.isArray(leaf.ds)) {
+                    leaf.ds = leaf.ds.filter(id => validIds.has(id));
+                }
+            });
+            (node.children || []).forEach(walkV2);
+        };
+        walkV2(entry.treeV2);
+    }
+    (entry.branches || []).forEach(branch => {
+        const walkLegacy = (leaves) => {
+            (leaves || []).forEach(leaf => {
+                if (Array.isArray(leaf.ds)) {
+                    leaf.ds = leaf.ds.filter(id => validIds.has(id));
+                }
+            });
+        };
+        walkLegacy(branch.leaves);
+        (branch.l2_nodes || []).forEach(n => walkLegacy(n.leaves));
+    });
+}
+
+// =============================================================
 // --- ID / UID HELPERS ---
 // =============================================================
 

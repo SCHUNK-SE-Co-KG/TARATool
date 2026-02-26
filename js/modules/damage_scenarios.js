@@ -170,15 +170,21 @@ window.removeDamageScenario = function(dsId) {
     
     showConfirmation({
         title: 'Schadensszenario löschen bestätigen',
-        messageHtml: `Sind Sie sicher, dass Sie das Schadensszenario <b>${escapeHtml(ds.name)} (${escapeHtml(dsId)})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen gehen verloren.`,
+        messageHtml: `Sind Sie sicher, dass Sie das Schadensszenario <b>${escapeHtml(ds.name)} (${escapeHtml(dsId)})</b> löschen möchten? Alle zugehörigen Impact-Bewertungen und Angriffsbaum-Zuordnungen gehen verloren.`,
         confirmText: 'Ja, DS löschen',
         onConfirm: () => {
             analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
             
+            // Remove DS from impact matrix
             if (analysis.impactMatrix) {
                 for (const assetId in analysis.impactMatrix) {
                     delete analysis.impactMatrix[assetId][dsId];
                 }
+            }
+
+            // Remove DS references from all existing attack trees
+            if (typeof purgeDamageScenarioFromRiskEntries === 'function') {
+                purgeDamageScenarioFromRiskEntries(analysis, dsId);
             }
 
             saveAnalyses();
