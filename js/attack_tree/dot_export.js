@@ -45,7 +45,7 @@ function generateDotString(analysis, specificTreeId = null) {
     const _lbl = (text, kstu, iNorm) => {
         const p = _pStr(kstu);
         const i = _fmt(iNorm);
-        const r = _calcR(i, kstu);
+        const r = _calcR(iNorm, kstu);
         const cleanText = (text || '').replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
         return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
     };

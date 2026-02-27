@@ -1,0 +1,756 @@
+
+========================================================================================================================
+REPO: grasp_sensor
+File: grasp_sensor_trivy.json
+File size: 0.32 MB
+Total vulnerabilities (all severities): 112
+HIGH+CRITICAL unique (CVE+Package): 112
+  CRITICAL: 4
+  HIGH: 108
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2021-41208         | CRITICAL   | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation in boosted trees code                                                                     |
+| CVE-2023-25668         | CRITICAL   | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25668 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2024-3660          | CRITICAL   | 9.8    | Keras                               | 2.2.4                | 2.13.1rc0                 |
+|   Title: A arbitrary code injection vulnerability in TensorFlow's Keras framewo ...                                      |
+| GHSA-h6gw-r52c-724r    | CRITICAL   | 9.4    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: NULL Pointer Dereference and Access of Uninitialized Pointer in TensorFlow                                      |
+| CVE-2020-15202         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Integer truncation in Shard API usage                                                                           |
+| CVE-2020-15203         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Denial of Service in Tensorflow                                                                                 |
+| CVE-2020-15206         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Denial of Service in Tensorflow                                                                                 |
+| CVE-2020-15208         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Data corruption in tensorflow-lite                                                                              |
+| CVE-2020-15209         | HIGH       | 5.9    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Null pointer dereference in tensorflow-lite                                                                     |
+| CVE-2020-15210         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Segmentation fault in tensorflow-lite                                                                           |
+| CVE-2020-15265         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.4.0                     |
+|   Title: Segfault in `tf.quantization.quantize_and_dequantize`                                                           |
+| CVE-2021-29591         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.1.4, 2.2.3, 2.3.3, 2.4.2 |
+|   Title: Stack overflow due to looping TFLite subgraph                                                                   |
+| CVE-2021-37635         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap out of bounds access in sparse reduction operations                                                        |
+| CVE-2021-37637         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `CompressElement`                                                                   |
+| CVE-2021-37638         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `RaggedTensorToTensor`                                                              |
+| CVE-2021-37639         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference and heap OOB read in operations restoring tensors                                      |
+| CVE-2021-37643         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `MatrixDiagPartOp`                                                                  |
+| CVE-2021-37647         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `SparseTensorSliceDataset`                                                          |
+| CVE-2021-37648         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incorrect validation of `SaveV2` inputs                                                                         |
+| CVE-2021-37649         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `UncompressElement`                                                                 |
+| CVE-2021-37650         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Segfault and heap buffer overflow in `{Experimental,}DatasetToTFRecord`                                         |
+| CVE-2021-37651         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap buffer overflow in `FractionalAvgPoolGrad`                                                                 |
+| CVE-2021-37652         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Use after free in boosted trees creation                                                                        |
+| CVE-2021-37654         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB and CHECK fail in `ResourceGather`                                                                     |
+| CVE-2021-37655         | HIGH       | 7.3    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in `ResourceScatterUpdate`                                                                             |
+| CVE-2021-37659         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr and heap OOB in binary cwise ops                                                   |
+| CVE-2021-37663         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in `QuantizeV2`                                                                           |
+| CVE-2021-37664         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in boosted trees                                                                                       |
+| CVE-2021-37665         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in MKL requantization                                                                     |
+| CVE-2021-37666         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in `RaggedTensorToVariant`                                                         |
+| CVE-2021-37667         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in unicode encoding                                                                |
+| CVE-2021-37671         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in map operations                                                                  |
+| CVE-2021-37676         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in shape inference                                                                 |
+| CVE-2021-37678         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Arbitrary code execution due to YAML deserialization                                                            |
+| CVE-2021-37679         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in nested `tf.map_fn` with `RaggedTensor`s                                                             |
+| CVE-2021-37681         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: NPE in TFLite                                                                                                   |
+| CVE-2021-37688         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite                                                                              |
+| CVE-2021-37689         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite MLIR optimizations                                                           |
+| CVE-2021-41201         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Unitialized access in `EinsumHelper::ParseEquation`                                                             |
+| CVE-2021-41203         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Missing validation during checkpoint loading                                                                    |
+| CVE-2021-41206         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation of shapes in multiple TF ops                                                              |
+| CVE-2021-41210         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.raw_ops.SparseCountSparseOutput`                                                           |
+| CVE-2021-41212         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.ragged.cross`                                                                              |
+| CVE-2021-41214         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Reference binding to `nullptr` in `tf.ragged.cross`                                                             |
+| CVE-2021-41219         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Undefined behavior via `nullptr` reference binding in sparse matrix multiplication                              |
+| CVE-2021-41221         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Access to invalid memory during shape inference in `Cudnn*` ops                                                 |
+| CVE-2021-41495         | HIGH       | 7.5    | numpy                               | 1.17.4               | 1.19                      |
+|   Title: numpy: NULL pointer dereference in numpy.sort in in the PyArray_DescrNew() due to missing return-value validation |
+| CVE-2022-21699         | HIGH       | 8.3    | ipython                             | 7.5.0                | 5.11, 7.16.3, 7.31.1, 8.0.1 |
+|   Title: IPython (Interactive Python) is a command shell for interactive comput ...                                      |
+| CVE-2022-21726         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21727         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-21728         | HIGH       | 8.1    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21729         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Overflow and uncaught divide by zero in Tensorflow                                                              |
+| CVE-2022-21730         | HIGH       | 8.1    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21731         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Type confusion leading to segfault in Tensorflow                                                                |
+| CVE-2022-21734         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-21735         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in Tensorflow                                                                                  |
+| CVE-2022-21736         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Undefined behavior in `SparseTensorSliceDataset`                                                                |
+| CVE-2022-21737         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Assertion failure based denial of service in Tensorflow                                                         |
+| CVE-2022-21738         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow leading to crash in Tensorflow                                                                 |
+| CVE-2022-21739         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null pointer dereference in TensorFlow                                                                          |
+| CVE-2022-21740         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Heap overflow in Tensorflow                                                                                     |
+| CVE-2022-21741         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23557         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23558         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite array creation                                                                       |
+| CVE-2022-23559         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite                                                                                      |
+| CVE-2022-23560         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Read and Write outside of bounds in TensorFlow                                                                  |
+| CVE-2022-23561         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in TFLite                                                                                   |
+| CVE-2022-23562         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23563         | HIGH       | 6.3    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Insecure temporary file in Tensorflow                                                                           |
+| CVE-2022-23564         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23565         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-23566         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in Tensorflow                                                                               |
+| CVE-2022-23567         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23568         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23569         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-fails when building invalid tensor shapes in Tensorflow                                                 |
+| CVE-2022-23570         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23571         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23572         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Crash when type cannot be specialized in Tensorflow                                                             |
+| CVE-2022-23573         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Uninitialized variable access in Tensorflow                                                                     |
+| CVE-2022-23574         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read and write in Tensorflow                                                                      |
+| CVE-2022-23575         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23576         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23577         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23584         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Use after free in `DecodePng` kernel                                                                            |
+| CVE-2022-23587         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TensorFlow                                                                                  |
+| CVE-2022-23591         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Stack overflow in TensorFlow                                                                                    |
+| CVE-2022-29208         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Segfault and OOB write due to incomplete validation in `EditDistance` in TensorFlow                             |
+| CVE-2022-29216         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Code injection in `saved_model_cli` in TensorFlow                                                               |
+| CVE-2022-35937         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB read in `Gather_nd` in TF Lite                                                     |
+| CVE-2022-35939         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB write in `scatter_nd` in TF Lite                                                   |
+| CVE-2022-41900         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: CVE-2022-41900 affecting package tensorflow for versions less than 2.11.0-1                                     |
+| CVE-2022-41902         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: Out of bounds write in grappler in Tensorflow                                                                   |
+| CVE-2023-25658         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25658 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25659         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25659 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25660         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25660 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25662         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25662 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25663         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25663 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25665         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25665 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25666         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25666 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25669         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25669 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25670         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25670 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25672         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25672 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25673         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25673 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25674         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25674 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25675         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25675 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25676         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25676 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25801         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25801 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-27579         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-27579 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-33976         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.12.1                    |
+|   Title: CVE-2023-33976 affecting package tensorflow for versions less than 2.11.1-2                                     |
+| CVE-2025-12060         | HIGH       | 9.8    | Keras                               | 2.2.4                | 3.12.0                    |
+|   Title: keras: Keras Path Traversal Vulnerability                                                                       |
+| CVE-2025-9906          | HIGH       | 7.3    | Keras                               | 2.2.4                | 3.11.0                    |
+|   Title: keras: Arbitrary Code execution in Keras Safe Mode                                                              |
+| GHSA-43q8-3fv7-pr5x    | HIGH       | 7      | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Improper Validation of Integrity Check Value in TensorFlow                                                      |
+========================================================================================================================
+
+========================================================================================================================
+REPO: algorithms_learned_grasping
+File: algorithms_learned_grasping_trivy.json
+File size: 0.28 MB
+Total vulnerabilities (all severities): 99
+HIGH+CRITICAL unique (CVE+Package): 99
+  CRITICAL: 3
+  HIGH: 96
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2021-41208         | CRITICAL   | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation in boosted trees code                                                                     |
+| CVE-2023-25668         | CRITICAL   | 9.8    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25668 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| GHSA-h6gw-r52c-724r    | CRITICAL   | 9.4    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: NULL Pointer Dereference and Access of Uninitialized Pointer in TensorFlow                                      |
+| CVE-2021-37635         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap out of bounds access in sparse reduction operations                                                        |
+| CVE-2021-37637         | HIGH       | 5.5    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `CompressElement`                                                                   |
+| CVE-2021-37638         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `RaggedTensorToTensor`                                                              |
+| CVE-2021-37639         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference and heap OOB read in operations restoring tensors                                      |
+| CVE-2021-37643         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `MatrixDiagPartOp`                                                                  |
+| CVE-2021-37647         | HIGH       | 5.5    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `SparseTensorSliceDataset`                                                          |
+| CVE-2021-37648         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incorrect validation of `SaveV2` inputs                                                                         |
+| CVE-2021-37649         | HIGH       | 5.5    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `UncompressElement`                                                                 |
+| CVE-2021-37650         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Segfault and heap buffer overflow in `{Experimental,}DatasetToTFRecord`                                         |
+| CVE-2021-37651         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap buffer overflow in `FractionalAvgPoolGrad`                                                                 |
+| CVE-2021-37652         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Use after free in boosted trees creation                                                                        |
+| CVE-2021-37654         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB and CHECK fail in `ResourceGather`                                                                     |
+| CVE-2021-37655         | HIGH       | 7.3    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in `ResourceScatterUpdate`                                                                             |
+| CVE-2021-37659         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr and heap OOB in binary cwise ops                                                   |
+| CVE-2021-37663         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in `QuantizeV2`                                                                           |
+| CVE-2021-37664         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in boosted trees                                                                                       |
+| CVE-2021-37665         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in MKL requantization                                                                     |
+| CVE-2021-37666         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in `RaggedTensorToVariant`                                                         |
+| CVE-2021-37667         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in unicode encoding                                                                |
+| CVE-2021-37671         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in map operations                                                                  |
+| CVE-2021-37676         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in shape inference                                                                 |
+| CVE-2021-37678         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Arbitrary code execution due to YAML deserialization                                                            |
+| CVE-2021-37679         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in nested `tf.map_fn` with `RaggedTensor`s                                                             |
+| CVE-2021-37681         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: NPE in TFLite                                                                                                   |
+| CVE-2021-37688         | HIGH       | 5.5    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite                                                                              |
+| CVE-2021-37689         | HIGH       | 5.5    | tensorflow-gpu                      | 2.5                  | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite MLIR optimizations                                                           |
+| CVE-2021-41201         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Unitialized access in `EinsumHelper::ParseEquation`                                                             |
+| CVE-2021-41203         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Missing validation during checkpoint loading                                                                    |
+| CVE-2021-41206         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation of shapes in multiple TF ops                                                              |
+| CVE-2021-41210         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.raw_ops.SparseCountSparseOutput`                                                           |
+| CVE-2021-41212         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.ragged.cross`                                                                              |
+| CVE-2021-41214         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Reference binding to `nullptr` in `tf.ragged.cross`                                                             |
+| CVE-2021-41219         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Undefined behavior via `nullptr` reference binding in sparse matrix multiplication                              |
+| CVE-2021-41221         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Access to invalid memory during shape inference in `Cudnn*` ops                                                 |
+| CVE-2022-21726         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21727         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-21728         | HIGH       | 8.1    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21729         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Overflow and uncaught divide by zero in Tensorflow                                                              |
+| CVE-2022-21730         | HIGH       | 8.1    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21731         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Type confusion leading to segfault in Tensorflow                                                                |
+| CVE-2022-21734         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-21735         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in Tensorflow                                                                                  |
+| CVE-2022-21736         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Undefined behavior in `SparseTensorSliceDataset`                                                                |
+| CVE-2022-21737         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Assertion failure based denial of service in Tensorflow                                                         |
+| CVE-2022-21738         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow leading to crash in Tensorflow                                                                 |
+| CVE-2022-21739         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null pointer dereference in TensorFlow                                                                          |
+| CVE-2022-21740         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Heap overflow in Tensorflow                                                                                     |
+| CVE-2022-21741         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23557         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23558         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite array creation                                                                       |
+| CVE-2022-23559         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite                                                                                      |
+| CVE-2022-23560         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Read and Write outside of bounds in TensorFlow                                                                  |
+| CVE-2022-23561         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in TFLite                                                                                   |
+| CVE-2022-23562         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23563         | HIGH       | 6.3    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Insecure temporary file in Tensorflow                                                                           |
+| CVE-2022-23564         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23565         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-23566         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in Tensorflow                                                                               |
+| CVE-2022-23567         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23568         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23569         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-fails when building invalid tensor shapes in Tensorflow                                                 |
+| CVE-2022-23570         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23571         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23572         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Crash when type cannot be specialized in Tensorflow                                                             |
+| CVE-2022-23573         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Uninitialized variable access in Tensorflow                                                                     |
+| CVE-2022-23574         | HIGH       | 8.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read and write in Tensorflow                                                                      |
+| CVE-2022-23575         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23576         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23577         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23584         | HIGH       | 6.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Use after free in `DecodePng` kernel                                                                            |
+| CVE-2022-23587         | HIGH       | 9.8    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TensorFlow                                                                                  |
+| CVE-2022-23591         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Stack overflow in TensorFlow                                                                                    |
+| CVE-2022-29208         | HIGH       | 7.1    | tensorflow-gpu                      | 2.5                  | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Segfault and OOB write due to incomplete validation in `EditDistance` in TensorFlow                             |
+| CVE-2022-29216         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Code injection in `saved_model_cli` in TensorFlow                                                               |
+| CVE-2022-35937         | HIGH       | 9.1    | tensorflow-gpu                      | 2.5                  | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB read in `Gather_nd` in TF Lite                                                     |
+| CVE-2022-35939         | HIGH       | 9.8    | tensorflow-gpu                      | 2.5                  | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB write in `scatter_nd` in TF Lite                                                   |
+| CVE-2022-41900         | HIGH       | 9.8    | tensorflow-gpu                      | 2.5                  | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: CVE-2022-41900 affecting package tensorflow for versions less than 2.11.0-1                                     |
+| CVE-2022-41902         | HIGH       | 9.1    | tensorflow-gpu                      | 2.5                  | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: Out of bounds write in grappler in Tensorflow                                                                   |
+| CVE-2023-25658         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25658 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25659         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25659 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25660         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25660 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25662         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25662 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25663         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25663 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25665         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25665 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25666         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25666 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25669         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25669 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25670         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25670 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25672         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25672 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25673         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25673 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25674         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25674 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25675         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25675 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25676         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25676 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25801         | HIGH       | 7.8    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-25801 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-27579         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.11.1                    |
+|   Title: CVE-2023-27579 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-33976         | HIGH       | 7.5    | tensorflow-gpu                      | 2.5                  | 2.12.1                    |
+|   Title: CVE-2023-33976 affecting package tensorflow for versions less than 2.11.1-2                                     |
+| GHSA-43q8-3fv7-pr5x    | HIGH       | 7      | tensorflow-gpu                      | 2.5                  | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Improper Validation of Integrity Check Value in TensorFlow                                                      |
+========================================================================================================================
+
+========================================================================================================================
+REPO: algorithms_mrcnn
+File: algorithms_mrcnn_trivy.json
+File size: 0.32 MB
+Total vulnerabilities (all severities): 112
+HIGH+CRITICAL unique (CVE+Package): 112
+  CRITICAL: 4
+  HIGH: 108
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2021-41208         | CRITICAL   | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation in boosted trees code                                                                     |
+| CVE-2023-25668         | CRITICAL   | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25668 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2024-3660          | CRITICAL   | 9.8    | Keras                               | 2.2.4                | 2.13.1rc0                 |
+|   Title: A arbitrary code injection vulnerability in TensorFlow's Keras framewo ...                                      |
+| GHSA-h6gw-r52c-724r    | CRITICAL   | 9.4    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: NULL Pointer Dereference and Access of Uninitialized Pointer in TensorFlow                                      |
+| CVE-2020-15202         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Integer truncation in Shard API usage                                                                           |
+| CVE-2020-15203         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Denial of Service in Tensorflow                                                                                 |
+| CVE-2020-15206         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Denial of Service in Tensorflow                                                                                 |
+| CVE-2020-15208         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Data corruption in tensorflow-lite                                                                              |
+| CVE-2020-15209         | HIGH       | 5.9    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Null pointer dereference in tensorflow-lite                                                                     |
+| CVE-2020-15210         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 1.15.4, 2.0.3, 2.1.2, 2.2.1, 2.3.1 |
+|   Title: Segmentation fault in tensorflow-lite                                                                           |
+| CVE-2020-15265         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.4.0                     |
+|   Title: Segfault in `tf.quantization.quantize_and_dequantize`                                                           |
+| CVE-2021-29591         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.1.4, 2.2.3, 2.3.3, 2.4.2 |
+|   Title: Stack overflow due to looping TFLite subgraph                                                                   |
+| CVE-2021-37635         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap out of bounds access in sparse reduction operations                                                        |
+| CVE-2021-37637         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `CompressElement`                                                                   |
+| CVE-2021-37638         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `RaggedTensorToTensor`                                                              |
+| CVE-2021-37639         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference and heap OOB read in operations restoring tensors                                      |
+| CVE-2021-37643         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `MatrixDiagPartOp`                                                                  |
+| CVE-2021-37647         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `SparseTensorSliceDataset`                                                          |
+| CVE-2021-37648         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incorrect validation of `SaveV2` inputs                                                                         |
+| CVE-2021-37649         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in `UncompressElement`                                                                 |
+| CVE-2021-37650         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Segfault and heap buffer overflow in `{Experimental,}DatasetToTFRecord`                                         |
+| CVE-2021-37651         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap buffer overflow in `FractionalAvgPoolGrad`                                                                 |
+| CVE-2021-37652         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Use after free in boosted trees creation                                                                        |
+| CVE-2021-37654         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB and CHECK fail in `ResourceGather`                                                                     |
+| CVE-2021-37655         | HIGH       | 7.3    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in `ResourceScatterUpdate`                                                                             |
+| CVE-2021-37659         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr and heap OOB in binary cwise ops                                                   |
+| CVE-2021-37663         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in `QuantizeV2`                                                                           |
+| CVE-2021-37664         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in boosted trees                                                                                       |
+| CVE-2021-37665         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Incomplete validation in MKL requantization                                                                     |
+| CVE-2021-37666         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in `RaggedTensorToVariant`                                                         |
+| CVE-2021-37667         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in unicode encoding                                                                |
+| CVE-2021-37671         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in map operations                                                                  |
+| CVE-2021-37676         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Reference binding to nullptr in shape inference                                                                 |
+| CVE-2021-37678         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Arbitrary code execution due to YAML deserialization                                                            |
+| CVE-2021-37679         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Heap OOB in nested `tf.map_fn` with `RaggedTensor`s                                                             |
+| CVE-2021-37681         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: NPE in TFLite                                                                                                   |
+| CVE-2021-37688         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite                                                                              |
+| CVE-2021-37689         | HIGH       | 5.5    | tensorflow-gpu                      | 1.14.0               | 2.3.4, 2.4.3, 2.5.1       |
+|   Title: Null pointer dereference in TFLite MLIR optimizations                                                           |
+| CVE-2021-41201         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Unitialized access in `EinsumHelper::ParseEquation`                                                             |
+| CVE-2021-41203         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Missing validation during checkpoint loading                                                                    |
+| CVE-2021-41206         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Incomplete validation of shapes in multiple TF ops                                                              |
+| CVE-2021-41210         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.raw_ops.SparseCountSparseOutput`                                                           |
+| CVE-2021-41212         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Heap OOB read in `tf.ragged.cross`                                                                              |
+| CVE-2021-41214         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Reference binding to `nullptr` in `tf.ragged.cross`                                                             |
+| CVE-2021-41219         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Undefined behavior via `nullptr` reference binding in sparse matrix multiplication                              |
+| CVE-2021-41221         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.1, 2.5.2, 2.4.4       |
+|   Title: Access to invalid memory during shape inference in `Cudnn*` ops                                                 |
+| CVE-2021-41495         | HIGH       | 7.5    | numpy                               | 1.17.4               | 1.19                      |
+|   Title: numpy: NULL pointer dereference in numpy.sort in in the PyArray_DescrNew() due to missing return-value validation |
+| CVE-2022-21699         | HIGH       | 8.3    | ipython                             | 7.5.0                | 5.11, 7.16.3, 7.31.1, 8.0.1 |
+|   Title: IPython (Interactive Python) is a command shell for interactive comput ...                                      |
+| CVE-2022-21726         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21727         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-21728         | HIGH       | 8.1    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21729         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Overflow and uncaught divide by zero in Tensorflow                                                              |
+| CVE-2022-21730         | HIGH       | 8.1    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read in Tensorflow                                                                                |
+| CVE-2022-21731         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Type confusion leading to segfault in Tensorflow                                                                |
+| CVE-2022-21734         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-21735         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in Tensorflow                                                                                  |
+| CVE-2022-21736         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Undefined behavior in `SparseTensorSliceDataset`                                                                |
+| CVE-2022-21737         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Assertion failure based denial of service in Tensorflow                                                         |
+| CVE-2022-21738         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow leading to crash in Tensorflow                                                                 |
+| CVE-2022-21739         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null pointer dereference in TensorFlow                                                                          |
+| CVE-2022-21740         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Heap overflow in Tensorflow                                                                                     |
+| CVE-2022-21741         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23557         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Division by zero in TFLite                                                                                      |
+| CVE-2022-23558         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite array creation                                                                       |
+| CVE-2022-23559         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TFLite                                                                                      |
+| CVE-2022-23560         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Read and Write outside of bounds in TensorFlow                                                                  |
+| CVE-2022-23561         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in TFLite                                                                                   |
+| CVE-2022-23562         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23563         | HIGH       | 6.3    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Insecure temporary file in Tensorflow                                                                           |
+| CVE-2022-23564         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23565         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-failures in Tensorflow                                                                                  |
+| CVE-2022-23566         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds write in Tensorflow                                                                               |
+| CVE-2022-23567         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23568         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflows in Tensorflow                                                                                 |
+| CVE-2022-23569         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: `CHECK`-fails when building invalid tensor shapes in Tensorflow                                                 |
+| CVE-2022-23570         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23571         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Reachable Assertion in Tensorflow                                                                               |
+| CVE-2022-23572         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Crash when type cannot be specialized in Tensorflow                                                             |
+| CVE-2022-23573         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Uninitialized variable access in Tensorflow                                                                     |
+| CVE-2022-23574         | HIGH       | 8.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Out of bounds read and write in Tensorflow                                                                      |
+| CVE-2022-23575         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23576         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in Tensorflow                                                                                  |
+| CVE-2022-23577         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Null-dereference in Tensorflow                                                                                  |
+| CVE-2022-23584         | HIGH       | 6.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Use after free in `DecodePng` kernel                                                                            |
+| CVE-2022-23587         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Integer overflow in TensorFlow                                                                                  |
+| CVE-2022-23591         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Stack overflow in TensorFlow                                                                                    |
+| CVE-2022-29208         | HIGH       | 7.1    | tensorflow-gpu                      | 1.14.0               | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Segfault and OOB write due to incomplete validation in `EditDistance` in TensorFlow                             |
+| CVE-2022-29216         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.6.4, 2.7.2, 2.8.1       |
+|   Title: Code injection in `saved_model_cli` in TensorFlow                                                               |
+| CVE-2022-35937         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB read in `Gather_nd` in TF Lite                                                     |
+| CVE-2022-35939         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.7.2, 2.8.1, 2.9.1       |
+|   Title: TensorFlow vulnerable to OOB write in `scatter_nd` in TF Lite                                                   |
+| CVE-2022-41900         | HIGH       | 9.8    | tensorflow-gpu                      | 1.14.0               | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: CVE-2022-41900 affecting package tensorflow for versions less than 2.11.0-1                                     |
+| CVE-2022-41902         | HIGH       | 9.1    | tensorflow-gpu                      | 1.14.0               | 2.8.4, 2.9.3, 2.10.1      |
+|   Title: Out of bounds write in grappler in Tensorflow                                                                   |
+| CVE-2023-25658         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25658 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25659         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25659 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25660         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25660 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25662         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25662 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25663         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25663 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25665         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25665 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25666         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25666 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25669         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25669 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25670         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25670 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25672         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25672 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25673         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25673 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25674         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25674 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25675         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25675 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25676         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25676 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-25801         | HIGH       | 7.8    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-25801 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-27579         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.11.1                    |
+|   Title: CVE-2023-27579 affecting package tensorflow for versions less than 2.11.1-1                                     |
+| CVE-2023-33976         | HIGH       | 7.5    | tensorflow-gpu                      | 1.14.0               | 2.12.1                    |
+|   Title: CVE-2023-33976 affecting package tensorflow for versions less than 2.11.1-2                                     |
+| CVE-2025-12060         | HIGH       | 9.8    | Keras                               | 2.2.4                | 3.12.0                    |
+|   Title: keras: Keras Path Traversal Vulnerability                                                                       |
+| CVE-2025-9906          | HIGH       | 7.3    | Keras                               | 2.2.4                | 3.11.0                    |
+|   Title: keras: Arbitrary Code execution in Keras Safe Mode                                                              |
+| GHSA-43q8-3fv7-pr5x    | HIGH       | 7      | tensorflow-gpu                      | 1.14.0               | 2.5.3, 2.6.3, 2.7.1       |
+|   Title: Improper Validation of Integrity Check Value in TensorFlow                                                      |
+========================================================================================================================
+
+========================================================================================================================
+REPO: web_user_interface
+File: web_user_interface_trivy.json
+File size: 0.03 MB
+Total vulnerabilities (all severities): 13
+HIGH+CRITICAL unique (CVE+Package): 13
+  CRITICAL: 1
+  HIGH: 12
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2025-68428         | CRITICAL   | 7.5    | jspdf                               | 3.0.4                | 4.0.0                     |
+|   Title: jspdf: jsPDF Local File Inclusion/Path Traversal vulnerability                                                  |
+| CVE-2025-27152         | HIGH       | 5.3    | axios                               | 1.7.9                | 1.8.2, 0.30.0             |
+|   Title: axios: Possible SSRF and Credential Leakage via Absolute URL in axios Requests                                  |
+| CVE-2025-43865         | HIGH       | 8.2    | react-router                        | 7.0.2                | 7.5.2                     |
+|   Title: react-router: React Router allows pre-render data spoofing on React-Router framework mode                       |
+| CVE-2025-58754         | HIGH       | 7.5    | axios                               | 1.7.9                | 1.12.0, 0.30.2            |
+|   Title: axios: Axios DoS via lack of data size check                                                                    |
+| CVE-2025-59057         | HIGH       | 7.6    | react-router                        | 7.0.2                | 7.9.0                     |
+|   Title: react-router: @remix-run/router: React Router XSS Vulnerability                                                 |
+| CVE-2026-21884         | HIGH       | 8.2    | react-router                        | 7.0.2                | 7.12.0                    |
+|   Title: react-router: @remix-run/react: React Router SSR XSS in ScrollRestoration                                       |
+| CVE-2026-22029         | HIGH       | 8      | react-router                        | 7.0.2                | 7.12.0                    |
+|   Title: @remix-run/router: react-router: React Router vulnerable to XSS via Open Redirects                              |
+| CVE-2026-24133         | HIGH       | 6.5    | jspdf                               | 3.0.4                | 4.1.0                     |
+|   Title: jsPDF: jsPDF: Denial of Service due to excessive memory allocation from crafted BMP images                      |
+| CVE-2026-24737         | HIGH       | 8.1    | jspdf                               | 3.0.4                | 4.1.0                     |
+|   Title: jsPDF: jsPDF: Arbitrary code execution via unsanitized input in Acroform module                                 |
+| CVE-2026-25535         | HIGH       | 7.5    | jspdf                               | 3.0.4                | 4.2.0                     |
+|   Title: jsPDF: denial of service via malicious GIF dimensions                                                           |
+| CVE-2026-25639         | HIGH       | 7.5    | axios                               | 1.7.9                | 1.13.5, 0.30.3            |
+|   Title: axios: Axios affected by Denial of Service via __proto__ Key in mergeConfig                                     |
+| CVE-2026-25755         | HIGH       | 8.1    | jspdf                               | 3.0.4                | 4.2.0                     |
+|   Title: jsPDF: PDF object injection via unsanitized input in addJS method                                               |
+| CVE-2026-25940         | HIGH       | 8.1    | jspdf                               | 3.0.4                | 4.2.0                     |
+|   Title: jsPDF: PDF injection in AcroForm module allows arbitrary JavaScript execution (RadioButton children)            |
+========================================================================================================================
+
+========================================================================================================================
+REPO: tools_database_explorer
+File: tools_database_explorer_trivy.json
+File size: 0.01 MB
+Total vulnerabilities (all severities): 2
+HIGH+CRITICAL unique (CVE+Package): 1
+  CRITICAL: 0
+  HIGH: 1
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2025-15284         | HIGH       | 7.5    | qs                                  | 6.13.0               | 6.14.1                    |
+|   Title: qs: qs: Denial of Service via improper input validation in array parsing                                        |
+========================================================================================================================
+
+========================================================================================================================
+REPO: web_backend_hardware_utilization_backend
+File: web_backend_hardware_utilization_backend_trivy.json
+File size: 0.00 MB
+Total vulnerabilities (all severities): 1
+HIGH+CRITICAL unique (CVE+Package): 1
+  CRITICAL: 0
+  HIGH: 1
+
+| CVE ID                 | Severity   | CVSS   | Package                             | Installed            | Fixed                     |
+|------------------------|------------|--------|-------------------------------------|----------------------|---------------------------|
+| CVE-2024-47874         | HIGH       | 7.5    | starlette                           | 0.32.0.post1         | 0.40.0                    |
+|   Title: starlette: Starlette Denial of service (DoS) via multipart/form-data                                            |
+========================================================================================================================
+
+DONE - All reports processed.
