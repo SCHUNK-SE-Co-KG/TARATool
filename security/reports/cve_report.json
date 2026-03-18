@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-03-17T06:17:16Z",
+  "timestamp": "2026-03-18T06:18:04Z",
   "repository": "SCHUNK-SE-Co-KG/TARATool",
   "dependencies_scanned": 9,
-  "vulnerabilities_found": 0,
-  "high_severity_count": 0,
+  "vulnerabilities_found": 2,
+  "high_severity_count": 2,
   "dependencies": [
     {
       "name": "@fortawesome/fontawesome-free",
@@ -60,5 +60,42 @@
       "source": "tests/requirements.txt"
     }
   ],
-  "vulnerabilities": []
+  "vulnerabilities": [
+    {
+      "vuln_id": "GHSA-7x6v-j9x4-qf24",
+      "summary": "jsPDF has a PDF Object Injection via FreeText color",
+      "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N",
+      "cvss_score": 8.1,
+      "affected_package": "npm:jspdf@4.2.0",
+      "affected_versions": "",
+      "fixed_version": "4.2.1",
+      "references": [
+        "https://github.com/parallax/jsPDF/security/advisories/GHSA-7x6v-j9x4-qf24",
+        "https://github.com/parallax/jsPDF/commit/4155c4819d5eca284168e51e0e1e81126b4f14b8",
+        "https://github.com/parallax/jsPDF",
+        "https://github.com/parallax/jsPDF/releases/tag/v4.2.1"
+      ],
+      "aliases": [
+        "CVE-2026-31898"
+      ]
+    },
+    {
+      "vuln_id": "GHSA-wfv2-pwc8-crg5",
+      "summary": "jsPDF has HTML Injection in New Window paths",
+      "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:L",
+      "cvss_score": 9.6,
+      "affected_package": "npm:jspdf@4.2.0",
+      "affected_versions": "",
+      "fixed_version": "4.2.1",
+      "references": [
+        "https://github.com/parallax/jsPDF/security/advisories/GHSA-wfv2-pwc8-crg5",
+        "https://github.com/parallax/jsPDF/commit/87a40bbd07e6b30575196370670b41f264aa78d7",
+        "https://github.com/parallax/jsPDF",
+        "https://github.com/parallax/jsPDF/releases/tag/v4.2.1"
+      ],
+      "aliases": [
+        "CVE-2026-31938"
+      ]
+    }
+  ]
 }
