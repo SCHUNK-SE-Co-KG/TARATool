@@ -214,23 +214,36 @@ function executeImport() {
     reader.onload = (ev) => {
         try {
             const json = JSON.parse(ev.target.result);
-            if (json.id && json.metadata) {
-                if (analysisData.some(a => a.id === json.id)) {
-                    json.id = json.id + '_imp_' + Date.now();
-                    json.name = json.name + ' (Imported)';
+
+            // Support both single objects and arrays of analyses
+            const items = Array.isArray(json) ? json : [json];
+            const imported = [];
+
+            for (const item of items) {
+                if (!item || !item.id || !item.metadata) {
+                    console.warn('Importfehler: Element übersprungen (fehlt id/metadata)', item);
+                    continue;
                 }
-                
-                analysisData.push(json);
 
-                // Use shared migration function (single source of truth)
-                migrateAnalysis(json);
+                if (analysisData.some(a => a.id === item.id)) {
+                    item.id = item.id + '_imp_' + Date.now();
+                    item.name = (item.name || 'Import') + ' (Imported)';
+                }
 
+                analysisData.push(item);
+                migrateAnalysis(item);
+                imported.push(item);
+            }
+
+            if (imported.length > 0) {
                 saveAnalyses();
                 renderAnalysisSelector();
-                activateAnalysis(json.id);
-                
+                // Activate the last imported analysis
+                activateAnalysis(imported[imported.length - 1].id);
+
                 if (elModal) elModal.style.display = 'none';
-                showToast(`Analyse "${json.name}" erfolgreich importiert.`, 'success');
+                const names = imported.map(a => a.name).join(', ');
+                showToast(`${imported.length} Analyse(n) importiert: ${names}`, 'success');
             } else {
                 showToast('Importfehler: Ungültige Datenstruktur.', 'error');
             }
