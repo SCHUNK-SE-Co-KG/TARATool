@@ -1,8 +1,8 @@
 {
-  "timestamp": "2026-04-13T06:36:27Z",
+  "timestamp": "2026-04-14T06:30:05Z",
   "repository": "SCHUNK-SE-Co-KG/TARATool",
   "dependencies_scanned": 9,
-  "vulnerabilities_found": 0,
+  "vulnerabilities_found": 1,
   "high_severity_count": 0,
   "dependencies": [
     {
@@ -60,5 +60,25 @@
       "source": "tests/requirements.txt"
     }
   ],
-  "vulnerabilities": []
+  "vulnerabilities": [
+    {
+      "vuln_id": "GHSA-6w46-j5rx-g56g",
+      "summary": "pytest has vulnerable tmpdir handling",
+      "severity": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:L",
+      "cvss_score": 6.8,
+      "affected_package": "PyPI:pytest@8.0",
+      "affected_versions": "2.0.0, 2.0.1, 2.0.2, 2.0.3, 2.1.0, 2.1.1, 2.1.2, 2.1.3, 2.2.0, 2.2.1 …",
+      "fixed_version": "9.0.3",
+      "references": [
+        "https://nvd.nist.gov/vuln/detail/CVE-2025-71176",
+        "https://github.com/pytest-dev/pytest/issues/13669",
+        "https://github.com/pytest-dev/pytest/pull/14343",
+        "https://github.com/pytest-dev/pytest/commit/95d8423bd24992deea5b9df32555fa1741679e2c",
+        "https://github.com/pytest-dev/pytes"
+      ],
+      "aliases": [
+        "CVE-2025-71176"
+      ]
+    }
+  ]
 }
