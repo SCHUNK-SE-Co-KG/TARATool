@@ -1,6 +1,6 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-04-25T06:25:25Z  
+**Scan-Zeitpunkt:** 2026-04-26T06:32:16Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 9  
 **Schwachstellen gefunden:** 1
