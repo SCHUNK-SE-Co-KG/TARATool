@@ -421,6 +421,74 @@
     }
 
     // -----------------------------
+    // Root-Node-Overview (Residual Risk)
+    // -----------------------------
+
+    function rrRenderRootOverview(entries, analysis) {
+        if (!entries || entries.length === 0) return '';
+
+        const fmt = (val) => {
+            if (val === null || val === undefined || val === '') return '0,0';
+            return String(val).replace('.', ',');
+        };
+
+        const pStr = (kstu) => {
+            if (!kstu) return '- / - / - / -';
+            return `${fmt(kstu.k)} / ${fmt(kstu.s)} / ${fmt(kstu.t)} / ${fmt(kstu.u)}`;
+        };
+
+        // Compute residual metrics and sort descending
+        const withMetrics = entries.map(entry => {
+            const base = (analysis?.riskEntries || []).find(e => e?.uid === entry?.uid) || entry;
+            let m = null;
+            try {
+                if (typeof computeResidualTreeMetrics === 'function' && analysis && entry?.uid) {
+                    m = computeResidualTreeMetrics(analysis, entry.uid);
+                }
+            } catch (_) {}
+            return { entry, base, m };
+        });
+
+        withMetrics.sort((a, b) => {
+            const ra = parseFloat(a.m?.riskValue) || 0;
+            const rb = parseFloat(b.m?.riskValue) || 0;
+            return rb - ra;
+        });
+
+        let html = '<h4>Root-Node-\u00dcbersicht (Restrisiko):</h4>';
+        html += '<div class="root-overview-grid">';
+
+        withMetrics.forEach(({ entry, base, m }) => {
+            const origKstu = base?.kstu || {};
+            const origScore = computeRiskScore(base?.i_norm, origKstu);
+            const origMeta = rrGetRiskMeta(base?.rootRiskValue);
+
+            const resKstu = (m && m.kstu) ? m.kstu : {};
+            const resScore = (m && m.riskValue !== undefined) ? parseFloat(m.riskValue) : 0;
+            const resMeta = rrGetRiskMeta(m ? m.riskValue : null);
+
+            const fill = resScore >= 2.0 ? '#ffcccc'
+                       : resScore >= 1.6 ? '#ffe0b3'
+                       : resScore >= 0.8 ? '#ffffcc'
+                       : '#ccffcc';
+
+            html += `
+            <div class="root-overview-card" style="background:${fill}; border:1px solid #999;">
+                <div class="root-overview-title">${rrEscapeHtml(base?.rootName || base?.id || '')}</div>
+                <div class="root-overview-row">P(RR) = ${rrEscapeHtml(pStr(resKstu))}</div>
+                <div class="root-overview-row">I[norm] = ${rrEscapeHtml(fmt(m ? m.i_norm : base?.i_norm))}</div>
+                <div class="root-overview-row">R = ${rrEscapeHtml(fmt(origScore.toFixed(2)))}</div>
+                <div class="root-overview-row root-overview-risk">RR = ${rrEscapeHtml(fmt(resScore.toFixed(2)))}
+                    <span class="root-overview-badge" style="background:${resMeta.color}; color:#fff;">${rrEscapeHtml(resMeta.label)}</span>
+                </div>
+            </div>`;
+        });
+
+        html += '</div>';
+        return html;
+    }
+
+    // -----------------------------
     // Overview cards
     // -----------------------------
 
@@ -558,7 +626,7 @@
             return;
         }
 
-        container.innerHTML = entries.map(e => rrRenderTreeCard(e, analysis)).join('');
+        container.innerHTML = rrRenderRootOverview(entries, analysis) + entries.map(e => rrRenderTreeCard(e, analysis)).join('');
 
         container.querySelectorAll('.rr-edit-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {

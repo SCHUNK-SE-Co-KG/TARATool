@@ -83,9 +83,9 @@ function fillAnalysisForm(analysis) {
     
     if (elMetadata) {
         elMetadata.innerHTML = `
-            <span>Version: ${analysis.metadata.version}</span> | 
-            <span>Autor: ${analysis.metadata.author}</span> | 
-            <span>Datum: ${analysis.metadata.date}</span>
+            <span>Version: ${escapeHtml(analysis.metadata.version)}</span> | 
+            <span>Autor: ${escapeHtml(analysis.metadata.author)}</span> | 
+            <span>Datum: ${escapeHtml(analysis.metadata.date)}</span>
         `;
     }
     
@@ -470,7 +470,7 @@ function deleteActiveAnalysis() {
     }
 
     if (title) title.textContent = 'Gesamte Analyse löschen';
-    if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${analysis.name}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
+    if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${escapeHtml(analysis.name)}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
     
     // Reset button state (important since the confirmation modal is used for multiple actions)
     if (btnConfirm) {

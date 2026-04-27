@@ -233,14 +233,42 @@
         if (risks.length === 0) {
             pdf.addText('Keine Angriffsbäume vorhanden.');
         } else {
+            // Root-Node-Overview table (sorted by risk, critical first)
+            const overviewSorted = [...risks].sort((a, b) => {
+                return (parseFloat(b.rootRiskValue) || 0) - (parseFloat(a.rootRiskValue) || 0);
+            });
+            const overviewRows = overviewSorted.map(entry => {
+                const kstu = entry.kstu || {};
+                const rScore = computeRiskScore(entry.i_norm, kstu);
+                const cls = h.riskClassFromValue(entry.rootRiskValue);
+                return [
+                    h.sanitizePdfText(entry.rootName || entry.id || ''),
+                    h.pVec(kstu.k, kstu.s, kstu.t, kstu.u),
+                    h.fmtNumComma(entry.i_norm, 2),
+                    h.fmtNumComma(rScore, 2),
+                    cls.label
+                ];
+            });
+            pdf.addH2('Root-Node-Uebersicht');
+            pdf.addTableGrid(
+                ['Root-Node', 'P (K/S/T/U)', 'I[norm]', 'R', 'Risikoklasse'],
+                overviewRows,
+                [60, 40, 20, 18, 30],
+                { zebra: true, noWrapCols: [1, 2, 3, 4], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
+            );
+            pdf.addSpacer(4);
+
             const sorted = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
             sorted.forEach(entry => {
                 const cls = h.riskClassFromValue(entry.rootRiskValue);
                 pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
                 pdf.addKeyValue('Risk Score (R)', entry.rootRiskValue ?? '-');
                 pdf.addKeyValue('Risikoklasse', cls.label);
+                if ((entry.notes || '').trim()) {
+                    pdf.addKeyValue('Notizen', h.sanitizePdfText(entry.notes));
+                }
                 pdf.addSpacer(1);
-                pdf.addText('siehe Visualisierung Angriffsbäume', 9, 4.2);
+                pdf.addText('siehe Visualisierung Angriffsbaeume', 9, 4.2);
                 pdf.hLine();
             });
         }
@@ -385,8 +413,47 @@
         }
         pdf.setY(pdf.margin);
         pdf.addH1('Restrisikoanalyse');
-        pdf.addH2('Bewertung der Restrisiken');
+
+        // Residual Risk Root-Node-Overview table
         const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
+        if (rrEntries.length > 0 && typeof computeResidualTreeMetrics === 'function') {
+            const rrOverviewRows = [];
+            const rrOverviewSorted = [...rrEntries].sort((a, b) => {
+                const mA = computeResidualTreeMetrics(analysis, a?.uid);
+                const mB = computeResidualTreeMetrics(analysis, b?.uid);
+                return (parseFloat(mB?.riskValue) || 0) - (parseFloat(mA?.riskValue) || 0);
+            });
+            rrOverviewSorted.forEach(rrEntry => {
+                if (!rrEntry) return;
+                const base = (analysis.riskEntries || []).find(e => String(e.uid) === String(rrEntry.uid)) || rrEntry;
+                const origMeta = h.riskClassFromValue(base.rootRiskValue);
+                const origR = h.fmtNumComma(base.rootRiskValue, 2);
+                const m = computeResidualTreeMetrics(analysis, rrEntry.uid);
+                const resR = (m && m.riskValue !== undefined) ? h.fmtNumComma(m.riskValue, 2) : '-';
+                const resKstu = (m && m.kstu) ? m.kstu : {};
+                const resMeta = h.riskClassFromValue(m ? m.riskValue : null);
+                rrOverviewRows.push([
+                    h.sanitizePdfText(base.rootName || base.id || ''),
+                    h.pVec(resKstu.k, resKstu.s, resKstu.t, resKstu.u),
+                    h.fmtNumComma(m ? m.i_norm : base.i_norm, 2),
+                    origR,
+                    resR,
+                    resMeta.label
+                ]);
+            });
+            if (rrOverviewRows.length > 0) {
+                pdf.addH2('Root-Node-Uebersicht (Restrisiko)');
+                pdf.addTableGrid(
+                    ['Root-Node', 'P(RR) (K/S/T/U)', 'I[norm]', 'R', 'RR', 'Risikoklasse'],
+                    rrOverviewRows,
+                    [52, 38, 18, 16, 16, 28],
+                    { zebra: true, noWrapCols: [1, 2, 3, 4, 5], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
+                );
+                pdf.addSpacer(4);
+            }
+        }
+
+        pdf.addH2('Bewertung der Restrisiken');
 
         if (!rrEntries || rrEntries.length === 0 || typeof rrIterateLeaves !== 'function') {
             pdf.addText('Keine Restrisikoanalyse-Daten vorhanden.');
