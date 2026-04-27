@@ -166,6 +166,36 @@ window.editAsset = (id) => {
     if (assetModalEl) assetModalEl.style.display = 'block';
 };
 
+/**
+ * Renumbers all assets sequentially (A01, A02, ...) and remaps
+ * impactMatrix keys to match the new IDs.
+ */
+function _renumberAssets(analysis) {
+    if (!analysis.assets || analysis.assets.length === 0) return;
+
+    const idMap = {};                       // oldId → newId
+    analysis.assets.forEach((asset, i) => {
+        const newId = 'A' + (i + 1).toString().padStart(2, '0');
+        if (asset.id !== newId) {
+            idMap[asset.id] = newId;
+            asset.id = newId;
+        }
+    });
+
+    // Nothing to remap
+    if (Object.keys(idMap).length === 0) return;
+
+    // Remap impactMatrix keys
+    if (analysis.impactMatrix) {
+        const newMatrix = {};
+        for (const oldKey in analysis.impactMatrix) {
+            const newKey = idMap[oldKey] || oldKey;
+            newMatrix[newKey] = analysis.impactMatrix[oldKey];
+        }
+        analysis.impactMatrix = newMatrix;
+    }
+}
+
 window.removeAsset = (id) => {
     const analysis = getActiveAnalysis();
     if (!analysis) return;
@@ -183,6 +213,9 @@ window.removeAsset = (id) => {
             if (analysis.impactMatrix && analysis.impactMatrix[id]) {
                 delete analysis.impactMatrix[id];
             }
+
+            // Renumber remaining assets (A01, A02, ...) and remap impactMatrix keys
+            _renumberAssets(analysis);
 
             saveAnalyses();
             renderAssets(analysis);
