@@ -43,6 +43,9 @@ function renderRiskAnalysis() {
                 <button onclick="downloadDotFile()" class="action-button large"><i class="fas fa-file-export"></i> Export (.dot)</button>
             </div>
         </div>
+        <div id="rootOverviewContainer">
+            ${renderRootOverview(analysis)}
+        </div>
         <div id="existingRiskEntriesContainer">
             ${renderExistingRiskEntries(analysis)}
         </div>
@@ -50,6 +53,56 @@ function renderRiskAnalysis() {
 
     const btn = document.getElementById('btnOpenAttackTreeModal');
     if (btn) btn.onclick = () => { if (typeof openAttackTreeModal === 'function') openAttackTreeModal(); }; 
+}
+
+/* ── Root-Node-Overview Panel ──────────────────────────────────────── */
+
+function renderRootOverview(analysis) {
+    if (!analysis.riskEntries || analysis.riskEntries.length === 0) return '';
+
+    const fmt = (val) => {
+        if (val === null || val === undefined || val === '') return '0,0';
+        return String(val).replace('.', ',');
+    };
+
+    const pStr = (kstu) => {
+        if (!kstu) return '- / - / - / -';
+        return `${fmt(kstu.k)} / ${fmt(kstu.s)} / ${fmt(kstu.t)} / ${fmt(kstu.u)}`;
+    };
+
+    // Sort descending by rootRiskValue (most critical first)
+    const sorted = [...analysis.riskEntries].sort((a, b) => {
+        const ra = parseFloat(a.rootRiskValue) || 0;
+        const rb = parseFloat(b.rootRiskValue) || 0;
+        return rb - ra;
+    });
+
+    let html = '<h4>Root-Node-Übersicht (alle Angriffsbäume):</h4>';
+    html += '<div class="root-overview-grid">';
+
+    sorted.forEach(entry => {
+        const kstu = entry.kstu || {};
+        const iNorm = entry.i_norm;
+        const rScore = computeRiskScore(iNorm, kstu);
+        const meta = getRiskMeta(entry.rootRiskValue);
+        const fill = rScore >= 2.0 ? '#ffcccc'
+                   : rScore >= 1.6 ? '#ffe0b3'
+                   : rScore >= 0.8 ? '#ffffcc'
+                   : '#ccffcc';
+
+        html += `
+            <div class="root-overview-card" style="background:${fill}; border:1px solid #999;">
+                <div class="root-overview-title">${escapeHtml(entry.rootName || entry.id)}</div>
+                <div class="root-overview-row">P = ${escapeHtml(pStr(kstu))}</div>
+                <div class="root-overview-row">I[norm] = ${escapeHtml(fmt(iNorm))}</div>
+                <div class="root-overview-row root-overview-risk">R = ${escapeHtml(fmt(rScore.toFixed(2)))}
+                    <span class="root-overview-badge" style="background:${meta.color}; color:#fff;">${escapeHtml(meta.label)}</span>
+                </div>
+            </div>`;
+    });
+
+    html += '</div>';
+    return html;
 }
 
 function renderExistingRiskEntries(analysis) {

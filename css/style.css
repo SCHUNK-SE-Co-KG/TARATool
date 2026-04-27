@@ -723,3 +723,50 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .at-delete-inline { margin-left: auto; }
 
 .at-max-note { font-size: 0.85em; color:#888; }
+
+/* =============================================================
+   Root-Node-Overview (Risk Analysis Tab)
+   ============================================================= */
+.root-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.root-overview-card {
+    border-radius: 6px;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 0.9em;
+    overflow: hidden;
+}
+
+.root-overview-title {
+    font-weight: 700;
+    padding: 8px 10px;
+    border-bottom: 1px solid #999;
+    word-break: break-word;
+}
+
+.root-overview-row {
+    padding: 4px 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    font-family: "Courier New", monospace;
+    font-size: 0.95em;
+}
+
+.root-overview-risk {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    border-bottom: none;
+}
+
+.root-overview-badge {
+    font-size: 0.75em;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: Arial, sans-serif;
+}
