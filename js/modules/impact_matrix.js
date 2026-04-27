@@ -15,6 +15,33 @@ function getImpactColorClass(val) {
     return (typeof IMPACT_CSS_CLASSES !== 'undefined' && IMPACT_CSS_CLASSES[val]) || '';
 }
 
+/**
+ * Recalculates impact inheritance, worst-case KSTU and risk score
+ * for every riskEntry in the given analysis.
+ * Called whenever the impact matrix changes so that stored tree data
+ * stays in sync without requiring the user to open & save each tree.
+ */
+function _recalcAllRiskEntries(analysis) {
+    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) return;
+
+    let changed = false;
+    analysis.riskEntries.forEach(entry => {
+        try {
+            if (typeof applyImpactInheritance === 'function') applyImpactInheritance(entry, analysis);
+            if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(entry);
+            const newRisk = _computeRiskScore(entry.kstu, entry.i_norm).toFixed(2);
+            if (entry.rootRiskValue !== newRisk) {
+                entry.rootRiskValue = newRisk;
+                changed = true;
+            }
+        } catch (e) {
+            console.warn('[ImpactMatrix] recalc riskEntry', entry.id, e.message || e);
+        }
+    });
+
+    if (changed) saveAnalyses();
+}
+
 window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     const analysis = getActiveAnalysis();
     if (!analysis) return;
@@ -38,6 +65,10 @@ window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
     }
 
     saveAnalyses();
+    
+    // Recalculate all attack trees (impact depends on matrix values)
+    _recalcAllRiskEntries(analysis);
+    
     showToast(`Impact für ${escapeHtml(assetId)}/${escapeHtml(dsId)} auf ${escapeHtml(newValue)} gesetzt.`, 'info');
     
     const riskTab = document.getElementById('tabRiskAnalysis');
