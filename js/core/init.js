@@ -191,4 +191,34 @@ document.addEventListener('DOMContentLoaded', () => {
         initAnalysisCoreListeners();
     }
 
+    // 7. Cross-tab synchronization via storage event
+    // When another tab/window changes localStorage, reload data to prevent inconsistencies.
+    window.addEventListener('storage', (e) => {
+        if (e.key !== 'taraAnalyses' || !e.newValue) return;
+
+        try {
+            analysisData = JSON.parse(e.newValue);
+            if (!Array.isArray(analysisData)) {
+                analysisData = [createDefaultAnalysis()];
+            }
+            analysisData.forEach(a => migrateAnalysis(a));
+        } catch (err) {
+            console.warn('[storage sync] Could not parse updated data:', err);
+            return;
+        }
+
+        // Re-render selector and active analysis
+        if (typeof renderAnalysisSelector === 'function') renderAnalysisSelector();
+
+        const current = getActiveAnalysis();
+        if (current) {
+            if (typeof fillAnalysisForm === 'function') fillAnalysisForm(current);
+            if (typeof renderActiveTab === 'function') renderActiveTab(current);
+        }
+
+        if (typeof showToast === 'function') {
+            showToast('Daten wurden in einem anderen Fenster geändert – Ansicht aktualisiert.', 'info');
+        }
+    });
+
 });

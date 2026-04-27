@@ -338,7 +338,7 @@
     const ds = document.createElement("div");
     ds.className = "ds-checks";
     const allDsIds = (typeof getAllDamageScenarioIds === "function")
-      ? getAllDamageScenarioIds(editor.analysis) : ["DS1","DS2","DS3","DS4","DS5"];
+      ? getAllDamageScenarioIds(editor.analysis) : [];
     ds.title = `Auswirkungen auswählen (${allDsIds[0]}..${allDsIds[allDsIds.length - 1]}).`;
     ds.innerHTML = `
       <span>Impact:</span>

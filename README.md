@@ -123,7 +123,21 @@ TARATool/
 ├── config/
 │   └── assessment_config.json              # Externalisierte Bewertungsparameter (jährlich reviewbar)
 ├── docs/
-│   └── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
+│   ├── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
+│   └── PENTEST_REPORT_2026-02-23.md        # Pentest-Bericht
+├── security/
+│   ├── cve_scanner.py                      # CVE-Scanner (OSV-API)
+│   ├── requirements.txt                    # Python-Abhängigkeiten für Scanner
+│   └── reports/                            # Generierte CVE-Reports (JSON + Markdown)
+├── tests/                                  # E2E-Testsuite (pytest + Playwright)
+│   ├── conftest.py                         # Fixtures und Playwright-Setup
+│   ├── pytest.ini                          # Pytest-Konfiguration und Marker
+│   ├── requirements.txt                    # Test-Abhängigkeiten
+│   ├── run_tests.bat                       # One-Click-Testskript
+│   ├── test_*.py                           # Testmodule (13 Dateien)
+│   └── fixtures/                           # Testdaten (JSON-Fixtures)
+├── .github/
+│   └── workflows/                          # GitHub Actions (CVE-Scan, Monthly Report)
 └── js/
     ├── core/                               # Kern (Config, Globals, Utils, Init)
     │   ├── about.js                        # About-Modal, SBOM-Generierung, Versionsinformation
@@ -214,8 +228,11 @@ Alle Abhängigkeiten werden über CDN geladen – es gibt **keine lokalen node_m
 | Bibliothek | Version | Zweck |
 |---|---|---|
 | [Font Awesome](https://fontawesome.com/) | 6.5.1 | Icons |
-| [@hpcc-js/wasm (Graphviz)](https://github.com/nicedoc/hpcc-js-wasm) | latest | DOT-Rendering im Browser (Angriffsbäume) |
-| [jsPDF](https://github.com/parallax/jsPDF) | 4.2.0 | PDF-Report-Generierung |
+| [@hpcc-js/wasm (Graphviz)](https://github.com/nicedoc/hpcc-js-wasm) | 2.33.2 | DOT-Rendering im Browser (Angriffsbäume) |
+| [JSZip](https://stuk.github.io/jszip/) | 3.10.1 | ZIP-Export (Baumdaten) |
+| [jsPDF](https://github.com/parallax/jsPDF) | 4.2.1 | PDF-Report-Generierung |
+
+> **Subresource Integrity (SRI):** Die CDN-Skripte für JSZip und jsPDF werden mit `integrity`-Hashes und `crossorigin="anonymous"` geladen, um Manipulationen durch kompromittierte CDNs zu verhindern.
 
 Für die PDF-Angriffsbaumvisualisierung werden externe Render-Dienste genutzt:
 - [Kroki](https://kroki.io/) (primär)
@@ -277,7 +294,7 @@ Alle Analysedaten werden im **`localStorage`** des Browsers gespeichert (Schlüs
 
 ## Testsuite
 
-Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (238 Tests).
+Das Projekt verfügt über eine umfassende E2E-Testsuite basierend auf **Python**, **pytest** und **Playwright** (266 Tests).
 
 ### Schnellstart
 
@@ -312,6 +329,8 @@ pytest
 | `residual_risk` | Restrisikoanalyse | `pytest -m residual_risk` |
 | `report` | PDF-Report-Generierung | `pytest -m report` |
 | `config` | Konfigurationssystem & Parameter-Propagation | `pytest -m config` |
+| `tree_export` | Baumdaten-ZIP-Export | `pytest -m tree_export` |
+| `security_fixes` | Security- und Datenintegritäts-Fixes | `pytest -m security_fixes` |
 | `e2e` | Vollständige Workflow-Tests | `pytest -m e2e` |
 
 > Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
@@ -330,7 +349,7 @@ Beiträge sind willkommen! So kannst du mitmachen:
    cd tests
    pytest -x -q
    ```
-   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle 238 Tests** bestehen.
+   Bei Änderungen an bestimmten Modulen können gezielt die relevanten Tests ausgeführt werden (z. B. `pytest -m assets`). Vor dem Pull Request müssen jedoch **alle Tests** bestehen.
 5. Pushe den Branch (`git push origin feature/mein-feature`)
 6. Erstelle einen Pull Request
 

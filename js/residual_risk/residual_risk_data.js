@@ -68,12 +68,14 @@
     function rrIterateLeaves(entry, cb) {
         if (entry && entry.treeV2) {
             // treeV2: recursively traverse and provide breadcrumbs so the naming in the UI remains unambiguous.
+            let nodeCounter = 0;
             const walk = (node, bNum, parts) => {
+                nodeCounter++;
                 const nodeTitle = (node && (node.title || node.name)) ? String(node.title || node.name) : '';
                 const nextParts = nodeTitle ? parts.concat([nodeTitle]) : parts;
                 (node.impacts || []).forEach((leaf, lIdx) => {
                     const leafUid = leaf.uid || ('leaf_' + (lIdx + 1));
-                    const nodeUid = node.uid || 'node';
+                    const nodeUid = node.uid || ('node_' + nodeCounter);
                     const leafKey = `B${bNum}|N${nodeUid}|L${leafUid}`;
                     const branchName = nextParts.length ? nextParts[0] : `Pfad B${bNum}`;
                     const nodeName = nodeTitle || branchName;

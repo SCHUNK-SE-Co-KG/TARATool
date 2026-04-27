@@ -114,6 +114,52 @@ class TestAssetDelete:
         data = get_active_analysis(page)
         assert len(data["assets"]) == 0
 
+    def test_renumber_assets_after_delete(self, app_with_analysis: Page):
+        """After deleting an asset, remaining assets are renumbered sequentially and impactMatrix keys follow."""
+        page = app_with_analysis
+        # Create 3 assets
+        add_asset(page, {"name": "Alpha", "type": "HW"})
+        add_asset(page, {"name": "Beta", "type": "SW"})
+        add_asset(page, {"name": "Gamma", "type": "NET"})
+
+        # Set impactMatrix values in the live analysis object so the in-memory state is correct
+        page.evaluate("""() => {
+            const analyses = JSON.parse(localStorage.getItem('taraAnalyses'));
+            const a = analyses[0];
+            if (!a.impactMatrix) a.impactMatrix = {};
+            a.impactMatrix['A02'] = { DS1: '2' };
+            a.impactMatrix['A03'] = { DS1: '3' };
+            localStorage.setItem('taraAnalyses', JSON.stringify(analyses));
+            // Also update the live in-memory object
+            if (typeof getActiveAnalysis === 'function') {
+                const live = getActiveAnalysis();
+                if (live) {
+                    if (!live.impactMatrix) live.impactMatrix = {};
+                    live.impactMatrix['A02'] = { DS1: '2' };
+                    live.impactMatrix['A03'] = { DS1: '3' };
+                }
+            }
+        }""")
+
+        switch_tab(page, "assets")
+        # Delete the second asset (A02 = "Beta")
+        cards = page.locator("#assetsCardContainer .asset-card")
+        cards.nth(1).locator('button:has-text("Löschen")').click()
+        page.wait_for_selector("#confirmationModal", state="visible")
+        page.click("#btnConfirmAction")
+        page.wait_for_timeout(500)
+
+        data = get_active_analysis(page)
+        ids = [a["id"] for a in data["assets"]]
+        assert ids == ["A01", "A02"], f"Expected sequential IDs [A01, A02] but got {ids}"
+        assert data["assets"][0]["name"] == "Alpha"
+        assert data["assets"][1]["name"] == "Gamma"
+
+        # ImpactMatrix keys must follow renumbered IDs
+        matrix = data.get("impactMatrix", {})
+        assert "A03" not in matrix, "Old key A03 should no longer exist"
+        assert matrix.get("A02", {}).get("DS1") == "3", "A03's matrix data should now be under A02"
+
 
 @pytest.mark.assets
 class TestAssetOverviewStats:

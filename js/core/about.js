@@ -88,14 +88,14 @@ function generateCycloneDxSbom() {
             {
                 "type": "library",
                 "name": "jsPDF",
-                "version": "4.2.0",
+                "version": "4.2.1",
                 "description": "Client-seitige PDF-Generierung – Erzeugung des TARA-PDF-Reports",
                 "licenses": [{ "license": { "id": "MIT" } }],
-                "purl": "pkg:npm/jspdf@4.2.0",
+                "purl": "pkg:npm/jspdf@4.2.1",
                 "scope": "required",
                 "externalReferences": [
                     { "type": "website",      "url": "https://github.com/parallax/jsPDF" },
-                    { "type": "distribution", "url": "https://cdn.jsdelivr.net/npm/jspdf@4.2.0/dist/jspdf.umd.min.js" }
+                    { "type": "distribution", "url": "https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" }
                 ]
             },
             {
