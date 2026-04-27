@@ -191,10 +191,23 @@ window.editAttackTree = function(riskId) {
 
 function reindexRiskIDs(analysis) {
     if (!analysis || !analysis.riskEntries) return;
+    const idMap = {};
     analysis.riskEntries.forEach((entry, index) => {
         const newId = 'R' + (index + 1).toString().padStart(2, '0');
+        if (entry.id !== newId) idMap[entry.id] = newId;
         entry.id = newId;
     });
+    // Update rootRefs in securityGoals: remap renamed IDs, remove stale refs
+    if (analysis.securityGoals) {
+        const validIds = new Set(analysis.riskEntries.map(e => e.id));
+        analysis.securityGoals.forEach(sg => {
+            if (Array.isArray(sg.rootRefs)) {
+                sg.rootRefs = sg.rootRefs
+                    .map(ref => idMap[ref] || ref)
+                    .filter(ref => validIds.has(ref));
+            }
+        });
+    }
 }
 
 window.deleteAttackTree = function(riskId) {
