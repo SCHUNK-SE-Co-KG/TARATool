@@ -770,3 +770,8 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
     border-radius: 3px;
     font-family: Arial, sans-serif;
 }
+
+/* Tree Notes indicator */
+.tree-note-active {
+    color: #f39c12;
+}

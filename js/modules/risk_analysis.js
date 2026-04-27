@@ -115,6 +115,7 @@ function renderExistingRiskEntries(analysis) {
         const meta = getRiskMeta(entry.rootRiskValue);
         const eId = escapeHtml(entry.id);
         const eName = escapeHtml(entry.rootName);
+        const hasNotes = (entry.notes || '').trim().length > 0;
 
         html += `
             <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${meta.color};">
@@ -126,6 +127,9 @@ function renderExistingRiskEntries(analysis) {
                     </span>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center;">
+                    <button onclick="openTreeNotes('${eId}')" class="action-button small" title="Notizen">
+                        <i class="fas fa-sticky-note${hasNotes ? ' tree-note-active' : ''}"></i>
+                    </button>
                     <button onclick="editAttackTree('${eId}')" class="action-button small">
                         <i class="fas fa-edit"></i> Bearbeiten
                     </button>
@@ -139,6 +143,43 @@ function renderExistingRiskEntries(analysis) {
     html += '</ul>';
     return html;
 }
+
+/* ── Tree Notes ────────────────────────────────────────────────────── */
+
+window.openTreeNotes = function(riskId) {
+    const analysis = getActiveAnalysis();
+    if (!analysis) return;
+    const entry = analysis.riskEntries.find(r => r.id === riskId);
+    if (!entry) return;
+
+    const modal = document.getElementById('treeNotesModal');
+    if (!modal) return;
+
+    document.getElementById('treeNotesTitle').textContent =
+        'Notizen: ' + (entry.id || '') + ' – ' + (entry.rootName || '');
+    document.getElementById('treeNotesText').value = entry.notes || '';
+    modal.dataset.riskId = riskId;
+    modal.style.display = 'block';
+};
+
+window.saveTreeNotes = function() {
+    const modal = document.getElementById('treeNotesModal');
+    if (!modal) return;
+    const riskId = modal.dataset.riskId;
+    const analysis = getActiveAnalysis();
+    if (!analysis || !riskId) return;
+
+    const entry = analysis.riskEntries.find(r => r.id === riskId);
+    if (!entry) return;
+
+    entry.notes = (document.getElementById('treeNotesText').value || '').trim();
+    saveAnalyses();
+    modal.style.display = 'none';
+
+    // Refresh list to update note indicator
+    renderRiskAnalysis();
+    if (typeof showToast === 'function') showToast('Notiz gespeichert.', 'success');
+};
 
 window.editAttackTree = function(riskId) {
     const analysis = getActiveAnalysis();

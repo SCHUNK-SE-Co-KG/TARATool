@@ -264,6 +264,9 @@
                 pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
                 pdf.addKeyValue('Risk Score (R)', entry.rootRiskValue ?? '-');
                 pdf.addKeyValue('Risikoklasse', cls.label);
+                if ((entry.notes || '').trim()) {
+                    pdf.addKeyValue('Notizen', h.sanitizePdfText(entry.notes));
+                }
                 pdf.addSpacer(1);
                 pdf.addText('siehe Visualisierung Angriffsbaeume', 9, 4.2);
                 pdf.hLine();
