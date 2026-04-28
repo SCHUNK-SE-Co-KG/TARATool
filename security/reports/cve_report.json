@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-04-27T08:21:52Z",
+  "timestamp": "2026-04-28T08:23:06Z",
   "repository": "SCHUNK-SE-Co-KG/TARATool",
-  "dependencies_scanned": 9,
+  "dependencies_scanned": 10,
   "vulnerabilities_found": 1,
   "high_severity_count": 0,
   "dependencies": [
@@ -14,6 +14,12 @@
     {
       "name": "jszip",
       "version": "3.10.1",
+      "ecosystem": "npm",
+      "source": "index.html"
+    },
+    {
+      "name": "@hpcc-js/wasm",
+      "version": "2.33.2",
       "ecosystem": "npm",
       "source": "index.html"
     },
