@@ -194,6 +194,16 @@ function _renumberAssets(analysis) {
         }
         analysis.impactMatrix = newMatrix;
     }
+
+    // Remap impactComments keys
+    if (analysis.impactComments) {
+        const newComments = {};
+        for (const oldKey in analysis.impactComments) {
+            const newKey = idMap[oldKey] || oldKey;
+            newComments[newKey] = analysis.impactComments[oldKey];
+        }
+        analysis.impactComments = newComments;
+    }
 }
 
 window.removeAsset = (id) => {
@@ -212,6 +222,11 @@ window.removeAsset = (id) => {
             // Clean up impact matrix
             if (analysis.impactMatrix && analysis.impactMatrix[id]) {
                 delete analysis.impactMatrix[id];
+            }
+
+            // Clean up impact comments
+            if (analysis.impactComments && analysis.impactComments[id]) {
+                delete analysis.impactComments[id];
             }
 
             // Renumber remaining assets (A01, A02, ...) and remap impactMatrix keys

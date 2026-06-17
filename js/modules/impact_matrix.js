@@ -138,8 +138,14 @@ function renderImpactMatrix() {
         displayDS.forEach(ds => {
             const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
             const colorClass = getImpactColorClass(currentScore);
+            const hasComment = analysis.impactComments
+                && analysis.impactComments[asset.id]
+                && analysis.impactComments[asset.id][ds.id];
+            const commentIconClass = hasComment ? 'impact-comment-btn has-comment' : 'impact-comment-btn';
+            const commentTooltip = hasComment ? 'Kommentar bearbeiten' : 'Kommentar hinzufügen';
             
             html += '<td class="score-cell">';
+            html += '<div class="impact-cell-wrap">';
             // Build <option> tags dynamically from config
             const optionsHtml = VALID_IMPACT_VALUES.map(v => {
                 const lbl = IMPACT_LABELS[v] || v;
@@ -154,6 +160,8 @@ function renderImpactMatrix() {
                 class="impact-select ${colorClass}">
                 ${optionsHtml}
             </select>`;
+            html += `<button type="button" class="${commentIconClass}" title="${commentTooltip}" onclick="openImpactComment('${eAssetId}', '${escapeHtml(ds.id)}')"><i class="fas fa-sticky-note"></i></button>`;
+            html += '</div>';
             html += '</td>';
         });
         html += '</tr>';
@@ -162,3 +170,56 @@ function renderImpactMatrix() {
     html += '</tbody></table></div>';
     dsMatrixContainer.innerHTML = html;
 }
+
+window.openImpactComment = function(assetId, dsId) {
+    const analysis = getActiveAnalysis();
+    if (!analysis) return;
+
+    const modal = document.getElementById('impactCommentModal');
+    const titleEl = document.getElementById('impactCommentTitle');
+    const textEl = document.getElementById('impactCommentText');
+    const assetField = document.getElementById('impactCommentAssetId');
+    const dsField = document.getElementById('impactCommentDsId');
+    if (!modal || !textEl) return;
+
+    const existing = (analysis.impactComments && analysis.impactComments[assetId])
+        ? (analysis.impactComments[assetId][dsId] || '')
+        : '';
+
+    if (titleEl) titleEl.textContent = `Kommentar – ${assetId} / ${dsId}`;
+    textEl.value = existing;
+    if (assetField) assetField.value = assetId;
+    if (dsField) dsField.value = dsId;
+
+    modal.style.display = 'block';
+    textEl.focus();
+};
+
+window.saveImpactComment = function() {
+    const analysis = getActiveAnalysis();
+    if (!analysis) return;
+
+    const modal = document.getElementById('impactCommentModal');
+    const textEl = document.getElementById('impactCommentText');
+    const assetId = document.getElementById('impactCommentAssetId')?.value;
+    const dsId = document.getElementById('impactCommentDsId')?.value;
+    if (!assetId || !dsId) return;
+
+    if (!analysis.impactComments) analysis.impactComments = {};
+    if (!analysis.impactComments[assetId]) analysis.impactComments[assetId] = {};
+
+    const comment = (textEl ? textEl.value : '').trim();
+    if (comment) {
+        analysis.impactComments[assetId][dsId] = comment;
+    } else {
+        delete analysis.impactComments[assetId][dsId];
+        if (Object.keys(analysis.impactComments[assetId]).length === 0) {
+            delete analysis.impactComments[assetId];
+        }
+    }
+
+    saveAnalyses();
+    if (modal) modal.style.display = 'none';
+    renderImpactMatrix();
+    showToast('Kommentar gespeichert.', 'success');
+};

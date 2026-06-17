@@ -182,6 +182,16 @@ window.removeDamageScenario = function(dsId) {
                 }
             }
 
+            // Remove DS from impact comments
+            if (analysis.impactComments) {
+                for (const assetId in analysis.impactComments) {
+                    delete analysis.impactComments[assetId][dsId];
+                    if (Object.keys(analysis.impactComments[assetId]).length === 0) {
+                        delete analysis.impactComments[assetId];
+                    }
+                }
+            }
+
             // Remove DS references from all existing attack trees
             if (typeof purgeDamageScenarioFromRiskEntries === 'function') {
                 purgeDamageScenarioFromRiskEntries(analysis, dsId);

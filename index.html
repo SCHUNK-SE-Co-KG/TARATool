@@ -309,6 +309,21 @@
         </div>
     </div>
 
+    <!-- Impact Comment Modal -->
+    <div id="impactCommentModal" class="modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
+        <div class="modal-content" style="width:500px;">
+            <span class="close-button" onclick="document.getElementById('impactCommentModal').style.display='none'">&times;</span>
+            <h2 id="impactCommentTitle">Kommentar</h2>
+            <textarea id="impactCommentText" class="rr-textarea" style="width:100%; min-height:150px; resize:vertical;" placeholder="Kommentar zur Bewertung..."></textarea>
+            <input type="hidden" id="impactCommentAssetId">
+            <input type="hidden" id="impactCommentDsId">
+            <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
+                <button class="action-button" onclick="document.getElementById('impactCommentModal').style.display='none'">Abbrechen</button>
+                <button class="primary-button" onclick="saveImpactComment()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Tree Notes Modal -->
     <div id="treeNotesModal" class="modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content" style="width:600px;">
