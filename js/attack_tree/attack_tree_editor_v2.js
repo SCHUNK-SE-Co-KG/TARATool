@@ -68,6 +68,7 @@
       uid: _uid("leaf"),
       text,
       ds: [],
+      stride: [],
       k: "",
       s: "",
       t: "",
@@ -90,6 +91,7 @@
     const l = Object.assign({}, leaf || {});
     if (!l.uid) l.uid = _uid("leaf");
     if (!Array.isArray(l.ds)) l.ds = [];
+    if (!Array.isArray(l.stride)) l.stride = [];
     if (l.text == null) l.text = l.name || "";
     if (l.k == null) l.k = "";
     if (l.s == null) l.s = "";
@@ -356,6 +358,40 @@
       });
     });
 
+    const strideWrap = document.createElement("div");
+    strideWrap.className = "stride-checks";
+    const _strideFallback = [
+      {id:"S",name:"Spoofing (Identitätstäuschung)",short:"S",description:"Kann sich ein Angreifer oder ein fremdes Gerät als vertrauenswürdiger Teilnehmer ausgeben, um Zugriff zu erhalten? (z.\u00a0B. ein gefälschtes Servicetool)."},
+      {id:"T",name:"Tampering (Manipulation)",short:"T",description:"Können Daten, Parameter, Konfigurationen oder die Firmware auf dem Gerät oder während der Übertragung unbefugt verändert werden?"},
+      {id:"R",name:"Repudiation (Abstreitbarkeit)",short:"R",description:"Können kritische Aktionen durchgeführt werden, ohne dass wir im Nachhinein nachweisen können, wer es war? (Fehlende oder manipulierbare Logs)."},
+      {id:"I",name:"Information Disclosure (Informationsenthüllung)",short:"I",description:"Können schützenswerte Informationen (z.\u00a0B. Passwörter, Rezepturen, Kundendaten oder Know-how) von Unbefugten ausgelesen werden?"},
+      {id:"D",name:"Denial of Service (Dienstverweigerung)",short:"D",description:"Kann das System so sabotiert oder überlastet werden, dass es seine Funktion einstellt oder träge wird? (z.\u00a0B. Blockade der Steuerung)."},
+      {id:"E",name:"Elevation of Privilege (Rechteausweitung)",short:"E",description:"Kann ein Nutzer mit geringen Rechten (z.\u00a0B. Gast/Operator) Berechtigungen erlangen, die ihm nicht zustehen (z.\u00a0B. Admin-/Service-Rechte)?"}
+    ];
+    const strideCats = (typeof window.ASSESSMENT_CONFIG !== 'undefined' && window.ASSESSMENT_CONFIG?.strideCategories)
+      ? window.ASSESSMENT_CONFIG.strideCategories
+      : _strideFallback;
+    strideWrap.innerHTML = `
+      <span class="stride-label">STRIDE:</span>
+      ${strideCats.map(cat => {
+        const checked = (imp.stride || []).includes(cat.id) ? "checked" : "";
+        const tipName = _escapeHtml(cat.name);
+        const tipDesc = _escapeHtml(cat.description || '');
+        return `<label class="stride-tag ${checked ? 'stride-active' : ''}" data-stride-id="${cat.id}"><span class="stride-tooltip"><strong>${tipName}</strong><br>${tipDesc}</span>${cat.short}<input type="checkbox" data-stride="${cat.id}" ${checked} class="stride-cb"></label>`;
+      }).join("")}
+    `;
+    _qsa('input[type="checkbox"][data-stride]', strideWrap).forEach((cb) => {
+      cb.addEventListener("change", () => {
+        const picked = _qsa('input[type="checkbox"][data-stride]', strideWrap).filter(x => x.checked).map(x => x.getAttribute("data-stride"));
+        imp.stride = picked;
+        _qsa('.stride-tag', strideWrap).forEach(lbl => {
+          const id = lbl.querySelector('input')?.getAttribute('data-stride');
+          lbl.classList.toggle('stride-active', picked.includes(id));
+        });
+        editor.updateSummaries();
+      });
+    });
+
     const kstu = document.createElement("div");
     kstu.className = "kstu-grid";
     kstu.title = "K/S/T/U bewerten.";
@@ -394,6 +430,7 @@
 
     wrap.appendChild(row1);
     wrap.appendChild(ds);
+    wrap.appendChild(strideWrap);
     wrap.appendChild(kstu);
     wrap.appendChild(sum);
     card.appendChild(wrap);
@@ -427,7 +464,11 @@
       (n.impacts || []).forEach((lf) => {
         const lfSum = document.getElementById(`atv2_leaf_summary_${lf.uid}`);
         if (lfSum && typeof _renderNodeSummaryHTML === "function") {
-          lfSum.innerHTML = _renderNodeSummaryHTML({k: lf.k, s: lf.s, t: lf.t, u: lf.u}, lf.i_norm || "");
+          let html = _renderNodeSummaryHTML({k: lf.k, s: lf.s, t: lf.t, u: lf.u}, lf.i_norm || "");
+          if (Array.isArray(lf.stride) && lf.stride.length > 0) {
+            html += `<div class="ns-row" style="color:#2980b9;font-weight:600">STRIDE: ${lf.stride.join(', ')}</div>`;
+          }
+          lfSum.innerHTML = html;
         }
       });
       (n.children || []).forEach(walk);

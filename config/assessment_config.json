@@ -103,5 +103,14 @@
     { "id": "DS3", "name": "Verlust von geistigem Eigentum", "short": "IP loss", "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.)." },
     { "id": "DS4", "name": "Verlust Privatsphäre/Daten", "short": "Privacy",  "description": "Verlust sensibler persönlicher oder technischer Daten." },
     { "id": "DS5", "name": "Rechtliche Konsequenzen",    "short": "Legal",    "description": "Verstoß gegen Gesetze oder Vorschriften." }
+  ],
+
+  "strideCategories": [
+    { "id": "S", "name": "Spoofing (Identitätstäuschung)",              "short": "S", "description": "Kann sich ein Angreifer oder ein fremdes Gerät als vertrauenswürdiger Teilnehmer ausgeben, um Zugriff zu erhalten? (z.\u00a0B. ein gefälschtes Servicetool)." },
+    { "id": "T", "name": "Tampering (Manipulation)",                    "short": "T", "description": "Können Daten, Parameter, Konfigurationen oder die Firmware auf dem Gerät oder während der Übertragung unbefugt verändert werden?" },
+    { "id": "R", "name": "Repudiation (Abstreitbarkeit)",               "short": "R", "description": "Können kritische Aktionen durchgeführt werden, ohne dass wir im Nachhinein nachweisen können, wer es war? (Fehlende oder manipulierbare Logs)." },
+    { "id": "I", "name": "Information Disclosure (Informationsenthüllung)", "short": "I", "description": "Können schützenswerte Informationen (z.\u00a0B. Passwörter, Rezepturen, Kundendaten oder Know-how) von Unbefugten ausgelesen werden?" },
+    { "id": "D", "name": "Denial of Service (Dienstverweigerung)",      "short": "D", "description": "Kann das System so sabotiert oder überlastet werden, dass es seine Funktion einstellt oder träge wird? (z.\u00a0B. Blockade der Steuerung)." },
+    { "id": "E", "name": "Elevation of Privilege (Rechteausweitung)",   "short": "E", "description": "Kann ein Nutzer mit geringen Rechten (z.\u00a0B. Gast/Operator) Berechtigungen erlangen, die ihm nicht zustehen (z.\u00a0B. Admin-/Service-Rechte)?" }
   ]
 }
