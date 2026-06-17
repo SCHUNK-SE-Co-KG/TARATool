@@ -349,6 +349,15 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .impact-comment-btn.has-comment { color: #e67e22; }
 .impact-comment-btn.has-comment:hover { color: #d35400; }
 
+/* Attack tree node/leaf note button */
+.at-note-btn {
+    background: none; border: none; cursor: pointer; padding: 2px 6px;
+    color: #bbb; font-size: 1em; transition: color 0.15s ease; flex-shrink: 0;
+}
+.at-note-btn:hover { color: #555; }
+.at-note-btn.has-note { color: #e67e22; }
+.at-note-btn.has-note:hover { color: #d35400; }
+
 /* --- ATTACK TREE TABLE STYLES --- */
 .tree-structure-table { margin-top: 15px; overflow-x: auto; }
 .tree-structure-table table { width: 100%; border-collapse: collapse; border: 1px solid #ccc; }

@@ -21,6 +21,42 @@
   /** Delegates to global escapeHtml() in utils.js (single source of truth). */
   const _escapeHtml = (str) => escapeHtml(str);
 
+  /** Opens the node/leaf note modal and wires save to the given data object. */
+  function _openNoteModal(dataObj, label) {
+    const modal = document.getElementById("atNodeNoteModal");
+    const titleEl = document.getElementById("atNodeNoteTitle");
+    const textEl = document.getElementById("atNodeNoteText");
+    const saveBtn = document.getElementById("atNodeNoteSaveBtn");
+    if (!modal || !textEl || !saveBtn) return;
+    if (titleEl) titleEl.textContent = `Notiz – ${label || "(unbenannt)"}`;
+    textEl.value = dataObj.note || "";
+    modal.style.display = "block";
+    textEl.focus();
+    saveBtn.onclick = () => {
+      const val = textEl.value.trim();
+      dataObj.note = val || "";
+      modal.style.display = "none";
+      // Update icon state
+      document.querySelectorAll(`.at-note-btn[data-note-uid="${dataObj.uid}"]`).forEach(btn => {
+        btn.classList.toggle("has-note", !!val);
+        btn.title = val ? "Notiz bearbeiten" : "Notiz hinzufügen";
+      });
+    };
+  }
+
+  /** Creates a note button element for a node or leaf. */
+  function _createNoteBtn(dataObj, label) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    const hasNote = !!(dataObj.note);
+    btn.className = `at-note-btn${hasNote ? " has-note" : ""}`;
+    btn.dataset.noteUid = dataObj.uid;
+    btn.title = hasNote ? "Notiz bearbeiten" : "Notiz hinzufügen";
+    btn.innerHTML = '<i class="fas fa-sticky-note"></i>';
+    btn.onclick = (e) => { e.stopPropagation(); _openNoteModal(dataObj, label); };
+    return btn;
+  }
+
   function _confirm({ title, html, confirmText = "Löschen", confirmClass = "primary-button dangerous", onConfirm }) {
     const modal = document.getElementById("confirmationModal");
     const t = document.getElementById("confirmationTitle");
@@ -246,6 +282,7 @@
     header.appendChild(title);
     header.appendChild(breadcrumb);
     header.appendChild(summary);
+    header.appendChild(_createNoteBtn(node, node.title || "(Pfad)"));
     header.appendChild(del);
     card.appendChild(header);
 
@@ -335,6 +372,7 @@
     };
 
     row1.appendChild(txt);
+    row1.appendChild(_createNoteBtn(imp, imp.text || "(Auswirkung)"));
     row1.appendChild(del);
 
     const ds = document.createElement("div");
