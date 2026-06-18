@@ -62,8 +62,10 @@
         return null;
     }
 
-    async function svgTextToPng(svgText, maxPxWidth = 3200) {
-        // Converts SVG text to a PNG dataURL using an in-memory canvas.
+    async function svgTextToPng(svgText, maxPxWidth = 1600, jpegQuality = 0.85) {
+        // Converts SVG text to a JPEG dataURL using an in-memory canvas.
+        // JPEG with white background produces much smaller files than PNG
+        // while maintaining excellent print quality at A4 size (~190 DPI).
         // Returns { dataUrl, widthPx, heightPx } or null.
         if (!svgText || !svgText.includes('<svg')) return null;
 
@@ -93,9 +95,11 @@
             const ctx = canvas.getContext('2d');
             if (!ctx) return null;
 
-            ctx.clearRect(0, 0, cw, ch);
+            // White background (JPEG has no transparency)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cw, ch);
             ctx.drawImage(img, 0, 0, cw, ch);
-            const dataUrl = canvas.toDataURL('image/png');
+            const dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
             return { dataUrl, widthPx: cw, heightPx: ch };
         } catch (_) {
             return null;
@@ -105,7 +109,7 @@
     }
 
     // NOTE: We keep the conversion intentionally dependency-free (no svg2pdf).
-    // Graphviz SVG is converted to PNG via canvas and embedded using doc.addImage.
+    // Graphviz SVG is converted to JPEG via canvas and embedded using doc.addImage.
 
     // =============================================================
     // General Utility Functions
