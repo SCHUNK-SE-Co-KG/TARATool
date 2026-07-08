@@ -1,11 +1,11 @@
 # CVE-Scan Report – TARATool
 
-**Scan-Zeitpunkt:** 2026-07-07T09:37:10Z  
+**Scan-Zeitpunkt:** 2026-07-08T08:23:54Z  
 **Repository:** SCHUNK-SE-Co-KG/TARATool  
 **Abhängigkeiten geprüft:** 10  
-**Schwachstellen gefunden:** 1
+**Schwachstellen gefunden:** 2
 
-> ⚠️ **1 Schwachstelle(n) gefunden!**
+> ⚠️ **2 Schwachstelle(n) gefunden!**
 
 ## Geprüfte Abhängigkeiten
 
@@ -25,6 +25,21 @@
 ## Gefundene Schwachstellen
 
 ### GHSA-6w46-j5rx-g56g
+
+- **Paket:** PyPI:pytest@8.0
+- **CVSS-Score:** 6.8
+- **Schweregrad:** CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:L
+- **CVE:** CVE-2025-71176
+- **Beschreibung:** pytest has vulnerable tmpdir handling
+- **Fix-Version:** 9.0.3
+- **Referenzen:**
+  - https://nvd.nist.gov/vuln/detail/CVE-2025-71176
+  - https://github.com/pytest-dev/pytest/issues/13669
+  - https://github.com/pytest-dev/pytest/pull/14343
+  - https://github.com/pytest-dev/pytest/commit/95d8423bd24992deea5b9df32555fa1741679e2c
+  - https://github.com/pytest-dev/pytes
+
+### PYSEC-2026-1845
 
 - **Paket:** PyPI:pytest@8.0
 - **CVSS-Score:** 6.8
