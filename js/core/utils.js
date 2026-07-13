@@ -197,6 +197,28 @@ function getAllDamageScenarioIds(analysis) {
 }
 
 /**
+ * Returns all damage scenarios (default + custom) for the given analysis,
+ * sorted naturally. Single source of truth for labels/tooltips in UI and reports.
+ * @param {object} [analysis]
+ * @returns {object[]} e.g. [{ id, name, short, description }, ...]
+ */
+function getDisplayDamageScenarios(analysis) {
+    if (!analysis) analysis = getActiveAnalysis();
+    let displayDS = JSON.parse(JSON.stringify(
+        (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS))
+            ? DEFAULT_DAMAGE_SCENARIOS : []
+    ));
+    const defaultIds = new Set(displayDS.map(d => d.id));
+    if (analysis && Array.isArray(analysis.damageScenarios)) {
+        analysis.damageScenarios.forEach(ds => {
+            if (ds && ds.id && !defaultIds.has(ds.id)) displayDS.push(ds);
+        });
+    }
+    displayDS.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+    return displayDS;
+}
+
+/**
  * Removes references to a deleted DS from all risk entries (attack trees).
  * Walks both legacy (branches/leaves) and V2 (treeV2/impacts) structures.
  * @param {object} analysis - The analysis object

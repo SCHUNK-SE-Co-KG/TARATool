@@ -18,7 +18,7 @@ function generateDotString(analysis, specificTreeId = null) {
     dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
     dot += '    edge [fontname="Arial", fontsize=9];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=spline;\n';
+    dot += '    overlap=false;\n    splines=polyline;\n';
     dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
     dot += '    concentrate=true;\n';
     dot += '    ordering=out;\n\n';
@@ -70,7 +70,8 @@ function generateDotString(analysis, specificTreeId = null) {
         const riskId = entry.id;
         const rootId = `${riskId}_Root`;
 
-        const levelMap = {}; // depth -> [ids]
+        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+        const leafIds = []; // ALL impacts, aligned on one common bottom rank
         const nodes = [];
         const edges = [];
 
@@ -96,7 +97,7 @@ function generateDotString(analysis, specificTreeId = null) {
                 const lfFill = _getColor(leaf.i_norm, lkstu);
                 nodes.push(`    ${lid} [label="${_lbl(leaf.text, lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
                 edges.push(`    ${nid} -> ${lid}\n`);
-                pushRank(depth + 1, lid);
+                leafIds.push(lid);
             });
 
             (node.children || []).forEach(ch => walk(ch, depth + 1, nid));
@@ -108,12 +109,14 @@ function generateDotString(analysis, specificTreeId = null) {
         out += nodes.join('');
         out += edges.join('');
 
-        // Ranking: Root at top, each level in rank=same
+        // Ranking: Root at top; each path/intermediate-path level in rank=same;
+        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
         out += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k,10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
             if (ids.trim()) out += `    { rank=same; ${ids}; }\n`;
         });
+        if (leafIds.length) out += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
 
         out += "\n";
         return out;
@@ -558,7 +561,7 @@ const _buildResidualClone = (baseEntry) => {
     dot += '    node [shape=record, fontname="Arial", fontsize=9];\n';
     dot += '    edge [fontname="Arial", fontsize=8];\n';
     dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=spline;\n';
+    dot += '    overlap=false;\n    splines=polyline;\n';
     dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
     dot += '    concentrate=true;\n';
     dot += '    ordering=out;\n\n';
@@ -577,7 +580,8 @@ const _buildResidualClone = (baseEntry) => {
         const rrRootKstu = rrClone?.kstu || rrClone?.treeV2?.kstu || { k:'', s:'', t:'', u:'' };
         const rrNodeMap = _buildUidNodeMapV2(rrClone.treeV2);
 
-        const levelMap = {}; // depth -> [ids]
+        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+        const leafIds = []; // ALL impacts, aligned on one common bottom rank
         const nodes = [];
         const edges = [];
         const pushRank = (depth, id) => {
@@ -651,7 +655,7 @@ const _isMitigated = (t) => {
 
                 nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);
                 edges.push(`    ${nid} -> ${lid}\n`);
-                pushRank(depth + 1, lid);
+                leafIds.push(lid);
             });
 
             (baseNode.children || []).forEach(ch => walk(ch, depth + 1, nid));
@@ -663,12 +667,14 @@ const _isMitigated = (t) => {
         dot += nodes.join('');
         dot += edges.join('');
 
-        // Ranking: Root at top, each level in rank=same
+        // Ranking: Root at top; each path/intermediate-path level in rank=same;
+        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
         dot += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k, 10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
             if (ids.trim()) dot += `    { rank=same; ${ids}; }\n`;
         });
+        if (leafIds.length) dot += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
 
         dot += '\n';
     });

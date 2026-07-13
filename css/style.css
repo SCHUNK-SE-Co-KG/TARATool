@@ -368,7 +368,15 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .cell-leaf { width: auto; }
 
 .leaf-container { display: flex; flex-direction: column; gap: 8px; }
-.ds-checks { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85em; background: #f9f9f9; padding: 4px; border-radius: 4px; }
+.ds-checks { display: flex; gap: 10px; flex-wrap: wrap; font-size: 0.85em; background: #f9f9f9; padding: 6px 8px; border-radius: 4px; align-items: center; }
+.ds-checks-label { font-weight: 600; color: #555; margin-right: 2px; }
+.ds-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  cursor: pointer; position: relative; user-select: none;
+  padding: 2px 6px; border-radius: 4px; white-space: nowrap;
+}
+.ds-tag:hover { background: #ececec; }
+.ds-tag:focus-visible { outline: 2px solid #3498db; outline-offset: 1px; }
 
 /* STRIDE threat category tags */
 .stride-checks { display: flex; gap: 6px; flex-wrap: wrap; font-size: 0.82em; padding: 4px 0; align-items: center; }
@@ -383,15 +391,17 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .stride-tag:hover { border-color: #888; background: #eaeaea; }
 .stride-tag.stride-active { background: #3498db; color: #fff; border-color: #2980b9; }
 .stride-tag .stride-cb { display: none; }
+.stride-tag:focus-visible { outline: 2px solid #3498db; outline-offset: 1px; }
 
-/* Custom STRIDE tooltip */
-.stride-tooltip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
+/* Hidden tooltip template – shown via .at-floating-tooltip on body */
+.at-hover-tooltip { display: none !important; }
+
+/* Floating tooltip (fixed, escapes modal overflow) */
+.at-floating-tooltip {
+  position: fixed;
+  z-index: 10050;
   width: 320px;
+  max-width: min(360px, calc(100vw - 16px));
   padding: 10px 12px;
   background: #2c3e50;
   color: #ecf0f1;
@@ -400,21 +410,10 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
   line-height: 1.45;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  z-index: 9999;
   pointer-events: none;
   text-align: left;
   white-space: normal;
 }
-.stride-tooltip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-top-color: #2c3e50;
-}
-.stride-tag:hover .stride-tooltip { display: block; }
 
 .kstu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .kstu-select { padding: 2px; font-size: 0.85em; width: 100%; }
