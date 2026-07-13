@@ -36,8 +36,13 @@
 - Alle **Auswirkungen (Blätter)** liegen auf **einer gemeinsamen untersten Ebene** (`rank=sink`).
 - Kein versetztes Ranking mehr (z. B. SATA höher als DisplayPort), obwohl Pfade unterschiedlich tief sind.
 
-### Gerade Verbindungslinien
-- `splines=spline` → `splines=polyline`: **gerade Pfeile**, die andere Kästen umgehen statt durch sie hindurch.
+### Gerade Verbindungslinien (Stamm- und Bus-Optik)
+- `splines=spline` → `splines=polyline`: **gerade Segmente** statt Kurven.
+- Bei mehreren Abzweigungen: **unsichtbarer Knotenpunkt (Junction)** unter dem Parent.
+  - Senkrechter **Stamm** bis zum Knotenpunkt (ohne Pfeilspitze).
+  - Von dort **gerade Äste** zu jeder Ziel-Box (mit Pfeilspitze).
+- Gilt für Auswirkungen, Zwischenpfade und Angriffspfade; `concentrate=false` verhindert zusammengezogene Kurven.
+- Angriffsbaum- und Restrisiko-Export nutzen dieselbe Logik (`_dotConnectFanout`).
 
 ---
 
@@ -59,7 +64,7 @@
 | Datei | Inhalt |
 |-------|--------|
 | `js/attack_tree/attack_tree_editor_v2.js` | Limit 10, Clipboard, Verschieben, DS-Labels |
-| `js/attack_tree/dot_export.js` | Blatt-Ranking, Polyline-Kanten |
+| `js/attack_tree/dot_export.js` | Blatt-Ranking, Polyline-Kanten, Junction-Bus-Routing |
 | `js/report/report_pdf_helpers.js` | Hochauflösende SVG→PNG-Konvertierung |
 | `js/report/report_export.js` | DPI-basierte Bildbreite im PDF |
 | `js/core/utils.js` | `getDisplayDamageScenarios()` |
