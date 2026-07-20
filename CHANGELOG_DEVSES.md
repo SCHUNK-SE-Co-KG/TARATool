@@ -161,4 +161,4 @@ Neue Texte in `assessment_config.json` (Beispiel):
 | `db086c4` | feat: portable config reload + assessment_config.js |
 
 **Vollständige Dokumentation (inkl. Copy/Paste/Move-Details):**  
-`Aufgaben/2026-07-20_devses-aenderungsuebersicht/AENDERUNGEN_DEVSES.md`
+`AENDERUNGEN_DEVSES.md` (im Repo-Root) bzw. `Aufgaben/2026-07-20_devses-aenderungsuebersicht/AENDERUNGEN_DEVSES.md`
