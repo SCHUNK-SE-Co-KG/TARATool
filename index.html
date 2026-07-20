@@ -64,9 +64,18 @@
             </div>
 
             <div id="tabOverview" class="tab-content" style="display: block;">
-                <div class="overview-actions" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:10px;">
+                <div class="overview-actions" style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <input type="file" id="assessmentConfigFileInput" accept=".json,application/json" hidden>
+                        <button type="button" id="btnReloadAssessmentConfig" class="action-button"
+                                title="Lädt config/assessment_config.json nach JSON-Änderung (ohne Webserver/.bat).">
+                            <i class="fas fa-sliders-h"></i> Bewertungsconfig laden
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:8px;">
                     <button id="btnGenerateReport" class="action-button"><i class="fas fa-file-pdf"></i> Report (PDF)</button>
                     <button id="btnExportTreeData" class="action-button"><i class="fas fa-file-archive"></i> Export Baumdaten</button>
+                    </div>
                 </div>
 
                 <div class="dashboard-grid">
@@ -465,6 +474,7 @@
 
     <!-- Core -->
     <script src="js/core/about.js"></script>
+    <script src="config/assessment_config.js"></script>
     <script src="js/core/config_loader.js"></script>
     <script src="js/core/globals.js"></script>
     <script src="js/core/utils.js"></script>
