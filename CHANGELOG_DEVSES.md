@@ -158,4 +158,7 @@ Neue Texte in `assessment_config.json` (Beispiel):
 | `51bd877` | feat: SES dev improvements (Editor, PDF, DOT, Tooltips) |
 | `fd5fd18` | docs: CHANGELOG_DEVSES |
 | `9bdc8d8` | feat(dot): junction bus routing |
-| *(aktuell)* | feat: portable config reload + assessment_config.js |
+| `db086c4` | feat: portable config reload + assessment_config.js |
+
+**Vollständige Dokumentation (inkl. Copy/Paste/Move-Details):**  
+`Aufgaben/2026-07-20_devses-aenderungsuebersicht/AENDERUNGEN_DEVSES.md`
