@@ -62,8 +62,10 @@
         return null;
     }
 
-    async function svgTextToPng(svgText, maxPxWidth = 3200) {
-        // Converts SVG text to a PNG dataURL using an in-memory canvas.
+    async function svgTextToPng(svgText, maxPxWidth = 1600, jpegQuality = 0.85) {
+        // Converts SVG text to a JPEG dataURL using an in-memory canvas.
+        // JPEG with white background produces much smaller files than PNG
+        // while maintaining excellent print quality at A4 size (~190 DPI).
         // Returns { dataUrl, widthPx, heightPx } or null.
         if (!svgText || !svgText.includes('<svg')) return null;
 
@@ -93,9 +95,11 @@
             const ctx = canvas.getContext('2d');
             if (!ctx) return null;
 
-            ctx.clearRect(0, 0, cw, ch);
+            // White background (JPEG has no transparency)
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cw, ch);
             ctx.drawImage(img, 0, 0, cw, ch);
-            const dataUrl = canvas.toDataURL('image/png');
+            const dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
             return { dataUrl, widthPx: cw, heightPx: ch };
         } catch (_) {
             return null;
@@ -105,7 +109,7 @@
     }
 
     // NOTE: We keep the conversion intentionally dependency-free (no svg2pdf).
-    // Graphviz SVG is converted to PNG via canvas and embedded using doc.addImage.
+    // Graphviz SVG is converted to JPEG via canvas and embedded using doc.addImage.
 
     // =============================================================
     // General Utility Functions
@@ -173,19 +177,37 @@
         return `${f(k)} / ${f(s)} / ${f(t)} / ${f(u)}`;
     }
 
-    function sanitizePdfText(input) {
+    function sanitizePdfText(input, preserveNewlines) {
         let s = String(input ?? '');
+
+        // Unescape common HTML entities (data may arrive HTML-escaped)
+        s = s.replace(/&amp;/g, '&');
+        s = s.replace(/&lt;/g, '<');
+        s = s.replace(/&gt;/g, '>');
+        s = s.replace(/&quot;/g, '"');
+        s = s.replace(/&#0?39;/g, "'");
+
         // Replace problematic glyphs (WinAnsi/Helvetica) for better print readability
         s = s.replace(/\u00A0/g, ' ');            // NBSP
-        s = s.replace(/[→⇒]/g, '->');
-        s = s.replace(/[←⇐]/g, '<-');
+        s = s.replace(/[→⇒]/g, '\u00BB');         // » (WinAnsi 0xBB) – jsPDF 4.x has issues with >
+        s = s.replace(/[←⇐]/g, '\u00AB');         // « (WinAnsi 0xAB)
+        s = s.replace(/->/g, '\u00BB');            // ASCII arrow -> to »
+        s = s.replace(/<-/g, '\u00AB');            // ASCII arrow <- to «
         s = s.replace(/[–—−]/g, '-');
         s = s.replace(/[""„‟]/g, '"');
         s = s.replace(/[''‚‛]/g, "'");
         s = s.replace(/…/g, '...');
         s = s.replace(/[•·]/g, '*');
         s = s.replace(/›/g, '/');
-        s = s.replace(/\s+/g, ' ').trim();
+
+        // Collapse whitespace but optionally preserve line breaks
+        if (preserveNewlines) {
+            s = s.replace(/[^\S\n]+/g, ' ');       // collapse horizontal WS only
+            s = s.replace(/\n{3,}/g, '\n\n');       // max 2 consecutive newlines
+            s = s.trim();
+        } else {
+            s = s.replace(/\s+/g, ' ').trim();
+        }
 
         // Replace non-Latin1 chars (code > 255), which can show up as black boxes
         s = Array.from(s).map(ch => (ch.charCodeAt(0) <= 255 ? ch : '?')).join('');

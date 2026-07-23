@@ -42,12 +42,17 @@ function generateDotString(analysis, specificTreeId = null) {
         return _fmt(computeRiskScore(iNorm, kstu).toFixed(2));
     };
 
-    const _lbl = (text, kstu, iNorm) => {
+    const _lbl = (text, kstu, iNorm, stride) => {
         const p = _pStr(kstu);
         const i = _fmt(iNorm);
         const r = _calcR(iNorm, kstu);
         const cleanText = (text || '').replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
-        return `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}}`;
+        let label = `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}`;
+        if (Array.isArray(stride) && stride.length > 0) {
+            label += ` | STRIDE: ${stride.join(', ')}`;
+        }
+        label += '}';
+        return label;
     };
 
     // DOT-specific pastel fill colors based on risk score
@@ -89,7 +94,7 @@ function generateDotString(analysis, specificTreeId = null) {
                 const lid = `${riskId}_L${_safeId(leaf.uid || (node.uid + '_' + idx))}`;
                 const lkstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
                 const lfFill = _getColor(leaf.i_norm, lkstu);
-                nodes.push(`    ${lid} [label="${_lbl(leaf.text, lkstu, leaf.i_norm)}", style=filled, fillcolor="${lfFill}"]\n`);
+                nodes.push(`    ${lid} [label="${_lbl(leaf.text, lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
                 edges.push(`    ${nid} -> ${lid}\n`);
                 pushRank(depth + 1, lid);
             });
@@ -221,7 +226,7 @@ function generateDotString(analysis, specificTreeId = null) {
                     if (!leaf || !leaf.text) return;
                     const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
                     const lFill = _getColor(leaf.i_norm, leaf);
-                    dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
+                    dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
                 });
                 return;
             }
@@ -240,7 +245,7 @@ function generateDotString(analysis, specificTreeId = null) {
                         if (!leaf || !leaf.text) return;
                         const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
                         const lFill = _getColor(leaf.i_norm, leaf);
-                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
+                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
                     });
                 });
                 return;
@@ -265,7 +270,7 @@ function generateDotString(analysis, specificTreeId = null) {
                 if (!leaf || !leaf.text) return;
                 const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
                 const lFill = _getColor(leaf.i_norm, leaf);
-                dot += `    ${leafId} [label="${_lbl(leaf.text, leaf, leaf.i_norm)}", style=filled, fillcolor="${lFill}"]\n`;
+                dot += `    ${leafId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
             });
         });
 
@@ -640,7 +645,8 @@ const _isMitigated = (t) => {
                 const showPRRLeaf = _pStr(rkstuEff);
 
                 const leafText = _cleanText(leaf?.text ?? leaf?.name ?? leaf?.label ?? '');
-                const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | Behandlung: ${_cleanText(trLeaf)}}`;
+                const strideStr = (Array.isArray(leaf.stride) && leaf.stride.length > 0) ? ` | STRIDE: ${leaf.stride.join(', ')}` : '';
+                const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | Behandlung: ${_cleanText(trLeaf)}${strideStr}}`;
                 const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));
 
                 nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);

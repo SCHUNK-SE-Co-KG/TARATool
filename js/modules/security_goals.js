@@ -263,6 +263,16 @@
         openModal(goal, analysis);
     };
 
+    /**
+     * Renumbers all security goals sequentially (SO01, SO02, ...).
+     */
+    function _renumberSecurityGoals(analysis) {
+        if (!analysis.securityGoals || analysis.securityGoals.length === 0) return;
+        analysis.securityGoals.forEach((goal, i) => {
+            goal.id = 'SO' + String(i + 1).padStart(2, '0');
+        });
+    }
+
     window.removeSecurityGoal = function(id) {
         const analysis = getActiveAnalysis();
         if (!analysis) return;
@@ -277,6 +287,7 @@
             confirmText: 'Löschen',
             onConfirm: () => {
                 analysis.securityGoals = analysis.securityGoals.filter(g => g.id !== id);
+                _renumberSecurityGoals(analysis);
                 if (typeof saveAnalyses === 'function') saveAnalyses();
                 renderSecurityGoals(analysis);
                 if (typeof showToast === 'function') showToast(`Security Ziel ${id} gelöscht.`, 'success');
