@@ -246,14 +246,15 @@
                     h.pVec(kstu.k, kstu.s, kstu.t, kstu.u),
                     h.fmtNumComma(entry.i_norm, 2),
                     h.fmtNumComma(rScore, 2),
-                    cls.label
+                    cls.label,
+                    h.sanitizePdfText((entry.notes || '').trim() || '-', true)
                 ];
             });
             pdf.addH2('Root-Node-Uebersicht');
             pdf.addTableGrid(
-                ['Root-Node', 'P (K/S/T/U)', 'I[norm]', 'R', 'Risikoklasse'],
+                ['Root-Node', 'P (K/S/T/U)', 'I[norm]', 'R', 'Risikoklasse', 'Kommentar'],
                 overviewRows,
-                [60, 40, 20, 18, 30],
+                [40, 35, 16, 14, 24, 39],
                 { zebra: true, noWrapCols: [1, 2, 3, 4], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
             );
             pdf.addSpacer(4);
@@ -265,7 +266,7 @@
                 pdf.addKeyValue('Risk Score (R)', entry.rootRiskValue ?? '-');
                 pdf.addKeyValue('Risikoklasse', cls.label);
                 if ((entry.notes || '').trim()) {
-                    pdf.addKeyValue('Notizen', h.sanitizePdfText(entry.notes));
+                    pdf.addKeyValue('Notizen', h.sanitizePdfText(entry.notes, true));
                 }
                 pdf.addSpacer(1);
                 pdf.addText('siehe Visualisierung Angriffsbaeume', 9, 4.2);
@@ -330,7 +331,7 @@
 
                 if (svgText && svgText.includes('<svg')) {
                     let png = null;
-                    try { png = await h.svgTextToPng(svgText, 3800); } catch (e) { png = null; }
+                    try { png = await h.svgTextToPng(svgText, 1600); } catch (e) { png = null; }
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = availW;
@@ -342,7 +343,7 @@
                         const x = treeMargin + (availW - drawW) / 2;
                         const y = topY + (availH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
                             doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', treeMargin, topY);
@@ -490,7 +491,7 @@
 
                     const path = (meta.breadcrumb || meta?.branch?.name || '').toString();
                     const leafText = (oLeaf.text || oLeaf.name || oLeaf.label || '').toString();
-                    const impactName = (path ? (path + ' -> ') : '') + (leafText || '(ohne Text)');
+                    const impactName = (path ? (path + ' \u00BB ') : '') + (leafText || '(ohne Text)');
 
                     const iNorm = (oLeaf.i_norm !== undefined && oLeaf.i_norm !== null && String(oLeaf.i_norm).trim() !== '')
                         ? oLeaf.i_norm
@@ -610,7 +611,7 @@
 
                 if (rrSvgText && rrSvgText.includes('<svg')) {
                     let png = null;
-                    try { png = await h.svgTextToPng(rrSvgText, 3800); } catch (e) { png = null; }
+                    try { png = await h.svgTextToPng(rrSvgText, 1600); } catch (e) { png = null; }
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = rrAvailW;
@@ -622,7 +623,7 @@
                         const x = rrMargin + (rrAvailW - drawW) / 2;
                         const y = rrTopY + (rrAvailH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, 'PNG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
                             doc.text('Restrisiko-Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', rrMargin, rrTopY);

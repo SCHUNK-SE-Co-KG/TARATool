@@ -104,6 +104,9 @@ function saveAttackTree(e) {
 
     const existingIdx = analysis.riskEntries.findIndex(r => r.id === entry.id);
     if (existingIdx >= 0) {
+        // Preserve fields managed outside the tree editor (e.g. tree-level notes)
+        const prev = analysis.riskEntries[existingIdx];
+        if (prev.notes !== undefined) entry.notes = prev.notes;
         analysis.riskEntries[existingIdx] = entry;
         if (typeof showToast === 'function') showToast('Angriffsbaum aktualisiert.', 'success');
     } else {
