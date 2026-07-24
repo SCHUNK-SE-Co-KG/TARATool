@@ -62,12 +62,22 @@
         return null;
     }
 
-    async function svgTextToPng(svgText, maxPxWidth = 1600, jpegQuality = 0.85) {
-        // Converts SVG text to a JPEG dataURL using an in-memory canvas.
-        // JPEG with white background produces much smaller files than PNG
-        // while maintaining excellent print quality at A4 size (~190 DPI).
-        // Returns { dataUrl, widthPx, heightPx } or null.
+    async function svgTextToPng(svgText, targetPxWidth = 4000, jpegQuality = 0.92) {
+        // Rasterizes a vector Graphviz SVG onto an in-memory canvas and returns an
+        // image dataURL for PDF embedding. The vector source is rendered directly at
+        // the requested target width (up- OR down-scaled), so large trees stay crisp
+        // instead of being capped to a low fixed resolution.
+        //
+        // Prefers lossless PNG (sharp lines/text). Only falls back to high-quality
+        // JPEG when the PNG would be excessively large.
+        //
+        // Returns { dataUrl, widthPx, heightPx, format } or null.
         if (!svgText || !svgText.includes('<svg')) return null;
+
+        // Browser canvas safety limits (avoid failed/blank rasterization on huge trees).
+        const MAX_SIDE = 16000;                 // max width/height in px
+        const MAX_AREA = 40 * 1000 * 1000;      // ~40 MP total pixels
+        const MAX_PNG_BYTES = 12 * 1024 * 1024; // above this, fall back to JPEG
 
         const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -85,9 +95,18 @@
             const w = img.naturalWidth || img.width || 1;
             const h = img.naturalHeight || img.height || 1;
 
-            const scale = (w > maxPxWidth) ? (maxPxWidth / w) : 1;
-            const cw = Math.max(1, Math.floor(w * scale));
-            const ch = Math.max(1, Math.floor(h * scale));
+            // Scale the vector to the requested target width (may enlarge for sharpness).
+            let scale = (targetPxWidth > 0 ? targetPxWidth : w) / w;
+            // Clamp by max side length (width and height).
+            if (w * scale > MAX_SIDE) scale = MAX_SIDE / w;
+            if (h * scale > MAX_SIDE) scale = MAX_SIDE / h;
+            // Clamp by total pixel area.
+            if ((w * scale) * (h * scale) > MAX_AREA) {
+                scale = Math.sqrt(MAX_AREA / (w * h));
+            }
+
+            const cw = Math.max(1, Math.round(w * scale));
+            const ch = Math.max(1, Math.round(h * scale));
 
             const canvas = document.createElement('canvas');
             canvas.width = cw;
@@ -95,12 +114,25 @@
             const ctx = canvas.getContext('2d');
             if (!ctx) return null;
 
-            // White background (JPEG has no transparency)
+            // High-quality scaling for the vector->raster step.
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+
+            // White background (opaque, needed for JPEG fallback and clean print).
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, cw, ch);
             ctx.drawImage(img, 0, 0, cw, ch);
-            const dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
-            return { dataUrl, widthPx: cw, heightPx: ch };
+
+            // Prefer lossless PNG for crisp line-art/text; fall back to JPEG if too big.
+            let format = 'PNG';
+            let dataUrl = canvas.toDataURL('image/png');
+            if (!dataUrl || dataUrl.length > MAX_PNG_BYTES) {
+                const jpg = canvas.toDataURL('image/jpeg', jpegQuality);
+                if (jpg) { dataUrl = jpg; format = 'JPEG'; }
+            }
+            if (!dataUrl) return null;
+
+            return { dataUrl, widthPx: cw, heightPx: ch, format };
         } catch (_) {
             return null;
         } finally {
@@ -141,6 +173,9 @@
     }
 
     function getDisplayDamageScenarios(analysis) {
+        if (typeof window.getDisplayDamageScenarios === 'function') {
+            return window.getDisplayDamageScenarios(analysis);
+        }
         let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS || []));
         const defaultIds = new Set(displayDS.map(d => d.id));
         if (analysis && Array.isArray(analysis.damageScenarios)) {

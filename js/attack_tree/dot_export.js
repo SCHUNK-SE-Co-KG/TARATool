@@ -9,19 +9,45 @@
  * @pattern     No IIFE – all helpers are function-local closures inside the generate* functions.
  */
 
+/** Shared DOT graph header: orthogonal splines for trunk + branch routing. */
+function _dotGraphHeader(opts = {}) {
+    const fontSize = opts.fontSize || 10;
+    const edgeSize = opts.edgeSize || 9;
+    let h = 'digraph {\n\n';
+    h += `    node [shape=record, fontname="Arial", fontsize=${fontSize}];\n`;
+    h += `    edge [fontname="Arial", fontsize=${edgeSize}];\n`;
+    h += '    rankdir=TB;\n';
+    h += '    overlap=false;\n';
+    h += '    splines=polyline;\n';
+    h += '    nodesep=1.0;\n';
+    h += '    ranksep=1.0;\n';
+    h += '    concentrate=false;\n';
+    h += '    ordering=out;\n\n';
+    return h;
+}
+
+/**
+ * Fan-out edges via invisible junction: straight trunk (no arrowhead) then straight
+ * branches with arrowheads to each child. Single child = direct edge.
+ */
+function _dotConnectFanout(parentId, childIds, nodes, edges, hubCounter) {
+    if (!childIds || childIds.length === 0) return;
+    if (childIds.length === 1) {
+        edges.push(`    ${parentId} -> ${childIds[0]}\n`);
+        return;
+    }
+    const hubId = `${parentId}_J${hubCounter.value++}`;
+    nodes.push(`    ${hubId} [shape=point, width=0.01, height=0.01, label="", style=invis]\n`);
+    edges.push(`    ${parentId} -> ${hubId} [arrowhead=none]\n`);
+    childIds.forEach((cid) => edges.push(`    ${hubId} -> ${cid}\n`));
+}
+
 function generateDotString(analysis, specificTreeId = null) {
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
         return null;
     }
 
-    let dot = 'digraph {\n\n';
-    dot += '    node [shape=record, fontname="Arial", fontsize=10];\n';
-    dot += '    edge [fontname="Arial", fontsize=9];\n';
-    dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=spline;\n';
-    dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
-    dot += '    concentrate=true;\n';
-    dot += '    ordering=out;\n\n';
+    let dot = _dotGraphHeader({ fontSize: 10, edgeSize: 9 });
 
     const _fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
@@ -70,9 +96,11 @@ function generateDotString(analysis, specificTreeId = null) {
         const riskId = entry.id;
         const rootId = `${riskId}_Root`;
 
-        const levelMap = {}; // depth -> [ids]
+        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+        const leafIds = []; // ALL impacts, aligned on one common bottom rank
         const nodes = [];
         const edges = [];
+        const hubCounter = { value: 0 };
 
         const pushRank = (depth, id) => {
             if (!levelMap[depth]) levelMap[depth] = [];
@@ -83,37 +111,44 @@ function generateDotString(analysis, specificTreeId = null) {
         nodes.push(`    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`);
         pushRank(0, rootId);
 
-        const walk = (node, depth, parentId) => {
+        const walk = (node, depth) => {
             const nid = `${riskId}_N${_safeId(node.uid || node.title || ('d' + depth))}`;
             const fill = _getColor(node.i_norm, node.kstu);
             nodes.push(`    ${nid} [label="${_lbl(node.title, node.kstu, node.i_norm)}", style=filled, fillcolor="${fill}"]\n`);
-            edges.push(`    ${parentId} -> ${nid}\n`);
             pushRank(depth, nid);
 
+            const impactIds = [];
             (node.impacts || []).forEach((leaf, idx) => {
                 const lid = `${riskId}_L${_safeId(leaf.uid || (node.uid + '_' + idx))}`;
                 const lkstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
                 const lfFill = _getColor(leaf.i_norm, lkstu);
                 nodes.push(`    ${lid} [label="${_lbl(leaf.text, lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
-                edges.push(`    ${nid} -> ${lid}\n`);
-                pushRank(depth + 1, lid);
+                impactIds.push(lid);
+                leafIds.push(lid);
             });
+            _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
 
-            (node.children || []).forEach(ch => walk(ch, depth + 1, nid));
+            const childIds = (node.children || []).map((ch) => walk(ch, depth + 1));
+            _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
+
+            return nid;
         };
 
-        (entry.treeV2.children || []).forEach((pathNode) => walk(pathNode, 1, rootId));
+        const pathIds = (entry.treeV2.children || []).map((pathNode) => walk(pathNode, 1));
+        _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
 
         let out = `    // Tree ${riskId} (treeV2)\n`;
         out += nodes.join('');
         out += edges.join('');
 
-        // Ranking: Root at top, each level in rank=same
+        // Ranking: Root at top; each path/intermediate-path level in rank=same;
+        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
         out += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k,10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
             if (ids.trim()) out += `    { rank=same; ${ids}; }\n`;
         });
+        if (leafIds.length) out += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
 
         out += "\n";
         return out;
@@ -554,14 +589,7 @@ const _buildResidualClone = (baseEntry) => {
     let entriesToProcess = analysis.riskEntries;
     if (specificTreeId) entriesToProcess = analysis.riskEntries.filter(e => e && e.id === specificTreeId);
 
-    let dot = 'digraph {\n\n';
-    dot += '    node [shape=record, fontname="Arial", fontsize=9];\n';
-    dot += '    edge [fontname="Arial", fontsize=8];\n';
-    dot += '    rankdir=TB;\n';
-    dot += '    overlap=false;\n    splines=spline;\n';
-    dot += '    nodesep=1.0;\n    ranksep=1.2;\n';
-    dot += '    concentrate=true;\n';
-    dot += '    ordering=out;\n\n';
+    let dot = _dotGraphHeader({ fontSize: 9, edgeSize: 8 });
 
     entriesToProcess.forEach(entry => {
         if (!entry) return;
@@ -577,9 +605,11 @@ const _buildResidualClone = (baseEntry) => {
         const rrRootKstu = rrClone?.kstu || rrClone?.treeV2?.kstu || { k:'', s:'', t:'', u:'' };
         const rrNodeMap = _buildUidNodeMapV2(rrClone.treeV2);
 
-        const levelMap = {}; // depth -> [ids]
+        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+        const leafIds = []; // ALL impacts, aligned on one common bottom rank
         const nodes = [];
         const edges = [];
+        const hubCounter = { value: 0 };
         const pushRank = (depth, id) => {
             if (!levelMap[depth]) levelMap[depth] = [];
             levelMap[depth].push(id);
@@ -610,8 +640,8 @@ const _isMitigated = (t) => {
         nodes.push(`    ${rootId} [label="${rootLabel}", style=filled, fillcolor="${rootFill}"]\n`);
         pushRank(0, rootId);
 
-        const walk = (baseNode, depth, parentId) => {
-            if (!baseNode) return;
+        const walk = (baseNode, depth) => {
+            if (!baseNode) return null;
             const nid = `${riskId}_N_RR${_safeId(baseNode.uid || baseNode.title || ('d' + depth))}`;
             const rrNode = rrNodeMap[baseNode.uid] || null;
 
@@ -625,10 +655,9 @@ const _isMitigated = (t) => {
             const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
 
             nodes.push(`    ${nid} [label="${label}", style=filled, fillcolor="${fill}"]\n`);
-            edges.push(`    ${parentId} -> ${nid}\n`);
             pushRank(depth, nid);
 
-            // Leaves
+            const impactIds = [];
             (baseNode.impacts || []).forEach((leaf, idx) => {
                 const rrLeaf = (rrNode && Array.isArray(rrNode.impacts))
                     ? (rrNode.impacts.find(l => l && l.uid && leaf && l.uid === leaf.uid) || rrNode.impacts[idx])
@@ -650,25 +679,32 @@ const _isMitigated = (t) => {
                 const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));
 
                 nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);
-                edges.push(`    ${nid} -> ${lid}\n`);
-                pushRank(depth + 1, lid);
+                impactIds.push(lid);
+                leafIds.push(lid);
             });
+            _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
 
-            (baseNode.children || []).forEach(ch => walk(ch, depth + 1, nid));
+            const childIds = (baseNode.children || []).map((ch) => walk(ch, depth + 1)).filter(Boolean);
+            _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
+
+            return nid;
         };
 
-        (entry.treeV2.children || []).forEach((pathNode) => walk(pathNode, 1, rootId));
+        const pathIds = (entry.treeV2.children || []).map((pathNode) => walk(pathNode, 1)).filter(Boolean);
+        _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
 
         dot += `    // Tree ${riskId} (Residual Risk)\n`;
         dot += nodes.join('');
         dot += edges.join('');
 
-        // Ranking: Root at top, each level in rank=same
+        // Ranking: Root at top; each path/intermediate-path level in rank=same;
+        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
         dot += `    { rank=source; ${rootId}; }\n`;
         Object.keys(levelMap).map(k => parseInt(k, 10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
             const ids = (levelMap[lvl] || []).join('; ');
             if (ids.trim()) dot += `    { rank=same; ${ids}; }\n`;
         });
+        if (leafIds.length) dot += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
 
         dot += '\n';
     });

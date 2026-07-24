@@ -126,6 +126,40 @@ document.addEventListener('DOMContentLoaded', () => {
             if (typeof showToast === 'function') showToast('Analyse gespeichert.', 'success');
         };
     }
+
+    // --- Bewertungsconfig aus JSON-Datei nachladen (portable, ohne Webserver) ---
+    window.onAssessmentConfigReloaded = function () {
+        try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (_) {}
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
+        const activeTab = document.querySelector('.tab-button.active')?.dataset?.tab || 'tabOverview';
+        if (analysis && typeof renderActiveTab === 'function') {
+            renderActiveTab(analysis, activeTab);
+        }
+    };
+
+    const btnReloadCfg = document.getElementById('btnReloadAssessmentConfig');
+    const cfgFileInput = document.getElementById('assessmentConfigFileInput');
+    if (btnReloadCfg && cfgFileInput) {
+        btnReloadCfg.onclick = () => {
+            if (typeof promptReloadAssessmentConfig === 'function') promptReloadAssessmentConfig();
+        };
+        cfgFileInput.addEventListener('change', () => {
+            const file = cfgFileInput.files && cfgFileInput.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const ok = (typeof reloadAssessmentConfigFromJsonText === 'function')
+                    && reloadAssessmentConfigFromJsonText(ev.target.result, file.name);
+                if (ok && typeof showToast === 'function') {
+                    showToast(`Bewertungsconfig geladen: ${file.name}`, 'success');
+                }
+            };
+            reader.onerror = () => {
+                if (typeof showToast === 'function') showToast('Datei konnte nicht gelesen werden.', 'error');
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+    }
     
     const elBtnVersions = document.getElementById('btnShowVersionControl');
     const elVersionModal = document.getElementById('versionControlModal');
