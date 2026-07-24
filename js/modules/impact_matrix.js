@@ -81,9 +81,11 @@ function renderImpactMatrix() {
     const analysis = getActiveAnalysis();
     if (!analysis) return;
     if (!dsMatrixContainer) return;
+    const _t = (k) => (typeof t === 'function' ? t(k) : k);
+    const _loc = (obj, field) => (typeof getLocalizedField === 'function' ? getLocalizedField(obj, field) : (obj?.[field] || ''));
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        dsMatrixContainer.innerHTML = '<h4>Schadensauswirkungsmatrix</h4><p style="text-align: center; color: #7f8c8d; padding: 20px;">Bitte legen Sie zuerst Assets im Reiter "Assets" an.</p>';
+        dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needAssets')}</p>`;
         return;
     }
 
@@ -98,22 +100,22 @@ function renderImpactMatrix() {
     displayDS.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
 
     if (displayDS.length === 0) {
-        dsMatrixContainer.innerHTML = '<h4>Schadensauswirkungsmatrix</h4><p style="text-align: center; color: #7f8c8d; padding: 20px;">Bitte definieren Sie zuerst Schadensszenarien.</p>';
+        dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needDs')}</p>`;
         return;
     }
     
-    let html = '<h4>Schadensauswirkungsmatrix (Assets vs. Damage Scenarios)</h4>';
-    html += '<p style="font-size: 0.9em; color: #7f8c8d;">Bewerten Sie die Auswirkung (Impact) jedes Schadensszenarios auf jedes Asset (1=Low, 3=High, N/A=Nicht anwendbar).</p>';
+    let html = `<h4>${_t('ds.matrixSub')}</h4>`;
+    html += `<p class="muted-hint" style="font-size: 0.9em;">${_t('ds.matrixHint')}</p>`;
     html += '<div style="overflow-x: auto;"><table class="impact-matrix-table">';
     
     html += '<thead><tr>';
     html += '<th class="asset-col">Asset (ID: Name)</th>';
     
     displayDS.forEach(ds => {
-        const eDsName = escapeHtml(ds.name);
-        const eDsDesc = escapeHtml(ds.description);
+        const eDsName = escapeHtml(_loc(ds, 'name'));
+        const eDsDesc = escapeHtml(_loc(ds, 'description'));
         const eDsId = escapeHtml(ds.id);
-        const eDsShort = escapeHtml(ds.short);
+        const eDsShort = escapeHtml(_loc(ds, 'short') || ds.short || '');
         html += `<th class="ds-col" title="${eDsName}: ${eDsDesc}">
             <div class="vertical-text">${eDsId} (${eDsShort})</div>
         </th>`;
@@ -130,7 +132,7 @@ function renderImpactMatrix() {
         }
 
         const eAssetId = escapeHtml(asset.id);
-        const eAssetName = escapeHtml(asset.name);
+        const eAssetName = escapeHtml(_loc(asset, 'name'));
 
         html += '<tr>';
         html += `<td class="asset-col"><strong>${eAssetId}: ${eAssetName}</strong></td>`;

@@ -21,16 +21,21 @@
     async function generateReportPdf() {
         const h = H();
         const b = B();
+        const ri = window.ReportI18n;
+        const lang = (ri && ri.getReportLang) ? ri.getReportLang() : 'de';
+        const L = (ri && ri.reportStrings) ? ri.reportStrings(lang) : {};
+        const riskLabel = (deLabel) => (ri && ri.mapRiskLabel) ? ri.mapRiskLabel(deLabel, lang) : deLabel;
+        const isHiCrit = (deLabel) => (ri && ri.isHighOrCritical) ? ri.isHighOrCritical(deLabel) : (deLabel === 'Hoch' || deLabel === 'Kritisch');
 
         const analysis = h.getActiveAnalysis();
         if (!analysis) {
-            if (typeof showToast === 'function') showToast('Keine aktive Analyse ausgewählt.', 'warning');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.noAnalysis', lang) : 'Keine aktive Analyse ausgewählt.'), 'warning');
             return;
         }
 
         const doc = b.createPdfDoc();
         if (!doc) {
-            if (typeof showToast === 'function') showToast('PDF-Erzeugung nicht verfügbar (jsPDF nicht geladen).', 'error');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.pdfMissing', lang) : 'PDF-Erzeugung nicht verfügbar (jsPDF nicht geladen).'), 'error');
             return;
         }
 
@@ -45,19 +50,19 @@
         // =============================================================
         // Chapter 1: Project Description
         // =============================================================
-        pdf.addTitle('Bedrohungs- und Risikoanalyse');
-        pdf.addText('Projektbeschreibung', 12, 6);
+        pdf.addTitle(L.title);
+        pdf.addText(L.projectDesc, 12, 6);
         pdf.hLine();
         pdf.addSpacer(2.5);
 
-        pdf.addH1('Projektbeschreibung');
-        pdf.addKeyValue('Analysename', analysis.name || '-');
-        pdf.addKeyValue('Autor / Verantwortlich', (analysis.metadata && analysis.metadata.author) || analysis.author || '-');
-        pdf.addKeyValue('Version', (analysis.metadata && analysis.metadata.version) || '-');
-        pdf.addKeyValue('Datum', h.formatDate((analysis.metadata && analysis.metadata.date) || ''));
-        pdf.addKeyValue('Systembeschreibung', analysis.description || '-');
-        pdf.addKeyValue('Verwendungszweck', analysis.intendedUse || '-');
-        pdf.addKeyValue('Report erstellt', generatedAt);
+        pdf.addH1(L.projectDesc);
+        pdf.addKeyValue(L.analysisName, analysis.name || '-');
+        pdf.addKeyValue(L.author, (analysis.metadata && analysis.metadata.author) || analysis.author || '-');
+        pdf.addKeyValue(L.version, (analysis.metadata && analysis.metadata.version) || '-');
+        pdf.addKeyValue(L.date, h.formatDate((analysis.metadata && analysis.metadata.date) || ''));
+        pdf.addKeyValue(L.systemDesc, analysis.description || '-');
+        pdf.addKeyValue(L.intendedUse, analysis.intendedUse || '-');
+        pdf.addKeyValue(L.reportCreated, generatedAt);
 
         // =============================================================
         // Chapter 2: Management Summary (eigene Seite)
@@ -109,59 +114,56 @@
 
         const riskWithResidualSorted = [...riskWithResidual].sort((a, b) => b._rrValueNum - a._rrValueNum);
 
-        pdf.addH1('Management-Zusammenfassung');
-        pdf.addText(
-            `Diese Zusammenfassung bietet einen Management-Überblick über die aktuelle Risikoanalyse. ` +
-            `Detaillierte Informationen (Assets, Schadensszenarien, Impact-Matrix und Angriffsbäume) folgen in den nachfolgenden Kapiteln.`
-        );
+        pdf.addH1(L.mgmtSummary);
+        pdf.addText(L.mgmtIntro);
 
         pdf.addSpacer(1.8);
 
         const summaryRows = [
-            ['Assets', String(assets.length)],
-            ['Schadensszenarien (gesamt)', String(dsList.length)],
-            ['Risiken / Angriffsbäume', String(risks.length)],
-            ['Risikoverteilung', `Kritisch: ${dist.Kritisch} | Hoch: ${dist.Hoch} | Mittel: ${dist.Mittel} | Niedrig: ${dist.Niedrig} | Unbekannt: ${dist.Unbekannt}`]
+            [L.assets, String(assets.length)],
+            [L.dsTotal, String(dsList.length)],
+            [L.risksTrees, String(risks.length)],
+            [L.riskDist, L.distLine(dist)]
         ];
         if (hasResidualData) {
             summaryRows.push([
-                'Risikoverteilung Restrisiko',
-                `Kritisch: ${rrDist.Kritisch} | Hoch: ${rrDist.Hoch} | Mittel: ${rrDist.Mittel} | Niedrig: ${rrDist.Niedrig} | Unbekannt: ${rrDist.Unbekannt}`
+                L.riskDistRr,
+                L.distLine(rrDist)
             ]);
         }
 
         pdf.addTable(
-            ['Kennzahl', 'Wert'],
+            [L.metric, L.value],
             summaryRows,
             [55, (pdf.pageW - pdf.margin * 2) - 55]
         );
 
         // Top risks table
-        pdf.addH2('Top Risiken');
-        const topOnlyHighCritical = riskSorted.filter(r => r._riskLabel === 'Hoch' || r._riskLabel === 'Kritisch');
+        pdf.addH2(L.topRisks);
+        const topOnlyHighCritical = riskSorted.filter(r => isHiCrit(r._riskLabel));
         if (topOnlyHighCritical.length === 0) {
-            pdf.addText('Keine Top-Risiken in den Klassen Hoch oder Kritisch vorhanden.');
+            pdf.addText(L.noTopRisks);
         } else {
             const topN = topOnlyHighCritical.slice(0, 5);
             pdf.addTable(
-                ['ID', 'Beschreibung', 'R', 'Klasse'],
-                topN.map(r => [r.id || '-', r.rootName || '-', (r.rootRiskValue ?? '-').toString(), r._riskLabel || 'Unbekannt']),
-                [14, 110, 14, (pdf.pageW - pdf.margin * 2) - 14 - 110 - 14]
+                [L.colId, L.colDesc, L.colR, L.colClass],
+                topN.map(r => [r.id || '-', r.rootName || '-', (r.rootRiskValue ?? '-').toString(), riskLabel(r._riskLabel || 'Unbekannt')]),
+                [16, 100, 22, 30]
             );
         }
 
         // Top residual risks table (after risk treatment)
         if (hasResidualData) {
-            pdf.addH2('Top Restrisiken (nach Risikobehandlung)');
-            const topRRHighCritical = riskWithResidualSorted.filter(r => r._rrLabel === 'Hoch' || r._rrLabel === 'Kritisch');
+            pdf.addH2(L.topResidual);
+            const topRRHighCritical = riskWithResidualSorted.filter(r => isHiCrit(r._rrLabel));
             if (topRRHighCritical.length === 0) {
-                pdf.addText('Keine verbleibenden Restrisiken in den Klassen Hoch oder Kritisch vorhanden.');
+                pdf.addText(L.noTopResidual);
             } else {
                 const topRRN = topRRHighCritical.slice(0, 5);
                 pdf.addTable(
-                    ['ID', 'Beschreibung', 'R (Rest)', 'Klasse'],
-                    topRRN.map(r => [r.id || '-', r.rootName || '-', r._rrValueNum >= 0 ? r._rrValueNum.toFixed(2) : '-', r._rrLabel || 'Unbekannt']),
-                    [14, 110, 14, (pdf.pageW - pdf.margin * 2) - 14 - 110 - 14]
+                    [L.colId, L.colDesc, L.colRr, L.colClass],
+                    topRRN.map(r => [r.id || '-', r.rootName || '-', r._rrValueNum >= 0 ? r._rrValueNum.toFixed(2) : '-', riskLabel(r._rrLabel || 'Unbekannt')]),
+                    [16, 100, 22, 30]
                 );
             }
         }
@@ -173,19 +175,19 @@
         doc.addPage();
         pdf.setY(pdf.margin);
 
-        pdf.addTitle('Bedrohungs- und Risikoanalyse');
-        pdf.addText(`Analyse: ${analysis.name || analysis.id}`, 12, 6);
+        pdf.addTitle(L.title);
+        pdf.addText(`${L.analysisPrefix}: ${analysis.name || analysis.id}`, 12, 6);
         pdf.hLine();
 
-        pdf.addH1('Assets');
+        pdf.addH1(L.assets);
         if (assets.length === 0) {
-            pdf.addText('Keine Assets erfasst.');
+            pdf.addText(L.noAssets);
         } else {
             pdf.addTable(
-                ['ID', 'Name', 'Typ', 'C', 'I', 'A', 'Schutzbedarf'],
+                [L.colId, L.colName, L.colType, 'C', 'I', 'A', L.colSchutz],
                 assets.map(a => [
                     a.id || '-',
-                    a.name || '-',
+                    (typeof getLocalizedField === 'function' ? getLocalizedField(a, 'name', lang, { fallback: true }) : (a.name || '-')) || '-',
                     a.type || '-',
                     a.confidentiality || '-',
                     a.integrity || '-',
@@ -199,13 +201,18 @@
         // =============================================================
         // Chapter 4: Damage Scenarios
         // =============================================================
-        pdf.addH1('Schadensszenarien');
+        pdf.addH1(L.damageScenarios);
         if (dsList.length === 0) {
-            pdf.addText('Keine Schadensszenarien definiert.');
+            pdf.addText(L.noDs);
         } else {
             pdf.addTable(
-                ['ID', 'Kurz', 'Name', 'Beschreibung'],
-                dsList.map(ds => [ds.id, ds.short || '-', ds.name || '-', ds.description || '-']),
+                [L.colId, L.colShort, L.colName, L.colDesc],
+                dsList.map(ds => [
+                    ds.id,
+                    (typeof getLocalizedField === 'function' ? getLocalizedField(ds, 'short', lang, { fallback: true }) : (ds.short || '-')) || '-',
+                    (typeof getLocalizedField === 'function' ? getLocalizedField(ds, 'name', lang, { fallback: true }) : (ds.name || '-')) || '-',
+                    (typeof getLocalizedField === 'function' ? getLocalizedField(ds, 'description', lang, { fallback: true }) : (ds.description || '-')) || '-'
+                ]),
                 [14, 18, 55, (pdf.pageW - pdf.margin * 2) - (14 + 18 + 55)]
             );
         }
@@ -215,12 +222,12 @@
         // =============================================================
         doc.addPage();
         pdf.setY(pdf.margin);
-        pdf.addH1('Schadensauswirkungsmatrix');
+        pdf.addH1(L.impactMatrix);
         const impact = analysis.impactMatrix || {};
         if (assets.length === 0 || dsList.length === 0) {
-            pdf.addText('Impact-Matrix kann nicht dargestellt werden (Assets oder Szenarien fehlen).');
+            pdf.addText(L.impactMissing);
         } else {
-            pdf.addText('Tabelle: Assets (Y-Achse) vs. Schadensszenarien (X-Achse) mit farbiger Bewertung (High/Medium/Low/N/A).', 9, 4.2);
+            pdf.addText(L.impactHint, 9, 4.2);
             pdf.addImpactMatrixTable(assets, dsList, impact);
         }
 
@@ -229,9 +236,9 @@
         // =============================================================
         doc.addPage();
         pdf.setY(pdf.margin);
-        pdf.addH1('Risikoanalyse & Angriffsbäume');
+        pdf.addH1(L.riskAndTrees);
         if (risks.length === 0) {
-            pdf.addText('Keine Angriffsbäume vorhanden.');
+            pdf.addText(L.noTrees);
         } else {
             // Root-Node-Overview table (sorted by risk, critical first)
             const overviewSorted = [...risks].sort((a, b) => {
@@ -246,13 +253,13 @@
                     h.pVec(kstu.k, kstu.s, kstu.t, kstu.u),
                     h.fmtNumComma(entry.i_norm, 2),
                     h.fmtNumComma(rScore, 2),
-                    cls.label,
+                    riskLabel(cls.label),
                     h.sanitizePdfText((entry.notes || '').trim() || '-', true)
                 ];
             });
-            pdf.addH2('Root-Node-Uebersicht');
+            pdf.addH2(L.rootOverview);
             pdf.addTableGrid(
-                ['Root-Node', 'P (K/S/T/U)', 'I[norm]', 'R', 'Risikoklasse', 'Kommentar'],
+                [L.colRoot, L.colP, L.colInorm, L.colR, L.colRiskClass, L.colComment],
                 overviewRows,
                 [40, 35, 16, 14, 24, 39],
                 { zebra: true, noWrapCols: [1, 2, 3, 4], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
@@ -263,13 +270,13 @@
             sorted.forEach(entry => {
                 const cls = h.riskClassFromValue(entry.rootRiskValue);
                 pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
-                pdf.addKeyValue('Risk Score (R)', entry.rootRiskValue ?? '-');
-                pdf.addKeyValue('Risikoklasse', cls.label);
+                pdf.addKeyValue(L.riskScore, entry.rootRiskValue ?? '-');
+                pdf.addKeyValue(L.colRiskClass, riskLabel(cls.label));
                 if ((entry.notes || '').trim()) {
-                    pdf.addKeyValue('Notizen', h.sanitizePdfText(entry.notes, true));
+                    pdf.addKeyValue(L.notes, h.sanitizePdfText(entry.notes, true));
                 }
                 pdf.addSpacer(1);
-                pdf.addText('siehe Visualisierung Angriffsbaeume', 9, 4.2);
+                pdf.addText(L.seeTreeViz, 9, 4.2);
                 pdf.hLine();
             });
         }
@@ -290,7 +297,7 @@
                         : null;
 
                     if (dotContent) {
-                        if (typeof showToast === 'function') showToast('Erzeuge Angriffsbaum (SVG)\u2026 ' + (entry.id || ''), 'info');
+                        if (typeof showToast === 'function') showToast(L.toastTree + ' ' + (entry.id || ''), 'info');
                         svgText = await h.renderDotToSvg(dotContent);
                     }
                 } catch (_) {
@@ -312,7 +319,7 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
                 doc.setTextColor(0);
-                doc.text('Angriffsbaum ' + (entry.id || '') + ': ' + (entry.rootName || ''), treeMargin, treeMargin);
+                doc.text(L.attackTree + ' ' + (entry.id || '') + ': ' + (entry.rootName || ''), treeMargin, treeMargin);
                 doc.setFont('helvetica', 'normal');
 
                 // Watermark
@@ -320,7 +327,7 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(60);
                     doc.setTextColor(245);
-                    doc.text('Angriffsbaum', pageW / 2, pageH / 2, { align: 'center', angle: 35 });
+                    doc.text(L.attackTreeWm, pageW / 2, pageH / 2, { align: 'center', angle: 35 });
                 } catch (_) { /* noop */ }
                 doc.setTextColor(0);
                 doc.setFont('helvetica', 'normal');
@@ -348,15 +355,15 @@
                             doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
-                            doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', treeMargin, topY);
+                            doc.text(L.vizEmbedFail, treeMargin, topY);
                         }
                     } else {
                         doc.setFontSize(11);
-                        doc.text('Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', treeMargin, topY);
+                        doc.text(L.vizSvgFail, treeMargin, topY);
                     }
                 } else {
                     doc.setFontSize(11);
-                    doc.text('Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', treeMargin, topY);
+                    doc.text(L.vizGraphvizFail, treeMargin, topY);
                 }
             }
 
@@ -375,16 +382,16 @@
             doc.addPage();
         }
         pdf.setY(pdf.margin);
-        pdf.addH1('Security Objectives');
+        pdf.addH1(L.secObjectives);
 
         const secGoals = Array.isArray(analysis.securityGoals) ? analysis.securityGoals : [];
         if (secGoals.length === 0) {
-            pdf.addText('Keine Security Objectives definiert.');
+            pdf.addText(L.noSecObj);
         } else {
             const sortedSG = [...secGoals].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
             
             pdf.addTable(
-                ['ID', 'Name', 'Beschreibung', 'Ref. Risiken'],
+                [L.colId, L.colName, L.colDesc, L.colRefRisks],
                 sortedSG.map(sg => {
                     const refs = Array.isArray(sg.rootRefs) ? sg.rootRefs.join(', ') : '-';
                     return [
@@ -415,7 +422,7 @@
             doc.addPage();
         }
         pdf.setY(pdf.margin);
-        pdf.addH1('Restrisikoanalyse');
+        pdf.addH1(L.residualRisk);
 
         // Residual Risk Root-Node-Overview table
         const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
@@ -441,13 +448,13 @@
                     h.fmtNumComma(m ? m.i_norm : base.i_norm, 2),
                     origR,
                     resR,
-                    resMeta.label
+                    riskLabel(resMeta.label)
                 ]);
             });
             if (rrOverviewRows.length > 0) {
-                pdf.addH2('Root-Node-Uebersicht (Restrisiko)');
+                pdf.addH2(L.rootOverviewRr);
                 pdf.addTableGrid(
-                    ['Root-Node', 'P(RR) (K/S/T/U)', 'I[norm]', 'R', 'RR', 'Risikoklasse'],
+                    [L.colRoot, L.colPrr, L.colInorm, L.colR, L.colRR, L.colRiskClass],
                     rrOverviewRows,
                     [52, 38, 18, 16, 16, 28],
                     { zebra: true, noWrapCols: [1, 2, 3, 4, 5], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
@@ -456,10 +463,10 @@
             }
         }
 
-        pdf.addH2('Bewertung der Restrisiken');
+        pdf.addH2(L.residualEval);
 
         if (!rrEntries || rrEntries.length === 0 || typeof rrIterateLeaves !== 'function') {
-            pdf.addText('Keine Restrisikoanalyse-Daten vorhanden.');
+            pdf.addText(L.noResidualData);
         } else {
             const rows = [];
 
@@ -521,7 +528,7 @@
 
                     const rrNum = h.riskNum(iNorm, rk, rs, rt, ru);
                     const rrVal = isNaN(rrNum) ? '-' : h.fmtNumComma(rrNum, 2);
-                    const rrClass = isNaN(rrNum) ? 'Unbekannt' : h.riskClassFromValue(rrNum).label;
+                    const rrClass = isNaN(rrNum) ? riskLabel('Unbekannt') : riskLabel(h.riskClassFromValue(rrNum).label);
 
                     const prrVec = (treatment === 'Mitigiert') ? h.pVec(rk, rs, rt, ru) : '-';
 
@@ -535,7 +542,7 @@
                         treeRefId,
                         rootName,
                         impactText,
-                        treatment,
+                        (ri && ri.mapTreatment) ? ri.mapTreatment(treatment, lang) : treatment,
                         oR,
                         rrTxt,
                         sec,
@@ -545,10 +552,10 @@
             });
 
             if (rows.length === 0) {
-                pdf.addText('Keine Auswirkungen in der Restrisikoanalyse gefunden.');
+                pdf.addText(L.noResidualImpacts);
             } else {
                 pdf.addTableGrid(
-                    ['', 'Baum Name', 'Auswirkung', 'Behandlung', 'R', 'RR', 'Ma\u00dfnahme', 'Anmerkung'],
+                    ['', L.colTreeName, L.colImpact, L.colTreatment, L.colR, L.colRR, L.colMeasure, L.colRemark],
                     rows,
                     [14, 22, 35, 20, 11, 11, 77, 77],
                     { zebra: true, noWrapCols: [0, 3, 4, 5], headerFill: [250, 250, 250], headerTextColor: [20, 20, 20], zebraFill: [252, 252, 252], borderColor: [190, 190, 190], headerFontSize: 10, cellFontSize: 9 }
@@ -572,7 +579,7 @@
                         : null;
 
                     if (rrDot) {
-                        if (typeof showToast === 'function') showToast('Erzeuge Restrisiko-Baum (SVG)\u2026 ' + (entry.id || ''), 'info');
+                        if (typeof showToast === 'function') showToast(L.toastRrTree + ' ' + (entry.id || ''), 'info');
                         rrSvgText = await h.renderDotToSvg(rrDot);
                     }
                 } catch (_) {
@@ -594,7 +601,7 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
                 doc.setTextColor(0);
-                doc.text('Restrisiko-Baum ' + (entry.id || '') + ': ' + (entry.rootName || ''), rrMargin, rrMargin);
+                doc.text(L.residualTree + ' ' + (entry.id || '') + ': ' + (entry.rootName || ''), rrMargin, rrMargin);
                 doc.setFont('helvetica', 'normal');
 
                 // Watermark
@@ -602,7 +609,7 @@
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(56);
                     doc.setTextColor(245);
-                    doc.text('Restrisiko', rrPageW / 2, rrPageH / 2, { align: 'center', angle: 35 });
+                    doc.text(L.residualWm, rrPageW / 2, rrPageH / 2, { align: 'center', angle: 35 });
                 } catch (_) { /* noop */ }
                 doc.setTextColor(0);
                 doc.setFont('helvetica', 'normal');
@@ -630,15 +637,15 @@
                             doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
-                            doc.text('Restrisiko-Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', rrMargin, rrTopY);
+                            doc.text(L.rrVizEmbedFail, rrMargin, rrTopY);
                         }
                     } else {
                         doc.setFontSize(11);
-                        doc.text('Restrisiko-Visualisierung konnte nicht erzeugt werden (SVG-Konvertierung fehlgeschlagen).', rrMargin, rrTopY);
+                        doc.text(L.rrVizSvgFail, rrMargin, rrTopY);
                     }
                 } else {
                     doc.setFontSize(11);
-                    doc.text('Restrisiko-Visualisierung konnte nicht erzeugt werden (Graphviz-Service nicht erreichbar).', rrMargin, rrTopY);
+                    doc.text(L.rrVizGraphvizFail, rrMargin, rrTopY);
                 }
             }
 
@@ -657,8 +664,8 @@
             doc.addPage();
         }
         pdf.setY(pdf.margin);
-        pdf.addTitle('Freigabe');
-        pdf.addH2('Unterschriften');
+        pdf.addTitle(L.approval);
+        pdf.addH2(L.signatures);
         pdf.addSpacer(8);
 
         const drawSignatureRow = (roleLabel) => {
@@ -681,15 +688,15 @@
 
             // Date
             doc.setFontSize(10);
-            doc.text('Datum', dateLabelX, y0);
+            doc.text(L.date, dateLabelX, y0);
             doc.line(dateX1, y0 + 1.5, dateX2, y0 + 1.5);
 
             pdf.setY(y0 + 16);
         };
 
-        drawSignatureRow('1. Autor');
-        drawSignatureRow('2. Reviewer');
-        drawSignatureRow('3. Genehmiger');
+        drawSignatureRow(L.roleAuthor);
+        drawSignatureRow(L.roleReviewer);
+        drawSignatureRow(L.roleApprover);
 
         // =============================================================
         // Page Numbers (Page X of Y)
@@ -703,7 +710,7 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
                 doc.setTextColor(120);
-                doc.text(`Seite ${i} von ${pageCount}`, w - pdf.margin, hh - 8, { align: 'right' });
+                doc.text(L.pageOf(i, pageCount), w - pdf.margin, hh - 8, { align: 'right' });
                 doc.setTextColor(0);
             }
         } catch (_) { /* noop */ }
@@ -711,9 +718,12 @@
         // =============================================================
         // Save PDF
         // =============================================================
-        const fname = h.sanitizeFilename(`Bedrohungs_und_Risikoanalyse_${analysis.name || analysis.id}_${now.toISOString().substring(0, 10)}`) + '.pdf';
+        const langSuffix = lang === 'en' ? 'en' : 'de';
+        const fname = h.sanitizeFilename(
+            `${L.fileBase}_${analysis.name || analysis.id}_${now.toISOString().substring(0, 10)}_${langSuffix}`
+        ) + '.pdf';
         doc.save(fname);
-        if (typeof showToast === 'function') showToast('PDF Report erstellt.', 'success');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.reportOk', lang) : 'PDF Report erstellt.'), 'success');
     }
 
     // Expose

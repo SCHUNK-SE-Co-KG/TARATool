@@ -142,16 +142,20 @@
             const fontSizeCell = 9;
             const lineH = 4.5;
 
-            // Header
+            // Header (wrap long labels to avoid overlap, e.g. EN)
             ensureSpace(8);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(fontSizeHeader);
+            const headerWrapped = headers.map((hTxt, i) => {
+                const w = widths[i] - cellPadding * 2;
+                return doc.splitTextToSize(String(hTxt || ''), Math.max(8, w));
+            });
+            const headerH = Math.max(...headerWrapped.map(a => a.length)) * lineH;
             for (let i = 0; i < headers.length; i++) {
-                const txt = String(headers[i] || '');
-                doc.text(txt, xPos[i] + cellPadding, y);
+                doc.text(headerWrapped[i], xPos[i] + cellPadding, y);
             }
             doc.setFont('helvetica', 'normal');
-            y += 6;
+            y += Math.max(6, headerH + 1);
             doc.setDrawColor(220);
             doc.line(margin, y - 4, doc.internal.pageSize.getWidth() - margin, y - 4);
 

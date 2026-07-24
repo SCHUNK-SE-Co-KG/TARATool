@@ -10,6 +10,26 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // Theme + language (sliders)
+    if (typeof TaraPrefs !== 'undefined' && TaraPrefs.applyPrefsOnLoad) {
+        TaraPrefs.applyPrefsOnLoad();
+    }
+    const swTheme = document.getElementById('toggleTheme');
+    if (swTheme && typeof TaraPrefs !== 'undefined') {
+        swTheme.addEventListener('change', () => TaraPrefs.setTheme(swTheme.checked ? 'light' : 'dark'));
+    }
+    const swLang = document.getElementById('toggleLang');
+    if (swLang && typeof TaraPrefs !== 'undefined') {
+        swLang.addEventListener('change', () => TaraPrefs.setLang(swLang.checked ? 'de' : 'en'));
+    }
+    window.onTaraLangChanged = function () {
+        const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
+        const activeTab = document.querySelector('.tab-button.active')?.dataset?.tab || 'tabOverview';
+        if (analysis && typeof renderActiveTab === 'function') {
+            renderActiveTab(analysis, activeTab);
+        }
+    };
+
     // Refresh todayISO so it's current even if the page was loaded yesterday
     todayISO = getTodayISO();
     

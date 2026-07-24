@@ -13,13 +13,15 @@ const riskAnalysisContainerEl = document.getElementById('riskAnalysisContainer')
 function renderRiskAnalysis() {
     const analysis = getActiveAnalysis();
     if (!analysis) return;
-    if (!riskAnalysisContainerEl) return; 
+    if (!riskAnalysisContainerEl) return;
+
+    const _t = (k) => (typeof t === 'function' ? t(k) : k);
 
     if (!analysis.assets || analysis.assets.length === 0) {
         riskAnalysisContainerEl.innerHTML = `
             <div class="warning-box">
-                <h4>Fehlende Daten: Assets</h4>
-                <p>Es wurden noch keine Schutzobjekte (Assets) im Reiter "Assets" erfasst.</p>
+                <h4>${_t('risk.missingAssets')}</h4>
+                <p>${_t('risk.missingAssetsHint')}</p>
             </div>
         `;
         return;
@@ -29,18 +31,18 @@ function renderRiskAnalysis() {
     if (allDS.length === 0) {
         riskAnalysisContainerEl.innerHTML = `
             <div class="warning-box">
-                <h4>Fehlende Daten: Schadensszenarien</h4>
-                <p>Bitte definieren Sie zuerst Schadensszenarien.</p>
+                <h4>${_t('risk.missingDs')}</h4>
+                <p>${_t('risk.missingDsHint')}</p>
             </div>
         `;
         return;
     }
-    
+
     riskAnalysisContainerEl.innerHTML = `
         <div class="success-box" style="margin-bottom:20px;">
-            <div style="display:flex; gap:10px;">
-                <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> Neuen Angriffsbaum erstellen</button>
-                <button onclick="downloadDotFile()" class="action-button large"><i class="fas fa-file-export"></i> Export (.dot)</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button id="btnOpenAttackTreeModal" class="primary-button large"><i class="fas fa-sitemap"></i> ${_t('btn.createTree')}</button>
+                <button onclick="downloadDotFile()" class="action-button large"><i class="fas fa-file-export"></i> ${_t('btn.exportDot')}</button>
             </div>
         </div>
         <div id="rootOverviewContainer">
@@ -52,13 +54,16 @@ function renderRiskAnalysis() {
     `;
 
     const btn = document.getElementById('btnOpenAttackTreeModal');
-    if (btn) btn.onclick = () => { if (typeof openAttackTreeModal === 'function') openAttackTreeModal(); }; 
+    if (btn) btn.onclick = () => { if (typeof openAttackTreeModal === 'function') openAttackTreeModal(); };
 }
 
 /* ── Root-Node-Overview Panel ──────────────────────────────────────── */
 
 function renderRootOverview(analysis) {
     if (!analysis.riskEntries || analysis.riskEntries.length === 0) return '';
+
+    const _t = (k) => (typeof t === 'function' ? t(k) : k);
+    const _rl = (lbl) => (typeof tRiskLabel === 'function' ? tRiskLabel(lbl) : lbl);
 
     const fmt = (val) => {
         if (val === null || val === undefined || val === '') return '0,0';
@@ -70,14 +75,13 @@ function renderRootOverview(analysis) {
         return `${fmt(kstu.k)} / ${fmt(kstu.s)} / ${fmt(kstu.t)} / ${fmt(kstu.u)}`;
     };
 
-    // Sort descending by rootRiskValue (most critical first)
     const sorted = [...analysis.riskEntries].sort((a, b) => {
         const ra = parseFloat(a.rootRiskValue) || 0;
         const rb = parseFloat(b.rootRiskValue) || 0;
         return rb - ra;
     });
 
-    let html = '<h4>Root-Node-Übersicht (alle Angriffsbäume):</h4>';
+    let html = `<h4>${_t('risk.rootOverview')}</h4>`;
     html += '<div class="root-overview-grid">';
 
     sorted.forEach(entry => {
@@ -96,7 +100,7 @@ function renderRootOverview(analysis) {
                 <div class="root-overview-row">P = ${escapeHtml(pStr(kstu))}</div>
                 <div class="root-overview-row">I[norm] = ${escapeHtml(fmt(iNorm))}</div>
                 <div class="root-overview-row root-overview-risk">R = ${escapeHtml(fmt(rScore.toFixed(2)))}
-                    <span class="root-overview-badge" style="background:${meta.color}; color:#fff;">${escapeHtml(meta.label)}</span>
+                    <span class="root-overview-badge" style="background:${meta.color}; color:#fff;">${escapeHtml(_rl(meta.label))}</span>
                 </div>
             </div>`;
     });
@@ -106,11 +110,14 @@ function renderRootOverview(analysis) {
 }
 
 function renderExistingRiskEntries(analysis) {
+    const _t = (k) => (typeof t === 'function' ? t(k) : k);
+    const _rl = (lbl) => (typeof tRiskLabel === 'function' ? tRiskLabel(lbl) : lbl);
+
     if (!analysis.riskEntries || analysis.riskEntries.length === 0) {
-        return '<p style="color: #7f8c8d;">Noch keine Angriffs-Bäume angelegt.</p>';
+        return `<p class="muted-hint">${_t('risk.none')}</p>`;
     }
 
-    let html = '<h4>Gespeicherte Angriffsbäume:</h4><ul style="list-style:none; padding:0;">';
+    let html = `<h4>${_t('risk.savedTrees')}</h4><ul class="entry-list">`;
     analysis.riskEntries.forEach(entry => {
         const meta = getRiskMeta(entry.rootRiskValue);
         const eId = escapeHtml(entry.id);
@@ -118,23 +125,23 @@ function renderExistingRiskEntries(analysis) {
         const hasNotes = (entry.notes || '').trim().length > 0;
 
         html += `
-            <li style="background:#fff; border:1px solid #ddd; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center; border-left: 5px solid ${meta.color};">
+            <li class="entry-list-item" style="border-left-color:${meta.color};">
                 <div>
-                    <strong>${eId}</strong>: ${eName} <br> 
-                    <span style="color:#666; font-size:0.9em;">
-                        Risk Score (R): <b style="color:${meta.color}">${escapeHtml(meta.display)}</b> 
-                        <span style="margin-left:5px; padding:2px 6px; border-radius:3px; background:${meta.color}; color:#fff; font-size:0.8em;">${escapeHtml(meta.label)}</span>
+                    <strong>${eId}</strong>: ${eName} <br>
+                    <span class="entry-list-meta">
+                        ${_t('risk.score')} <b style="color:${meta.color}">${escapeHtml(meta.display)}</b>
+                        <span class="root-overview-badge" style="margin-left:5px; background:${meta.color}; color:#fff;">${escapeHtml(_rl(meta.label))}</span>
                     </span>
                 </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <button onclick="openTreeNotes('${eId}')" class="action-button small" title="Notizen">
+                <div class="entry-list-actions">
+                    <button onclick="openTreeNotes('${eId}')" class="action-button small" title="${_t('risk.notes')}">
                         <i class="fas fa-sticky-note${hasNotes ? ' tree-note-active' : ''}"></i>
                     </button>
                     <button onclick="editAttackTree('${eId}')" class="action-button small">
-                        <i class="fas fa-edit"></i> Bearbeiten
+                        <i class="fas fa-edit"></i> ${_t('btn.edit')}
                     </button>
                     <button onclick="deleteAttackTree('${eId}')" class="action-button small dangerous">
-                        <i class="fas fa-trash"></i> Löschen
+                        <i class="fas fa-trash"></i> ${_t('btn.delete')}
                     </button>
                 </div>
             </li>
@@ -155,8 +162,9 @@ window.openTreeNotes = function(riskId) {
     const modal = document.getElementById('treeNotesModal');
     if (!modal) return;
 
+    const notesLabel = (typeof t === 'function' ? t('risk.notes') : 'Notizen');
     document.getElementById('treeNotesTitle').textContent =
-        'Notizen: ' + (entry.id || '') + ' – ' + (entry.rootName || '');
+        notesLabel + ': ' + (entry.id || '') + ' – ' + (entry.rootName || '');
     document.getElementById('treeNotesText').value = entry.notes || '';
     modal.dataset.riskId = riskId;
     modal.style.display = 'block';
@@ -176,9 +184,8 @@ window.saveTreeNotes = function() {
     saveAnalyses();
     modal.style.display = 'none';
 
-    // Refresh list to update note indicator
     renderRiskAnalysis();
-    if (typeof showToast === 'function') showToast('Notiz gespeichert.', 'success');
+    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('risk.notes') : 'Notiz') + ' OK', 'success');
 };
 
 window.editAttackTree = function(riskId) {
@@ -197,7 +204,6 @@ function reindexRiskIDs(analysis) {
         if (entry.id !== newId) idMap[entry.id] = newId;
         entry.id = newId;
     });
-    // Update rootRefs in securityGoals: remap renamed IDs, remove stale refs
     if (analysis.securityGoals) {
         const validIds = new Set(analysis.riskEntries.map(e => e.id));
         analysis.securityGoals.forEach(sg => {
@@ -217,15 +223,15 @@ window.deleteAttackTree = function(riskId) {
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
+    const delLabel = (typeof t === 'function' ? t('btn.delete') : 'Löschen');
     showConfirmation({
-        title: 'Angriffsbaum löschen',
-        messageHtml: `Möchten Sie den Angriffsbaum <b>${escapeHtml(entry.id)}: ${escapeHtml(entry.rootName)}</b> wirklich löschen?`,
-        confirmText: 'Löschen',
+        title: delLabel,
+        messageHtml: `<b>${escapeHtml(entry.id)}: ${escapeHtml(entry.rootName)}</b>`,
+        confirmText: delLabel,
         onConfirm: () => {
             analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
             reindexRiskIDs(analysis);
 
-            // Update residual risk structure (separate data management)
             try {
                 if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
                     syncResidualRiskFromRiskAnalysis(analysis, false);
@@ -234,13 +240,13 @@ window.deleteAttackTree = function(riskId) {
                 console.warn('[deleteAttackTree] Residual risk sync failed:', e);
             }
             saveAnalyses();
-            
-            // Close AttackTree modal if open (explicit DOM lookup, ES-module-safe)
+
             const attackTreeModalEl = document.getElementById('attackTreeModal');
             if (attackTreeModalEl) attackTreeModalEl.style.display = 'none';
-            
+
             renderRiskAnalysis();
-            showToast('Angriffsbaum gelöscht.', 'success');
+            showToast(delLabel + ' OK', 'success');
         }
     });
 };
+
