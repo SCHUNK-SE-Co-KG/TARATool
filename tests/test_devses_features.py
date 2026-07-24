@@ -294,8 +294,8 @@ class TestDotExportV2:
         }""")
         assert "rank=source" in dot
 
-    def test_dot_uses_concentrate(self, app: Page):
-        """DOT uses concentrate=true for edge merging."""
+    def test_dot_uses_polyline_splines(self, app: Page):
+        """DOT uses splines=polyline for junction-bus routing."""
         page = app
         _prepare_risk_prereqs(page)
         _create_tree_with_paths(page)
@@ -303,7 +303,7 @@ class TestDotExportV2:
             const a = analysisData.find(x => x.id === activeAnalysisId);
             return generateDotString(a);
         }""")
-        assert "concentrate=true" in dot
+        assert "splines=polyline" in dot
 
     def test_dot_shows_risk_values(self, app: Page):
         """DOT labels must include P, I[norm], and R values."""
