@@ -18,30 +18,34 @@ const btnAddAssetEl          = document.getElementById('btnAddAsset');
 function renderAssets(analysis) {
     if (!assetsCardContainerEl) return;
     assetsCardContainerEl.innerHTML = '';
+    const _t = (k) => (typeof t === 'function' ? t(k) : k);
+    const _loc = (obj, field) => (typeof getLocalizedField === 'function' ? getLocalizedField(obj, field) : (obj?.[field] || ''));
 
     if (!analysis.assets || analysis.assets.length === 0) {
-        assetsCardContainerEl.innerHTML = '<p style="color: #7f8c8d; grid-column: 1/-1; text-align: center;">Noch keine Assets vorhanden. Klicken Sie auf "Asset hinzufügen".</p>';
+        assetsCardContainerEl.innerHTML = `<p class="muted-hint" style="grid-column: 1/-1; text-align: center;">${_t('assets.empty')}</p>`;
         return;
     }
 
     analysis.assets.forEach(asset => {
         const card = document.createElement('div');
         card.className = 'asset-card';
-        const eName = escapeHtml(asset.name);
+        const name = _loc(asset, 'name');
+        const descRaw = _loc(asset, 'description');
+        const eName = escapeHtml(name);
         const eType = escapeHtml(asset.type || '-');
-        const eDesc = asset.description
-            ? escapeHtml(asset.description.substring(0, 100)) + (asset.description.length > 100 ? '...' : '')
-            : 'Keine Beschreibung';
+        const eDesc = descRaw
+            ? escapeHtml(descRaw.substring(0, 100)) + (descRaw.length > 100 ? '...' : '')
+            : _t('assets.noDesc');
         const eId = escapeHtml(asset.id);
 
         card.innerHTML = `
             <div class="asset-card-header">${eId}: ${eName}</div>
             <div class="asset-description-area">
-                <strong>Typ:</strong> ${eType}<br><br>
+                <strong>${_t('assets.type')}</strong> ${eType}<br><br>
                 ${eDesc}
             </div>
             <div class="asset-cia-area">
-                <div style="font-weight:600; font-size:0.8em; margin-bottom:2px; text-transform:uppercase; color:#999;">Schutzbedarf</div>
+                <div style="font-weight:600; font-size:0.8em; margin-bottom:2px; text-transform:uppercase; color:#999;">${_t('assets.schutz')}</div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold;">
                     <span title="Confidentiality">C: ${escapeHtml(asset.confidentiality || '-')}</span>
                     <span title="Integrity">I: ${escapeHtml(asset.integrity || '-')}</span>
@@ -49,8 +53,8 @@ function renderAssets(analysis) {
                 </div>
             </div>
             <div class="asset-card-footer">
-                <button onclick="editAsset('${eId}')" class="action-button small">Bearbeiten</button>
-                <button onclick="removeAsset('${eId}')" class="action-button small dangerous">Löschen</button>
+                <button onclick="editAsset('${eId}')" class="action-button small">${_t('btn.edit')}</button>
+                <button onclick="removeAsset('${eId}')" class="action-button small dangerous">${_t('btn.delete')}</button>
             </div>
         `;
         assetsCardContainerEl.appendChild(card);
@@ -71,7 +75,7 @@ function saveAsset(e) {
     const name = nameField.value.trim();
     
     if (!name) {
-        showToast('Name ist erforderlich.', 'warning');
+        showToast((typeof t === 'function' ? t('assets.empty') : 'Name'), 'warning');
         return;
     }
 
@@ -102,17 +106,23 @@ function saveAsset(e) {
         // Edit
         const index = analysis.assets.findIndex(a => a.id === assetId);
         if (index !== -1) {
-            analysis.assets[index] = {
+            const updated = {
                 ...analysis.assets[index],
-                name: name,
                 type: typeField.value,
-                description: descField.value,
                 confidentiality: cia.c,
                 integrity: cia.i,
                 authenticity: cia.a,
                 schutzbedarf: schutzbedarf
             };
-            showToast(`Asset ${assetId} aktualisiert.`, 'success');
+            if (typeof setLocalizedField === 'function') {
+                setLocalizedField(updated, 'name', name);
+                setLocalizedField(updated, 'description', descField.value);
+            } else {
+                updated.name = name;
+                updated.description = descField.value;
+            }
+            analysis.assets[index] = updated;
+            showToast(`Asset ${assetId} OK`, 'success');
         }
     } else {
         // New
@@ -120,18 +130,25 @@ function saveAsset(e) {
         const existingIds = analysis.assets.map(a => parseInt(a.id.replace('A', ''))).filter(n => !isNaN(n));
         const newIndex = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
         const newId = 'A' + newIndex.toString().padStart(2, '0');
-        
-        analysis.assets.push({
+        const created = {
             id: newId,
-            name: name,
+            name: '',
             type: typeField.value,
-            description: descField.value,
+            description: '',
             confidentiality: cia.c,
             integrity: cia.i,
             authenticity: cia.a,
             schutzbedarf: schutzbedarf
-        });
-        showToast(`Asset ${newId} erstellt.`, 'success');
+        };
+        if (typeof setLocalizedField === 'function') {
+            setLocalizedField(created, 'name', name);
+            setLocalizedField(created, 'description', descField.value);
+        } else {
+            created.name = name;
+            created.description = descField.value;
+        }
+        analysis.assets.push(created);
+        showToast(`Asset ${newId} OK`, 'success');
     }
 
     saveAnalyses();
@@ -146,11 +163,11 @@ window.editAsset = (id) => {
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
-    if (assetModalTitleEl) assetModalTitleEl.textContent = `Asset ${asset.id} bearbeiten`;
+    if (assetModalTitleEl) assetModalTitleEl.textContent = `Asset ${asset.id}`;
     document.getElementById('assetIdField').value = asset.id;
-    document.getElementById('assetName').value = asset.name;
+    document.getElementById('assetName').value = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'name') : (asset.name || '');
     document.getElementById('assetType').value = asset.type || '';
-    document.getElementById('assetDescription').value = asset.description || '';
+    document.getElementById('assetDescription').value = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'description') : (asset.description || '');
 
     // Set radio buttons
     const setRadio = (radioName, val) => {
