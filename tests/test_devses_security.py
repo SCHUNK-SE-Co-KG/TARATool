@@ -248,16 +248,21 @@ class TestScriptIntegrity:
         """jsPDF script tag should have integrity attribute."""
         html = (PROJECT_ROOT / "index.html").read_text(encoding="utf-8")
         assert "jspdf" in html.lower(), "jsPDF script tag must be present"
-        jspdf_section = html.split("jspdf")[1].split(">")[0]
-        assert 'integrity=' in jspdf_section, \
+        # Find the script tag containing jspdf
+        import re
+        match = re.search(r'<script[^>]*jspdf[^>]*>', html)
+        assert match, "jsPDF script tag not found"
+        assert 'integrity=' in match.group(0), \
             "jsPDF CDN script missing integrity attribute"
 
     def test_jszip_has_integrity(self):
         """JSZip script tag should have integrity attribute."""
         html = (PROJECT_ROOT / "index.html").read_text(encoding="utf-8")
         assert "jszip" in html.lower(), "JSZip script tag must be present"
-        jszip_section = html.split("jszip")[1].split(">")[0]
-        assert 'integrity=' in jszip_section, \
+        import re
+        match = re.search(r'<script[^>]*jszip[^>]*>', html)
+        assert match, "JSZip script tag not found"
+        assert 'integrity=' in match.group(0), \
             "JSZip CDN script missing integrity attribute"
 
     def test_fontawesome_is_loaded(self):
