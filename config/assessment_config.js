@@ -1,0 +1,260 @@
+/**
+ * @file assessment_config.js
+ * @description Portable assessment config for file:// usage (no web server).
+ *              AUTO-GENERATED from assessment_config.json – do not edit by hand.
+ *              After changing the JSON, run: tools/sync_assessment_config.bat
+ */
+window.__ASSESSMENT_CONFIG_PRELOAD__ = {
+  "_meta": {
+    "version": "1.0",
+    "description": "Assessment configuration for TARA Tool – impact matrix scalars, risk thresholds and probability criteria. This file can be updated independently during annual reviews without changing source code.",
+    "lastModified": "2026-02-19",
+    "author": "SCHUNK SE & Co. KG"
+  },
+  "impactScale": {
+    "validValues": [
+      "N/A",
+      "1",
+      "2",
+      "3"
+    ],
+    "labels": {
+      "N/A": "N/A",
+      "1": "Low",
+      "2": "Medium",
+      "3": "High"
+    },
+    "cssClasses": {
+      "3": "impact-high",
+      "2": "impact-medium",
+      "1": "impact-low",
+      "N/A": "impact-na"
+    }
+  },
+  "severityLevelFactors": {
+    "0": 0.0,
+    "1": 0.3,
+    "2": 0.6,
+    "3": 1.0
+  },
+  "protectionLevels": {
+    "weights": {
+      "I": 0.6,
+      "II": 0.8,
+      "III": 1.0
+    },
+    "ranking": {
+      "-": 0,
+      "I": 1,
+      "II": 2,
+      "III": 3
+    }
+  },
+  "probabilityCriteria": {
+    "K": {
+      "label": "K (Komplexität)",
+      "fullLabel": "Komplexität (Knowledge / Complexity)",
+      "options": [
+        {
+          "value": "0.7",
+          "text": "0,7 - Bekannte Schwachstellen (z.B. CVE, Errata)"
+        },
+        {
+          "value": "0.6",
+          "text": "0,6 - Einfache Internetrecherche (z.B. einfache Foren)"
+        },
+        {
+          "value": "0.3",
+          "text": "0,3 - Experten Recherche (z.B. spezifische Foren, Onionnet)"
+        },
+        {
+          "value": "0.1",
+          "text": "0,1 - Expertenwissen"
+        }
+      ]
+    },
+    "S": {
+      "label": "S (Skalierung)",
+      "fullLabel": "Skalierung (Scaling)",
+      "options": [
+        {
+          "value": "0.5",
+          "text": "0,5 - IT-Netzwerk beim Kunden)"
+        },
+        {
+          "value": "0.3",
+          "text": "0,3 - OT-Netzwerk beim Kunden"
+        },
+        {
+          "value": "0.1",
+          "text": "0,1 - Einzelprodukt/ lokale Maschine"
+        }
+      ]
+    },
+    "T": {
+      "label": "T (Zeit)",
+      "fullLabel": "Zeit / Aufwand (Time)",
+      "options": [
+        {
+          "value": "0.5",
+          "text": "0,5 - < 1 Woche"
+        },
+        {
+          "value": "0.4",
+          "text": "0,4 - < 4 Wochen"
+        },
+        {
+          "value": "0.2",
+          "text": "0,2 - < 3 Monate"
+        },
+        {
+          "value": "0.1",
+          "text": "0,1 - > 3 Monate"
+        }
+      ]
+    },
+    "U": {
+      "label": "U (Nutzen)",
+      "fullLabel": "Sichtbarer Nutzen für Angreifer (Utility)",
+      "options": [
+        {
+          "value": "0.5",
+          "text": "0,5 - Groß"
+        },
+        {
+          "value": "0.3",
+          "text": "0,3 - Mittel"
+        },
+        {
+          "value": "0.1",
+          "text": "0,1 - Klein"
+        }
+      ]
+    }
+  },
+  "riskThresholds": [
+    {
+      "min": 2.0,
+      "label": "Kritisch",
+      "labelEn": "critical",
+      "color": "#c0392b",
+      "colorRGB": [
+        192,
+        57,
+        43
+      ]
+    },
+    {
+      "min": 1.6,
+      "label": "Hoch",
+      "labelEn": "high",
+      "color": "#e67e22",
+      "colorRGB": [
+        230,
+        126,
+        34
+      ]
+    },
+    {
+      "min": 0.8,
+      "label": "Mittel",
+      "labelEn": "medium",
+      "color": "#f39c12",
+      "colorRGB": [
+        243,
+        156,
+        18
+      ]
+    },
+    {
+      "min": 0,
+      "label": "Niedrig",
+      "labelEn": "low",
+      "color": "#27ae60",
+      "colorRGB": [
+        39,
+        174,
+        96
+      ]
+    }
+  ],
+  "riskUnknown": {
+    "label": "Unbekannt",
+    "color": "#7f8c8d",
+    "colorRGB": [
+      127,
+      140,
+      141
+    ]
+  },
+  "defaultDamageScenarios": [
+    {
+      "id": "DS1",
+      "name": "Gefahr für Leib und Leben",
+      "short": "Safety",
+      "description": "Verletzung von Personen oder lebensbedrohliche Situationen."
+    },
+    {
+      "id": "DS2",
+      "name": "Finanzieller Schaden",
+      "short": "Financial",
+      "description": "Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz)."
+    },
+    {
+      "id": "DS3",
+      "name": "Verlust von geistigem Eigentum",
+      "short": "IP loss",
+      "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.)."
+    },
+    {
+      "id": "DS4",
+      "name": "Verlust Privatsphäre/Daten",
+      "short": "Privacy",
+      "description": "Verlust sensibler persönlicher oder technischer Daten."
+    },
+    {
+      "id": "DS5",
+      "name": "Rechtliche Konsequenzen",
+      "short": "Legal",
+      "description": "Verstoß gegen Gesetze oder Vorschriften."
+    }
+  ],
+  "strideCategories": [
+    {
+      "id": "S",
+      "name": "Spoofing (Identitätstäuschung)",
+      "short": "S",
+      "description": "Kann sich ein Angreifer oder ein fremdes Gerät als vertrauenswürdiger Teilnehmer ausgeben, um Zugriff zu erhalten? (z. B. ein gefälschtes Servicetool)."
+    },
+    {
+      "id": "T",
+      "name": "Tampering (Manipulation)",
+      "short": "T",
+      "description": "Können Daten, Parameter, Konfigurationen oder die Firmware auf dem Gerät oder während der Übertragung unbefugt verändert werden?"
+    },
+    {
+      "id": "R",
+      "name": "Repudiation (Abstreitbarkeit)",
+      "short": "R",
+      "description": "Können kritische Aktionen durchgeführt werden, ohne dass wir im Nachhinein nachweisen können, wer es war? (Fehlende oder manipulierbare Logs)."
+    },
+    {
+      "id": "I",
+      "name": "Information Disclosure (Informationsenthüllung)",
+      "short": "I",
+      "description": "Können schützenswerte Informationen (z. B. Passwörter, Rezepturen, Kundendaten oder Know-how) von Unbefugten ausgelesen werden?"
+    },
+    {
+      "id": "D",
+      "name": "Denial of Service (Dienstverweigerung)",
+      "short": "D",
+      "description": "Kann das System so sabotiert oder überlastet werden, dass es seine Funktion einstellt oder träge wird? (z. B. Blockade der Steuerung)."
+    },
+    {
+      "id": "E",
+      "name": "Elevation of Privilege (Rechteausweitung)",
+      "short": "E",
+      "description": "Kann ein Nutzer mit geringen Rechten (z. B. Gast/Operator) Berechtigungen erlangen, die ihm nicht zustehen (z. B. Admin-/Service-Rechte)?"
+    }
+  ]
+};

@@ -1,0 +1,179 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests
+configfile: pytest.ini
+plugins: base-url-2.1.0, html-4.2.0, metadata-3.1.1, playwright-0.7.2, timeout-2.4.0, xdist-3.8.0
+timeout: 10.0s
+timeout method: thread
+timeout func_only: False
+collected 27 items
+
+test_security_fixes.py FFFFFFFF.F.FF..FF.FF.FFFF..                       [100%]
+
+================================== FAILURES ===================================
+E   AssertionError: XSS payload rendered as live HTML in metadata: 
+                  <span>Version: 0.1</span> | 
+                  <span>Autor: <img src="x" onerror="alert(1)"></span> | 
+                  <span>Datum: 2026-04-27</span>
+              
+    assert ('<img' not in '\n         ...n>\n        '
+      
+      '<img' is contained here:
+        an>autor: <img src="x" onerror="alert(1)"></span> | 
+      ?           ++++
+                    <span>datum: 2026-04-27</span>
+                 or 'onerror' not in '\n         ...n>\n        '
+      
+      'onerror' is contained here:
+        g src="x" onerror="alert(1)"></span> | 
+      ?           +++++++
+                    <span>datum: 2026-04-27</span>
+                )
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:68: AssertionError: XSS payload rendered as live HTML in metadata:
+E   AssertionError: Field 'author' not escaped: raw <b> tag found in innerHTML
+    assert ('&lt;b&gt;' in '\n            <span>Version: 0.1</span> | \n            <span>Autor: <b>test</b></span> | \n            <span>Datum: 2026-04-27</span>\n        ' or '\\u003c' in '\n            <span>Version: 0.1</span> | \n            <span>Autor: <b>test</b></span> | \n            <span>Datum: 2026-04-27</span>\n        ' or '<b>test</b>' not in '\n         ...n>\n        '
+      
+      '<b>test</b>' is contained here:
+        n>Autor: <b>test</b></span> | 
+      ?          +++++++++++
+                    <span>Datum: 2026-04-27</span>
+                )
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:89: AssertionError: Field 'author' not escaped: raw <b> tag found in innerHTML
+E   AssertionError: XSS payload executed in fillAnalysisForm!
+    assert True is False
+     +  where True = evaluate('window.__xss_sentinel')
+     +    where evaluate = <Page url='file:///C:/Users/R011239/Documents/Webapp/TRA/TARATool/index.html'>.evaluate
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:103: AssertionError: XSS payload executed in fillAnalysisForm!
+E   AssertionError: XSS payload in delete confirmation: Sind Sie sicher, dass Sie die Analyse <strong><img src="x" onerror="alert(1)"></strong> unwiderruflich l�schen m�chten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsb�ume gehen verloren!</span>
+    assert ('<img' not in 'sind sie si...oren!</span>'
+      
+      '<img' is contained here:
+        e <strong><img src="x" onerror="alert(1)"></strong> unwiderruflich l�schen m�chten? <br><br><span style="color:red;">warnung: alle assets, schadensszenarien und angriffsb�ume gehen verloren!</span>
+      ?           ++++ or 'onerror' not in 'sind sie si...oren!</span>'
+      
+      'onerror' is contained here:
+        g src="x" onerror="alert(1)"></strong> unwiderruflich l�schen m�chten? <br><br><span style="color:red;">warnung: alle assets, schadensszenarien und angriffsb�ume gehen verloren!</span>
+      ?           +++++++)
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:128: AssertionError: XSS payload in delete confirmation: Sind Sie sicher, dass Sie die Analyse <strong><img src="x" onerror="alert(1)"></strong> unwiderruflich l�schen m�chten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsb�ume gehen verloren!</span>
+E   AssertionError: XSS payload executed in deleteActiveAnalysis!
+    assert True is False
+     +  where True = evaluate('window.__xss_sentinel')
+     +    where evaluate = <Page url='file:///C:/Users/R011239/Documents/Webapp/TRA/TARATool/index.html'>.evaluate
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:141: AssertionError: XSS payload executed in deleteActiveAnalysis!
+E   AssertionError: rootRefs should contain R01 (formerly R02): ['R02', 'R03']
+    assert 'R01' in ['R02', 'R03']
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:225: AssertionError: rootRefs should contain R01 (formerly R02): ['R02', 'R03']
+E   AssertionError: rootRefs should NOT still contain stale R03: ['R02', 'R03']
+    assert 'R03' not in ['R02', 'R03']
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:255: AssertionError: rootRefs should NOT still contain stale R03: ['R02', 'R03']
+E   AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+    assert 2 == 0
+     +  where 2 = len(['R02', 'R03'])
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:274: AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+E   AssertionError: Duplicate leaf keys found: ['B1|Nnode|Lleaf_1', 'B1|Nnode|Lleaf_2', 'B1|Nnode|Lleaf_1']
+    assert 3 == 2
+     +  where 3 = len(['B1|Nnode|Lleaf_1', 'B1|Nnode|Lleaf_2', 'B1|Nnode|Lleaf_1'])
+     +  and   2 = len(['B1|Nnode|Lleaf_1', 'B1|Nnode|Lleaf_2'])
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:364: AssertionError: Duplicate leaf keys found: ['B1|Nnode|Lleaf_1', 'B1|Nnode|Lleaf_2', 'B1|Nnode|Lleaf_1']
+E   AssertionError: assert 7 == 2
+     +  where 7 = len(['DS1', 'DS2', 'DS3', 'DS4', 'DS5', 'DS6', ...])
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:401: AssertionError: assert 7 == 2
+E   AssertionError: Hardcoded DS fallback IDs still present in attack_tree_editor_v2.js
+    assert '["DS1","DS2..."DS4","DS5"]' not in '/**\n * @fi...();\n\n})();'
+      
+      '["DS1","DS2","DS3","DS4","DS5"]' is contained here:
+        alysis) : ["DS1","DS2","DS3","DS4","DS5"];
+            ds.title = `Auswirkungen ausw�hlen (${allDsIds[0]}..${allDsIds[allDsIds.length - 1]}).`;
+            ds.innerHTML = `
+              <span>Impact:</span>
+              ${allDsIds.map(id => {...
+      
+      ...Full output truncated (218 lines hidden), use '-vv' to show
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:415: AssertionError: Hardcoded DS fallback IDs still present in attack_tree_editor_v2.js
+E   AssertionError: Script tag rendered in metadata: 
+                  <span>Version: 0.1</span> | 
+                  <span>Autor: <script>alert("xss")</script></span> | 
+                  <span>Datum: 2026-04-27</span>
+              
+    assert '<script>' not in '\n         ...n>\n        '
+      
+      '<script>' is contained here:
+        an>autor: <script>alert("xss")</script></span> | 
+      ?           ++++++++
+                    <span>datum: 2026-04-27</span>
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:70: AssertionError: Script tag rendered in metadata:
+E   AssertionError: Field 'version' not escaped: raw <b> tag found in innerHTML
+    assert ('&lt;b&gt;' in '\n            <span>Version: <b>test</b></span> | \n            <span>Autor: Unbekannt</span> | \n            <span>Datum: 2026-04-27</span>\n        ' or '\\u003c' in '\n            <span>Version: <b>test</b></span> | \n            <span>Autor: Unbekannt</span> | \n            <span>Datum: 2026-04-27</span>\n        ' or '<b>test</b>' not in '\n         ...n>\n        '
+      
+      '<b>test</b>' is contained here:
+        
+                    <span>Version: <b>test</b></span> | 
+      ?                            +++++++++++
+                    <span>Autor: Unbekannt</span> | 
+                    <span>Datum: 2026-04-27</span>
+                )
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:89: AssertionError: Field 'version' not escaped: raw <b> tag found in innerHTML
+E   AssertionError: SVG onload payload rendered in metadata: 
+                  <span>Version: 0.1</span> | 
+                  <span>Autor: "&gt;<svg onload="alert(1)"></svg></span> | 
+                  <span>Datum: 2026-04-27</span>
+              
+    assert ('<svg' not in '\n         ...n>\n        '
+      
+      '<svg' is contained here:
+        tor: "&gt;<svg onload="alert(1)"></svg></span> | 
+      ?           ++++
+                    <span>datum: 2026-04-27</span>
+                 or 'onload' not in '\n         ...n>\n        '
+      
+      'onload' is contained here:
+        "&gt;<svg onload="alert(1)"></svg></span> | 
+      ?           ++++++
+                    <span>datum: 2026-04-27</span>
+                )
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:72: AssertionError: SVG onload payload rendered in metadata:
+E   AssertionError: Field 'date' not escaped: raw <b> tag found in innerHTML
+    assert ('&lt;b&gt;' in '\n            <span>Version: 0.1</span> | \n            <span>Autor: Unbekannt</span> | \n            <span>Datum: <b>test</b></span>\n        ' or '\\u003c' in '\n            <span>Version: 0.1</span> | \n            <span>Autor: Unbekannt</span> | \n            <span>Datum: <b>test</b></span>\n        ' or '<b>test</b>' not in '\n         ...n>\n        '
+      
+      '<b>test</b>' is contained here:
+        n>Datum: <b>test</b></span>
+      ?          +++++++++++
+                )
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:89: AssertionError: Field 'date' not escaped: raw <b> tag found in innerHTML
+E   AssertionError: Missing integrity attribute on CDN script: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+    assert 'integrity=' in ' '
+     +  where ' ' = <built-in method lower of str object at 0x00007FFAFBA573B0>()
+     +    where <built-in method lower of str object at 0x00007FFAFBA573B0> = ' '.lower
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:474: AssertionError: Missing integrity attribute on CDN script: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+E   AssertionError: Missing crossorigin attribute on CDN script: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+    assert 'crossorigin=' in ' '
+     +  where ' ' = <built-in method lower of str object at 0x00007FFAFBA573B0>()
+     +    where <built-in method lower of str object at 0x00007FFAFBA573B0> = ' '.lower
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:481: AssertionError: Missing crossorigin attribute on CDN script: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+E   AssertionError: Integrity hash missing or malformed for: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+    assert None is not None
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:491: AssertionError: Integrity hash missing or malformed for: https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
+E   AssertionError: External ES module import not version-pinned: https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.js
+    assert False
+C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\test_security_fixes.py:503: AssertionError: External ES module import not version-pinned: https://cdn.jsdelivr.net/npm/@hpcc-js/wasm/dist/index.js
+=========================== short test summary info ===========================
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-img_onerror]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-author]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_no_script_execution[chromium]
+FAILED test_security_fixes.py::TestXSSDeleteAnalysis::test_delete_dialog_escapes_name[chromium]
+FAILED test_security_fixes.py::TestXSSDeleteAnalysis::test_delete_dialog_no_script_execution[chromium]
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_first_tree[chromium]
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_middle_tree[chromium]
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_empty_when_all_referenced_deleted[chromium]
+FAILED test_security_fixes.py::TestRRNodeUIDCollision::test_unique_leaf_keys_without_any_uids[chromium]
+FAILED test_security_fixes.py::TestDSFallbackIDs::test_ds_ids_match_analysis[chromium]
+FAILED test_security_fixes.py::TestDSFallbackIDs::test_no_hardcoded_fallback_in_source[chromium]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-script_tag]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-version]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-svg_onload]
+FAILED test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-date]
+FAILED test_security_fixes.py::TestCDNSubresourceIntegrity::test_all_cdn_scripts_have_integrity
+FAILED test_security_fixes.py::TestCDNSubresourceIntegrity::test_all_cdn_scripts_have_crossorigin
+FAILED test_security_fixes.py::TestCDNSubresourceIntegrity::test_integrity_hash_format
+FAILED test_security_fixes.py::TestCDNSubresourceIntegrity::test_es_module_import_has_integrity_comment
+=================== 19 failed, 8 passed in 76.40s (0:01:16) ===================

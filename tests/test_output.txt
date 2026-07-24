@@ -1,0 +1,59 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.13', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '9.0.2', 'pluggy': '1.6.0'}, 'Plugins': {'base-url': '2.1.0', 'html': '4.2.0', 'metadata': '3.1.1', 'playwright': '0.7.2', 'timeout': '2.4.0', 'xdist': '3.8.0'}, 'Base URL': ''}
+rootdir: C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests
+configfile: pytest.ini
+plugins: base-url-2.1.0, html-4.2.0, metadata-3.1.1, playwright-0.7.2, timeout-2.4.0, xdist-3.8.0
+timeout: 30.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 27 items
+
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-img_onerror] PASSED [  3%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-author] PASSED [  7%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_no_script_execution[chromium] PASSED [ 11%]
+test_security_fixes.py::TestXSSDeleteAnalysis::test_delete_dialog_escapes_name[chromium] PASSED [ 14%]
+test_security_fixes.py::TestXSSDeleteAnalysis::test_delete_dialog_no_script_execution[chromium] PASSED [ 18%]
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_first_tree[chromium] PASSED [ 22%]
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_middle_tree[chromium] PASSED [ 25%]
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_empty_when_all_referenced_deleted[chromium] FAILED [ 29%]
+test_security_fixes.py::TestRRNodeUIDCollision::test_unique_leaf_keys_without_node_uid[chromium] PASSED [ 33%]
+test_security_fixes.py::TestRRNodeUIDCollision::test_unique_leaf_keys_without_any_uids[chromium] PASSED [ 37%]
+test_security_fixes.py::TestDSFallbackIDs::test_getAllDamageScenarioIds_is_available[chromium] PASSED [ 40%]
+test_security_fixes.py::TestDSFallbackIDs::test_ds_ids_match_analysis[chromium] FAILED [ 44%]
+test_security_fixes.py::TestDSFallbackIDs::test_no_hardcoded_fallback_in_source[chromium] PASSED [ 48%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_output[chromium-<script>-&lt;script&gt;] PASSED [ 51%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_null_safe[chromium] PASSED [ 55%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-script_tag] PASSED [ 59%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-version] PASSED [ 62%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_output[chromium-"onclick="-&quot;onclick=&quot;] PASSED [ 66%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_author_escaped[chromium-svg_onload] PASSED [ 70%]
+test_security_fixes.py::TestXSSFillAnalysisForm::test_metadata_field_html_entities[chromium-date] PASSED [ 74%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_output[chromium-'onfocus='-&#039;onfocus=&#039;] PASSED [ 77%]
+test_security_fixes.py::TestCDNSubresourceIntegrity::test_all_cdn_scripts_have_integrity PASSED [ 81%]
+test_security_fixes.py::TestCDNSubresourceIntegrity::test_all_cdn_scripts_have_crossorigin PASSED [ 85%]
+test_security_fixes.py::TestCDNSubresourceIntegrity::test_integrity_hash_format PASSED [ 88%]
+test_security_fixes.py::TestCDNSubresourceIntegrity::test_es_module_import_has_integrity_comment PASSED [ 92%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_output[chromium-&amp;-&amp;amp;] PASSED [ 96%]
+test_security_fixes.py::TestEscapeHtmlUtility::test_escapeHtml_output[chromium-<img src=x onerror=alert(1)>-&lt;img] PASSED [100%]
+
+================================== FAILURES ===================================
+_ TestReindexRiskIDsRootRefs.test_rootrefs_empty_when_all_referenced_deleted[chromium] _
+test_security_fixes.py:274: in test_rootrefs_empty_when_all_referenced_deleted
+    assert len(refs) == 0, f"rootRefs should be empty after deleting referenced trees: {refs}"
+E   AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+E   assert 2 == 0
+E    +  where 2 = len(['R02', 'R03'])
+___________ TestDSFallbackIDs.test_ds_ids_match_analysis[chromium] ____________
+test_security_fixes.py:401: in test_ds_ids_match_analysis
+    assert len(actual_ids) == 2
+E   AssertionError: assert 7 == 2
+E    +  where 7 = len(['DS1', 'DS2', 'DS3', 'DS4', 'DS5', 'DS6', 'DS7'])
+=========================== short test summary info ===========================
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_empty_when_all_referenced_deleted[chromium] - AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+assert 2 == 0
+ +  where 2 = len(['R02', 'R03'])
+FAILED test_security_fixes.py::TestDSFallbackIDs::test_ds_ids_match_analysis[chromium] - AssertionError: assert 7 == 2
+ +  where 7 = len(['DS1', 'DS2', 'DS3', 'DS4', 'DS5', 'DS6', 'DS7'])
+================== 2 failed, 25 passed in 108.48s (0:01:48) ===================

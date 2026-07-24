@@ -1,0 +1,44 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+metadata: {'Python': '3.13.13', 'Platform': 'Windows-11-10.0.26100-SP0', 'Packages': {'pytest': '9.0.2', 'pluggy': '1.6.0'}, 'Plugins': {'base-url': '2.1.0', 'html': '4.2.0', 'metadata': '3.1.1', 'playwright': '0.7.2', 'timeout': '2.4.0', 'xdist': '3.8.0'}, 'Base URL': ''}
+rootdir: C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests
+configfile: pytest.ini
+plugins: base-url-2.1.0, html-4.2.0, metadata-3.1.1, playwright-0.7.2, timeout-2.4.0, xdist-3.8.0
+timeout: 60.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 3 items
+
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_first_tree[chromium] FAILED [ 33%]
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_middle_tree[chromium] FAILED [ 66%]
+test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_empty_when_all_referenced_deleted[chromium] FAILED [100%]
+
+================================== FAILURES ===================================
+_ TestReindexRiskIDsRootRefs.test_rootrefs_updated_after_delete_first_tree[chromium] _
+test_security_fixes.py:225: in test_rootrefs_updated_after_delete_first_tree
+    assert "R01" in refs, f"rootRefs should contain R01 (formerly R02): {refs}"
+E   AssertionError: rootRefs should contain R01 (formerly R02): ['R02', 'R03']
+E   assert 'R01' in ['R02', 'R03']
+_ TestReindexRiskIDsRootRefs.test_rootrefs_updated_after_delete_middle_tree[chromium] _
+test_security_fixes.py:255: in test_rootrefs_updated_after_delete_middle_tree
+    assert "R03" not in refs, f"rootRefs should NOT still contain stale R03: {refs}"
+E   AssertionError: rootRefs should NOT still contain stale R03: ['R02', 'R03']
+E   assert 'R03' not in ['R02', 'R03']
+_ TestReindexRiskIDsRootRefs.test_rootrefs_empty_when_all_referenced_deleted[chromium] _
+test_security_fixes.py:274: in test_rootrefs_empty_when_all_referenced_deleted
+    assert len(refs) == 0, f"rootRefs should be empty after deleting referenced trees: {refs}"
+E   AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+E   assert 2 == 0
+E    +  where 2 = len(['R02', 'R03'])
+=========================== short test summary info ===========================
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_first_tree[chromium] - AssertionError: rootRefs should contain R01 (formerly R02): ['R02', 'R03']
+assert 'R01' in ['R02', 'R03']
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_updated_after_delete_middle_tree[chromium] - AssertionError: rootRefs should NOT still contain stale R03: ['R02', 'R03']
+assert 'R03' not in ['R02', 'R03']
+FAILED test_security_fixes.py::TestReindexRiskIDsRootRefs::test_rootrefs_empty_when_all_referenced_deleted[chromium] - AssertionError: rootRefs should be empty after deleting referenced trees: ['R02', 'R03']
+assert 2 == 0
+ +  where 2 = len(['R02', 'R03'])
+============================= 3 failed in 32.52s ==============================
+
+RC=1

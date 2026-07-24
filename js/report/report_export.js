@@ -331,7 +331,9 @@
 
                 if (svgText && svgText.includes('<svg')) {
                     let png = null;
-                    try { png = await h.svgTextToPng(svgText, 1600); } catch (e) { png = null; }
+                    // Target ~300 DPI relative to the printed width so large trees stay sharp.
+                    const targetPxW = Math.round((availW / 25.4) * 300);
+                    try { png = await h.svgTextToPng(svgText, targetPxW); } catch (e) { png = null; }
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = availW;
@@ -343,7 +345,7 @@
                         const x = treeMargin + (availW - drawW) / 2;
                         const y = topY + (availH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, 'JPEG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
                             doc.text('Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', treeMargin, topY);
@@ -611,7 +613,9 @@
 
                 if (rrSvgText && rrSvgText.includes('<svg')) {
                     let png = null;
-                    try { png = await h.svgTextToPng(rrSvgText, 1600); } catch (e) { png = null; }
+                    // Target ~300 DPI relative to the printed width so large trees stay sharp.
+                    const targetPxW = Math.round((rrAvailW / 25.4) * 300);
+                    try { png = await h.svgTextToPng(rrSvgText, targetPxW); } catch (e) { png = null; }
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = rrAvailW;
@@ -623,7 +627,7 @@
                         const x = rrMargin + (rrAvailW - drawW) / 2;
                         const y = rrTopY + (rrAvailH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, 'JPEG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                         } catch (_) {
                             doc.setFontSize(11);
                             doc.text('Restrisiko-Visualisierung konnte nicht eingebettet werden (Bildkonvertierung fehlgeschlagen).', rrMargin, rrTopY);

@@ -1,0 +1,40 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.13, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\R011239\Documents\Webapp\TRA\TARATool\tests
+configfile: pytest.ini
+testpaths: .
+plugins: base-url-2.1.0, html-4.2.0, metadata-3.1.1, playwright-0.7.2, timeout-2.4.0, xdist-3.8.0
+timeout: 60.0s
+timeout method: thread
+timeout func_only: False
+collected 239 items
+
+test_assets.py ..........                                                [  4%]
+test_calculations.py .......................                             [ 13%]
+test_config.py .......................................                   [ 30%]
+test_core.py ......................                                      [ 39%]
+test_damage_scenarios.py ..........                                      [ 43%]
+test_e2e_workflow.py ...                                                 [ 44%]
+test_report_versioning.py ......                                         [ 47%]
+test_residual_debug.py ......                                            [ 49%]
+test_residual_risk.py ....                                               [ 51%]
+test_risk_analysis.py ...............                                    [ 57%]
+test_security_goals.py ....                                              [ 59%]
+test_tree_export.py .....................                                [ 68%]
+test_calculations.py ..........                                          [ 72%]
+test_core.py .                                                           [ 72%]
+test_calculations.py ..........                                          [ 76%]
+test_core.py .                                                           [ 77%]
+test_calculations.py ..........                                          [ 81%]
+test_core.py .                                                           [ 82%]
+test_calculations.py ..........                                          [ 86%]
+test_core.py .                                                           [ 86%]
+test_calculations.py ..........                                          [ 90%]
+test_core.py .                                                           [ 91%]
+test_config.py .....................                                     [100%]
+
+======================= 239 passed in 838.37s (0:13:58) =======================
+
+STDERR:
+
+RC=0

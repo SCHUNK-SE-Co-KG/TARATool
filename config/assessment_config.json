@@ -58,9 +58,9 @@
       "label": "S (Skalierung)",
       "fullLabel": "Skalierung (Scaling)",
       "options": [
-        { "value": "0.5", "text": "0,5 - Produktportfolio (z.B. BKE)" },
-        { "value": "0.3", "text": "0,3 - Produktfamilie (z.B. EGU / EGK)" },
-        { "value": "0.1", "text": "0,1 - Einzelprodukt (z.B. einzelner Greifer)" }
+        { "value": "0.5", "text": "0,5 - IT-Netzwerk beim Kunden)" },
+        { "value": "0.3", "text": "0,3 - OT-Netzwerk beim Kunden" },
+        { "value": "0.1", "text": "0,1 - Einzelprodukt/ lokale Maschine" }
       ]
     },
     "T": {
