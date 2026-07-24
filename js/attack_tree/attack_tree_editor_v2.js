@@ -113,6 +113,150 @@
     };
   }
 
+  // ---------- clipboard (copy / cut / paste) & move helpers ----------
+  // Shared across all editor instances. Holds one node or one impact.
+  //   { mode: 'copy'|'cut', kind: 'node'|'impact', payload, sourceArr }
+  let _clip = null;
+
+  function _toast(msg, type) {
+    try { if (typeof showToast === "function") showToast(msg, type || "info"); } catch (_) {}
+  }
+
+  /** Recursively assigns fresh UIDs to a node subtree (for copy/paste). */
+  function _regenNodeUids(node) {
+    node.uid = _uid("node");
+    (node.impacts || []).forEach((im) => { im.uid = _uid("leaf"); });
+    (node.children || []).forEach(_regenNodeUids);
+    return node;
+  }
+
+  function _regenImpactUid(imp) {
+    imp.uid = _uid("leaf");
+    return imp;
+  }
+
+  /** True if `target` is `root` itself or somewhere inside its subtree. */
+  function _containsNode(root, target) {
+    if (!root || !target) return false;
+    if (root === target) return true;
+    return (root.children || []).some((c) => _containsNode(c, target));
+  }
+
+  /** Moves the element with `uid` within `arr` by `dir` (-1 up, +1 down). */
+  function _moveInArray(arr, uid, dir) {
+    if (!Array.isArray(arr)) return;
+    const i = arr.findIndex((x) => x && x.uid === uid);
+    if (i < 0) return;
+    const j = i + dir;
+    if (j < 0 || j >= arr.length) return;
+    const [item] = arr.splice(i, 1);
+    arr.splice(j, 0, item);
+  }
+
+  /** Small icon button factory for the inline card actions. */
+  function _mkIconBtn(iconHtml, title, onClick, extraClass) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "action-button small" + (extraClass ? " " + extraClass : "");
+    b.title = title;
+    b.innerHTML = iconHtml;
+    b.onclick = onClick;
+    return b;
+  }
+
+  /** Binds floating tooltips that escape modal overflow (fixed to viewport). */
+  function _bindHoverTooltips(root) {
+    _qsa(".at-hover-tooltip", root).forEach((tipSrc) => {
+      const anchor = tipSrc.parentElement;
+      if (!anchor || anchor.dataset.tooltipBound === "1") return;
+      anchor.dataset.tooltipBound = "1";
+
+      let floating = null;
+      const show = () => {
+        if (floating) return;
+        floating = document.createElement("div");
+        floating.className = "at-floating-tooltip";
+        floating.innerHTML = tipSrc.innerHTML;
+        document.body.appendChild(floating);
+
+        const ar = anchor.getBoundingClientRect();
+        const tr = floating.getBoundingClientRect();
+        let left = ar.left + (ar.width / 2) - (tr.width / 2);
+        let top = ar.top - tr.height - 8;
+        if (top < 8) top = ar.bottom + 8;
+        left = Math.max(8, Math.min(left, window.innerWidth - tr.width - 8));
+        top = Math.max(8, Math.min(top, window.innerHeight - tr.height - 8));
+        floating.style.left = `${left}px`;
+        floating.style.top = `${top}px`;
+      };
+      const hide = () => {
+        if (floating) { floating.remove(); floating = null; }
+      };
+      anchor.addEventListener("mouseenter", show);
+      anchor.addEventListener("mouseleave", hide);
+      anchor.addEventListener("focusin", show);
+      anchor.addEventListener("focusout", hide);
+    });
+  }
+
+  function _clonePayloadForCopy() {
+    const data = structuredClone(_clip.payload);
+    if (_clip.kind === "node") _regenNodeUids(data);
+    else _regenImpactUid(data);
+    return data;
+  }
+
+  /**
+   * Pastes the current clipboard content into `targetNode`.
+   * If `targetNode` is null, pastes into the tree root (only nodes → attack paths).
+   */
+  function pasteInto(editor, targetNode) {
+    if (!_clip) { _toast("Zwischenablage ist leer.", "warning"); return; }
+    const container = targetNode || editor.root;
+
+    if (_clip.kind === "node") {
+      if (_clip.mode === "cut") {
+        if (_containsNode(_clip.payload, container)) {
+          _toast("Verschieben nicht möglich: Ziel liegt innerhalb dieses Pfads.", "error");
+          return;
+        }
+        if (_clip.sourceArr) {
+          const i = _clip.sourceArr.indexOf(_clip.payload);
+          if (i >= 0) _clip.sourceArr.splice(i, 1);
+        }
+        container.children.push(_clip.payload);
+        _clip = null;
+      } else {
+        container.children.push(_clonePayloadForCopy());
+      }
+      editor.rerender();
+      _toast(targetNode ? "Zwischenpfad eingefügt." : "Angriffspfad eingefügt.", "success");
+      return;
+    }
+
+    // impact
+    if (!targetNode) {
+      _toast("Auswirkung kann nur in einen Pfad/Zwischenpfad eingefügt werden.", "warning");
+      return;
+    }
+    if ((container.impacts || []).length >= 10) {
+      _toast("Maximal 10 Auswirkungen pro Pfad/Zwischenpfad.", "warning");
+      return;
+    }
+    if (_clip.mode === "cut") {
+      if (_clip.sourceArr) {
+        const i = _clip.sourceArr.indexOf(_clip.payload);
+        if (i >= 0) _clip.sourceArr.splice(i, 1);
+      }
+      container.impacts.push(_clip.payload);
+      _clip = null;
+    } else {
+      container.impacts.push(_clonePayloadForCopy());
+    }
+    editor.rerender();
+    _toast("Auswirkung eingefügt.", "success");
+  }
+
   // ---------- legacy -> v2 conversion ----------
   function _getLegacyDepth(entry) {
     try { if (typeof _getTreeDepthForData === "function") return _getTreeDepthForData(entry); } catch (_) {}
@@ -223,6 +367,7 @@
     const host = editor.host;
     host.innerHTML = "";
     rootNode.children.forEach((n) => host.appendChild(renderNode(editor, rootNode, n, 1, [rootNode.title || "Root"])));
+    _bindHoverTooltips(host);
   }
 
   function renderNode(editor, parent, node, depth, crumb) {
@@ -292,10 +437,10 @@
     const btnAddImpact = document.createElement("button");
     btnAddImpact.type = "button";
     btnAddImpact.className = "action-button small";
-    btnAddImpact.title = "Legt eine neue Auswirkung (Blatt) unter diesem Pfad an (max. 5).";
+    btnAddImpact.title = "Legt eine neue Auswirkung (Blatt) unter diesem Pfad an (max. 10).";
     btnAddImpact.innerHTML = '<i class="fas fa-plus"></i> Auswirkung anlegen';
     btnAddImpact.onclick = () => {
-      if (node.impacts.length >= 5) return;
+      if (node.impacts.length >= 10) return;
       node.impacts.push(newImpact(""));
       editor.rerender();
     };
@@ -307,13 +452,51 @@
     btnAddChild.innerHTML = '<i class="fas fa-plus"></i> Zwischenpfad anlegen';
     btnAddChild.onclick = () => { node.children.push(newNode("", depth + 1)); editor.rerender(); };
 
+    const isPath = depth === 1;
+    const kindLabel = isPath ? "Angriffspfad" : "Zwischenpfad";
+
+    const btnPaste = _mkIconBtn(
+      '<i class="fas fa-paste"></i> Einfügen',
+      "Zwischenablage hier einfügen (Auswirkung als Blatt, Pfad als Zwischenpfad)",
+      () => pasteInto(editor, node)
+    );
+
+    const btnCopy = _mkIconBtn(
+      '<i class="fas fa-copy"></i>',
+      `${kindLabel} kopieren`,
+      () => { _clip = { mode: "copy", kind: "node", payload: structuredClone(node) }; _toast(`${kindLabel} kopiert.`, "info"); }
+    );
+
+    const btnCut = _mkIconBtn(
+      '<i class="fas fa-cut"></i>',
+      `${kindLabel} ausschneiden (zum Verschieben)`,
+      () => { _clip = { mode: "cut", kind: "node", payload: node, sourceArr: parent.children }; _toast(`${kindLabel} ausgeschnitten – jetzt am Ziel einfügen.`, "info"); }
+    );
+
+    const btnUp = _mkIconBtn(
+      '<i class="fas fa-arrow-up"></i>',
+      `${kindLabel} nach oben verschieben`,
+      () => { _moveInArray(parent.children, node.uid, -1); editor.rerender(); }
+    );
+
+    const btnDown = _mkIconBtn(
+      '<i class="fas fa-arrow-down"></i>',
+      `${kindLabel} nach unten verschieben`,
+      () => { _moveInArray(parent.children, node.uid, 1); editor.rerender(); }
+    );
+
     const maxNote = document.createElement("span");
     maxNote.className = "at-max-note";
-    maxNote.title = "Maximal 5 Auswirkungen pro Pfad/Zwischenpfad";
-    maxNote.textContent = `(${node.impacts.length}/5 Auswirkungen)`;
+    maxNote.title = "Maximal 10 Auswirkungen pro Pfad/Zwischenpfad";
+    maxNote.textContent = `(${node.impacts.length}/10 Auswirkungen)`;
 
     actions.appendChild(btnAddImpact);
     actions.appendChild(btnAddChild);
+    actions.appendChild(btnPaste);
+    actions.appendChild(btnCopy);
+    actions.appendChild(btnCut);
+    actions.appendChild(btnUp);
+    actions.appendChild(btnDown);
     actions.appendChild(maxNote);
     card.appendChild(actions);
 
@@ -371,20 +554,52 @@
       });
     };
 
+    const impUp = _mkIconBtn(
+      '<i class="fas fa-arrow-up"></i>',
+      "Auswirkung nach oben verschieben",
+      () => { _moveInArray(node.impacts, imp.uid, -1); editor.rerender(); }
+    );
+    const impDown = _mkIconBtn(
+      '<i class="fas fa-arrow-down"></i>',
+      "Auswirkung nach unten verschieben",
+      () => { _moveInArray(node.impacts, imp.uid, 1); editor.rerender(); }
+    );
+    const impCopy = _mkIconBtn(
+      '<i class="fas fa-copy"></i>',
+      "Auswirkung kopieren",
+      () => { _clip = { mode: "copy", kind: "impact", payload: structuredClone(imp) }; _toast("Auswirkung kopiert.", "info"); }
+    );
+    const impCut = _mkIconBtn(
+      '<i class="fas fa-cut"></i>',
+      "Auswirkung ausschneiden (zum Verschieben)",
+      () => { _clip = { mode: "cut", kind: "impact", payload: imp, sourceArr: node.impacts }; _toast("Auswirkung ausgeschnitten – jetzt in Ziel-Pfad einfügen.", "info"); }
+    );
+
     row1.appendChild(txt);
     row1.appendChild(_createNoteBtn(imp, imp.text || "(Auswirkung)"));
+    row1.appendChild(impUp);
+    row1.appendChild(impDown);
+    row1.appendChild(impCopy);
+    row1.appendChild(impCut);
     row1.appendChild(del);
 
     const ds = document.createElement("div");
     ds.className = "ds-checks";
-    const allDsIds = (typeof getAllDamageScenarioIds === "function")
-      ? getAllDamageScenarioIds(editor.analysis) : [];
-    ds.title = `Auswirkungen auswählen (${allDsIds[0]}..${allDsIds[allDsIds.length - 1]}).`;
+    const dsList = (typeof getDisplayDamageScenarios === "function")
+      ? getDisplayDamageScenarios(editor.analysis)
+      : [];
     ds.innerHTML = `
-      <span>Impact:</span>
-      ${allDsIds.map(id => {
-        const checked = (imp.ds || []).includes(id) ? "checked" : "";
-        return `<label title="${id}">${id}<input type="checkbox" data-ds="${id}" ${checked}></label>`;
+      <span class="ds-checks-label">Impact:</span>
+      ${dsList.map((dsItem) => {
+        const checked = (imp.ds || []).includes(dsItem.id) ? "checked" : "";
+        const label = dsItem.short ? `${dsItem.id} (${dsItem.short})` : dsItem.id;
+        const tipTitle = _escapeHtml(`${dsItem.id}: ${dsItem.name || dsItem.id}`);
+        const tipCat = dsItem.short ? `(${_escapeHtml(dsItem.short)})` : "";
+        const tipDesc = _escapeHtml(dsItem.description || "");
+        return `<label class="ds-tag" tabindex="0">
+          <span class="at-hover-tooltip"><strong>${tipTitle}</strong>${tipCat ? `<br>${tipCat}` : ""}<br>${tipDesc}</span>
+          ${_escapeHtml(label)}<input type="checkbox" data-ds="${dsItem.id}" ${checked}>
+        </label>`;
       }).join("")}
     `;
 
@@ -415,7 +630,7 @@
         const checked = (imp.stride || []).includes(cat.id) ? "checked" : "";
         const tipName = _escapeHtml(cat.name);
         const tipDesc = _escapeHtml(cat.description || '');
-        return `<label class="stride-tag ${checked ? 'stride-active' : ''}" data-stride-id="${cat.id}"><span class="stride-tooltip"><strong>${tipName}</strong><br>${tipDesc}</span>${cat.short}<input type="checkbox" data-stride="${cat.id}" ${checked} class="stride-cb"></label>`;
+        return `<label class="stride-tag ${checked ? 'stride-active' : ''}" data-stride-id="${cat.id}" tabindex="0"><span class="at-hover-tooltip"><strong>${tipName}</strong><br>${tipDesc}</span>${cat.short}<input type="checkbox" data-stride="${cat.id}" ${checked} class="stride-cb"></label>`;
       }).join("")}
     `;
     _qsa('input[type="checkbox"][data-stride]', strideWrap).forEach((cb) => {
@@ -559,6 +774,11 @@
         const btnAdd = document.getElementById("btnAddAttackPath");
         if (btnAdd) {
           btnAdd.onclick = () => { this.root.children.push(newNode("", 1)); this.rerender(); };
+        }
+
+        const btnPastePath = document.getElementById("btnPasteAttackPath");
+        if (btnPastePath) {
+          btnPastePath.onclick = () => pasteInto(this, null);
         }
       },
 

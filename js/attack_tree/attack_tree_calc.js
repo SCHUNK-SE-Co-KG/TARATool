@@ -27,21 +27,24 @@ const _parseImpactValue = _parseKSTUValue;
 // Excludes the lowest tier (label "low") because _getRiskLevel() falls
 // through to 'low' for any score below all thresholds.
 /* global RISK_THRESHOLDS, SEVERITY_LEVEL_FACTORS, PROTECTION_LEVEL_WEIGHTS */
-const _TREE_RISK_LEVELS = (() => {
+var _TREE_RISK_LEVELS = {};
+
+function rebuildTreeRiskLevelsFromConfig() {
     const levels = {};
     if (typeof RISK_THRESHOLDS !== 'undefined' && Array.isArray(RISK_THRESHOLDS)) {
         RISK_THRESHOLDS.forEach(t => {
             if (t.labelEn && t.min > 0) levels[t.labelEn] = t.min;
         });
     }
-    // Fallback if config was not loaded
     if (Object.keys(levels).length === 0) {
         levels.critical = 2.0;
         levels.high = 1.6;
         levels.medium = 0.8;
     }
-    return Object.freeze(levels);
-})();
+    _TREE_RISK_LEVELS = Object.freeze(levels);
+}
+
+rebuildTreeRiskLevelsFromConfig();
 
 // --- Centralized Risk Calculation Helpers ---
 // Delegates to the global computeRiskScore() in utils.js (single source of truth)
