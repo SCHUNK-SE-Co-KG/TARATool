@@ -12,6 +12,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TARA Analysis Tool</title>
+    <script>
+        (function () {
+            try {
+                var th = localStorage.getItem('taraTheme');
+                document.documentElement.setAttribute('data-theme', th === 'dark' ? 'dark' : 'light');
+                var lg = localStorage.getItem('taraLang');
+                document.documentElement.setAttribute('lang', lg === 'en' ? 'en' : 'de');
+                document.documentElement.setAttribute('data-lang', lg === 'en' ? 'en' : 'de');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
     
@@ -27,14 +38,28 @@
         <div class="header-nav">
             <h1>TARA Tool</h1>
             <div class="action-nav">
-                <button id="btnNewAnalysis" class="action-button small"><i class="fas fa-plus"></i> Neu</button>
+                <button id="btnNewAnalysis" class="action-button small" data-i18n="nav.new"><i class="fas fa-plus"></i> Neu</button>
                 <select id="analysisSelector" style="width: 200px; padding:4px;">
                     </select>
             </div>
             <div class="utility-actions">
-                <button id="btnImportAnalysis" class="action-button small"><i class="fas fa-file-import"></i> Import</button>
-                <button id="btnExportAnalysis" class="action-button small"><i class="fas fa-file-export"></i> Export</button>
-                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="Über TARA Tool & SBOM"><i class="fas fa-info-circle"></i> About</button>
+                <div class="prefs-switches">
+                    <label class="prefs-switch" title="Dark Mode">
+                        <i class="fas fa-moon prefs-ico" aria-hidden="true"></i>
+                        <input type="checkbox" id="toggleTheme" role="switch" aria-label="Dark Mode">
+                        <span class="prefs-slider"></span>
+                        <i class="fas fa-sun prefs-ico" aria-hidden="true"></i>
+                    </label>
+                    <label class="prefs-switch" title="Language / Sprache">
+                        <span class="prefs-lang-tag">EN</span>
+                        <input type="checkbox" id="toggleLang" role="switch" aria-label="Language">
+                        <span class="prefs-slider"></span>
+                        <span class="prefs-lang-tag">DE</span>
+                    </label>
+                </div>
+                <button id="btnImportAnalysis" class="action-button small" data-i18n="nav.import"><i class="fas fa-file-import"></i> Import</button>
+                <button id="btnExportAnalysis" class="action-button small" data-i18n="nav.export"><i class="fas fa-file-export"></i> Export</button>
+                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="Über TARA Tool & SBOM" data-i18n="nav.about"><i class="fas fa-info-circle"></i> About</button>
             </div>
         </div>
 
@@ -47,89 +72,89 @@
                         <div class="metadata" id="analysisMetadata" style="font-size:0.85em; color:#777; margin-top:2px;"></div>
                     </div>
                     <div class="header-actions">
-                        <button id="btnSave" class="primary-button"><i class="fas fa-save"></i> Speichern</button>
-                        <button id="btnShowVersionControl" class="action-button"><i class="fas fa-code-branch"></i> Versionen</button>
-                        <button id="btnDeleteAnalysis" class="action-button dangerous"><i class="fas fa-trash"></i> Analyse löschen</button>
+                        <button id="btnSave" class="primary-button" data-i18n="nav.save"><i class="fas fa-save"></i> Speichern</button>
+                        <button id="btnShowVersionControl" class="action-button" data-i18n="nav.versions"><i class="fas fa-code-branch"></i> Versionen</button>
+                        <button id="btnDeleteAnalysis" class="action-button dangerous" data-i18n="nav.delete"><i class="fas fa-trash"></i> Analyse löschen</button>
                     </div>
                 </div>
             </header>
 
             <div class="tab-navigation">
-                <button class="tab-button active" data-tab="tabOverview">Übersicht</button>
-                <button class="tab-button" data-tab="tabAssets">Assets</button>
-                <button class="tab-button" data-tab="tabDamageScenarios">Schadensszenarien</button>
-                <button class="tab-button" data-tab="tabRiskAnalysis">Risikoanalyse</button>
-                <button class="tab-button" data-tab="tabSecurityGoals">Security Ziele</button>
-                <button class="tab-button" data-tab="tabResidualRisk">Restrisikoanalyse</button>
+                <button class="tab-button active" data-tab="tabOverview" data-i18n="tab.overview">Übersicht</button>
+                <button class="tab-button" data-tab="tabAssets" data-i18n="tab.assets">Assets</button>
+                <button class="tab-button" data-tab="tabDamageScenarios" data-i18n="tab.ds">Schadensszenarien</button>
+                <button class="tab-button" data-tab="tabRiskAnalysis" data-i18n="tab.risk">Risikoanalyse</button>
+                <button class="tab-button" data-tab="tabSecurityGoals" data-i18n="tab.sg">Security Ziele</button>
+                <button class="tab-button" data-tab="tabResidualRisk" data-i18n="tab.rr">Restrisikoanalyse</button>
             </div>
 
             <div id="tabOverview" class="tab-content" style="display: block;">
                 <div class="overview-actions" style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
                     <div style="display:flex; gap:8px; align-items:center;">
                         <input type="file" id="assessmentConfigFileInput" accept=".json,application/json" hidden>
-                        <button type="button" id="btnReloadAssessmentConfig" class="action-button"
+                        <button type="button" id="btnReloadAssessmentConfig" class="action-button" data-i18n="btn.config"
                                 title="Lädt config/assessment_config.json nach JSON-Änderung (ohne Webserver/.bat).">
                             <i class="fas fa-sliders-h"></i> Bewertungsconfig laden
                         </button>
                     </div>
                     <div style="display:flex; gap:8px;">
-                    <button id="btnGenerateReport" class="action-button"><i class="fas fa-file-pdf"></i> Report (PDF)</button>
-                    <button id="btnExportTreeData" class="action-button"><i class="fas fa-file-archive"></i> Export Baumdaten</button>
+                    <button id="btnGenerateReport" class="action-button" data-i18n="btn.report"><i class="fas fa-file-pdf"></i> Report (PDF)</button>
+                    <button id="btnExportTreeData" class="action-button" data-i18n="btn.exportTrees"><i class="fas fa-file-archive"></i> Export Baumdaten</button>
                     </div>
                 </div>
 
                 <div class="dashboard-grid">
                     <div class="stats-row">
                         <div class="stat-card" style="border-left-color: #3498db;">
-                            <span class="stat-label">Assets</span>
+                            <span class="stat-label" data-i18n="stat.assets">Assets</span>
                             <span class="stat-value" id="statAssetCount">0</span>
                         </div>
                         <div class="stat-card" style="border-left-color: #e67e22;">
-                            <span class="stat-label">Szenarien</span>
+                            <span class="stat-label" data-i18n="stat.scenarios">Szenarien</span>
                             <span class="stat-value" id="statDSCount">0</span>
                         </div>
                         <div class="stat-card" style="border-left-color: #f1c40f;">
-                            <span class="stat-label">Risiken (Gesamt)</span>
+                            <span class="stat-label" data-i18n="stat.risks">Risiken (Gesamt)</span>
                             <span class="stat-value" id="statRiskCount">0</span>
                         </div>
                         <div class="stat-card" style="border-left-color: #e74c3c; display: block; padding: 10px 15px;">
-                            <div style="font-size: 0.85em; color: #666; font-weight: 600; margin-bottom: 5px;">Risikoverteilung</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;" data-i18n="stat.dist">Risikoverteilung</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.85em;">
-                                <div style="color:#c0392b; font-weight:bold;">Kritisch: <span id="statCrit" style="color:#333;">0</span></div>
-                                <div style="color:#e67e22; font-weight:bold;">Hoch: <span id="statHigh" style="color:#333;">0</span></div>
-                                <div style="color:#f39c12; font-weight:bold;">Mittel: <span id="statMed" style="color:#333;">0</span></div>
-                                <div style="color:#27ae60; font-weight:bold;">Niedrig: <span id="statLow" style="color:#333;">0</span></div>
+                                <div style="color:#c0392b; font-weight:bold;"><span data-i18n="label.critical">Kritisch</span>: <span id="statCrit">0</span></div>
+                                <div style="color:#e67e22; font-weight:bold;"><span data-i18n="label.high">Hoch</span>: <span id="statHigh">0</span></div>
+                                <div style="color:#f39c12; font-weight:bold;"><span data-i18n="label.medium">Mittel</span>: <span id="statMed">0</span></div>
+                                <div style="color:#27ae60; font-weight:bold;"><span data-i18n="label.low">Niedrig</span>: <span id="statLow">0</span></div>
                             </div>
                         </div>
 
                         <div class="stat-card" style="border-left-color: #8e44ad; display: block; padding: 10px 15px;">
-                            <div style="font-size: 0.85em; color: #666; font-weight: 600; margin-bottom: 5px;">Risikoverteilung Restrisiko</div>
+                            <div style="font-size: 0.85em; color: var(--text-muted); font-weight: 600; margin-bottom: 5px;" data-i18n="stat.distRr">Risikoverteilung Restrisiko</div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; font-size: 0.85em;">
-                                <div style="color:#c0392b; font-weight:bold;">Kritisch: <span id="statRRCrit" style="color:#333;">0</span></div>
-                                <div style="color:#e67e22; font-weight:bold;">Hoch: <span id="statRRHigh" style="color:#333;">0</span></div>
-                                <div style="color:#f39c12; font-weight:bold;">Mittel: <span id="statRRMed" style="color:#333;">0</span></div>
-                                <div style="color:#27ae60; font-weight:bold;">Niedrig: <span id="statRRLow" style="color:#333;">0</span></div>
+                                <div style="color:#c0392b; font-weight:bold;"><span data-i18n="label.critical">Kritisch</span>: <span id="statRRCrit">0</span></div>
+                                <div style="color:#e67e22; font-weight:bold;"><span data-i18n="label.high">Hoch</span>: <span id="statRRHigh">0</span></div>
+                                <div style="color:#f39c12; font-weight:bold;"><span data-i18n="label.medium">Mittel</span>: <span id="statRRMed">0</span></div>
+                                <div style="color:#27ae60; font-weight:bold;"><span data-i18n="label.low">Niedrig</span>: <span id="statRRLow">0</span></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="panel" style="background: #fff; padding: 0;">
-                        <h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">Projektbeschreibung</h3>
+                    <div class="panel" style="padding: 0;">
+                        <h3 style="margin-top:0; border-bottom:1px solid var(--border-soft); padding-bottom:10px;" data-i18n="overview.project">Projektbeschreibung</h3>
                         <div class="meta-form-grid">
                             <div class="form-group">
-                                <label>Analysename</label>
+                                <label data-i18n="overview.name">Analysename</label>
                                 <input type="text" id="inputAnalysisName">
                             </div>
                             <div class="form-group">
-                                <label>Autor / Verantwortlich</label>
+                                <label data-i18n="overview.author">Autor / Verantwortlich</label>
                                 <input type="text" id="inputAuthorName">
                             </div>
                             <div class="form-group">
-                                <label>Systembeschreibung</label>
+                                <label data-i18n="overview.desc">Systembeschreibung</label>
                                 <textarea id="inputDescription" rows="3"></textarea>
                             </div>
                             <div class="form-group">
-                                <label>Verwendungszweck (Intended Use)</label>
+                                <label data-i18n="overview.use">Verwendungszweck (Intended Use)</label>
                                 <textarea id="inputIntendedUse" rows="3"></textarea>
                             </div>
                         </div>
@@ -139,7 +164,7 @@
 
             <div id="tabAssets" class="tab-content" style="display: none;">
                 <div class="assets-controls" style="margin-bottom:15px;">
-                    <button id="btnAddAsset" class="primary-button"><i class="fas fa-plus"></i> Asset hinzufügen</button>
+                    <button id="btnAddAsset" class="primary-button" data-i18n="btn.addAsset"><i class="fas fa-plus"></i> Asset hinzufügen</button>
                 </div>
                 <div id="assetsCardContainer" class="cards-grid"></div>
             </div>
@@ -149,15 +174,15 @@
                     <div class="column-left" style="flex:1;">
                         <div class="panel">
                             <div class="panel-header" style="display:flex; justify-content:space-between;">
-                                <h3 style="margin:0;">Verwaltung</h3>
-                                <button id="btnAddDamageScenario" class="action-button small"><i class="fas fa-plus"></i> Neu</button>
+                                <h3 style="margin:0;" data-i18n="ds.admin">Verwaltung</h3>
+                                <button id="btnAddDamageScenario" class="action-button small" data-i18n="btn.addDs"><i class="fas fa-plus"></i> Neu</button>
                             </div>
                             <div id="dsManagementContainer" style="margin-top:10px;"></div>
                         </div>
                     </div>
                     <div class="column-right" style="flex:3;">
                         <div class="panel">
-                            <h3 style="margin-top:0;">Schadensauswirkungsmatrix</h3>
+                            <h3 style="margin-top:0;" data-i18n="ds.matrixTitle">Schadensauswirkungsmatrix</h3>
                             <div id="dsMatrixContainer"></div>
                         </div>
                     </div>
@@ -166,14 +191,14 @@
 
             <div id="tabRiskAnalysis" class="tab-content" style="display: none;">
                 <div class="panel">
-                    <h3>Risikoanalyse & Angriffsbäume</h3>
+                    <h3 data-i18n="risk.panelTitle">Risikoanalyse & Angriffsbäume</h3>
                     <div id="riskAnalysisContainer"></div>
                 </div>
             </div>
 
             <div id="tabSecurityGoals" class="tab-content" style="display: none;">
                 <div class="assets-controls" style="margin-bottom:15px;">
-                    <button id="btnAddSecurityGoal" class="primary-button"><i class="fas fa-plus"></i> Security Ziel hinzufügen</button>
+                    <button id="btnAddSecurityGoal" class="primary-button" data-i18n="btn.addSg"><i class="fas fa-plus"></i> Security Ziel hinzufügen</button>
                 </div>
                 <div id="securityGoalsScrollArea" class="scroll-area">
                     <div id="securityGoalsCardContainer" class="cards-grid"></div>
@@ -457,8 +482,8 @@
             <h2 id="confirmationTitle">Bestätigung</h2>
             <p id="confirmationMessage">Sicher?</p>
             <div style="text-align:right;">
-                <button id="btnCancelConfirmation" class="action-button">Abbrechen</button> 
-                <button id="btnConfirmAction" class="primary-button">OK</button>
+                <button id="btnCancelConfirmation" class="action-button" data-i18n="confirm.cancel">Abbrechen</button> 
+                <button id="btnConfirmAction" class="primary-button" data-i18n="confirm.ok">OK</button>
             </div>
         </div>
     </div>
@@ -474,6 +499,9 @@
 
     <!-- Core -->
     <script src="js/core/about.js"></script>
+    <script src="js/core/prefs.js"></script>
+    <script src="js/core/i18n.js"></script>
+    <script src="js/core/bilingual.js"></script>
     <script src="config/assessment_config.js"></script>
     <script src="js/core/config_loader.js"></script>
     <script src="js/core/globals.js"></script>
@@ -504,6 +532,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js" integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3" crossorigin="anonymous"></script>
     <script src="js/report/report_pdf_helpers.js"></script>
     <script src="js/report/report_pdf_builder.js"></script>
+    <script src="js/report/report_i18n.js"></script>
     <script src="js/report/report_export.js"></script>
 
     <!-- Residual Risk -->

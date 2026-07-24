@@ -634,7 +634,10 @@ const _isMitigated = (t) => {
         const rootNoMit = _isNoMitigation(rootTreatment);
         const rrRootKstuEff = rootNoMit ? (entry.kstu || rrRootKstu) : rrRootKstu;
         const showPRR = _pStr(rrRootKstuEff);
-        const rootLabel = `{${_cleanText(entry.rootName)} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | Behandlung: ${_cleanText(rootTreatment)}}`;
+        const _lang = (window.ReportI18n && ReportI18n.getReportLang) ? ReportI18n.getReportLang() : 'de';
+        const _treatKey = (window.ReportI18n && ReportI18n.reportStrings) ? ReportI18n.reportStrings(_lang).treatment : 'Behandlung';
+        const _treatVal = (v) => (window.ReportI18n && ReportI18n.mapTreatment) ? ReportI18n.mapTreatment(v, _lang) : v;
+        const rootLabel = `{${_cleanText(entry.rootName)} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(rootTreatment))}}`;
         const rootFill = _colorFromScore(_score(entry.i_norm, rrRootKstuEff));
 
         nodes.push(`    ${rootId} [label="${rootLabel}", style=filled, fillcolor="${rootFill}"]\n`);
@@ -651,7 +654,7 @@ const _isMitigated = (t) => {
             const rrKstuEff = nodeNoMit ? baseNode.kstu : rrKstu;
             const showPRRNode = _pStr(rrKstuEff);
 
-            const label = `{${_cleanText(baseNode.title)} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | Behandlung: ${_cleanText(tNode)}}`;
+            const label = `{${_cleanText(baseNode.title)} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(tNode))}}`;
             const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
 
             nodes.push(`    ${nid} [label="${label}", style=filled, fillcolor="${fill}"]\n`);
@@ -675,7 +678,7 @@ const _isMitigated = (t) => {
 
                 const leafText = _cleanText(leaf?.text ?? leaf?.name ?? leaf?.label ?? '');
                 const strideStr = (Array.isArray(leaf.stride) && leaf.stride.length > 0) ? ` | STRIDE: ${leaf.stride.join(', ')}` : '';
-                const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | Behandlung: ${_cleanText(trLeaf)}${strideStr}}`;
+                const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(trLeaf))}${strideStr}}`;
                 const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));
 
                 nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);

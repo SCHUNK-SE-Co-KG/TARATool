@@ -191,32 +191,42 @@ window.__ASSESSMENT_CONFIG_PRELOAD__ = {
     {
       "id": "DS1",
       "name": "Gefahr für Leib und Leben",
+      "name_en": "Danger to life and limb",
       "short": "Safety",
-      "description": "Verletzung von Personen oder lebensbedrohliche Situationen."
+      "description": "Verletzung von Personen oder lebensbedrohliche Situationen.",
+      "description_en": "Injury to persons or life-threatening situations."
     },
     {
       "id": "DS2",
       "name": "Finanzieller Schaden",
+      "name_en": "Financial damage",
       "short": "Financial",
-      "description": "Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz)."
+      "description": "Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).",
+      "description_en": "Direct or indirect financial losses (recall, damages)."
     },
     {
       "id": "DS3",
       "name": "Verlust von geistigem Eigentum",
+      "name_en": "Loss of intellectual property",
       "short": "IP loss",
-      "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.)."
+      "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).",
+      "description_en": "Loss of intellectual property (patents, copyrights, etc.)."
     },
     {
       "id": "DS4",
       "name": "Verlust Privatsphäre/Daten",
+      "name_en": "Loss of privacy/data",
       "short": "Privacy",
-      "description": "Verlust sensibler persönlicher oder technischer Daten."
+      "description": "Verlust sensibler persönlicher oder technischer Daten.",
+      "description_en": "Loss of sensitive personal or technical data."
     },
     {
       "id": "DS5",
       "name": "Rechtliche Konsequenzen",
+      "name_en": "Legal consequences",
       "short": "Legal",
-      "description": "Verstoß gegen Gesetze oder Vorschriften."
+      "description": "Verstoß gegen Gesetze oder Vorschriften.",
+      "description_en": "Violation of laws or regulations."
     }
   ],
   "strideCategories": [
