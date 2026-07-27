@@ -31,11 +31,13 @@ function renderAssets(analysis) {
         card.className = 'asset-card';
         const name = _loc(asset, 'name');
         const descRaw = _loc(asset, 'description');
-        const eName = escapeHtml(name);
+        const eName = (typeof localizeParenHtml === 'function') ? localizeParenHtml(name) : escapeHtml(name);
         const eType = escapeHtml(asset.type || '-');
         const eDesc = descRaw
-            ? escapeHtml(descRaw.substring(0, 100)) + (descRaw.length > 100 ? '...' : '')
-            : _t('assets.noDesc');
+            ? ((typeof localizeParenHtml === 'function')
+                ? localizeParenHtml(descRaw.substring(0, 100) + (descRaw.length > 100 ? '...' : ''))
+                : (escapeHtml(descRaw.substring(0, 100)) + (descRaw.length > 100 ? '...' : '')))
+            : escapeHtml(_t('assets.noDesc'));
         const eId = escapeHtml(asset.id);
 
         card.innerHTML = `
@@ -45,7 +47,7 @@ function renderAssets(analysis) {
                 ${eDesc}
             </div>
             <div class="asset-cia-area">
-                <div style="font-weight:600; font-size:0.8em; margin-bottom:2px; text-transform:uppercase; color:#999;">${_t('assets.schutz')}</div>
+                <div class="asset-cia-label">${_t('assets.schutz')}</div>
                 <div style="display:flex; justify-content:space-between; font-weight:bold;">
                     <span title="Confidentiality">C: ${escapeHtml(asset.confidentiality || '-')}</span>
                     <span title="Integrity">I: ${escapeHtml(asset.integrity || '-')}</span>
@@ -75,7 +77,7 @@ function saveAsset(e) {
     const name = nameField.value.trim();
     
     if (!name) {
-        showToast((typeof t === 'function' ? t('assets.empty') : 'Name'), 'warning');
+        showToast((typeof t === 'function' ? t('toast.needName') : 'Bitte einen Namen angeben.'), 'warning');
         return;
     }
 
@@ -122,7 +124,7 @@ function saveAsset(e) {
                 updated.description = descField.value;
             }
             analysis.assets[index] = updated;
-            showToast(`Asset ${assetId} OK`, 'success');
+            showToast((typeof tf === 'function' ? tf('toast.assetOk', { id: assetId }) : `Asset ${assetId} OK`), 'success');
         }
     } else {
         // New
@@ -148,7 +150,7 @@ function saveAsset(e) {
             created.description = descField.value;
         }
         analysis.assets.push(created);
-        showToast(`Asset ${newId} OK`, 'success');
+        showToast((typeof tf === 'function' ? tf('toast.assetOk', { id: newId }) : `Asset ${newId} OK`), 'success');
     }
 
     saveAnalyses();
@@ -163,11 +165,34 @@ window.editAsset = (id) => {
     const asset = analysis.assets.find(a => a.id === id);
     if (!asset) return;
 
-    if (assetModalTitleEl) assetModalTitleEl.textContent = `Asset ${asset.id}`;
+    if (assetModalTitleEl) {
+        assetModalTitleEl.textContent = (typeof tf === 'function')
+            ? tf('assets.modal.edit', { id: asset.id })
+            : `Asset ${asset.id}`;
+    }
     document.getElementById('assetIdField').value = asset.id;
-    document.getElementById('assetName').value = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'name') : (asset.name || '');
+    const nameEl = document.getElementById('assetName');
+    const descEl = document.getElementById('assetDescription');
+    const nameRaw = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'name', undefined, { raw: true }) : (asset.name || '');
+    const descRaw = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'description', undefined, { raw: true }) : (asset.description || '');
+    nameEl.value = nameRaw;
+    descEl.value = descRaw;
+    if (typeof syncLocalizedInputHint === 'function') {
+        syncLocalizedInputHint(nameEl, asset, 'name', '');
+        syncLocalizedInputHint(descEl, asset, 'description', '');
+    } else {
+        const lang = (window.TaraPrefs && TaraPrefs.getLang()) || 'de';
+        if (lang === 'en') {
+            const deName = (typeof getPrimaryField === 'function') ? getPrimaryField(asset, 'name') : (asset.name || '');
+            const deDesc = (typeof getPrimaryField === 'function') ? getPrimaryField(asset, 'description') : (asset.description || '');
+            nameEl.placeholder = deName ? `(${deName})` : '';
+            descEl.placeholder = deDesc ? `(${deDesc})` : '';
+        } else {
+            nameEl.placeholder = '';
+            descEl.placeholder = '';
+        }
+    }
     document.getElementById('assetType').value = asset.type || '';
-    document.getElementById('assetDescription').value = (typeof getLocalizedField === 'function') ? getLocalizedField(asset, 'description') : (asset.description || '');
 
     // Set radio buttons
     const setRadio = (radioName, val) => {
@@ -230,9 +255,11 @@ window.removeAsset = (id) => {
     if (!asset) return;
 
     showConfirmation({
-        title: 'Asset löschen',
-        messageHtml: `Möchten Sie das Asset <b>${escapeHtml(asset.name)} (${escapeHtml(asset.id)})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`,
-        confirmText: 'Löschen',
+        title: (typeof t === 'function' ? t('assets.delete.title') : 'Asset löschen'),
+        messageHtml: (typeof tf === 'function'
+            ? tf('assets.delete.message', { name: escapeHtml(asset.name), id: escapeHtml(asset.id) })
+            : `Möchten Sie das Asset <b>${escapeHtml(asset.name)} (${escapeHtml(asset.id)})</b> wirklich löschen?<br>Dies entfernt auch alle Einträge in der Impact-Matrix!`),
+        confirmText: (typeof t === 'function' ? t('confirm.delete') : 'Löschen'),
         onConfirm: () => {
             analysis.assets = analysis.assets.filter(a => a.id !== id);
 
@@ -252,7 +279,7 @@ window.removeAsset = (id) => {
             saveAnalyses();
             renderAssets(analysis);
             if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-            showToast(`Asset ${id} gelöscht.`, 'success');
+            showToast((typeof tf === 'function' ? tf('toast.assetDeleted', { id }) : `Asset ${id} gelöscht.`), 'success');
         }
     });
 };
@@ -264,10 +291,10 @@ if (assetFormEl) {
 if (btnAddAssetEl) {
     btnAddAssetEl.onclick = () => {
         if (!activeAnalysisId) {
-            showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
+            showToast((typeof t === 'function' ? t('toast.needAnalysis') : 'Bitte erst eine Analyse wählen/erstellen.'), 'warning');
             return;
         }
-        if (assetModalTitleEl) assetModalTitleEl.textContent = 'Neues Asset';
+        if (assetModalTitleEl) assetModalTitleEl.textContent = (typeof t === 'function' ? t('assets.modal.new') : 'Neues Asset');
         if (assetFormEl) assetFormEl.reset();
         document.getElementById('assetIdField').value = '';
         if (assetModalEl) assetModalEl.style.display = 'block';
@@ -279,3 +306,20 @@ if (closeAssetModalEl) {
         if (assetModalEl) assetModalEl.style.display = 'none';
     };
 }
+
+/** Persist open asset form into language slot before DE/EN switch. */
+window.flushAssetModalLang = function (lang) {
+    const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
+    if (!analysis) return;
+    const id = document.getElementById('assetIdField')?.value;
+    if (!id) return;
+    const asset = (analysis.assets || []).find(a => a.id === id);
+    if (!asset) return;
+    const name = document.getElementById('assetName')?.value ?? '';
+    const desc = document.getElementById('assetDescription')?.value ?? '';
+    if (typeof setLocalizedField === 'function') {
+        setLocalizedField(asset, 'name', name, lang);
+        setLocalizedField(asset, 'description', desc, lang);
+    }
+    try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (_) {}
+};

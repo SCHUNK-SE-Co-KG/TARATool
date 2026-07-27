@@ -52,7 +52,7 @@ function saveAnalyses() {
     } catch (e) {
         console.error('Speicherfehler:', e);
         if (typeof showToast === 'function') {
-            showToast('FEHLER: Speichern im Browser-Speicher fehlgeschlagen.', 'error');
+            showToast((typeof t === 'function' ? t('toast.storageFail') : 'FEHLER: Speichern im Browser-Speicher fehlgeschlagen.'), 'error');
         }
     }
 }
@@ -138,7 +138,7 @@ function loadAnalyses() {
             analysisData = JSON.parse(data);
         } catch (e) {
             console.error('[loadAnalyses] Corrupt localStorage data:', e);
-            showToast('FEHLER: Gespeicherte Daten sind beschädigt. Neue Analyse wird erstellt.', 'error');
+            showToast((typeof t === 'function' ? t('toast.dataCorrupt') : 'FEHLER: Gespeicherte Daten sind beschädigt. Neue Analyse wird erstellt.'), 'error');
             analysisData = [createDefaultAnalysis()];
             return;
         }
@@ -354,6 +354,16 @@ function getRiskMeta(rootRiskValue) {
     return { color: match.color, label: match.label, display, colorRGB: match.colorRGB };
 }
 
+/** CSS-Klasse für Root-Übersicht-Karten (vermeidet Darkmode-Bug mit #ffffcc ⊆ #fff). */
+function getRiskBgClass(score) {
+    const r = parseFloat(score);
+    if (isNaN(r)) return 'risk-bg-unknown';
+    if (r >= 2.0) return 'risk-bg-critical';
+    if (r >= 1.6) return 'risk-bg-high';
+    if (r >= 0.8) return 'risk-bg-medium';
+    return 'risk-bg-low';
+}
+
 // =============================================================
 // --- CONFIRMATION MODAL UTILITY ---
 // =============================================================
@@ -368,7 +378,10 @@ function getRiskMeta(rootRiskValue) {
  * @param {string} [opts.confirmClass='primary-button dangerous'] - CSS class(es)
  * @param {function} opts.onConfirm - Callback executed on confirmation
  */
-function showConfirmation({ title, messageHtml, confirmText = 'Löschen', confirmClass = 'primary-button dangerous', onConfirm }) {
+function showConfirmation({ title, messageHtml, confirmText, confirmClass = 'primary-button dangerous', onConfirm }) {
+    if (confirmText == null || confirmText === '') {
+        confirmText = (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
+    }
     const modal     = document.getElementById('confirmationModal');
     const titleEl   = document.getElementById('confirmationTitle');
     const msgEl     = document.getElementById('confirmationMessage');
@@ -378,9 +391,9 @@ function showConfirmation({ title, messageHtml, confirmText = 'Löschen', confir
 
     if (!modal || !msgEl || !btnOk) return;
 
-    if (titleEl) titleEl.textContent = title || 'Bestätigung';
+    if (titleEl) titleEl.textContent = title || (typeof t === 'function' ? t('confirm.title') : 'Bestätigung');
     msgEl.innerHTML = messageHtml || '';
-    btnOk.textContent = confirmText;
+    btnOk.textContent = confirmText || (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
     btnOk.className = confirmClass;
 
     modal.style.display = 'block';

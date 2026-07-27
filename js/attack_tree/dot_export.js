@@ -26,6 +26,23 @@ function _dotGraphHeader(opts = {}) {
     return h;
 }
 
+/** UI/export text: EN if set, else plain DE (no parentheses). Abwärtskompatibel. */
+function _dotLoc(obj, field, fallbackStr) {
+    if (typeof getLocalizedField === 'function' && obj && field) {
+        const v = getLocalizedField(obj, field, undefined, { fallback: true });
+        if (v) return v;
+    }
+    if (fallbackStr != null && fallbackStr !== '') return String(fallbackStr);
+    return (obj && field && obj[field] != null) ? String(obj[field]) : '';
+}
+
+function _dotRootName(entry) {
+    return _dotLoc({
+        title: entry?.rootName || entry?.treeV2?.title || '',
+        title_en: entry?.rootName_en || entry?.treeV2?.title_en || ''
+    }, 'title', entry?.rootName || '');
+}
+
 /**
  * Fan-out edges via invisible junction: straight trunk (no arrowhead) then straight
  * branches with arrowheads to each child. Single child = direct edge.
@@ -108,13 +125,13 @@ function generateDotString(analysis, specificTreeId = null) {
         };
 
         const rootFill = _getColor(entry.i_norm, entry.kstu);
-        nodes.push(`    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`);
+        nodes.push(`    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`);
         pushRank(0, rootId);
 
         const walk = (node, depth) => {
             const nid = `${riskId}_N${_safeId(node.uid || node.title || ('d' + depth))}`;
             const fill = _getColor(node.i_norm, node.kstu);
-            nodes.push(`    ${nid} [label="${_lbl(node.title, node.kstu, node.i_norm)}", style=filled, fillcolor="${fill}"]\n`);
+            nodes.push(`    ${nid} [label="${_lbl(_dotLoc(node, 'title', node.title), node.kstu, node.i_norm)}", style=filled, fillcolor="${fill}"]\n`);
             pushRank(depth, nid);
 
             const impactIds = [];
@@ -122,7 +139,7 @@ function generateDotString(analysis, specificTreeId = null) {
                 const lid = `${riskId}_L${_safeId(leaf.uid || (node.uid + '_' + idx))}`;
                 const lkstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
                 const lfFill = _getColor(leaf.i_norm, lkstu);
-                nodes.push(`    ${lid} [label="${_lbl(leaf.text, lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
+                nodes.push(`    ${lid} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
                 impactIds.push(lid);
                 leafIds.push(lid);
             });
@@ -247,7 +264,7 @@ function generateDotString(analysis, specificTreeId = null) {
         const rootFill = _getColor(entry.i_norm, entry.kstu);
 
         dot += `    // Tree ${riskId}\n`;
-        dot += `    ${rootId} [label="${_lbl(entry.rootName, entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
+        dot += `    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
 
         (entry.branches || []).forEach((branch, bIdx) => {
             if (!branch || !branch.name) return;
@@ -261,7 +278,7 @@ function generateDotString(analysis, specificTreeId = null) {
                     if (!leaf || !leaf.text) return;
                     const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
                     const lFill = _getColor(leaf.i_norm, leaf);
-                    dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
+                    dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
                 });
                 return;
             }
@@ -280,7 +297,7 @@ function generateDotString(analysis, specificTreeId = null) {
                         if (!leaf || !leaf.text) return;
                         const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
                         const lFill = _getColor(leaf.i_norm, leaf);
-                        dot += `    ${lId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
+                        dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
                     });
                 });
                 return;
@@ -305,7 +322,7 @@ function generateDotString(analysis, specificTreeId = null) {
                 if (!leaf || !leaf.text) return;
                 const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
                 const lFill = _getColor(leaf.i_norm, leaf);
-                dot += `    ${leafId} [label="${_lbl(leaf.text, leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
+                dot += `    ${leafId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
             });
         });
 
@@ -637,7 +654,7 @@ const _isMitigated = (t) => {
         const _lang = (window.ReportI18n && ReportI18n.getReportLang) ? ReportI18n.getReportLang() : 'de';
         const _treatKey = (window.ReportI18n && ReportI18n.reportStrings) ? ReportI18n.reportStrings(_lang).treatment : 'Behandlung';
         const _treatVal = (v) => (window.ReportI18n && ReportI18n.mapTreatment) ? ReportI18n.mapTreatment(v, _lang) : v;
-        const rootLabel = `{${_cleanText(entry.rootName)} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(rootTreatment))}}`;
+        const rootLabel = `{${_cleanText(_dotRootName(entry))} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(rootTreatment))}}`;
         const rootFill = _colorFromScore(_score(entry.i_norm, rrRootKstuEff));
 
         nodes.push(`    ${rootId} [label="${rootLabel}", style=filled, fillcolor="${rootFill}"]\n`);
@@ -654,7 +671,7 @@ const _isMitigated = (t) => {
             const rrKstuEff = nodeNoMit ? baseNode.kstu : rrKstu;
             const showPRRNode = _pStr(rrKstuEff);
 
-            const label = `{${_cleanText(baseNode.title)} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(tNode))}}`;
+            const label = `{${_cleanText(_dotLoc(baseNode, 'title', baseNode.title))} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(tNode))}}`;
             const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
 
             nodes.push(`    ${nid} [label="${label}", style=filled, fillcolor="${fill}"]\n`);
@@ -676,7 +693,7 @@ const _isMitigated = (t) => {
                 const rkstuEff = leafNoMit ? okstu : rkstu;
                 const showPRRLeaf = _pStr(rkstuEff);
 
-                const leafText = _cleanText(leaf?.text ?? leaf?.name ?? leaf?.label ?? '');
+                const leafText = _cleanText(_dotLoc(leaf, 'text', leaf?.text ?? leaf?.name ?? leaf?.label ?? ''));
                 const strideStr = (Array.isArray(leaf.stride) && leaf.stride.length > 0) ? ` | STRIDE: ${leaf.stride.join(', ')}` : '';
                 const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(trLeaf))}${strideStr}}`;
                 const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));

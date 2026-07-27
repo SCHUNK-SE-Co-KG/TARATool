@@ -62,7 +62,7 @@
         return null;
     }
 
-    async function svgTextToPng(svgText, targetPxWidth = 4000, jpegQuality = 0.92) {
+    async function svgTextToPng(svgText, targetPxWidth = 5000, jpegQuality = 0.97) {
         // Rasterizes a vector Graphviz SVG onto an in-memory canvas and returns an
         // image dataURL for PDF embedding. The vector source is rendered directly at
         // the requested target width (up- OR down-scaled), so large trees stay crisp
@@ -76,8 +76,8 @@
 
         // Browser canvas safety limits (avoid failed/blank rasterization on huge trees).
         const MAX_SIDE = 16000;                 // max width/height in px
-        const MAX_AREA = 40 * 1000 * 1000;      // ~40 MP total pixels
-        const MAX_PNG_BYTES = 12 * 1024 * 1024; // above this, fall back to JPEG
+        const MAX_AREA = 48 * 1000 * 1000;      // ~48 MP total pixels
+        const MAX_PNG_BYTES = 20 * 1024 * 1024; // above this, fall back to JPEG
 
         const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -111,12 +111,11 @@
             const canvas = document.createElement('canvas');
             canvas.width = cw;
             canvas.height = ch;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { alpha: false });
             if (!ctx) return null;
 
-            // High-quality scaling for the vector->raster step.
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+            // Line-art (Graphviz): avoid soft filter blur on edges/text.
+            ctx.imageSmoothingEnabled = false;
 
             // White background (opaque, needed for JPEG fallback and clean print).
             ctx.fillStyle = '#ffffff';

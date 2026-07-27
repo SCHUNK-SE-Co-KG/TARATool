@@ -19,6 +19,14 @@
         return escapeHtml(str);
     }
 
+    function _t(k) {
+        return (typeof t === 'function') ? t(k) : k;
+    }
+
+    function _paren(str) {
+        return (typeof localizeParenHtml === 'function') ? localizeParenHtml(str) : rrEscapeHtml(str);
+    }
+
     // Delegates to global getRiskMeta() in utils.js
     function rrGetRiskMeta(rootRiskValue) {
         return getRiskMeta(rootRiskValue);
@@ -34,6 +42,7 @@
 
         const close = () => {
             modal.style.display = 'none';
+            delete modal.dataset.rrEditingUid;
             // Refresh overview (so that status/counts can become visible later)
             const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
             if (analysis && typeof renderResidualRisk === 'function') {
@@ -56,13 +65,20 @@
         const opts = (crit && Array.isArray(crit.options)) ? crit.options : [];
         const label = crit ? crit.label : key;
 
-        let html = `<label style="font-size:0.8em; color:#666;">${rrEscapeHtml(label)}</label>`;
+        let html = `<label style="font-size:0.8em; color:#666;">${rrEscapeHtml(
+            (typeof getLocalizedOptionText === 'function')
+                ? (getLocalizedOptionText(crit || {}, 'label') || label)
+                : label
+        )}</label>`;
         html += `<select class="kstu-select rr-kstu" data-kstu="${key}">`;
-        html += `<option value="">Bitte waehlen…</option>`;
+        html += `<option value="">${_t('rr.pleaseSelect')}</option>`;
         opts.forEach(o => {
             const v = String(o.value ?? '');
             const sel = (String(selected ?? '') === v) ? 'selected' : '';
-            html += `<option value="${rrEscapeHtml(v)}" ${sel}>${rrEscapeHtml(o.text ?? v)}</option>`;
+            const txt = (typeof getLocalizedOptionText === 'function')
+                ? getLocalizedOptionText(o, 'text')
+                : (o.text ?? v);
+            html += `<option value="${rrEscapeHtml(v)}" ${sel}>${rrEscapeHtml(txt)}</option>`;
         });
         html += `</select>`;
         return html;
@@ -100,11 +116,11 @@
     function rrRenderResidualLeafRiskValueHTML(leaf) {
         const val = rrComputeResidualLeafRiskValue(leaf);
         if (val === null) {
-            return `Restrisiko R: <b>-</b>`;
+            return `${_t('rr.residualR')} <b>-</b>`;
         }
         const meta = rrGetRiskMeta(val);
-        return `Restrisiko R: <b style="color:${meta.color}">${rrEscapeHtml(meta.display)}</b>`
-            + ` <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${meta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(meta.label)}</span>`;
+        return `${_t('rr.residualR')} <b style="color:${meta.color}">${rrEscapeHtml(meta.display)}</b>`
+            + ` <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${meta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(rrRiskLabel(meta))}</span>`;
     }
 
     function rrLeafComplete(leaf) {
@@ -192,12 +208,35 @@
         }
     }
 
-    function rrBuildLeafLabel(meta) {
-        const leafText = meta?.leaf?.text
-            ? String(meta.leaf.text)
-            : (meta?.leaf?.name ? String(meta.leaf.name) : (meta?.leaf?.label ? String(meta.leaf.label) : ''));
+    function rrLoc(obj, field) {
+        if (!obj || !field) return '';
+        if (typeof getLocalizedField === 'function') {
+            return getLocalizedField(obj, field) || '';
+        }
+        return obj[field] != null ? String(obj[field]) : '';
+    }
 
-        // treeV2 provides breadcrumb directly (full naming)
+    function rrRootLabel(entry) {
+        if (!entry) return '';
+        const obj = {
+            title: entry.rootName || entry.treeV2?.title || '',
+            title_en: entry.rootName_en || entry.treeV2?.title_en || ''
+        };
+        return rrLoc(obj, 'title') || entry.rootName || entry.id || '';
+    }
+
+    function rrRiskLabel(meta) {
+        const raw = meta?.label || '';
+        return (typeof tRiskLabel === 'function') ? tRiskLabel(raw) : raw;
+    }
+
+    function rrBuildLeafLabel(meta) {
+        const leaf = meta?.leaf;
+        const leafText = leaf
+            ? (rrLoc(leaf, 'text') || (leaf.name ? String(leaf.name) : (leaf.label ? String(leaf.label) : '')))
+            : '';
+
+        // treeV2 provides breadcrumb directly (full naming) – already localized in rrIterateLeaves
         if (meta?.breadcrumb) {
             return {
                 path: String(meta.breadcrumb),
@@ -205,13 +244,13 @@
             };
         }
 
-        const bName = meta?.branch?.name
-            ? String(meta.branch.name)
-            : (meta?.branch?.title ? String(meta.branch.title) : '');
+        const bName = meta?.branch
+            ? (rrLoc(meta.branch, 'title') || rrLoc(meta.branch, 'name') || (meta.branch.name ? String(meta.branch.name) : '') || (meta.branch.title ? String(meta.branch.title) : ''))
+            : '';
 
-        const nName = meta?.node?.name
-            ? String(meta.node.name)
-            : (meta?.node?.title ? String(meta.node.title) : '');
+        const nName = meta?.node
+            ? (rrLoc(meta.node, 'title') || rrLoc(meta.node, 'name') || (meta.node.name ? String(meta.node.name) : '') || (meta.node.title ? String(meta.node.title) : ''))
+            : '';
 
         // compact but unambiguous
         const parts = [];
@@ -245,8 +284,8 @@
         if (!modal || !title || !body) return;
 
         const id = rrEscapeHtml(liveEntry?.id ?? 'R??');
-        const name = rrEscapeHtml(liveEntry?.rootName ?? '(ohne Titel)');
-        title.textContent = `Restrisiko bearbeiten - ${id}: ${name}`;
+        const namePlain = rrRootLabel(liveEntry) || _t('rr.emptyTitle');
+        title.textContent = `${_t('rr.editTitle')} - ${id}: ${namePlain}`;
 
         const rows = [];
         try {
@@ -260,26 +299,27 @@
         } catch (e) {}
 
         if (rows.length === 0) {
-            body.innerHTML = `<div class="warning-box" style="margin:0;"><h4 style="margin:0 0 6px 0;">Keine Blaetter gefunden</h4><p style="margin:0; color:#555;">Der Angriffsbaum enthaelt keine Auswirkungen (Leaves).</p></div>`;
+            body.innerHTML = `<div class="warning-box" style="margin:0;"><h4 style="margin:0 0 6px 0;">${_t('rr.noLeaves')}</h4><p style="margin:0; color:#555;">${_t('rr.noLeavesHint')}</p></div>`;
+            modal.dataset.rrEditingUid = liveEntry?.uid || '';
             modal.style.display = 'block';
             return;
         }
 
         const tableHtml = `
             <div class="success-box" style="margin-bottom:12px;">
-                <p style="margin:0;">Bearbeiten Sie nur die Blaetter (Auswirkungen). Risikobewertung bleibt unveraendert.</p>
+                <p style="margin:0;">${_t('rr.editHint')}</p>
             </div>
-            <div style="overflow-x:auto;">
+            <div style="overflow-x:auto; max-width:100%;">
                 <table class="rr-leaf-table">
                     <thead>
                         <tr>
                             <th style="width:42px; text-align:center;">&nbsp;</th>
-                            <th style="min-width:220px;">Blatt (Auswirkung)</th>
-                            <th style="min-width:150px;">Risiko-Score</th>
-                            <th style="min-width:160px;">Behandlung</th>
-                            <th style="min-width:320px;">Restrisiko Bewertung (K/S/T/U)</th>
-                            <th style="min-width:220px;">Anmerkungen</th>
-                            <th style="min-width:220px;">Maßnahme aus Security Konzept</th>
+                            <th class="rr-col-path">${_t('rr.colLeaf')}</th>
+                            <th class="rr-col-score">${_t('rr.colScore')}</th>
+                            <th class="rr-col-treat">${_t('rr.colTreat')}</th>
+                            <th class="rr-col-kstu">${_t('rr.colKstu')}</th>
+                            <th class="rr-col-note">${_t('rr.colNote')}</th>
+                            <th class="rr-col-sec">${_t('rr.colSec')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -299,16 +339,16 @@
                                         <i class="fas fa-check-circle rr-leaf-check ${complete ? '' : 'incomplete'}"></i>
                                     </td>
                                     <td>
-                                        <div style="font-weight:700;">${rrEscapeHtml(lbl.path)}</div>
-                                        <div style="color:#555; font-size:0.9em; margin-top:3px; white-space:pre-wrap;">${rrEscapeHtml(lbl.text || '(ohne Text)')}</div>
+                                        <div style="font-weight:700;">${_paren(lbl.path)}</div>
+                                        <div style="color:#555; font-size:0.9em; margin-top:3px; white-space:pre-wrap;">${_paren(lbl.text || _t('rr.noText'))}</div>
                                     </td>
                                     <td>${rrRenderOriginalSummary(leaf)}</td>
                                     <td>
                                         <select class="rr-treatment rr-field">
-                                            <option value="">Bitte waehlen…</option>
-                                            <option value="Akzeptiert" ${treatment === 'Akzeptiert' ? 'selected' : ''}>Akzeptiert</option>
-                                            <option value="Delegiert" ${treatment === 'Delegiert' ? 'selected' : ''}>Delegiert</option>
-                                            <option value="Mitigiert" ${treatment === 'Mitigiert' ? 'selected' : ''}>Mitigiert</option>
+                                            <option value="">${_t('rr.pleaseSelect')}</option>
+                                            <option value="Akzeptiert" ${treatment === 'Akzeptiert' ? 'selected' : ''}>${_t('rr.treat.accept')}</option>
+                                            <option value="Delegiert" ${treatment === 'Delegiert' ? 'selected' : ''}>${_t('rr.treat.delegate')}</option>
+                                            <option value="Mitigiert" ${treatment === 'Mitigiert' ? 'selected' : ''}>${_t('rr.treat.mitigate')}</option>
                                         </select>
                                     </td>
                                     <td>
@@ -326,10 +366,10 @@
                                         <div class="rr-mitigate-placeholder ${isMit ? 'rr-hidden' : ''}" style="color:#7f8c8d;">-</div>
                                     </td>
                                     <td>
-                                        <textarea class="rr-note rr-textarea" placeholder="Anmerkungen (optional bei Mitigiert)...">${note}</textarea>
+                                        <textarea class="rr-note rr-textarea" placeholder="${_t('rr.notePh')}">${note}</textarea>
                                     </td>
                                     <td>
-                                        <textarea class="rr-security rr-textarea" placeholder="Maßnahme aus Security Konzept...">${sec}</textarea>
+                                        <textarea class="rr-security rr-textarea" placeholder="${_t('rr.secPh')}">${sec}</textarea>
                                     </td>
                                 </tr>
                             `;
@@ -417,6 +457,7 @@
             });
         }
 
+        modal.dataset.rrEditingUid = liveEntry?.uid || '';
         modal.style.display = 'block';
     }
 
@@ -455,7 +496,7 @@
             return rb - ra;
         });
 
-        let html = '<h4>Root-Node-\u00dcbersicht (Restrisiko):</h4>';
+        let html = `<h4>${_t('rr.rootOverview')}</h4>`;
         html += '<div class="root-overview-grid">';
 
         withMetrics.forEach(({ entry, base, m }) => {
@@ -467,19 +508,18 @@
             const resScore = (m && m.riskValue !== undefined) ? parseFloat(m.riskValue) : 0;
             const resMeta = rrGetRiskMeta(m ? m.riskValue : null);
 
-            const fill = resScore >= 2.0 ? '#ffcccc'
-                       : resScore >= 1.6 ? '#ffe0b3'
-                       : resScore >= 0.8 ? '#ffffcc'
-                       : '#ccffcc';
+            const fillClass = (typeof getRiskBgClass === 'function')
+                ? getRiskBgClass(resScore)
+                : 'risk-bg-unknown';
 
             html += `
-            <div class="root-overview-card" style="background:${fill}; border:1px solid #999;">
-                <div class="root-overview-title">${rrEscapeHtml(base?.rootName || base?.id || '')}</div>
+            <div class="root-overview-card ${fillClass}">
+                <div class="root-overview-title">${_paren(rrRootLabel(base) || base?.id || '')}</div>
                 <div class="root-overview-row">P(RR) = ${rrEscapeHtml(pStr(resKstu))}</div>
                 <div class="root-overview-row">I[norm] = ${rrEscapeHtml(fmt(m ? m.i_norm : base?.i_norm))}</div>
-                <div class="root-overview-row">R = ${rrEscapeHtml(fmt(origScore.toFixed(2)))}</div>
-                <div class="root-overview-row root-overview-risk">RR = ${rrEscapeHtml(fmt(resScore.toFixed(2)))}
-                    <span class="root-overview-badge" style="background:${resMeta.color}; color:#fff;">${rrEscapeHtml(resMeta.label)}</span>
+                <div class="root-overview-row">R = <b style="color:${origMeta.color}">${rrEscapeHtml(fmt(origScore.toFixed(2)))}</b></div>
+                <div class="root-overview-row root-overview-risk">RR = <b style="color:${resMeta.color}">${rrEscapeHtml(fmt(resScore.toFixed(2)))}</b>
+                    <span class="root-overview-badge" style="background:${resMeta.color}; color:#fff;">${rrEscapeHtml(rrRiskLabel(resMeta))}</span>
                 </div>
             </div>`;
         });
@@ -494,7 +534,7 @@
 
     function rrRenderTreeCard(entry, analysis) {
         const id = rrEscapeHtml(entry?.id ?? 'R??');
-        const name = rrEscapeHtml(entry?.rootName ?? '(ohne Titel)');
+        const name = _paren(rrRootLabel(entry) || _t('rr.emptyTitle'));
         const uid = rrEscapeHtml(entry?.uid ?? '');
 
         const base = (analysis?.riskEntries || []).find(e => e?.uid === entry?.uid) || entry;
@@ -556,11 +596,11 @@
 
                         <!-- Risiko-Score & Restrisiko hintereinander -->
                         <div style="margin-top:6px; color:#666; font-size:0.9em;">
-                            <span>Risiko-Score (R): <b style="color:${origMeta.color}">${rrEscapeHtml(origMeta.display)}</b></span>
-                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${origMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(origMeta.label)}</span>
+                            <span>${_t('rr.scoreR')} <b style="color:${origMeta.color}">${rrEscapeHtml(origMeta.display)}</b></span>
+                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${origMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(rrRiskLabel(origMeta))}</span>
                             <span style="margin:0 8px; color:#bbb;">|</span>
-                            <span>Restrisiko (R): <b style="color:${resMeta.color}">${rrEscapeHtml(resMeta.display)}</b></span>
-                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${resMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(resMeta.label)}</span>
+                            <span>${_t('rr.residualLabel')} <b style="color:${resMeta.color}">${rrEscapeHtml(resMeta.display)}</b></span>
+                            <span style="margin-left:6px; padding:2px 6px; border-radius:3px; background:${resMeta.color}; color:#fff; font-size:0.8em;">${rrEscapeHtml(rrRiskLabel(resMeta))}</span>
                         </div>
 
                         <div style="margin-top:4px; color:#666; font-size:0.85em;">
@@ -569,28 +609,28 @@
                         </div>
 
                         <div style="margin-top:4px; color:#666; font-size:0.85em;">
-                            Restrisiko K/S/T/U: <span>K:${rrEscapeHtml(resK)} S:${rrEscapeHtml(resS)} T:${rrEscapeHtml(resT)} U:${rrEscapeHtml(resU)}</span>
+                            ${_t('rr.residualKstu')}: <span>K:${rrEscapeHtml(resK)} S:${rrEscapeHtml(resS)} T:${rrEscapeHtml(resT)} U:${rrEscapeHtml(resU)}</span>
                         </div>
 
                         <div style="margin-top:10px;">
                             <div style="font-size:0.85em; color:#666; font-weight:600; margin-bottom:4px;">
-                                Anmerkungen ${noteRequired ? '<span style="color:#c0392b; font-weight:700;">(Pflicht bei Kritisch/Hoch)</span>' : '<span style="color:#7f8c8d; font-weight:600;">(optional)</span>'}
+                                ${_t('rr.notesLabel')} ${noteRequired ? `<span style="color:#c0392b; font-weight:700;">${_t('rr.noteRequired')}</span>` : `<span style="color:#7f8c8d; font-weight:600;">${_t('rr.noteOptional')}</span>`}
                             </div>
                             <textarea
                                 class="rr-tree-note rr-textarea ${noteRequired && !treeNote.trim() ? 'rr-text-invalid' : ''}"
                                 data-rr-tree-uid="${uid}"
                                 data-rr-note-required="${noteRequired ? '1' : '0'}"
                                 data-rr-allleaves="${allLeavesOk ? '1' : '0'}"
-                                placeholder="Anmerkungen zum Restrisiko..."
+                                placeholder="${_t('rr.treeNotePh')}"
                                 style="min-height:56px;"
                             >${rrEscapeHtml(treeNote)}</textarea>
                         </div>
                     </div>
 
                     <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
-                        <i class="fas fa-check-circle rr-tree-check ${treeComplete ? '' : 'incomplete'}" title="${treeComplete ? 'Restrisikoanalyse komplett' : 'Restrisikoanalyse unvollstaendig'}"></i>
+                        <i class="fas fa-check-circle rr-tree-check ${treeComplete ? '' : 'incomplete'}" title="${treeComplete ? _t('rr.complete') : _t('rr.incomplete')}"></i>
                         <button class="action-button small rr-edit-btn" data-rr-edit="${uid}">
-                            <i class="fas fa-edit"></i> Bearbeiten
+                            <i class="fas fa-edit"></i> ${_t('btn.edit')}
                         </button>
                     </div>
                 </div>
@@ -607,7 +647,7 @@
         if (!container) return;
 
         if (!analysis) {
-            container.innerHTML = '<p style="color:#7f8c8d;">Keine Analyse aktiv.</p>';
+            container.innerHTML = `<p class="muted-hint">${_t('rr.noAnalysis')}</p>`;
             return;
         }
 
@@ -622,7 +662,7 @@
             : [];
 
         if (!entries || entries.length === 0) {
-            container.innerHTML = '<p style="color:#7f8c8d;">Noch keine Angriffsbäume vorhanden (siehe Reiter "Risikoanalyse").</p>';
+            container.innerHTML = `<p class="muted-hint">${_t('rr.noTrees')}</p>`;
             return;
         }
 
@@ -678,7 +718,7 @@
         const entry = (analysis.residualRisk?.entries || []).find(r => r?.uid === riskUid);
 
         if (!entry) {
-            if (typeof showToast === 'function') showToast('Angriffsbaum nicht gefunden.', 'error');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeNotFound') : 'Angriffsbaum nicht gefunden.'), 'error');
             return;
         }
 

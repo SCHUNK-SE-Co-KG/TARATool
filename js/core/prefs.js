@@ -35,6 +35,10 @@
 
     function setLang(lang) {
         const next = lang === 'en' ? 'en' : 'de';
+        const prev = getLang();
+        if (typeof window.beforeTaraLangChange === 'function') {
+            try { window.beforeTaraLangChange(prev, next); } catch (_) { /* ignore */ }
+        }
         localStorage.setItem(LANG_KEY, next);
         document.documentElement.setAttribute('lang', next);
         document.documentElement.setAttribute('data-lang', next);

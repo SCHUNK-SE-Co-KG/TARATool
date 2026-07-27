@@ -126,32 +126,32 @@ function setTreeDepth(depth) {
 
     if (btnL2) {
         btnL2.innerHTML = showL2
-            ? '<i class="fas fa-minus"></i> Zwischenknoten 1 ausblenden'
-            : '<i class="fas fa-layer-group"></i> Zwischenknoten 1 anzeigen';
+            ? `<i class="fas fa-minus"></i> ${(typeof tf === 'function' ? tf('at.mid.hide', { n: 1 }) : 'Zwischenknoten 1 ausblenden')}`
+            : `<i class="fas fa-layer-group"></i> ${(typeof tf === 'function' ? tf('at.mid.show', { n: 1 }) : 'Zwischenknoten 1 anzeigen')}`;
     }
 
     // Second intermediate path: possible from depth >= 2
     if (btnSecond) {
         btnSecond.style.display = showL2 ? 'inline-flex' : 'none';
         btnSecond.innerHTML = _atIsSecondIntermediateEnabled()
-            ? '<i class="fas fa-minus"></i> Alternativen Ast (B) entfernen'
-            : '<i class="fas fa-layer-group"></i> Alternativen Ast (B) hinzufügen';
+            ? `<i class="fas fa-minus"></i> ${(typeof t === 'function' ? t('at.alt.remove') : 'Alternativen Ast (B) entfernen')}`
+            : `<i class="fas fa-layer-group"></i> ${(typeof t === 'function' ? t('at.alt.add') : 'Alternativen Ast (B) hinzufügen')}`;
     }
 
     // Third intermediate level button: toggle between depth 2 and 3
     if (btnThird) {
         btnThird.style.display = showL2 ? 'inline-flex' : 'none';
         btnThird.innerHTML = (depth >= 3)
-            ? '<i class="fas fa-minus"></i> Zwischenknoten 2 ausblenden'
-            : '<i class="fas fa-layer-group"></i> Zwischenknoten 2 anzeigen';
+            ? `<i class="fas fa-minus"></i> ${(typeof tf === 'function' ? tf('at.mid.hide', { n: 2 }) : 'Zwischenknoten 2 ausblenden')}`
+            : `<i class="fas fa-layer-group"></i> ${(typeof tf === 'function' ? tf('at.mid.show', { n: 2 }) : 'Zwischenknoten 2 anzeigen')}`;
     }
 
     // Fourth intermediate level button: toggle between depth 3 and 4
     if (btnFourth) {
         btnFourth.style.display = showL3 ? 'inline-flex' : 'none';
         btnFourth.innerHTML = (depth === 4)
-            ? '<i class="fas fa-minus"></i> Zwischenknoten 3 ausblenden'
-            : '<i class="fas fa-layer-group"></i> Zwischenknoten 3 anzeigen';
+            ? `<i class="fas fa-minus"></i> ${(typeof tf === 'function' ? tf('at.mid.hide', { n: 3 }) : 'Zwischenknoten 3 ausblenden')}`
+            : `<i class="fas fa-layer-group"></i> ${(typeof tf === 'function' ? tf('at.mid.show', { n: 3 }) : 'Zwischenknoten 3 anzeigen')}`;
     }
 
     // If intermediate level off: also turn off 2nd intermediate path
@@ -509,8 +509,9 @@ function _atEnsureLeafDeleteButtons() {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'action-button small leaf-delete-btn';
-        btn.title = 'Auswirkung löschen';
-        btn.setAttribute('aria-label', 'Auswirkung löschen');
+        const _delTip = (typeof t === 'function' ? t('at.impact.delete.titleTip') : 'Auswirkung löschen (mit Bestätigung)');
+        btn.title = _delTip;
+        btn.setAttribute('aria-label', _delTip);
         btn.style.marginLeft = 'auto';
         btn.innerHTML = '<i class="fas fa-minus"></i>';
 
@@ -639,7 +640,7 @@ function initAttackTreeImpactRemovers() {
             const leafIdx = _atLeafIndex(branchNum, group, visible);
             const leafData = _atReadLeafFields(leafIdx);
             if (!_atLeafDataIsEmpty(leafData)) {
-                const ok = confirm('Diese Auswirkung ist nicht leer. Wirklich löschen?');
+                const ok = confirm((typeof t === 'function' ? t('at.impact.confirmNonEmpty') : 'Diese Auswirkung ist nicht leer. Wirklich löschen?'));
                 if (!ok) return;
             }
 
@@ -683,7 +684,7 @@ function initAttackTreeLeafRemovers() {
             const delIdx = _atLeafIndex(branchNum, group, impactPos);
             const delData = _atReadLeafFields(delIdx);
             if (!_atLeafDataIsEmpty(delData)) {
-                const ok = confirm('Diese Auswirkung ist nicht leer. Wirklich löschen?');
+                const ok = confirm((typeof t === 'function' ? t('at.impact.confirmNonEmpty') : 'Diese Auswirkung ist nicht leer. Wirklich löschen?'));
                 if (!ok) return;
             }
 

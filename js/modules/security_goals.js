@@ -91,7 +91,10 @@
         return entries
             .map(e => {
                 const id = e.id || '';
-                const label = `${id}: ${e.rootName || ''}`;
+                const name = (typeof getLocalizedField === 'function')
+                    ? (getLocalizedField({ title: e.rootName || '', title_en: e.rootName_en || '' }, 'title') || e.rootName || '')
+                    : (e.rootName || '');
+                const label = `${id}: ${name}`;
                 const sel = selectedSet.has(id) ? 'selected' : '';
                 return `<option value="${escapeHtml(id)}" ${sel}>${escapeHtml(label)}</option>`;
             })
@@ -104,7 +107,7 @@
         const entries = Array.isArray(analysis.riskEntries) ? analysis.riskEntries : [];
         if (entries.length === 0) {
             rootRefsSelect.disabled = true;
-            rootRefsSelect.innerHTML = `<option>Keine Angriffsbäume vorhanden</option>`;
+            rootRefsSelect.innerHTML = `<option>${(typeof t === 'function') ? t('sg.noTrees') : 'Keine Angriffsbäume vorhanden'}</option>`;
             return;
         }
 
@@ -123,15 +126,16 @@
         if (!modal || !form) return;
         const a = analysis || getActiveAnalysis();
         if (!a) return;
+        modal.dataset.sgId = goal && goal.id ? goal.id : '';
 
         if (goal) {
-            if (titleEl) titleEl.textContent = `Security Ziel ${goal.id} bearbeiten`;
+            if (titleEl) titleEl.textContent = (typeof tf === 'function') ? tf('sg.modal.edit', { id: goal.id }) : `Security Ziel ${goal.id} bearbeiten`;
             if (idField) idField.value = goal.id;
             if (nameField) nameField.value = goal.name || '';
             if (descField) descField.value = goal.description || '';
             renderRootRefsSelect(a, goal.rootRefs || []);
         } else {
-            if (titleEl) titleEl.textContent = 'Neues Security Ziel';
+            if (titleEl) titleEl.textContent = (typeof t === 'function') ? t('sg.modal.new') : 'Neues Security Ziel';
             form.reset();
             if (idField) idField.value = '';
             renderRootRefsSelect(a, []);
@@ -149,7 +153,7 @@
 
         const analysis = getActiveAnalysis();
         if (!analysis) {
-            if (typeof showToast === 'function') showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.needAnalysis') : 'Bitte erst eine Analyse wählen/erstellen.'), 'warning');
             return;
         }
 
@@ -161,20 +165,20 @@
         const rootRefs = readRootRefsSelect();
 
         if (!name) {
-            if (typeof showToast === 'function') showToast('Bitte einen Namen angeben.', 'warning');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.needName') : 'Bitte einen Namen angeben.'), 'warning');
             return;
         }
 
         if (id) {
             const existing = analysis.securityGoals.find(g => g.id === id);
             if (!existing) {
-                if (typeof showToast === 'function') showToast('Security Ziel nicht gefunden.', 'error');
+                if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.sgNotFound') : 'Security Ziel nicht gefunden.'), 'error');
                 return;
             }
             existing.name = name;
             existing.description = description;
             existing.rootRefs = rootRefs;
-            if (typeof showToast === 'function') showToast(`Security Ziel ${id} aktualisiert.`, 'success');
+            if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.sgUpdated', { id }) : `Security Ziel ${id} aktualisiert.`), 'success');
         } else {
             const newId = nextSecurityGoalId(analysis);
             analysis.securityGoals.push({
@@ -183,7 +187,7 @@
                 description,
                 rootRefs
             });
-            if (typeof showToast === 'function') showToast(`Security Ziel ${newId} erstellt.`, 'success');
+            if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.sgCreated', { id: newId }) : `Security Ziel ${newId} erstellt.`), 'success');
         }
 
         if (typeof saveAnalyses === 'function') saveAnalyses();
@@ -201,8 +205,8 @@
         if (goals.length === 0) {
             container.innerHTML = `
                 <div class="warning-box" style="grid-column: 1 / -1;">
-                    <h4>Keine Security Ziele definiert</h4>
-                    <p>Fügen Sie über <b>"Security Ziel hinzufügen"</b> neue Ziele hinzu und referenzieren Sie optional bestehende Angriffsbäume (Root).</p>
+                    <h4>${(typeof t === 'function') ? t('sg.noneTitle') : 'Keine Security Ziele definiert'}</h4>
+                    <p>${(typeof t === 'function') ? t('sg.noneHint') : 'Fügen Sie über <b>"Security Ziel hinzufügen"</b> neue Ziele hinzu und referenzieren Sie optional bestehende Angriffsbäume (Root).'}</p>
                 </div>
             `;
             return;
@@ -215,8 +219,9 @@
             const refLabels = refs
                 .map(id => {
                     const r = riskById.get(id);
-                    const name = (r && r.rootName) ? r.rootName : '';
-                    // Display requirement: "Rnn: Name" (no bullet points)
+                    const name = (r && typeof getLocalizedField === 'function')
+                        ? (getLocalizedField({ title: r.rootName || '', title_en: r.rootName_en || '' }, 'title') || r.rootName || '')
+                        : ((r && r.rootName) ? r.rootName : '');
                     return name ? `${id}: ${name}` : `${id}`;
                 })
                 .filter(Boolean);
@@ -225,21 +230,21 @@
                 ? `<div style="margin-top:6px;">
                         ${refLabels.map(lbl => `<div style="margin:2px 0;">${escapeHtml(lbl)}</div>`).join('')}
                    </div>`
-                : `<div style="color:#999; margin-top:6px;">— keine Referenz —</div>`;
+                : `<div style="color:#999; margin-top:6px;">${(typeof t === 'function') ? t('sg.noRef') : '— keine Referenz —'}</div>`;
 
             return `
                 <div class="asset-card" style="border-top-color:#8e44ad;">
                     <div class="asset-card-header">${escapeHtml(g.id)}: ${escapeHtml(g.name)}</div>
-                    <div class="asset-description-area">${g.description ? escapeHtml(g.description) : '<span style="color:#999;">— Keine Beschreibung —</span>'}</div>
+                    <div class="asset-description-area">${g.description ? escapeHtml(g.description) : `<span style="color:#999;">${(typeof t === 'function') ? t('sg.noDesc') : '— Keine Beschreibung —'}</span>`}</div>
 
                     <div style="margin-bottom:12px;">
-                        <div style="font-weight:600; font-size:0.9em;">Referenzierte Angriffsziele (Root)</div>
+                        <div style="font-weight:600; font-size:0.9em;">${(typeof t === 'function') ? t('sg.refsTitle') : 'Referenzierte Angriffsziele (Root)'}</div>
                         ${refsMarkup}
                     </div>
 
                     <div class="asset-card-footer">
-                        <button class="action-button small" onclick="editSecurityGoal('${escapeHtml(g.id)}')"><i class="fas fa-edit"></i> Bearbeiten</button>
-                        <button class="action-button small dangerous" onclick="removeSecurityGoal('${escapeHtml(g.id)}')"><i class="fas fa-trash"></i> Löschen</button>
+                        <button class="action-button small" onclick="editSecurityGoal('${escapeHtml(g.id)}')"><i class="fas fa-edit"></i> ${(typeof t === 'function') ? t('btn.edit') : 'Bearbeiten'}</button>
+                        <button class="action-button small dangerous" onclick="removeSecurityGoal('${escapeHtml(g.id)}')"><i class="fas fa-trash"></i> ${(typeof t === 'function') ? t('btn.delete') : 'Löschen'}</button>
                     </div>
                 </div>
             `;
@@ -282,15 +287,17 @@
         if (!goal) return;
 
         showConfirmation({
-            title: 'Security Ziel löschen',
-            messageHtml: `Möchten Sie das Security Ziel <b>${escapeHtml(goal.name)} (${escapeHtml(goal.id)})</b> wirklich löschen?`,
-            confirmText: 'Löschen',
+            title: (typeof t === 'function') ? t('sg.delete.title') : 'Security Ziel löschen',
+            messageHtml: (typeof tf === 'function')
+                ? tf('sg.delete.message', { name: escapeHtml(goal.name), id: escapeHtml(goal.id) })
+                : `Möchten Sie das Security Ziel <b>${escapeHtml(goal.name)} (${escapeHtml(goal.id)})</b> wirklich löschen?`,
+            confirmText: (typeof t === 'function') ? t('confirm.delete') : 'Löschen',
             onConfirm: () => {
                 analysis.securityGoals = analysis.securityGoals.filter(g => g.id !== id);
                 _renumberSecurityGoals(analysis);
                 if (typeof saveAnalyses === 'function') saveAnalyses();
                 renderSecurityGoals(analysis);
-                if (typeof showToast === 'function') showToast(`Security Ziel ${id} gelöscht.`, 'success');
+                if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.sgDeleted', { id }) : `Security Ziel ${id} gelöscht.`), 'success');
             }
         });
     };
@@ -300,7 +307,7 @@
         btnAdd.onclick = () => {
             const analysis = getActiveAnalysis();
             if (!analysis) {
-                if (typeof showToast === 'function') showToast('Bitte erst eine Analyse wählen/erstellen.', 'warning');
+                if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.needAnalysis') : 'Bitte erst eine Analyse wählen/erstellen.'), 'warning');
                 return;
             }
             openModal(null, analysis);

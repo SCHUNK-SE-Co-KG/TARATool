@@ -17,13 +17,13 @@
     --text-main: #333333;
     --text-muted: #666666;
     --text-heading: #2c3e50;
-    --border-soft: #dddddd;
-    --border-input: #cccccc;
-    --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --border-soft: #b8c0c8;
+    --border-input: #aeb6bf;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
     --tab-inactive-bg: #e0e0e0;
     --tab-inactive-fg: #555555;
     --list-item-bg: #ffffff;
-    --list-item-border: #dddddd;
+    --list-item-border: #aeb6bf;
     --list-meta: #666666;
 }
 
@@ -34,8 +34,9 @@ html[data-theme="dark"] {
     --bg-button: #2a3542;
     --bg-button-hover: #3a4756;
     --text-main: #e8edf2;
-    --text-muted: #a8b3bf;
-    --text-heading: #f3f6fa;
+    /* noch etwas heller → DS/Matrix-Lesbarkeit */
+    --text-muted: #d0d8e0;
+    --text-heading: #f5f8fc;
     --border-soft: #33404d;
     --border-input: #3d4b5a;
     --shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -43,7 +44,7 @@ html[data-theme="dark"] {
     --tab-inactive-fg: #c5d0db;
     --list-item-bg: #1e2732;
     --list-item-border: #33404d;
-    --list-meta: #a8b3bf;
+    --list-meta: #d0d8e0;
     color-scheme: dark;
 }
 
@@ -74,7 +75,8 @@ body {
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
-    z-index: 100;
+    /* Über Modal-Overlay (1000), damit Theme/Sprache im Modal bedienbar bleiben */
+    z-index: 1100;
     gap: 20px;
     height: 50px;
 }
@@ -93,16 +95,40 @@ body {
     display: flex; gap: 10px;
 }
 
+/* Offenes Modal: Header bleibt oben – nur Theme/Sprache klickbar (kein versehentliches Neu/Import) */
+body:has(.modal[style*="display: block"]) .header-nav .action-nav,
+body:has(.modal[style*="display:block"]) .header-nav .action-nav,
+body:has(.modal[style*="display: block"]) .header-nav .utility-actions > :not(.prefs-switches),
+body:has(.modal[style*="display:block"]) .header-nav .utility-actions > :not(.prefs-switches) {
+    pointer-events: none;
+    opacity: 0.4;
+}
+body:has(.modal[style*="display: block"]) .header-nav .prefs-switches,
+body:has(.modal[style*="display:block"]) .header-nav .prefs-switches {
+    pointer-events: auto;
+    opacity: 1;
+    position: relative;
+    z-index: 2;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--bg-muted);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow);
+}
+body:has(.modal[style*="display: block"]) .header-nav,
+body:has(.modal[style*="display:block"]) .header-nav {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
 /* --- MAIN CONTENT --- */
 .main-content {
     flex: 1;
-    padding: 20px;
+    padding: 16px 20px 60px;
     overflow: visible; /* WICHTIG: Damit der Hintergrund mitwächst */
-    max-width: 1400px;
-    margin: 0 auto;
+    max-width: none; /* volle Viewport-Breite nutzen */
+    margin: 0;
     width: 100%;
     box-sizing: border-box;
-    padding-bottom: 60px; /* Platz für Footer */
 }
 
 .main-header {
@@ -111,6 +137,10 @@ body {
     border-radius: 8px;
     box-shadow: var(--shadow);
     margin-bottom: 20px;
+}
+
+.metadata {
+    color: var(--text-muted);
 }
 
 /* --- TABS --- */
@@ -284,6 +314,14 @@ textarea { resize: none; }
     min-height: 60px; 
 }
 
+.asset-cia-label {
+    font-weight: 600;
+    font-size: 0.8em;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+    color: #999;
+}
+
 /* Footer (Buttons) */
 .asset-card-footer {
     margin-top: auto; 
@@ -360,18 +398,90 @@ textarea { resize: none; }
 }
 
 /* --- MATRICES & TABLES --- */
-.two-column-layout { display: flex; gap: 20px; }
-.column-left { flex: 1; }
-.column-right { flex: 2; overflow-x: auto; }
+.two-column-layout {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* DS-Liste links schmaler, Matrix rechts nimmt Restbreite */
+.column-left {
+    flex: 0 1 340px;
+    max-width: 400px;
+    min-width: 240px;
+}
+.column-right {
+    flex: 1 1 0;
+    min-width: 0; /* Flex-Overflow → Scroll nur bei Bedarf */
+    overflow-x: auto;
+}
 
-.impact-matrix-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
-.impact-matrix-table th, .impact-matrix-table td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+.impact-matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    table-layout: auto;
+}
+.impact-matrix-table th,
+.impact-matrix-table td {
+    border: 1px solid #ddd;
+    padding: 6px;
+    text-align: center;
+}
 .impact-matrix-table th { background: #f4f4f4; }
-.vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100px; }
+.vertical-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    max-height: 110px;
+}
 
 .impact-matrix-table .asset-col {
     text-align: left;
     padding-left: 10px;
+    min-width: 14rem;
+    max-width: 32vw;
+    white-space: normal;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.impact-matrix-table .score-cell {
+    min-width: 10rem;
+    width: 1%; /* Spalten nur so breit wie nötig, aber min-width greift */
+    white-space: nowrap;
+}
+.impact-matrix-table .ds-col {
+    min-width: 10rem;
+}
+select.impact-select {
+    min-width: 9.75rem;
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+/* Impact-Matrix-Wrapper: Scroll erst wenn Inhalt breiter als Viewport-Anteil */
+#dsMatrixContainer .impact-matrix-scroll {
+    overflow-x: auto;
+    width: 100%;
+    max-width: 100%;
+}
+
+@media (max-width: 1100px) {
+    .two-column-layout {
+        flex-direction: column;
+    }
+    .column-left,
+    .column-right {
+        flex: none;
+        max-width: none;
+        width: 100%;
+        min-width: 0;
+    }
+    .impact-matrix-table .asset-col {
+        max-width: none;
+    }
 }
 
 select.impact-high { background-color: rgba(231, 76, 60, 0.4); color: #000; font-weight: bold; }
@@ -456,31 +566,92 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 }
 
 .kstu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.kstu-select { padding: 2px; font-size: 0.85em; width: 100%; }
+.kstu-select { padding: 2px; font-size: 0.85em; width: 100%; min-width: 0; }
 
-.node-stats-box { margin-top: 5px; background: #fdfdfd; border: 1px solid #bbb; font-family: monospace; font-size: 0.8em; padding: 0; }
+.node-stats-box { margin-top: 5px; background: #fdfdfd; border: 1px solid #bbb; font-family: monospace; font-size: 0.8em; padding: 0; color: #333; }
 .ns-row { display: flex; justify-content: space-between; padding: 2px 5px; border-bottom: 1px solid #ddd; }
 .ns-row:last-child { border-bottom: none; }
+.ns-row-head { background-color: #f0f0f0; }
+.ns-row-kstu { border-bottom: none; font-size: 0.8em; color: #666; }
 .risk-val-critical { color: #c0392b; font-weight: bold; }
 .risk-val-high { color: #e67e22; font-weight: bold; }
 .risk-val-medium { color: #f39c12; font-weight: bold; }
 .risk-val-low { color: #27ae60; font-weight: bold; }
 
 /* Modals */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto;}
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    overflow-y: auto;
+    /* Unter dem Prefs-Header (~50px) starten – kein Überdecken durch Umschalter-Balken */
+    padding-top: 78px;
+    box-sizing: border-box;
+}
+/* Bestätigung über Header (1100), damit Prefs nicht Bestätigung überdecken */
+#confirmationModal { z-index: 1200; }
 .modal-content {
     background: #fff;
-    margin: 5vh auto;
+    margin: 10px auto 5vh;
     padding: 20px;
+    /* Freiraum oben/rechts für Schließen-Kreuz – kein Überlapp mit Inhalt */
+    padding-top: 16px;
+    padding-right: 52px;
     width: 500px;
     border-radius: 8px;
     position: relative;
-    /* Wenn die Viewport-Höhe klein ist, soll der Dialog selbst scrollen */
-    max-height: 90vh;
+    /* Viewport minus Header-Offset */
+    max-height: calc(90vh - 78px);
     overflow-y: auto;
 }
-.large-modal .modal-content { width: 90%; max-width: 1200px; }
-.close-button { float: right; font-size: 1.5em; cursor: pointer; }
+.large-modal .modal-content {
+    width: 96%;
+    max-width: min(1760px, 98vw);
+}
+/* Restrisiko-Modal: noch etwas mehr Breite, weniger H-Scroll */
+#residualRiskModal.large-modal .modal-content {
+    width: 98%;
+    max-width: min(1900px, 99vw);
+}
+
+/* Schließen-Kreuz: fest in der Modal-Ecke, über dem Inhalt */
+.close-button {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    z-index: 30;
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-size: 1.9em;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    color: #e74c3c;
+    padding: 0;
+    margin: 0;
+    border-radius: 6px;
+    user-select: none;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+.close-button:hover {
+    color: #c0392b;
+    background: rgba(231, 76, 60, 0.12);
+}
+html[data-theme="dark"] .close-button {
+    color: #ff6b6b;
+}
+html[data-theme="dark"] .close-button:hover {
+    color: #ffa8a8;
+    background: rgba(255, 107, 107, 0.18);
+}
 
 /* --- ABOUT MODAL --- */
 .about-modal-content {
@@ -665,9 +836,20 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 }
 
 /* --- RESIDUAL RISK ANALYSIS (LEAF EDITOR) --- */
-.rr-leaf-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+.rr-leaf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+    table-layout: auto;
+}
 .rr-leaf-table th, .rr-leaf-table td { border: 1px solid #ddd; padding: 6px; vertical-align: top; background:#fff; }
 .rr-leaf-table th { background: #f4f4f4; }
+.rr-leaf-table .rr-col-path { min-width: 180px; max-width: 26vw; word-break: break-word; }
+.rr-leaf-table .rr-col-score { min-width: 130px; white-space: nowrap; }
+.rr-leaf-table .rr-col-treat { min-width: 120px; }
+.rr-leaf-table .rr-col-kstu { min-width: 260px; }
+.rr-leaf-table .rr-col-note,
+.rr-leaf-table .rr-col-sec { min-width: 140px; }
 
 .rr-leaf-check { font-size: 1.2em; color: #27ae60; }
 .rr-leaf-check.incomplete { color: #bdc3c7; }
@@ -676,7 +858,7 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 
 .rr-hidden { display: none; }
 
-.rr-field { width: 100%; min-height: 34px; }
+.rr-field { width: 100%; min-height: 34px; max-width: 100%; box-sizing: border-box; }
 .rr-textarea { width: 100%; min-height: 70px; resize: vertical; }
 .rr-textarea:disabled { background: #f2f2f2; color: #7f8c8d; }
 .rr-disabled { background: #f2f2f2 !important; color: #7f8c8d !important; }
@@ -689,10 +871,11 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 
 .rr-risk-card {
     background: #fff;
-    border: 1px solid #ddd;
+    border: 1px solid #9aa3ad;
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 15px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 .rr-risk-header {
@@ -804,17 +987,20 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 
 .at-node-card {
   margin-left: 18px;
-  border-left: 4px solid #e6e6e6;
+  border-left: 5px solid #bdc3c7;
 }
 
-.at-node-card[data-depth="1"] { border-left-color: #d6eaf8; }
-.at-node-card[data-depth="2"] { border-left-color: #d5f5e3; }
-.at-node-card[data-depth="3"] { border-left-color: #fcf3cf; }
-.at-node-card[data-depth="4"] { border-left-color: #fadbd8; }
+/* Topologie-Ebenen (Hell): etwas kräftiger als zuvor */
+.at-node-card[data-depth="1"] { border-left-color: #5dade2; } /* Pfad – Blau */
+.at-node-card[data-depth="2"] { border-left-color: #52be80; } /* Zwischenpfad – Grün */
+.at-node-card[data-depth="3"] { border-left-color: #f4d03f; } /* tiefer – Gelb */
+.at-node-card[data-depth="4"] { border-left-color: #e59866; } /* tiefer – Orange */
+.at-node-card[data-depth="5"] { border-left-color: #ec7063; } /* tiefer – Koralle */
 
+/* Auswirkungen (Blätter): Farbe statt gestrichelt */
 .at-impact-card {
   margin-left: 36px;
-  border-left: 4px dashed #ececec;
+  border-left: 5px solid #af7ac5; /* Lila */
 }
 
 .at-node-actions-row {
@@ -845,7 +1031,15 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
     font-family: Arial, sans-serif;
     font-size: 0.9em;
     overflow: hidden;
+    border: 1px solid #999;
+    color: #1a1a1a;
 }
+/* Risikofarben Root-Übersicht (Light) */
+.root-overview-card.risk-bg-critical { background: #ffcccc; }
+.root-overview-card.risk-bg-high     { background: #ffe0b3; }
+.root-overview-card.risk-bg-medium   { background: #ffffcc; }
+.root-overview-card.risk-bg-low      { background: #ccffcc; }
+.root-overview-card.risk-bg-unknown  { background: #e8e8e8; }
 
 .root-overview-title {
     font-weight: 700;
@@ -968,6 +1162,12 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
     gap: 10px;
     color: var(--text-main);
     border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+html[data-theme="light"] .entry-list-item,
+:root:not([data-theme="dark"]) .entry-list-item {
+    border-color: #9aa3ad;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
 }
 .entry-list-meta {
     color: var(--list-meta);
@@ -982,23 +1182,160 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
 .muted-hint {
     color: var(--text-muted);
 }
+/* EN-Klammern-Fallback: fokussier- und markierbar */
+.loc-paren {
+    color: var(--text-muted);
+    cursor: text;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    border-radius: 3px;
+    outline: none;
+    padding: 0 1px;
+}
+.loc-paren:focus,
+.loc-paren:focus-visible {
+    color: var(--text-main);
+    background: rgba(52, 152, 219, 0.22);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.45);
+}
+html[data-theme="dark"] .loc-paren:focus,
+html[data-theme="dark"] .loc-paren:focus-visible {
+    background: rgba(93, 173, 226, 0.28);
+    box-shadow: 0 0 0 2px rgba(93, 173, 226, 0.5);
+}
 
-/* Dark mode surface fixes (hard-coded whites / contrast) */
+/* Bilingual: DE-Hinweis unter Input (markierbar; Placeholder ist es nicht) */
+.at-bilingual-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 320px;
+    min-width: 240px;
+    gap: 4px;
+}
+.at-bilingual-wrap .at-root-input,
+.at-bilingual-wrap .at-node-title,
+.at-bilingual-wrap .at-impact-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+}
+.loc-de-hint {
+    display: block;
+    font-weight: 500;
+    font-size: 0.92em;
+    line-height: 1.35;
+    max-width: 100%;
+    word-break: break-word;
+}
+.loc-de-hint[hidden] {
+    display: none !important;
+}
+
+/* Dark mode surface fixes (hard-coded whites / contrast) – Light Mode unverändert */
 html[data-theme="dark"] .panel,
 html[data-theme="dark"] .asset-card,
 html[data-theme="dark"] .modal-content,
 html[data-theme="dark"] .at-card,
+html[data-theme="dark"] .at-node-card,
+html[data-theme="dark"] .at-impact-card,
 html[data-theme="dark"] .success-box,
-html[data-theme="dark"] .warning-box {
+html[data-theme="dark"] .warning-box,
+html[data-theme="dark"] .ds-list li,
+html[data-theme="dark"] .sg-card,
+html[data-theme="dark"] .version-item,
+html[data-theme="dark"] .about-modal-content,
+html[data-theme="dark"] .rr-risk-card,
+html[data-theme="dark"] .rr-leaf-block {
     background: var(--bg-surface) !important;
     color: var(--text-main);
     border-color: var(--border-soft);
 }
 
+/* Topologie-Randfarben im Darkmode wiederherstellen (schlägt border-color oben) */
+html[data-theme="dark"] .at-node-card {
+    border-left-width: 5px !important;
+    border-left-style: solid !important;
+}
+html[data-theme="dark"] .at-node-card[data-depth="1"] { border-left-color: #5dade2 !important; }
+html[data-theme="dark"] .at-node-card[data-depth="2"] { border-left-color: #58d68d !important; }
+html[data-theme="dark"] .at-node-card[data-depth="3"] { border-left-color: #f7dc6f !important; }
+html[data-theme="dark"] .at-node-card[data-depth="4"] { border-left-color: #e59866 !important; }
+html[data-theme="dark"] .at-node-card[data-depth="5"] { border-left-color: #ec7063 !important; }
+html[data-theme="dark"] .at-impact-card {
+    border-left: 5px solid #c39bd3 !important;
+}
+
 html[data-theme="dark"] .panel h3,
-html[data-theme="dark"] .metadata,
 html[data-theme="dark"] h4 {
     color: var(--text-heading);
+    border-color: var(--border-soft) !important;
+}
+
+/* Sekundärtext: etwas helleres Grau (schlägt auch alte Inline-Farben) */
+html[data-theme="dark"] .metadata,
+html[data-theme="dark"] .asset-description-area,
+html[data-theme="dark"] .asset-cia-label,
+html[data-theme="dark"] .muted-hint,
+html[data-theme="dark"] .stat-label,
+html[data-theme="dark"] .at-hint,
+html[data-theme="dark"] .at-breadcrumb,
+html[data-theme="dark"] .at-max-note,
+html[data-theme="dark"] .ds-subtitle-row,
+html[data-theme="dark"] .ds-col-description,
+html[data-theme="dark"] .entry-list-meta {
+    color: var(--text-muted) !important;
+}
+
+/* DS-Titel + Matrix-Hinweise: hell, lesbar */
+html[data-theme="dark"] .ds-col-id-name,
+html[data-theme="dark"] .ds-list li,
+html[data-theme="dark"] .impact-matrix-table th,
+html[data-theme="dark"] .impact-matrix-table td:first-child,
+html[data-theme="dark"] #impactMatrixContainer > p,
+html[data-theme="dark"] .column-right > p,
+html[data-theme="dark"] .panel > p {
+    color: var(--text-heading) !important;
+}
+
+html[data-theme="dark"] .ds-col-description {
+    border-top-color: var(--border-soft) !important;
+}
+
+/* Standard-Badge bleibt grün */
+html[data-theme="dark"] .ds-subtitle-row span[style*="color: #2ecc71"],
+html[data-theme="dark"] .ds-subtitle-row span[style*="color:#2ecc71"] {
+    color: #2ecc71 !important;
+}
+
+/* Helle Flächen → gedämpfte Dark-Surfaces */
+html[data-theme="dark"] .asset-cia-area,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .stride-tag:not(.stride-active),
+html[data-theme="dark"] .ds-checks,
+html[data-theme="dark"] .tree-structure-table th,
+html[data-theme="dark"] .branch-separator td,
+html[data-theme="dark"] .rr-textarea:disabled,
+html[data-theme="dark"] .rr-disabled,
+html[data-theme="dark"] fieldset,
+html[data-theme="dark"] .at-root-card {
+    background: var(--bg-muted) !important;
+    color: var(--text-main);
+    border-color: var(--border-soft);
+}
+
+html[data-theme="dark"] .ds-checks-label,
+html[data-theme="dark"] .stride-label,
+html[data-theme="dark"] .stride-tag:not(.stride-active) {
+    color: var(--text-muted) !important;
+}
+
+html[data-theme="dark"] legend {
+    color: var(--text-heading);
+    background: transparent;
+}
+
+html[data-theme="dark"] .asset-card-header,
+html[data-theme="dark"] .asset-card-footer {
     border-color: var(--border-soft) !important;
 }
 
@@ -1006,10 +1343,24 @@ html[data-theme="dark"] .tree-structure-table td,
 html[data-theme="dark"] .rr-leaf-table th,
 html[data-theme="dark"] .rr-leaf-table td,
 html[data-theme="dark"] table th,
-html[data-theme="dark"] table td {
+html[data-theme="dark"] table td,
+html[data-theme="dark"] .impact-matrix-table th,
+html[data-theme="dark"] .impact-matrix-table td {
     background: var(--bg-surface) !important;
     color: var(--text-main);
     border-color: var(--border-soft);
+}
+
+html[data-theme="dark"] .rr-risk-header {
+    border-color: var(--border-soft) !important;
+}
+
+html[data-theme="dark"] .rr-leaf-table th {
+    background: var(--bg-muted) !important;
+}
+
+html[data-theme="dark"] .rr-leaf-row-complete td {
+    background: rgba(46, 204, 113, 0.12) !important;
 }
 
 html[data-theme="dark"] .action-button.dangerous:hover {
@@ -1020,10 +1371,64 @@ html[data-theme="dark"] .modal {
     background: rgba(0, 0, 0, 0.7);
 }
 
+html[data-theme="dark"] .root-overview-card {
+    color: var(--text-main);
+    border-color: var(--border-soft);
+}
+html[data-theme="dark"] .root-overview-card.risk-bg-critical {
+    background: rgba(192, 57, 43, 0.42);
+    border-color: #c0392b;
+}
+html[data-theme="dark"] .root-overview-card.risk-bg-high {
+    background: rgba(230, 126, 34, 0.40);
+    border-color: #e67e22;
+}
+html[data-theme="dark"] .root-overview-card.risk-bg-medium {
+    background: rgba(243, 156, 18, 0.38);
+    border-color: #f39c12;
+}
+html[data-theme="dark"] .root-overview-card.risk-bg-low {
+    background: rgba(39, 174, 96, 0.35);
+    border-color: #27ae60;
+}
+html[data-theme="dark"] .root-overview-card.risk-bg-unknown {
+    background: var(--bg-muted);
+}
 html[data-theme="dark"] .root-overview-title,
 html[data-theme="dark"] .root-overview-row {
-    color: #1a1a1a;
+    color: inherit;
+    border-bottom-color: rgba(255, 255, 255, 0.12);
 }
+
+/* Risk-Score-Boxen im Angriffsbaum: kein helles Feld + helles Grau */
+html[data-theme="dark"] .node-stats-box {
+    background: var(--bg-muted) !important;
+    border-color: var(--border-soft) !important;
+    color: var(--text-main) !important;
+}
+html[data-theme="dark"] .node-stats-box .ns-row {
+    border-color: var(--border-soft);
+}
+html[data-theme="dark"] .node-stats-box .ns-row-head,
+html[data-theme="dark"] .node-stats-box .ns-row[style*="background"] {
+    background: var(--bg-page) !important;
+    color: var(--text-main) !important;
+}
+/* KSTU-Zeile: helleres Grau für Kontrast */
+html[data-theme="dark"] .node-stats-box .ns-row-kstu,
+html[data-theme="dark"] .node-stats-box .ns-row[style*="color:#666"],
+html[data-theme="dark"] .node-stats-box .ns-row[style*="color: #666"] {
+    color: #c5d0db !important;
+}
+/* I(N) ohne Risk-Klasse: hell */
+html[data-theme="dark"] .node-stats-box .ns-value:not([class*="risk-val"]) {
+    color: var(--text-heading);
+}
+/* Risk-Farben analog Light, etwas heller für Dark-Kontrast */
+html[data-theme="dark"] .risk-val-critical { color: #ff6b6b !important; font-weight: bold; }
+html[data-theme="dark"] .risk-val-high     { color: #ffa94d !important; font-weight: bold; }
+html[data-theme="dark"] .risk-val-medium   { color: #ffd43b !important; font-weight: bold; }
+html[data-theme="dark"] .risk-val-low      { color: #51cf66 !important; font-weight: bold; }
 
 html[data-theme="dark"] #statCrit,
 html[data-theme="dark"] #statHigh,
@@ -1040,4 +1445,86 @@ html[data-theme="dark"] .success-box,
 html[data-theme="dark"] .warning-box {
     background: var(--bg-muted) !important;
 }
+
+/* Formulare / Selects in Modals & Tabellen – Impact-Farben NICHT überschreiben */
+html[data-theme="dark"] input[type="text"],
+html[data-theme="dark"] input[type="number"],
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select:not(.impact-select) {
+    background: var(--bg-page) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-input) !important;
+}
+
+/* Impact-Selects: Farbklassen im Darkmode wiederherstellen */
+html[data-theme="dark"] select.impact-select {
+    border-color: var(--border-input) !important;
+}
+html[data-theme="dark"] select.impact-high {
+    background-color: rgba(231, 76, 60, 0.55) !important;
+    color: #fff !important;
+    font-weight: bold;
+}
+html[data-theme="dark"] select.impact-medium {
+    background-color: rgba(241, 196, 15, 0.55) !important;
+    color: #1a1a1a !important;
+    font-weight: bold;
+}
+html[data-theme="dark"] select.impact-low {
+    background-color: rgba(46, 204, 113, 0.45) !important;
+    color: #fff !important;
+    font-weight: bold;
+}
+html[data-theme="dark"] select.impact-na {
+    background-color: rgba(39, 174, 96, 0.55) !important;
+    color: #fff !important;
+    font-weight: bold;
+}
+
+html[data-theme="dark"] .tab-content,
+html[data-theme="dark"] .main-header,
+html[data-theme="dark"] .header-nav {
+    background: var(--bg-surface);
+    color: var(--text-main);
+}
+
+/* Inline-Graustufen aus Alt-HTML nur im Darkmode aufhellen */
+html[data-theme="dark"] [style*="color:#666"],
+html[data-theme="dark"] [style*="color: #666"],
+html[data-theme="dark"] [style*="color:#777"],
+html[data-theme="dark"] [style*="color: #777"],
+html[data-theme="dark"] [style*="color:#555"],
+html[data-theme="dark"] [style*="color: #555"],
+html[data-theme="dark"] [style*="color:#999"],
+html[data-theme="dark"] [style*="color: #999"] {
+    color: var(--text-muted) !important;
+}
+
+/* Inline-helle Hintergründe nur im Darkmode abdunkeln.
+   WICHTIG: nicht [style*="background:#fff"] – trifft auch #ffffcc (Mittel-Risiko)! */
+html[data-theme="dark"] [style*="background:#fff;"],
+html[data-theme="dark"] [style*="background: #fff;"],
+html[data-theme="dark"] [style*="background:#fff "],
+html[data-theme="dark"] [style*="background: #fff "],
+html[data-theme="dark"] [style="background:#fff"],
+html[data-theme="dark"] [style="background: #fff"],
+html[data-theme="dark"] [style*="background:#ffffff"],
+html[data-theme="dark"] [style*="background: #ffffff"],
+html[data-theme="dark"] [style*="background:#f9f9f9"],
+html[data-theme="dark"] [style*="background: #f9f9f9"],
+html[data-theme="dark"] [style*="background:#f8f9fa"],
+html[data-theme="dark"] [style*="background: #f8f9fa"],
+html[data-theme="dark"] [style*="background:#f5f5f5"],
+html[data-theme="dark"] [style*="background: #f5f5f5"],
+html[data-theme="dark"] [style*="background:#f0f0f0"],
+html[data-theme="dark"] [style*="background: #f0f0f0"],
+html[data-theme="dark"] [style*="background:#ecf0f1"],
+html[data-theme="dark"] [style*="background: #ecf0f1"],
+html[data-theme="dark"] [style*="background:#f2f2f2"],
+html[data-theme="dark"] [style*="background: #f2f2f2"] {
+    background: var(--bg-muted) !important;
+    color: var(--text-main);
+}
+
+
 
