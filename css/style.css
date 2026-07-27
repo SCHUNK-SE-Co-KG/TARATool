@@ -1329,6 +1329,22 @@ html[data-theme="dark"] .stride-tag:not(.stride-active) {
     color: var(--text-muted) !important;
 }
 
+/* Impact/STRIDE Tags: kein helles Hover-Highlight im Darkmode */
+html[data-theme="dark"] .ds-tag {
+    color: var(--text-main);
+}
+html[data-theme="dark"] .ds-tag:hover,
+html[data-theme="dark"] .ds-tag:focus-within {
+    background: var(--bg-button-hover);
+    color: var(--text-main);
+}
+html[data-theme="dark"] .stride-tag:not(.stride-active):hover,
+html[data-theme="dark"] .stride-tag:not(.stride-active):focus-within {
+    background: var(--bg-button-hover);
+    border-color: var(--border-input);
+    color: var(--text-main);
+}
+
 html[data-theme="dark"] legend {
     color: var(--text-heading);
     background: transparent;
