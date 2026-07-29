@@ -300,6 +300,9 @@
             for (let ti = 0; ti < sortedTrees.length; ti++) {
                 const entry = sortedTrees[ti];
                 let svgText = null;
+                const treeDpi = (typeof h.treeRasterDpi === 'function')
+                    ? h.treeRasterDpi(sortedTrees.length)
+                    : 180;
 
                 try {
                     const dotContent = (typeof window.exportRiskAnalysisToDot === 'function')
@@ -339,9 +342,14 @@
 
                 if (svgText && svgText.includes('<svg')) {
                     let png = null;
-                    // Target ~400 DPI relative to the printed width so tree text/lines stay sharp.
-                    const targetPxW = Math.round((availW / 25.4) * 400);
-                    try { png = await h.svgTextToPng(svgText, targetPxW); } catch (e) { png = null; }
+                    // Adaptive DPI (many trees → lower) + JPEG to avoid OOM
+                    const targetPxW = Math.min(4000, Math.round((availW / 25.4) * treeDpi));
+                    try {
+                        png = await h.svgTextToPng(svgText, targetPxW, 0.95, { preferJpeg: true });
+                    } catch (e) {
+                        png = null;
+                    }
+                    svgText = null; // free SVG string early
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = availW;
@@ -353,10 +361,10 @@
                         const x = treeMargin + (availW - drawW) / 2;
                         const y = topY + (availH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, png.format || 'PNG', x, y, drawW, drawH, undefined, 'NONE');
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
                         } catch (_) {
                             try {
-                                doc.addImage(png.dataUrl, png.format || 'PNG', x, y, drawW, drawH);
+                                doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                             } catch (__) {
                                 doc.setFontSize(11);
                                 doc.text(L.vizEmbedFail, treeMargin, topY);
@@ -366,10 +374,13 @@
                         doc.setFontSize(11);
                         doc.text(L.vizSvgFail, treeMargin, topY);
                     }
+                    png = null;
                 } else {
                     doc.setFontSize(11);
                     doc.text(L.vizGraphvizFail, treeMargin, topY);
                 }
+
+                if (typeof h.yieldToUi === 'function') await h.yieldToUi();
             }
 
             // Reset builder state
@@ -616,9 +627,16 @@
 
                 if (rrSvgText && rrSvgText.includes('<svg')) {
                     let png = null;
-                    // Target ~400 DPI relative to the printed width so tree text/lines stay sharp.
-                    const targetPxW = Math.round((rrAvailW / 25.4) * 400);
-                    try { png = await h.svgTextToPng(rrSvgText, targetPxW); } catch (e) { png = null; }
+                    const rrDpi = (typeof h.treeRasterDpi === 'function')
+                        ? h.treeRasterDpi(sortedTrees.length)
+                        : 180;
+                    const targetPxW = Math.min(4000, Math.round((rrAvailW / 25.4) * rrDpi));
+                    try {
+                        png = await h.svgTextToPng(rrSvgText, targetPxW, 0.95, { preferJpeg: true });
+                    } catch (e) {
+                        png = null;
+                    }
+                    rrSvgText = null;
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = rrAvailW;
@@ -630,10 +648,10 @@
                         const x = rrMargin + (rrAvailW - drawW) / 2;
                         const y = rrTopY + (rrAvailH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, png.format || 'PNG', x, y, drawW, drawH, undefined, 'NONE');
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
                         } catch (_) {
                             try {
-                                doc.addImage(png.dataUrl, png.format || 'PNG', x, y, drawW, drawH);
+                                doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
                             } catch (__) {
                                 doc.setFontSize(11);
                                 doc.text(L.rrVizEmbedFail, rrMargin, rrTopY);
@@ -643,10 +661,13 @@
                         doc.setFontSize(11);
                         doc.text(L.rrVizSvgFail, rrMargin, rrTopY);
                     }
+                    png = null;
                 } else {
                     doc.setFontSize(11);
                     doc.text(L.rrVizGraphvizFail, rrMargin, rrTopY);
                 }
+
+                if (typeof h.yieldToUi === 'function') await h.yieldToUi();
             }
 
             // Reset builder state

@@ -13,8 +13,8 @@
     // =============================================================
     // Graphviz rendering (DOT -> SVG) for PDF embedding
     // =============================================================
-    // Default: use Kroki (public). Fallback: QuickChart.
-    // NOTE: DOT content is sent to a third-party service.
+    // Primary: local @hpcc-js/wasm (offline / file:// / corporate firewall).
+    // Fallback: Kroki / QuickChart (online only; DOT leaves the browser).
     const GRAPHVIZ_RENDERERS = [
         {
             name: 'Kroki',
@@ -32,6 +32,65 @@
         }
     ];
 
+    let _localGraphviz = null;
+    let _localGraphvizLoading = null;
+
+    async function _getLocalGraphviz() {
+        if (_localGraphviz) return _localGraphviz;
+        if (_localGraphvizLoading) return _localGraphvizLoading;
+
+        _localGraphvizLoading = (async () => {
+            // Module import in index.html is async – wait briefly if not ready yet
+            let Graphviz = window.GraphvizLib && window.GraphvizLib.Graphviz;
+            if (!Graphviz) {
+                for (let i = 0; i < 40 && !Graphviz; i++) {
+                    await new Promise((r) => setTimeout(r, 100));
+                    Graphviz = window.GraphvizLib && window.GraphvizLib.Graphviz;
+                }
+            }
+            if (!Graphviz) {
+                console.warn('[report] GraphvizLib not available (CDN/WASM not loaded).');
+                return null;
+            }
+            try {
+                // hpcc-js/wasm: Graphviz.load() (Promise) — older builds may expose .load as Promise
+                const loaded = (typeof Graphviz.load === 'function')
+                    ? await Graphviz.load()
+                    : await Graphviz.load;
+                if (loaded && (typeof loaded.dot === 'function' || typeof loaded.layout === 'function')) {
+                    _localGraphviz = loaded;
+                    return loaded;
+                }
+            } catch (e) {
+                console.warn('[report] Local Graphviz WASM failed to load:', e);
+            }
+            return null;
+        })();
+
+        try {
+            return await _localGraphvizLoading;
+        } finally {
+            _localGraphvizLoading = null;
+        }
+    }
+
+    async function _renderDotLocal(dotString) {
+        const gv = await _getLocalGraphviz();
+        if (!gv) return null;
+        try {
+            let svg = null;
+            if (typeof gv.layout === 'function') {
+                svg = gv.layout(dotString, 'svg', 'dot');
+            } else if (typeof gv.dot === 'function') {
+                svg = gv.dot(dotString);
+            }
+            if (svg && String(svg).includes('<svg')) return String(svg);
+        } catch (e) {
+            console.warn('[report] Local Graphviz layout failed:', e);
+        }
+        return null;
+    }
+
     async function _fetchWithTimeout(url, options, timeoutMs = 20000) {
         const controller = new AbortController();
         const t = setTimeout(() => controller.abort(), timeoutMs);
@@ -45,6 +104,12 @@
 
     async function renderDotToSvg(dotString) {
         if (!dotString) return null;
+
+        // 1) Local WASM first (works offline / behind firewall)
+        const localSvg = await _renderDotLocal(dotString);
+        if (localSvg) return localSvg;
+
+        // 2) Online fallbacks
         for (const r of GRAPHVIZ_RENDERERS) {
             try {
                 const res = await _fetchWithTimeout(r.url, {
@@ -62,29 +127,24 @@
         return null;
     }
 
-    async function svgTextToPng(svgText, targetPxWidth = 5000, jpegQuality = 0.97) {
-        // Rasterizes a vector Graphviz SVG onto an in-memory canvas and returns an
-        // image dataURL for PDF embedding. The vector source is rendered directly at
-        // the requested target width (up- OR down-scaled), so large trees stay crisp
-        // instead of being capped to a low fixed resolution.
-        //
-        // Prefers lossless PNG (sharp lines/text). Only falls back to high-quality
-        // JPEG when the PNG would be excessively large.
-        //
+    async function svgTextToPng(svgText, targetPxWidth = 3600, jpegQuality = 0.95, opts = {}) {
+        // Rasterizes Graphviz SVG for PDF embedding.
+        // Sharpness first (high JPEG / optional PNG), memory via canvas caps + cleanup.
         // Returns { dataUrl, widthPx, heightPx, format } or null.
         if (!svgText || !svgText.includes('<svg')) return null;
 
-        // Browser canvas safety limits (avoid failed/blank rasterization on huge trees).
-        const MAX_SIDE = 16000;                 // max width/height in px
-        const MAX_AREA = 48 * 1000 * 1000;      // ~48 MP total pixels
-        const MAX_PNG_BYTES = 20 * 1024 * 1024; // above this, fall back to JPEG
+        const preferJpeg = opts.preferJpeg !== false;
+        const MAX_SIDE = opts.maxSide || 6000;
+        const MAX_AREA = opts.maxArea || (12 * 1000 * 1000); // ~12 MP
+        const MAX_PNG_BYTES = 6 * 1024 * 1024;
 
         const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(blob);
+        let canvas = null;
+        let img = null;
 
         try {
-            const img = new Image();
-            // Important: keep as same-origin (blob URL), so canvas isn't tainted.
+            img = new Image();
             const loaded = await new Promise((resolve, reject) => {
                 img.onload = () => resolve(true);
                 img.onerror = () => reject(new Error('SVG image load failed'));
@@ -95,12 +155,9 @@
             const w = img.naturalWidth || img.width || 1;
             const h = img.naturalHeight || img.height || 1;
 
-            // Scale the vector to the requested target width (may enlarge for sharpness).
             let scale = (targetPxWidth > 0 ? targetPxWidth : w) / w;
-            // Clamp by max side length (width and height).
             if (w * scale > MAX_SIDE) scale = MAX_SIDE / w;
             if (h * scale > MAX_SIDE) scale = MAX_SIDE / h;
-            // Clamp by total pixel area.
             if ((w * scale) * (h * scale) > MAX_AREA) {
                 scale = Math.sqrt(MAX_AREA / (w * h));
             }
@@ -108,26 +165,31 @@
             const cw = Math.max(1, Math.round(w * scale));
             const ch = Math.max(1, Math.round(h * scale));
 
-            const canvas = document.createElement('canvas');
+            canvas = document.createElement('canvas');
             canvas.width = cw;
             canvas.height = ch;
-            const ctx = canvas.getContext('2d', { alpha: false });
+            const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
             if (!ctx) return null;
 
-            // Line-art (Graphviz): avoid soft filter blur on edges/text.
+            // Line-art / text: no soft blur when scaling SVG → canvas
             ctx.imageSmoothingEnabled = false;
-
-            // White background (opaque, needed for JPEG fallback and clean print).
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, cw, ch);
             ctx.drawImage(img, 0, 0, cw, ch);
 
-            // Prefer lossless PNG for crisp line-art/text; fall back to JPEG if too big.
-            let format = 'PNG';
-            let dataUrl = canvas.toDataURL('image/png');
-            if (!dataUrl || dataUrl.length > MAX_PNG_BYTES) {
-                const jpg = canvas.toDataURL('image/jpeg', jpegQuality);
-                if (jpg) { dataUrl = jpg; format = 'JPEG'; }
+            let format = 'JPEG';
+            let dataUrl = null;
+            if (preferJpeg) {
+                dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
+            } else {
+                dataUrl = canvas.toDataURL('image/png');
+                if (!dataUrl || dataUrl.length > MAX_PNG_BYTES) {
+                    const jpg = canvas.toDataURL('image/jpeg', jpegQuality);
+                    if (jpg) { dataUrl = jpg; format = 'JPEG'; }
+                    else format = 'PNG';
+                } else {
+                    format = 'PNG';
+                }
             }
             if (!dataUrl) return null;
 
@@ -136,7 +198,32 @@
             return null;
         } finally {
             try { URL.revokeObjectURL(url); } catch (_) { /* noop */ }
+            try {
+                if (img) { img.onload = null; img.onerror = null; img.src = ''; }
+            } catch (_) { /* noop */ }
+            try {
+                if (canvas) { canvas.width = 0; canvas.height = 0; }
+            } catch (_) { /* noop */ }
+            canvas = null;
+            img = null;
         }
+    }
+
+    /**
+     * Adaptive print DPI for A3 tree pages.
+     * Floor stays high enough for readable node text; only slight drop for many trees.
+     */
+    function treeRasterDpi(treeCount) {
+        const n = Number(treeCount) || 1;
+        if (n >= 12) return 250;
+        if (n >= 8) return 270;
+        if (n >= 4) return 290;
+        return 300;
+    }
+
+    function yieldToUi() {
+        // Short pause so GC can reclaim canvas/dataURL between trees
+        return new Promise((resolve) => setTimeout(resolve, 40));
     }
 
     // NOTE: We keep the conversion intentionally dependency-free (no svg2pdf).
@@ -259,6 +346,8 @@
     window.ReportHelpers = {
         renderDotToSvg,
         svgTextToPng,
+        treeRasterDpi,
+        yieldToUi,
         getActiveAnalysis,
         riskClassFromValue,
         formatDate,

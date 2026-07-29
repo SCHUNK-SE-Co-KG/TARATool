@@ -173,7 +173,7 @@ const _configLoaded = loadAssessmentConfig();
 
 if (!_configLoaded) {
     console.warn('[config_loader] Falling back to hardcoded defaults – config could not be loaded.');
-    console.warn('[config_loader] Nutze auf der Übersicht „Bewertungsconfig laden“ oder tools/sync_assessment_config.bat');
+    console.warn('[config_loader] Nutze auf der Übersicht „Bewertungsconfig laden“ oder tools/sync_assessment_config.sh / .bat / .py');
 } else {
     window.ASSESSMENT_CONFIG = ASSESSMENT_CONFIG;
 }

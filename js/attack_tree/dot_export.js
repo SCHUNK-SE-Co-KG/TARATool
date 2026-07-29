@@ -110,7 +110,8 @@ function generateDotString(analysis, specificTreeId = null) {
     const _safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
 
     const _emitDotTreeV2 = (entry) => {
-        const riskId = entry.id;
+        // DOT IDs must be alphanumeric/_ — hyphens (e.g. NW-R03) parse as minus and break Graphviz
+        const riskId = _safeId(entry.id);
         const rootId = `${riskId}_Root`;
 
         const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
@@ -257,7 +258,7 @@ function generateDotString(analysis, specificTreeId = null) {
     entriesToProcess.forEach(entry => {
         if (!entry) return;
         if (entry.treeV2) { dot += _emitDotTreeV2(entry); return; }
-        const riskId = entry.id;
+        const riskId = _safeId(entry.id);
         const depth = _effectiveDepth(entry);
 
         const rootId = `${riskId}_Root`;
@@ -332,7 +333,7 @@ function generateDotString(analysis, specificTreeId = null) {
     // --- EDGES ---
     entriesToProcess.forEach(entry => {
         if (!entry) return;
-        const riskId = entry.id;
+        const riskId = _safeId(entry.id);
         const depth = _effectiveDepth(entry);
 
         const rootId = `${riskId}_Root`;
@@ -615,7 +616,7 @@ const _buildResidualClone = (baseEntry) => {
             return;
         }
 
-        const riskId = entry.id;
+        const riskId = _safeId(entry.id);
         const rootId = `${riskId}_Root_RR`;
 
         const rrClone = _buildResidualClone(entry);
