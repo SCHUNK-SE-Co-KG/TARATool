@@ -82,6 +82,14 @@ def test_process_guard_contains_all_rules():
         assert rule in content, f"Pflicht-Regel {rule} fehlt im PROCESS_GUARD_AGENT.md"
 
 @pytest.mark.TARA_0004
+def test_review_agent_workflow_contains_all_rules():
+    path = os.path.join(REPO_ROOT, "docs", "REVIEW_AGENT_WORKFLOW.md")
+    content = open(path).read()
+    for rule in ["R-01", "R-02", "R-03", "R-04", "R-05",
+                 "R-06", "R-07", "R-08", "R-09", "R-10", "R-11", "R-12"]:
+        assert rule in content, f"Prüfregel {rule} fehlt in REVIEW_AGENT_WORKFLOW.md"
+
+@pytest.mark.TARA_0004
 def test_process_guard_contains_tdd_rules():
     path = os.path.join(REPO_ROOT, ".github", "PROCESS_GUARD_AGENT.md")
     content = open(path).read()
