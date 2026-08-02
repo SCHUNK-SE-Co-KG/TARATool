@@ -38,6 +38,7 @@ Test-Ergebnis:    PASSED / FAILED
 | P-09 | Item auf „Review" gesetzt vor PR-Erstellung |
 | P-10 | Review-Agent aufgerufen (kein offenes Critical/High Finding) |
 | P-11 | Item erst auf „Done" nach Merge und Review-Abschluss |
+| P-14 | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
 
 ---
 
