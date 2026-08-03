@@ -11,13 +11,24 @@
         margin: 0;
         padding: 0;
       }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
       body {
         font-family: 'Segoe UI', sans-serif;
         background: #1a1a2e;
         color: #e0e0e0;
-        height: 100vh;
         display: flex;
         flex-direction: column;
+      }
+      #app {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
       }
 
       /* ── Toolbar ── */
@@ -119,10 +130,11 @@
         text-overflow: ellipsis;
       }
 
-      /* ── Canvas – nimmt allen verbleibenden Platz ein ── */
+      /* ── Canvas – 90%+ des verfügbaren Platzes ── */
       #network {
         flex: 1;
         min-height: 0;
+        width: 100%;
         background: #0d1b2a;
       }
 
@@ -297,6 +309,20 @@
           // ── Init vis-network ──
           onMounted(() => {
             const container = document.getElementById('network');
+
+            // Explizite Höhe setzen: Gesamthöhe minus Toolbar und Statusbar
+            function resizeCanvas() {
+              const toolbar = document.getElementById('toolbar');
+              const statusbar = document.getElementById('statusbar');
+              const usedHeight = (toolbar?.offsetHeight || 40) + (statusbar?.offsetHeight || 22);
+              container.style.height = `${window.innerHeight - usedHeight}px`;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', () => {
+              resizeCanvas();
+              network?.fit();
+            });
+
             network = new vis.Network(
               container,
               { nodes, edges },
