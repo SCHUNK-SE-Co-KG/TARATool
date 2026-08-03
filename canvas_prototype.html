@@ -24,26 +24,27 @@
       #toolbar {
         display: flex;
         align-items: center;
-        gap: 10px;
-        padding: 10px 16px;
+        gap: 8px;
+        padding: 6px 12px;
         background: #16213e;
         border-bottom: 2px solid #0f3460;
-        flex-wrap: wrap;
+        flex-shrink: 0;
       }
       #toolbar h1 {
-        font-size: 14px;
+        font-size: 13px;
         color: #a78bfa;
-        margin-right: 10px;
+        margin-right: 6px;
         white-space: nowrap;
       }
       .btn {
-        padding: 6px 14px;
+        padding: 5px 11px;
         border: none;
         border-radius: 6px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         transition: opacity 0.15s;
+        white-space: nowrap;
       }
       .btn:hover {
         opacity: 0.85;
@@ -107,37 +108,25 @@
 
       /* ── Status bar ── */
       #statusbar {
-        padding: 4px 16px;
+        padding: 3px 12px;
         background: #0d1b2a;
         font-size: 11px;
         color: #6b7280;
         border-bottom: 1px solid #0f3460;
+        flex-shrink: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      /* ── Canvas ── */
+      /* ── Canvas – nimmt allen verbleibenden Platz ein ── */
       #network {
         flex: 1;
+        min-height: 0;
         background: #0d1b2a;
       }
 
-      /* ── Legend ── */
-      #legend {
-        display: flex;
-        gap: 18px;
-        align-items: center;
-        padding: 6px 16px;
-        background: #16213e;
-        border-top: 1px solid #0f3460;
-        font-size: 11px;
-      }
-      .legend-dot {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 3px;
-        margin-right: 5px;
-        vertical-align: middle;
-      }
+      /* ── Legend entfernt (in Statusbar integriert) ── */
     </style>
   </head>
   <body>
@@ -173,31 +162,20 @@
         </div>
       </div>
 
-      <!-- Status -->
-      <div id="statusbar">{{ statusText }}</div>
+      <!-- Status: zeigt Aktions-Hinweise + Legende kompakt -->
+      <div id="statusbar">
+        {{ statusText }} &nbsp;|&nbsp;
+        <span style="color: #e63946">■</span>
+        Attack &nbsp;
+        <span style="color: #f4a261">◆</span>
+        Condition &nbsp;
+        <span style="color: #2a9d8f">●</span>
+        Leaf &nbsp;|&nbsp; Doppelklick = neuer Knoten · Ziehen = Kante · Esc = Kanten-Modus beenden
+        · Entf = Löschen
+      </div>
 
       <!-- Network Canvas -->
       <div id="network"></div>
-
-      <!-- Legend -->
-      <div id="legend">
-        <span>
-          <span class="legend-dot" style="background: #e63946"></span>
-          Attack-Node
-        </span>
-        <span>
-          <span class="legend-dot" style="background: #f4a261"></span>
-          Condition-Node
-        </span>
-        <span>
-          <span class="legend-dot" style="background: #2a9d8f; border-radius: 50%"></span>
-          Leaf-Node
-        </span>
-        <span style="margin-left: auto; color: #4b5563">
-          Doppelklick = Knoten erstellen · Von Knoten zu Knoten ziehen = Kante · Esc = Kanten-Modus
-          beenden · Entf = Löschen
-        </span>
-      </div>
     </div>
 
     <script>
