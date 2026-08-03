@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>TARA-0024 – Canvas-Prototyp: Visueller Baum-Editor</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: 'Segoe UI', sans-serif;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ── Toolbar ── */
+      #toolbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
+        background: #16213e;
+        border-bottom: 2px solid #0f3460;
+        flex-wrap: wrap;
+      }
+      #toolbar h1 {
+        font-size: 14px;
+        color: #a78bfa;
+        margin-right: 10px;
+        white-space: nowrap;
+      }
+      .btn {
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        transition: opacity 0.15s;
+      }
+      .btn:hover {
+        opacity: 0.85;
+      }
+      .btn-attack {
+        background: #e63946;
+        color: #fff;
+      }
+      .btn-condition {
+        background: #f4a261;
+        color: #000;
+      }
+      .btn-leaf {
+        background: #2a9d8f;
+        color: #fff;
+      }
+      .btn-layout {
+        background: #4361ee;
+        color: #fff;
+      }
+      .btn-delete {
+        background: #555;
+        color: #fff;
+      }
+      .separator {
+        width: 1px;
+        height: 28px;
+        background: #0f3460;
+        margin: 0 4px;
+      }
+
+      /* ── Label-Panel ── */
+      #label-panel {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+      }
+      #label-panel label {
+        font-size: 12px;
+        color: #a0a0c0;
+        white-space: nowrap;
+      }
+      #node-label {
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #4361ee;
+        background: #0d1b2a;
+        color: #fff;
+        font-size: 13px;
+        width: 180px;
+      }
+      #node-label:focus {
+        outline: 2px solid #a78bfa;
+      }
+      .btn-apply {
+        background: #a78bfa;
+        color: #000;
+        font-weight: 700;
+      }
+
+      /* ── Status bar ── */
+      #statusbar {
+        padding: 4px 16px;
+        background: #0d1b2a;
+        font-size: 11px;
+        color: #6b7280;
+        border-bottom: 1px solid #0f3460;
+      }
+
+      /* ── Canvas ── */
+      #network {
+        flex: 1;
+        background: #0d1b2a;
+      }
+
+      /* ── Legend ── */
+      #legend {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        padding: 6px 16px;
+        background: #16213e;
+        border-top: 1px solid #0f3460;
+        font-size: 11px;
+      }
+      .legend-dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Toolbar -->
+      <div id="toolbar">
+        <h1>🌲 Baum-Editor Prototyp</h1>
+
+        <button class="btn btn-attack" @click="addNode('attack')">＋ Attack</button>
+        <button class="btn btn-condition" @click="addNode('condition')">＋ Condition</button>
+        <button class="btn btn-leaf" @click="addNode('leaf')">＋ Leaf</button>
+
+        <div class="separator"></div>
+        <button class="btn btn-layout" @click="applyLayout">⇅ Layout</button>
+        <button class="btn btn-delete" @click="deleteSelected">🗑 Löschen</button>
+
+        <div class="separator"></div>
+
+        <!-- Label-Panel -->
+        <div id="label-panel">
+          <label for="node-label">Beschriftung:</label>
+          <input
+            id="node-label"
+            type="text"
+            v-model="labelInput"
+            placeholder="Knoten auswählen…"
+            :disabled="selectedNode === null"
+            @keyup.enter="applyLabel"
+          />
+          <button class="btn btn-apply" @click="applyLabel" :disabled="selectedNode === null">
+            ✓
+          </button>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div id="statusbar">{{ statusText }}</div>
+
+      <!-- Network Canvas -->
+      <div id="network"></div>
+
+      <!-- Legend -->
+      <div id="legend">
+        <span>
+          <span class="legend-dot" style="background: #e63946"></span>
+          Attack-Node
+        </span>
+        <span>
+          <span class="legend-dot" style="background: #f4a261"></span>
+          Condition-Node
+        </span>
+        <span>
+          <span class="legend-dot" style="background: #2a9d8f; border-radius: 50%"></span>
+          Leaf-Node
+        </span>
+        <span style="margin-left: auto; color: #4b5563">
+          Doppelklick = Knoten erstellen · Von Knoten zu Knoten ziehen = Kante · Esc = Kanten-Modus
+          beenden · Entf = Löschen
+        </span>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, onMounted } = Vue;
+
+      createApp({
+        setup() {
+          const labelInput = ref('');
+          const selectedNode = ref(null);
+          const statusText = ref('Bereit – Knoten hinzufügen oder Doppelklick ins Canvas');
+
+          let network = null;
+          let nodeIdCounter = 1;
+
+          // ── Datasets ──
+          const nodes = new vis.DataSet();
+          const edges = new vis.DataSet();
+
+          // ── Node style by type ──
+          function nodeStyle(type, label) {
+            const base = { label: label || type, font: { color: '#ffffff', size: 14 } };
+            if (type === 'attack')
+              return {
+                ...base,
+                shape: 'box',
+                color: {
+                  background: '#e63946',
+                  border: '#c1121f',
+                  highlight: { background: '#ff6b6b', border: '#e63946' },
+                },
+              };
+            if (type === 'condition')
+              return {
+                ...base,
+                shape: 'diamond',
+                color: {
+                  background: '#f4a261',
+                  border: '#e76f51',
+                  highlight: { background: '#ffd166', border: '#f4a261' },
+                },
+                font: { color: '#000', size: 13 },
+              };
+            // leaf
+            return {
+              ...base,
+              shape: 'ellipse',
+              color: {
+                background: '#2a9d8f',
+                border: '#1b7a74',
+                highlight: { background: '#4ecdc4', border: '#2a9d8f' },
+              },
+            };
+          }
+
+          // ── Add node ──
+          function addNode(type) {
+            const id = nodeIdCounter++;
+            const label = `${type.charAt(0).toUpperCase() + type.slice(1)} ${id}`;
+            nodes.add({ id, type, ...nodeStyle(type, label) });
+            statusText.value = `Knoten "${label}" hinzugefügt`;
+          }
+
+          // ── Apply label ──
+          function applyLabel() {
+            if (selectedNode.value === null) return;
+            const node = nodes.get(selectedNode.value);
+            if (!node) return;
+            // Strip HTML tags to prevent injection if multi-mode is ever enabled
+            const sanitized = (labelInput.value.trim() || node.label).replace(/<[^>]*>/g, '');
+            nodes.update({ id: selectedNode.value, label: sanitized });
+            statusText.value = `Beschriftung gesetzt: "${sanitized}"`;
+          }
+
+          // ── Delete selected ──
+          function deleteSelected() {
+            const sel = network.getSelection();
+            if (sel.nodes.length) {
+              nodes.remove(sel.nodes);
+              edges.remove(
+                edges
+                  .get()
+                  .filter((e) => sel.nodes.includes(e.from) || sel.nodes.includes(e.to))
+                  .map((e) => e.id)
+              );
+              statusText.value = `${sel.nodes.length} Knoten gelöscht`;
+              selectedNode.value = null;
+              labelInput.value = '';
+            } else if (sel.edges.length) {
+              edges.remove(sel.edges);
+              statusText.value = `${sel.edges.length} Kante(n) gelöscht`;
+            }
+          }
+
+          // ── Hierarchical layout ──
+          function applyLayout() {
+            network.setOptions({
+              layout: {
+                hierarchical: {
+                  enabled: true,
+                  direction: 'UD',
+                  sortMethod: 'directed',
+                  nodeSpacing: 120,
+                  levelSeparation: 100,
+                },
+              },
+            });
+            network.fit();
+            statusText.value = 'Hierarchisches Layout angewendet';
+            // Wait for stabilization before freezing positions and disabling hierarchical mode
+            network.once('stabilized', () => {
+              network.storePositions();
+              network.setOptions({
+                layout: { hierarchical: { enabled: false } },
+                physics: { enabled: false },
+              });
+            });
+          }
+
+          // ── Init vis-network ──
+          onMounted(() => {
+            const container = document.getElementById('network');
+            network = new vis.Network(
+              container,
+              { nodes, edges },
+              {
+                physics: { enabled: true, stabilization: { iterations: 100 } },
+                interaction: { hover: true, tooltipDelay: 200, dragNodes: true, multiselect: true },
+                manipulation: {
+                  enabled: false, // we handle add via buttons
+                  addEdge(data, callback) {
+                    if (data.from !== data.to) {
+                      callback(data);
+                      statusText.value = 'Kante verbunden';
+                    }
+                  },
+                },
+                edges: {
+                  arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+                  color: { color: '#4361ee', highlight: '#a78bfa' },
+                  width: 2,
+                  smooth: { type: 'cubicBezier', forceDirection: 'vertical', roundness: 0.4 },
+                },
+                nodes: {
+                  borderWidth: 2,
+                  shadow: { enabled: true, size: 6 },
+                  font: { multi: false },
+                },
+              }
+            );
+
+            // Select node → fill label input
+            network.on('selectNode', (params) => {
+              selectedNode.value = params.nodes[0];
+              const node = nodes.get(selectedNode.value);
+              labelInput.value = node?.label || '';
+              statusText.value = `Knoten "${node?.label}" ausgewählt – Beschriftung bearbeiten oder Kante ziehen`;
+            });
+
+            network.on('deselectNode', () => {
+              selectedNode.value = null;
+              labelInput.value = '';
+              statusText.value = 'Bereit';
+            });
+
+            // Double-click on canvas → add attack node at that position
+            network.on('doubleClick', (params) => {
+              if (params.nodes.length === 0) {
+                const id = nodeIdCounter++;
+                const label = `Attack ${id}`;
+                nodes.add({
+                  id,
+                  type: 'attack',
+                  x: params.pointer.canvas.x,
+                  y: params.pointer.canvas.y,
+                  ...nodeStyle('attack', label),
+                });
+                statusText.value = `Knoten "${label}" per Doppelklick erstellt`;
+              }
+            });
+
+            // Enable edge drawing mode – use addEdgeMode() directly (no manipulation bar)
+            // Wire Delete key + Esc (exit edge mode)
+            document.addEventListener('keydown', (e) => {
+              if (
+                (e.key === 'Delete' || e.key === 'Backspace') &&
+                document.activeElement.tagName !== 'INPUT'
+              ) {
+                deleteSelected();
+              }
+              if (e.key === 'Escape') {
+                network.disableEditMode();
+                statusText.value = 'Kanten-Modus beendet – zum Erneuten: Knoten per Drag verbinden';
+              }
+            });
+
+            // Start in addEdge mode so user can draw edges by dragging node-to-node
+            // The addEdge callback in options handles the actual creation
+            // Use manipulation enabled:true with CSS override to hide native bar
+            network.setOptions({
+              manipulation: {
+                enabled: true,
+                addEdge(data, callback) {
+                  if (data.from !== data.to) {
+                    callback(data);
+                    network.addEdgeMode(); // stay in edge-drawing mode after each connection
+                    statusText.value =
+                      'Kante verbunden ✓  – weiteres Ziehen möglich, Esc zum Beenden';
+                  }
+                },
+              },
+            });
+            network.addEdgeMode();
+
+            // Hide vis manipulation bar after render (async – use MutationObserver)
+            const observer = new MutationObserver(() => {
+              const bar = container.querySelector('.vis-manipulation');
+              if (bar) {
+                bar.style.display = 'none';
+                observer.disconnect();
+              }
+            });
+            observer.observe(container, { childList: true, subtree: true });
+
+            statusText.value =
+              'Bereit – Knoten per Button oder Doppelklick hinzufügen · Kante: von Knoten zu Knoten ziehen · Esc = Kanten-Modus beenden';
+          });
+
+          return {
+            labelInput,
+            selectedNode,
+            statusText,
+            addNode,
+            applyLabel,
+            deleteSelected,
+            applyLayout,
+          };
+        },
+      }).mount('#app');
+    </script>
+  </body>
+</html>
