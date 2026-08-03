@@ -59,14 +59,21 @@ Schritt 5 – Review
   • Findings beheben oder als Backlog-Items anlegen
 
         ↓
-Schritt 6 – Prozess-Guard Freigabe
+Schritt 6 – Prozess-Guard Prüfung
   • Prozess-Guard prüft alle Regeln (siehe .github/PROCESS_GUARD_AGENT.md)
   • ✅ PROCESS OK  → PR auf Development öffnen
   • ❌ PROCESS BLOCKED → Findings beheben, zurück zu Schritt 4
 
         ↓
-Schritt 7 – Abschluss
-  • PR gemergt → Status → "Done"
+Schritt 7 – Merge
+  • PR gemergt → Status → "Freigabe"
+  • Dev-Agent wartet auf explizites PO-OK (Chat-Nachricht oder Issue-Kommentar)
+
+        ↓
+Schritt 8 – PO-Freigabe (Pflicht)
+  • Product Owner prüft das Ergebnis
+  • PO gibt explizites OK → Status → "Done"
+  • ❌ Ohne PO-Freigabe: Status bleibt auf "Freigabe" – Dev-Agent setzt NICHT auf Done
 ```
 
 ---

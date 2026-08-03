@@ -38,3 +38,8 @@
 
 - [ ] Review-Agent aktiviert (Status → Review)
 - [ ] Alle Kritisch/Hoch-Findings behoben
+
+## PO-Freigabe (nach Merge)
+
+> ⏳ Nach dem Merge setzt der Dev-Agent den Status auf **„Freigabe"** und wartet auf
+> das explizite OK des Product Owners, bevor der Status auf **„Done"** gesetzt wird.
