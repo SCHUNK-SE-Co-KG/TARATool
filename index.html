@@ -289,8 +289,8 @@
                 <div class="form-group"><label data-i18n="sg.modal.description">Beschreibung</label><textarea id="sgDescription" rows="4"></textarea></div>
                 <div class="form-group">
                     <label data-i18n="sg.modal.rootRefs">Referenzierte Angriffsziel(e) (Root)</label>
-                    <select id="sgRootRefs" multiple size="6" style="width:100%;"></select>
-                    <div style="font-size:0.8em; color:#777; margin-top:4px;" data-i18n="sg.modal.multi">Mehrfachauswahl: Strg/⌘</div>
+                    <div id="sgRootRefs" class="sg-root-refs" role="group" aria-label="Root references"></div>
+                    <div class="sg-root-refs-hint" data-i18n="sg.modal.multi">Mehrfachauswahl per Checkbox</div>
                 </div>
                 <button type="submit" class="primary-button" data-i18n="nav.save">Speichern</button>
             </form>

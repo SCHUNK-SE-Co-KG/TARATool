@@ -20,7 +20,7 @@
     const idField = document.getElementById('sgIdField');
     const nameField = document.getElementById('sgName');
     const descField = document.getElementById('sgDescription');
-    const rootRefsSelect = document.getElementById('sgRootRefs');
+    const rootRefsList = document.getElementById('sgRootRefs');
 
     // Uses global getActiveAnalysis() from utils.js
 
@@ -78,12 +78,11 @@
         return 'SO' + String(next).padStart(2, '0');
     }
 
-    function riskEntryOptionsHtml(analysis, selectedIds) {
+    function riskEntryCheckboxHtml(analysis, selectedIds) {
         const entries = Array.isArray(analysis.riskEntries) ? analysis.riskEntries.slice() : [];
         entries.sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
 
         if (entries.length === 0) {
-            // Empty select is rendered as disabled in the card markup.
             return '';
         }
 
@@ -95,29 +94,34 @@
                     ? (getLocalizedField({ title: e.rootName || '', title_en: e.rootName_en || '' }, 'title') || e.rootName || '')
                     : (e.rootName || '');
                 const label = `${id}: ${name}`;
-                const sel = selectedSet.has(id) ? 'selected' : '';
-                return `<option value="${escapeHtml(id)}" ${sel}>${escapeHtml(label)}</option>`;
+                const checked = selectedSet.has(id) ? 'checked' : '';
+                return `<label class="sg-root-ref-item">
+                    <input type="checkbox" value="${escapeHtml(id)}" ${checked}>
+                    <span>${escapeHtml(label)}</span>
+                </label>`;
             })
             .join('');
     }
 
     function renderRootRefsSelect(analysis, selectedIds) {
-        if (!rootRefsSelect) return;
+        if (!rootRefsList) return;
 
         const entries = Array.isArray(analysis.riskEntries) ? analysis.riskEntries : [];
         if (entries.length === 0) {
-            rootRefsSelect.disabled = true;
-            rootRefsSelect.innerHTML = `<option>${(typeof t === 'function') ? t('sg.noTrees') : 'Keine Angriffsbäume vorhanden'}</option>`;
+            rootRefsList.innerHTML = `<div class="sg-root-refs-empty">${(typeof t === 'function') ? t('sg.noTrees') : 'Keine Angriffsbäume vorhanden'}</div>`;
+            rootRefsList.setAttribute('data-empty', '1');
             return;
         }
 
-        rootRefsSelect.disabled = false;
-        rootRefsSelect.innerHTML = riskEntryOptionsHtml(analysis, selectedIds);
+        rootRefsList.removeAttribute('data-empty');
+        rootRefsList.innerHTML = riskEntryCheckboxHtml(analysis, selectedIds);
     }
 
     function readRootRefsSelect() {
-        if (!rootRefsSelect || rootRefsSelect.disabled) return [];
-        return Array.from(rootRefsSelect.selectedOptions || []).map(o => o.value);
+        if (!rootRefsList || rootRefsList.getAttribute('data-empty') === '1') return [];
+        return Array.from(rootRefsList.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(cb => cb.value)
+            .filter(Boolean);
     }
 
     // escapeHtml() is provided globally via utils.js

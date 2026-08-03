@@ -618,6 +618,69 @@ select.impact-na { background-color: rgba(39, 174, 96, 0.6); color: #fff; font-w
     max-width: min(1900px, 99vw);
 }
 
+/* Security-Ziel-Modal: Höhe wächst mit Inhalt; Scroll erst wenn Viewport zu klein */
+#securityGoalModal .modal-content {
+    width: min(640px, 94vw);
+    height: auto;
+    max-height: calc(100vh - 98px);
+    overflow-y: auto;
+}
+.sg-root-refs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid var(--border-input, #aeb6bf);
+    border-radius: 6px;
+    background: var(--bg-muted, #f8f9fa);
+    /* Kein Innen-Scroll – Liste wächst; Scroll nur am Modal bei Viewport-Limit */
+    max-height: none;
+    overflow: visible;
+}
+.sg-root-refs-empty {
+    color: var(--text-muted, #777);
+    font-size: 0.9em;
+    padding: 4px 0;
+}
+.sg-root-ref-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 6px;
+    border-radius: 4px;
+    line-height: 1.35;
+}
+.sg-root-ref-item:hover {
+    background: rgba(52, 152, 219, 0.12);
+}
+.sg-root-ref-item input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+    width: 1.05em;
+    height: 1.05em;
+    cursor: pointer;
+}
+.sg-root-ref-item span {
+    color: var(--text-main, #333);
+    word-break: break-word;
+}
+.sg-root-refs-hint {
+    font-size: 0.8em;
+    color: var(--text-muted, #777);
+    margin-top: 4px;
+}
+html[data-theme="dark"] .sg-root-refs {
+    background: var(--bg-muted) !important;
+    border-color: var(--border-soft) !important;
+}
+html[data-theme="dark"] .sg-root-ref-item:hover {
+    background: rgba(93, 173, 226, 0.18);
+}
+
 /* Schließen-Kreuz: fest in der Modal-Ecke, über dem Inhalt */
 .close-button {
     position: absolute;
