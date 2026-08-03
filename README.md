@@ -32,15 +32,15 @@ Der **Cyber Resilience Act (CRA)** – Verordnung (EU) 2024/2847 – ist seit De
 
 **Relevante CRA-Anforderungen, die TARA Tool adressiert:**
 
-| CRA-Anforderung | Umsetzung im Tool |
-|---|---|
-| **Risikobewertung** (Anhang I, Teil 1) | Strukturierte TARA mit SCHASAM-Risikoberechnung |
-| **Dokumentation der Risikoanalyse** (Art. 13) | PDF-Report mit vollständiger Analysedokumentation |
-| **Identifikation von Schwachstellen & Bedrohungen** | Angriffsbäume mit mehrstufiger Bedrohungsmodellierung |
-| **Schutzbedarfsfeststellung** | CIA-Bewertung (Vertraulichkeit, Integrität, Verfügbarkeit) pro Asset |
-| **Bewertung der Auswirkungen** | Schadensauswirkungsmatrix (Safety, Financial, IP, Privacy, Legal) |
-| **Maßnahmenableitung** | Security-Ziele und Restrisikoanalyse mit Behandlungsoptionen |
-| **Versionierung & Nachvollziehbarkeit** | Snapshots, Rollback und Änderungshistorie |
+| CRA-Anforderung                                     | Umsetzung im Tool                                                    |
+| --------------------------------------------------- | -------------------------------------------------------------------- |
+| **Risikobewertung** (Anhang I, Teil 1)              | Strukturierte TARA mit SCHASAM-Risikoberechnung                      |
+| **Dokumentation der Risikoanalyse** (Art. 13)       | PDF-Report mit vollständiger Analysedokumentation                    |
+| **Identifikation von Schwachstellen & Bedrohungen** | Angriffsbäume mit mehrstufiger Bedrohungsmodellierung                |
+| **Schutzbedarfsfeststellung**                       | CIA-Bewertung (Vertraulichkeit, Integrität, Verfügbarkeit) pro Asset |
+| **Bewertung der Auswirkungen**                      | Schadensauswirkungsmatrix (Safety, Financial, IP, Privacy, Legal)    |
+| **Maßnahmenableitung**                              | Security-Ziele und Restrisikoanalyse mit Behandlungsoptionen         |
+| **Versionierung & Nachvollziehbarkeit**             | Snapshots, Rollback und Änderungshistorie                            |
 
 > **Hinweis:** TARA Tool ist ein unterstützendes Werkzeug für die Risikoanalyse. Die vollständige CRA-Konformität erfordert weitere organisatorische und technische Maßnahmen (z. B. Vulnerability Handling, Incident Reporting, SBOM).
 
@@ -48,20 +48,20 @@ Der **Cyber Resilience Act (CRA)** – Verordnung (EU) 2024/2847 – ist seit De
 
 ## Features
 
-| Feature | Beschreibung |
-|---|---|
-| **Assets** | Verwaltung von Assets mit CIA-Schutzbedarf (Stufe I / II / III) |
-| **Schadensszenarien** | 5 vordefinierte Szenarien (Safety, Financial, IP Loss, Privacy, Legal) + benutzerdefinierte |
-| **Schadensauswirkungsmatrix** | Kreuzmatrix Assets × Schadensszenarien mit Schweregrad-Bewertung (1 / 2 / 3) |
-| **Angriffsbäume** | Kartenbasierter Editor (variable Tiefe 1–3 Ebenen) mit DOT/Graphviz-Vorschau |
-| **Risikoanalyse** | SCHASAM-basierte Risikoberechnung je Angriffsbaum mit automatischer Worst-Case-Vererbung |
-| **Security Ziele** | Definition von Security-Zielen mit Referenz auf Angriffsbaumwurzeln |
-| **Restrisikoanalyse** | Behandlung je Blatt (Akzeptiert / Delegiert / Mitigiert) mit optionaler KSTU-Neubewertung |
-| **PDF-Report** | Vollständiger Analysebericht als PDF (Management-Summary, Detail, Visualisierungen) |
-| **Versionierung** | Major-/Minor-Versionskontrolle mit Snapshots, Rollback und Änderungskommentaren |
-| **Import / Export** | JSON-basierter Export/Import vollständiger Analysen mit automatischer Daten-Migration |
-| **Multi-Analyse** | Gleichzeitige Verwaltung mehrerer Analysen per Dropdown |
-| **Dashboard** | Übersicht mit Risikoverteilung (Original + Restrisiko) |
+| Feature                       | Beschreibung                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------- |
+| **Assets**                    | Verwaltung von Assets mit CIA-Schutzbedarf (Stufe I / II / III)                             |
+| **Schadensszenarien**         | 5 vordefinierte Szenarien (Safety, Financial, IP Loss, Privacy, Legal) + benutzerdefinierte |
+| **Schadensauswirkungsmatrix** | Kreuzmatrix Assets × Schadensszenarien mit Schweregrad-Bewertung (1 / 2 / 3)                |
+| **Angriffsbäume**             | Kartenbasierter Editor (variable Tiefe 1–3 Ebenen) mit DOT/Graphviz-Vorschau                |
+| **Risikoanalyse**             | SCHASAM-basierte Risikoberechnung je Angriffsbaum mit automatischer Worst-Case-Vererbung    |
+| **Security Ziele**            | Definition von Security-Zielen mit Referenz auf Angriffsbaumwurzeln                         |
+| **Restrisikoanalyse**         | Behandlung je Blatt (Akzeptiert / Delegiert / Mitigiert) mit optionaler KSTU-Neubewertung   |
+| **PDF-Report**                | Vollständiger Analysebericht als PDF (Management-Summary, Detail, Visualisierungen)         |
+| **Versionierung**             | Major-/Minor-Versionskontrolle mit Snapshots, Rollback und Änderungskommentaren             |
+| **Import / Export**           | JSON-basierter Export/Import vollständiger Analysen mit automatischer Daten-Migration       |
+| **Multi-Analyse**             | Gleichzeitige Verwaltung mehrerer Analysen per Dropdown                                     |
+| **Dashboard**                 | Übersicht mit Risikoverteilung (Original + Restrisiko)                                      |
 
 ---
 
@@ -171,12 +171,12 @@ TARATool/
 
 ### Architekturkonventionen
 
-| Konvention | Beschreibung |
-|---|---|
-| **IIFE-Pattern** | Dateien mit internem State/Closures nutzen IIFE (`structure`, `editor_v2`, `residual_risk_*`, `report_*`). Reine Funktionsdateien ohne internen State (calc, ui, modules) bleiben ohne IIFE, da alle Funktionen cross-module public API sind. |
-| **`_`-Prefix** | Markiert Funktionen als **intern konzipiert**, die aber aufgrund der globalen Script-Tag-Architektur dennoch cross-module genutzt werden. Alle Aufrufe sind mit `typeof`-Guards abgesichert. |
-| **Script-Reihenfolge** | `config_loader.js → globals.js → utils.js → …` (in `index.html`). Im Attack-Tree-Bereich: `structure.js → calc.js → editor_v2.js → ui.js → dot_export.js`. `tab_dispatcher.js` wird **nach allen Modulen** und **vor init.js** geladen. |
-| **DOM-Zugriffe** | Immer `document.getElementById()` verwenden, niemals implizite DOM-Globals (`window.elementId`) – Voraussetzung für ES-Module `strict mode`. |
+| Konvention             | Beschreibung                                                                                                                                                                                                                                  |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IIFE-Pattern**       | Dateien mit internem State/Closures nutzen IIFE (`structure`, `editor_v2`, `residual_risk_*`, `report_*`). Reine Funktionsdateien ohne internen State (calc, ui, modules) bleiben ohne IIFE, da alle Funktionen cross-module public API sind. |
+| **`_`-Prefix**         | Markiert Funktionen als **intern konzipiert**, die aber aufgrund der globalen Script-Tag-Architektur dennoch cross-module genutzt werden. Alle Aufrufe sind mit `typeof`-Guards abgesichert.                                                  |
+| **Script-Reihenfolge** | `config_loader.js → globals.js → utils.js → …` (in `index.html`). Im Attack-Tree-Bereich: `structure.js → calc.js → editor_v2.js → ui.js → dot_export.js`. `tab_dispatcher.js` wird **nach allen Modulen** und **vor init.js** geladen.       |
+| **DOM-Zugriffe**       | Immer `document.getElementById()` verwenden, niemals implizite DOM-Globals (`window.elementId`) – Voraussetzung für ES-Module `strict mode`.                                                                                                  |
 
 ---
 
@@ -188,14 +188,14 @@ Alle bewertungsrelevanten Skalierungsfaktoren und Schwellenwerte sind in einer *
 
 ### Konfigurierte Parameter
 
-| Abschnitt | Inhalt |
-|---|---|
-| `impactScale` | Gültige Impact-Werte (0–3), Labels und CSS-Klassen für die Schadensauswirkungsmatrix |
-| `severityLevelFactors` | Schweregradfaktoren (0 → 0.0, 1 → 0.3, 2 → 0.6, 3 → 1.0) |
-| `protectionLevels` | Schutzstufengewichte (I=0.6, II=0.8, III=1.0) und Ranking (−=0, I=1, II=2, III=3) |
-| `probabilityCriteria` | KSTU-Parameter (Komplexität, Skalierung, Zeitaufwand, Nutzen) mit Min/Max und Labels |
-| `riskThresholds` | Risikoschwellen (Kritisch ≥ 2.5, Hoch ≥ 1.5, Mittel ≥ 0.5, Niedrig ≥ 0) mit Farben |
-| `defaultDamageScenarios` | Die fünf Standard-Schadensszenarien (Safety, Financial, IP Loss, Privacy, Legal) |
+| Abschnitt                | Inhalt                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| `impactScale`            | Gültige Impact-Werte (0–3), Labels und CSS-Klassen für die Schadensauswirkungsmatrix |
+| `severityLevelFactors`   | Schweregradfaktoren (0 → 0.0, 1 → 0.3, 2 → 0.6, 3 → 1.0)                             |
+| `protectionLevels`       | Schutzstufengewichte (I=0.6, II=0.8, III=1.0) und Ranking (−=0, I=1, II=2, III=3)    |
+| `probabilityCriteria`    | KSTU-Parameter (Komplexität, Skalierung, Zeitaufwand, Nutzen) mit Min/Max und Labels |
+| `riskThresholds`         | Risikoschwellen (Kritisch ≥ 2.5, Hoch ≥ 1.5, Mittel ≥ 0.5, Niedrig ≥ 0) mit Farben   |
+| `defaultDamageScenarios` | Die fünf Standard-Schadensszenarien (Safety, Financial, IP Loss, Privacy, Legal)     |
 
 ### Architektur
 
@@ -225,16 +225,17 @@ Alle Module (impact_matrix, attack_tree_calc, assets, …)
 
 Alle Abhängigkeiten werden über CDN geladen – es gibt **keine lokalen node_modules** und keinen Build-Prozess.
 
-| Bibliothek | Version | Zweck |
-|---|---|---|
-| [Font Awesome](https://fontawesome.com/) | 6.5.1 | Icons |
-| [@hpcc-js/wasm (Graphviz)](https://github.com/nicedoc/hpcc-js-wasm) | 2.33.2 | DOT-Rendering im Browser (Angriffsbäume) |
-| [JSZip](https://stuk.github.io/jszip/) | 3.10.1 | ZIP-Export (Baumdaten) |
-| [jsPDF](https://github.com/parallax/jsPDF) | 4.2.1 | PDF-Report-Generierung |
+| Bibliothek                                                          | Version | Zweck                                    |
+| ------------------------------------------------------------------- | ------- | ---------------------------------------- |
+| [Font Awesome](https://fontawesome.com/)                            | 6.5.1   | Icons                                    |
+| [@hpcc-js/wasm (Graphviz)](https://github.com/nicedoc/hpcc-js-wasm) | 2.33.2  | DOT-Rendering im Browser (Angriffsbäume) |
+| [JSZip](https://stuk.github.io/jszip/)                              | 3.10.1  | ZIP-Export (Baumdaten)                   |
+| [jsPDF](https://github.com/parallax/jsPDF)                          | 4.2.1   | PDF-Report-Generierung                   |
 
 > **Subresource Integrity (SRI):** Die CDN-Skripte für JSZip und jsPDF werden mit `integrity`-Hashes und `crossorigin="anonymous"` geladen, um Manipulationen durch kompromittierte CDNs zu verhindern.
 
 Für die PDF-Angriffsbaumvisualisierung werden externe Render-Dienste genutzt:
+
 - [Kroki](https://kroki.io/) (primär)
 - [QuickChart](https://quickchart.io/graphviz) (Fallback)
 
@@ -246,13 +247,13 @@ Das Repository enthält einen **automatischen CVE-Scanner**, der alle Abhängigk
 
 ### Funktionsweise
 
-| Komponente | Beschreibung |
-|---|---|
-| `security/cve_scanner.py` | Python-Scanner – extrahiert Abhängigkeiten aus `index.html` (CDN-URLs) und `tests/requirements.txt`, fragt die OSV-API ab |
-| `.github/workflows/cve-scan.yml` | GitHub Actions Workflow – läuft **täglich um 06:00 UTC** und bei manuellem Auslösen |
-| `.github/workflows/cve-monthly-report.yml` | Monatlicher Report – erstellt am **1. Montag um 09:00 MEZ** ein GitHub Issue mit vollständigem CVE-Report |
-| `security/reports/cve_report.md` | Markdown-Report mit Schwachstellen-Details (CVE-ID, CVSS, Fix-Version) |
-| `security/reports/cve_report.json` | Maschinenlesbarer JSON-Report |
+| Komponente                                 | Beschreibung                                                                                                              |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `security/cve_scanner.py`                  | Python-Scanner – extrahiert Abhängigkeiten aus `index.html` (CDN-URLs) und `tests/requirements.txt`, fragt die OSV-API ab |
+| `.github/workflows/cve-scan.yml`           | GitHub Actions Workflow – läuft **täglich um 06:00 UTC** und bei manuellem Auslösen                                       |
+| `.github/workflows/cve-monthly-report.yml` | Monatlicher Report – erstellt am **1. Montag um 09:00 MEZ** ein GitHub Issue mit vollständigem CVE-Report                 |
+| `security/reports/cve_report.md`           | Markdown-Report mit Schwachstellen-Details (CVE-ID, CVSS, Fix-Version)                                                    |
+| `security/reports/cve_report.json`         | Maschinenlesbarer JSON-Report                                                                                             |
 
 ### Alert bei kritischen Schwachstellen
 
@@ -318,20 +319,20 @@ pytest
 
 ### Testkategorien
 
-| Marker | Beschreibung | Befehl |
-|---|---|---|
-| `smoke` | Schnelle Basis-Checks | `pytest -m smoke` |
-| `core` | App-Startup, Navigation, Persistenz | `pytest -m core` |
-| `assets` | Asset-Verwaltung | `pytest -m assets` |
-| `damage_scenarios` | Schadensszenarien & Impact-Matrix | `pytest -m damage_scenarios` |
-| `risk_analysis` | Risikoanalyse & Angriffsbäume | `pytest -m risk_analysis` |
-| `security_goals` | Schutzziele | `pytest -m security_goals` |
-| `residual_risk` | Restrisikoanalyse | `pytest -m residual_risk` |
-| `report` | PDF-Report-Generierung | `pytest -m report` |
-| `config` | Konfigurationssystem & Parameter-Propagation | `pytest -m config` |
-| `tree_export` | Baumdaten-ZIP-Export | `pytest -m tree_export` |
-| `security_fixes` | Security- und Datenintegritäts-Fixes | `pytest -m security_fixes` |
-| `e2e` | Vollständige Workflow-Tests | `pytest -m e2e` |
+| Marker             | Beschreibung                                 | Befehl                       |
+| ------------------ | -------------------------------------------- | ---------------------------- |
+| `smoke`            | Schnelle Basis-Checks                        | `pytest -m smoke`            |
+| `core`             | App-Startup, Navigation, Persistenz          | `pytest -m core`             |
+| `assets`           | Asset-Verwaltung                             | `pytest -m assets`           |
+| `damage_scenarios` | Schadensszenarien & Impact-Matrix            | `pytest -m damage_scenarios` |
+| `risk_analysis`    | Risikoanalyse & Angriffsbäume                | `pytest -m risk_analysis`    |
+| `security_goals`   | Schutzziele                                  | `pytest -m security_goals`   |
+| `residual_risk`    | Restrisikoanalyse                            | `pytest -m residual_risk`    |
+| `report`           | PDF-Report-Generierung                       | `pytest -m report`           |
+| `config`           | Konfigurationssystem & Parameter-Propagation | `pytest -m config`           |
+| `tree_export`      | Baumdaten-ZIP-Export                         | `pytest -m tree_export`      |
+| `security_fixes`   | Security- und Datenintegritäts-Fixes         | `pytest -m security_fixes`   |
+| `e2e`              | Vollständige Workflow-Tests                  | `pytest -m e2e`              |
 
 > Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
 

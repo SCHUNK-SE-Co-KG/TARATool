@@ -38,20 +38,20 @@ TDD-Tests:         tests/test_TARA_XXXX.py (PASSED)
 
 ## Prüfkatalog
 
-| # | Bereich | Prüfung |
-|---|---------|---------|
-| R-01 | Korrektheit | Alle Akzeptanzkriterien der Story erfüllt |
+| #    | Bereich     | Prüfung                                                  |
+| ---- | ----------- | -------------------------------------------------------- |
+| R-01 | Korrektheit | Alle Akzeptanzkriterien der Story erfüllt                |
 | R-02 | Korrektheit | Keine offensichtlichen Logikfehler, Edge Cases behandelt |
-| R-03 | Architektur | IIFE-Pattern korrekt (nur Dateien mit internem State) |
-| R-04 | Architektur | `_`-Prefix für intern konzipierte Funktionen |
+| R-03 | Architektur | IIFE-Pattern korrekt (nur Dateien mit internem State)    |
+| R-04 | Architektur | `_`-Prefix für intern konzipierte Funktionen             |
 | R-05 | Architektur | Nur `document.getElementById()`, kein `window.elementId` |
-| R-06 | Architektur | Script-Ladereihenfolge in `index.html` eingehalten |
-| R-07 | Sicherheit | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash |
-| R-08 | Sicherheit | Kein `eval()`, keine unsichere DOM-Manipulation |
-| R-09 | Tests | Alle bestehenden Tests weiterhin grün |
-| R-10 | Tests | Neue Funktionalität durch Story-Tests abgedeckt (TDD) |
-| R-11 | Qualität | Kein duplizierter Code (DRY) |
-| R-12 | Qualität | Keine auskommentierten Code-Blöcke |
+| R-06 | Architektur | Script-Ladereihenfolge in `index.html` eingehalten       |
+| R-07 | Sicherheit  | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash             |
+| R-08 | Sicherheit  | Kein `eval()`, keine unsichere DOM-Manipulation          |
+| R-09 | Tests       | Alle bestehenden Tests weiterhin grün                    |
+| R-10 | Tests       | Neue Funktionalität durch Story-Tests abgedeckt (TDD)    |
+| R-11 | Qualität    | Kein duplizierter Code (DRY)                             |
+| R-12 | Qualität    | Keine auskommentierten Code-Blöcke                       |
 
 ---
 
@@ -70,12 +70,15 @@ TDD-Tests:         tests/test_TARA_XXXX.py (PASSED)
 **Datei:** `path/to/file.js` (Zeile X)
 
 ### Problem
+
 <Beschreibung>
 
 ### Erwartung
+
 <Was sollte stattdessen sein?>
 
 ### Vorschlag
+
 <Konkreter Lösungsvorschlag>
 ```
 
@@ -83,8 +86,8 @@ TDD-Tests:         tests/test_TARA_XXXX.py (PASSED)
 
 ## Merge-Freigabe
 
-| Ergebnis | Vorgehen |
-|---|---|
-| Keine Findings | PR auf Development, Item → Done |
-| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen |
-| Hoch/Kritisch | Item zurück auf „In Progress", Findings zuerst beheben |
+| Ergebnis           | Vorgehen                                               |
+| ------------------ | ------------------------------------------------------ |
+| Keine Findings     | PR auf Development, Item → Done                        |
+| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen    |
+| Hoch/Kritisch      | Item zurück auf „In Progress", Findings zuerst beheben |

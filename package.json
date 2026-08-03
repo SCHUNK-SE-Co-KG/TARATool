@@ -1,0 +1,30 @@
+{
+  "name": "taratool",
+  "version": "1.0.0",
+  "description": "**Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA) im Kontext des EU Cyber Resilience Act (CRA)**",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "format:check": "prettier --check .",
+    "format:write": "prettier --write ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bheowulf/TARATool.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Bheowulf/TARATool/issues"
+  },
+  "homepage": "https://github.com/Bheowulf/TARATool#readme",
+  "devDependencies": {
+    "prettier": "^3.9.6"
+  }
+}

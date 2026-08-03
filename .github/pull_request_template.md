@@ -18,6 +18,7 @@
 - [ ] Vollständige Suite grün: `pytest -x -q`
 
 **Test-Output (Story-Tests):**
+
 ```
 <pytest output hier einfügen>
 ```

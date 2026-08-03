@@ -124,36 +124,36 @@ tests/
 
 ## Testabdeckung
 
-| Modul                | Testdatei                  | Tests |
-|----------------------|----------------------------|-------|
-| Startup & Navigation | `test_core.py`             | 27    |
-| Assets               | `test_assets.py`           | 9     |
-| Berechnungen         | `test_calculations.py`     | 73    |
-| Konfiguration        | `test_config.py`           | 60    |
-| Schadensszenarien     | `test_damage_scenarios.py` | 10    |
-| Risikoanalyse        | `test_risk_analysis.py`    | 15    |
-| Schutzziele          | `test_security_goals.py`   | 4     |
-| Restrisikoanalyse    | `test_residual_risk.py`    | 4     |
-| Restrisiko-Debug     | `test_residual_debug.py`   | 6     |
-| Report & Versioning  | `test_report_versioning.py`| 6     |
-| Baum-Export          | `test_tree_export.py`      | 21    |
-| E2E Workflow         | `test_e2e_workflow.py`     | 3     |
-| **Gesamt**           |                            | **238** |
+| Modul                | Testdatei                   | Tests   |
+| -------------------- | --------------------------- | ------- |
+| Startup & Navigation | `test_core.py`              | 27      |
+| Assets               | `test_assets.py`            | 9       |
+| Berechnungen         | `test_calculations.py`      | 73      |
+| Konfiguration        | `test_config.py`            | 60      |
+| Schadensszenarien    | `test_damage_scenarios.py`  | 10      |
+| Risikoanalyse        | `test_risk_analysis.py`     | 15      |
+| Schutzziele          | `test_security_goals.py`    | 4       |
+| Restrisikoanalyse    | `test_residual_risk.py`     | 4       |
+| Restrisiko-Debug     | `test_residual_debug.py`    | 6       |
+| Report & Versioning  | `test_report_versioning.py` | 6       |
+| Baum-Export          | `test_tree_export.py`       | 21      |
+| E2E Workflow         | `test_e2e_workflow.py`      | 3       |
+| **Gesamt**           |                             | **238** |
 
 ## Marker-Übersicht
 
-| Marker             | Beschreibung                                    |
-|--------------------|-------------------------------------------------|
-| `smoke`            | Schnelle Basis-Checks (App lädt, Elemente da)   |
-| `core`             | Kernfunktionen (Analyse-Lifecycle, Persistenz)   |
-| `assets`           | Asset-Management                                |
-| `damage_scenarios` | Schadensszenarien & Impact-Matrix               |
-| `risk_analysis`    | Risikoanalyse & Angriffsbäume                   |
-| `security_goals`   | Schutzziele                                     |
-| `residual_risk`    | Restrisikoanalyse                               |
-| `report`           | PDF-Report-Generierung                          |
-| `config`           | Konfigurationssystem & Parameter-Propagation    |
-| `e2e`              | Vollständige End-to-End-Workflows               |
+| Marker             | Beschreibung                                   |
+| ------------------ | ---------------------------------------------- |
+| `smoke`            | Schnelle Basis-Checks (App lädt, Elemente da)  |
+| `core`             | Kernfunktionen (Analyse-Lifecycle, Persistenz) |
+| `assets`           | Asset-Management                               |
+| `damage_scenarios` | Schadensszenarien & Impact-Matrix              |
+| `risk_analysis`    | Risikoanalyse & Angriffsbäume                  |
+| `security_goals`   | Schutzziele                                    |
+| `residual_risk`    | Restrisikoanalyse                              |
+| `report`           | PDF-Report-Generierung                         |
+| `config`           | Konfigurationssystem & Parameter-Propagation   |
+| `e2e`              | Vollständige End-to-End-Workflows              |
 
 ## Konfiguration
 

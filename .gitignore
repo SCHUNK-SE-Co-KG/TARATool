@@ -4,3 +4,11 @@
 # Trivy-Artefakte (lokale Scan-Outputs, nicht einchecken)
 trivy_output.txt
 *_trivy.json
+
+# Node.js
+node_modules/
+
+# Python
+**/__pycache__/
+**/*.pyc
+tests/.venv/

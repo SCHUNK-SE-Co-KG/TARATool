@@ -17,31 +17,26 @@
  * @param {string} [tabId] - Optional explicit tab ID. If omitted, reads from active tab button.
  */
 function renderActiveTab(analysis, tabId) {
-    if (!analysis) return;
+  if (!analysis) return;
 
-    if (!tabId) {
-        const activeTabBtn = document.querySelector('.tab-button.active');
-        if (!activeTabBtn) return;
-        tabId = activeTabBtn.dataset.tab;
-    }
+  if (!tabId) {
+    const activeTabBtn = document.querySelector('.tab-button.active');
+    if (!activeTabBtn) return;
+    tabId = activeTabBtn.dataset.tab;
+  }
 
-    if (tabId === 'tabOverview') {
-        if (typeof renderOverview === 'function') renderOverview(analysis);
-    }
-    else if (tabId === 'tabAssets') {
-        if (typeof renderAssets === 'function') renderAssets(analysis);
-    }
-    else if (tabId === 'tabDamageScenarios') {
-        if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
-        if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
-    }
-    else if (tabId === 'tabSecurityGoals') {
-        if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
-    }
-    else if (tabId === 'tabRiskAnalysis') {
-        if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
-    }
-    else if (tabId === 'tabResidualRisk') {
-        if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
-    }
+  if (tabId === 'tabOverview') {
+    if (typeof renderOverview === 'function') renderOverview(analysis);
+  } else if (tabId === 'tabAssets') {
+    if (typeof renderAssets === 'function') renderAssets(analysis);
+  } else if (tabId === 'tabDamageScenarios') {
+    if (typeof renderDamageScenarios === 'function') renderDamageScenarios();
+    if (typeof renderImpactMatrix === 'function') renderImpactMatrix();
+  } else if (tabId === 'tabSecurityGoals') {
+    if (typeof renderSecurityGoals === 'function') renderSecurityGoals(analysis);
+  } else if (tabId === 'tabRiskAnalysis') {
+    if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+  } else if (tabId === 'tabResidualRisk') {
+    if (typeof renderResidualRisk === 'function') renderResidualRisk(analysis);
+  }
 }

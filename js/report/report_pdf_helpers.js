@@ -8,267 +8,282 @@
  */
 
 (function () {
-    'use strict';
+  'use strict';
 
-    // =============================================================
-    // Graphviz rendering (DOT -> SVG) for PDF embedding
-    // =============================================================
-    // Default: use Kroki (public). Fallback: QuickChart.
-    // NOTE: DOT content is sent to a third-party service.
-    const GRAPHVIZ_RENDERERS = [
-        {
-            name: 'Kroki',
-            url: 'https://kroki.io/graphviz/svg',
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: (dot) => dot
-        },
-        {
-            name: 'QuickChart',
-            url: 'https://quickchart.io/graphviz',
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: (dot) => JSON.stringify({ graph: dot, format: 'svg', layout: 'dot' })
+  // =============================================================
+  // Graphviz rendering (DOT -> SVG) for PDF embedding
+  // =============================================================
+  // Default: use Kroki (public). Fallback: QuickChart.
+  // NOTE: DOT content is sent to a third-party service.
+  const GRAPHVIZ_RENDERERS = [
+    {
+      name: 'Kroki',
+      url: 'https://kroki.io/graphviz/svg',
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: (dot) => dot,
+    },
+    {
+      name: 'QuickChart',
+      url: 'https://quickchart.io/graphviz',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: (dot) => JSON.stringify({ graph: dot, format: 'svg', layout: 'dot' }),
+    },
+  ];
+
+  async function _fetchWithTimeout(url, options, timeoutMs = 20000) {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      return res;
+    } finally {
+      clearTimeout(t);
+    }
+  }
+
+  async function renderDotToSvg(dotString) {
+    if (!dotString) return null;
+    for (const r of GRAPHVIZ_RENDERERS) {
+      try {
+        const res = await _fetchWithTimeout(
+          r.url,
+          {
+            method: r.method,
+            headers: r.headers,
+            body: r.body(dotString),
+          },
+          25000
+        );
+        if (!res || !res.ok) continue;
+        const txt = await res.text();
+        if (txt && txt.includes('<svg')) return txt;
+      } catch (_) {
+        // try next renderer
+      }
+    }
+    return null;
+  }
+
+  async function svgTextToPng(svgText, targetPxWidth = 4000, jpegQuality = 0.92) {
+    // Rasterizes a vector Graphviz SVG onto an in-memory canvas and returns an
+    // image dataURL for PDF embedding. The vector source is rendered directly at
+    // the requested target width (up- OR down-scaled), so large trees stay crisp
+    // instead of being capped to a low fixed resolution.
+    //
+    // Prefers lossless PNG (sharp lines/text). Only falls back to high-quality
+    // JPEG when the PNG would be excessively large.
+    //
+    // Returns { dataUrl, widthPx, heightPx, format } or null.
+    if (!svgText || !svgText.includes('<svg')) return null;
+
+    // Browser canvas safety limits (avoid failed/blank rasterization on huge trees).
+    const MAX_SIDE = 16000; // max width/height in px
+    const MAX_AREA = 40 * 1000 * 1000; // ~40 MP total pixels
+    const MAX_PNG_BYTES = 12 * 1024 * 1024; // above this, fall back to JPEG
+
+    const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+
+    try {
+      const img = new Image();
+      // Important: keep as same-origin (blob URL), so canvas isn't tainted.
+      const loaded = await new Promise((resolve, reject) => {
+        img.onload = () => resolve(true);
+        img.onerror = () => reject(new Error('SVG image load failed'));
+        img.src = url;
+      });
+      void loaded;
+
+      const w = img.naturalWidth || img.width || 1;
+      const h = img.naturalHeight || img.height || 1;
+
+      // Scale the vector to the requested target width (may enlarge for sharpness).
+      let scale = (targetPxWidth > 0 ? targetPxWidth : w) / w;
+      // Clamp by max side length (width and height).
+      if (w * scale > MAX_SIDE) scale = MAX_SIDE / w;
+      if (h * scale > MAX_SIDE) scale = MAX_SIDE / h;
+      // Clamp by total pixel area.
+      if (w * scale * (h * scale) > MAX_AREA) {
+        scale = Math.sqrt(MAX_AREA / (w * h));
+      }
+
+      const cw = Math.max(1, Math.round(w * scale));
+      const ch = Math.max(1, Math.round(h * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+
+      // High-quality scaling for the vector->raster step.
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+
+      // White background (opaque, needed for JPEG fallback and clean print).
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.drawImage(img, 0, 0, cw, ch);
+
+      // Prefer lossless PNG for crisp line-art/text; fall back to JPEG if too big.
+      let format = 'PNG';
+      let dataUrl = canvas.toDataURL('image/png');
+      if (!dataUrl || dataUrl.length > MAX_PNG_BYTES) {
+        const jpg = canvas.toDataURL('image/jpeg', jpegQuality);
+        if (jpg) {
+          dataUrl = jpg;
+          format = 'JPEG';
         }
-    ];
+      }
+      if (!dataUrl) return null;
 
-    async function _fetchWithTimeout(url, options, timeoutMs = 20000) {
-        const controller = new AbortController();
-        const t = setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            const res = await fetch(url, { ...options, signal: controller.signal });
-            return res;
-        } finally {
-            clearTimeout(t);
-        }
+      return { dataUrl, widthPx: cw, heightPx: ch, format };
+    } catch (_) {
+      return null;
+    } finally {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (_) {
+        /* noop */
+      }
     }
+  }
 
-    async function renderDotToSvg(dotString) {
-        if (!dotString) return null;
-        for (const r of GRAPHVIZ_RENDERERS) {
-            try {
-                const res = await _fetchWithTimeout(r.url, {
-                    method: r.method,
-                    headers: r.headers,
-                    body: r.body(dotString)
-                }, 25000);
-                if (!res || !res.ok) continue;
-                const txt = await res.text();
-                if (txt && txt.includes('<svg')) return txt;
-            } catch (_) {
-                // try next renderer
-            }
-        }
-        return null;
+  // NOTE: We keep the conversion intentionally dependency-free (no svg2pdf).
+  // Graphviz SVG is converted to JPEG via canvas and embedded using doc.addImage.
+
+  // =============================================================
+  // General Utility Functions
+  // =============================================================
+
+  // Delegates to the global getActiveAnalysis() from utils.js
+  // (kept as local alias for backward-compatible ReportHelpers.getActiveAnalysis namespace)
+
+  function riskClassFromValue(rVal) {
+    // Delegates to the global getRiskMeta() (utils.js) for single source of truth
+    const meta = getRiskMeta(rVal);
+    return { label: meta.label, color: meta.colorRGB || [127, 140, 141] };
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '';
+    // Expects YYYY-MM-DD
+    const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return String(iso);
+    return `${m[3]}.${m[2]}.${m[1]}`;
+  }
+
+  function sanitizeFilename(s) {
+    return String(s || 'report')
+      .trim()
+      .replace(/[\\/?:*"<>|]+/g, '_')
+      .replace(/\s+/g, '_')
+      .substring(0, 80);
+  }
+
+  function getDisplayDamageScenarios(analysis) {
+    if (typeof window.getDisplayDamageScenarios === 'function') {
+      return window.getDisplayDamageScenarios(analysis);
     }
-
-    async function svgTextToPng(svgText, targetPxWidth = 4000, jpegQuality = 0.92) {
-        // Rasterizes a vector Graphviz SVG onto an in-memory canvas and returns an
-        // image dataURL for PDF embedding. The vector source is rendered directly at
-        // the requested target width (up- OR down-scaled), so large trees stay crisp
-        // instead of being capped to a low fixed resolution.
-        //
-        // Prefers lossless PNG (sharp lines/text). Only falls back to high-quality
-        // JPEG when the PNG would be excessively large.
-        //
-        // Returns { dataUrl, widthPx, heightPx, format } or null.
-        if (!svgText || !svgText.includes('<svg')) return null;
-
-        // Browser canvas safety limits (avoid failed/blank rasterization on huge trees).
-        const MAX_SIDE = 16000;                 // max width/height in px
-        const MAX_AREA = 40 * 1000 * 1000;      // ~40 MP total pixels
-        const MAX_PNG_BYTES = 12 * 1024 * 1024; // above this, fall back to JPEG
-
-        const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-
-        try {
-            const img = new Image();
-            // Important: keep as same-origin (blob URL), so canvas isn't tainted.
-            const loaded = await new Promise((resolve, reject) => {
-                img.onload = () => resolve(true);
-                img.onerror = () => reject(new Error('SVG image load failed'));
-                img.src = url;
-            });
-            void loaded;
-
-            const w = img.naturalWidth || img.width || 1;
-            const h = img.naturalHeight || img.height || 1;
-
-            // Scale the vector to the requested target width (may enlarge for sharpness).
-            let scale = (targetPxWidth > 0 ? targetPxWidth : w) / w;
-            // Clamp by max side length (width and height).
-            if (w * scale > MAX_SIDE) scale = MAX_SIDE / w;
-            if (h * scale > MAX_SIDE) scale = MAX_SIDE / h;
-            // Clamp by total pixel area.
-            if ((w * scale) * (h * scale) > MAX_AREA) {
-                scale = Math.sqrt(MAX_AREA / (w * h));
-            }
-
-            const cw = Math.max(1, Math.round(w * scale));
-            const ch = Math.max(1, Math.round(h * scale));
-
-            const canvas = document.createElement('canvas');
-            canvas.width = cw;
-            canvas.height = ch;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return null;
-
-            // High-quality scaling for the vector->raster step.
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            // White background (opaque, needed for JPEG fallback and clean print).
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, cw, ch);
-            ctx.drawImage(img, 0, 0, cw, ch);
-
-            // Prefer lossless PNG for crisp line-art/text; fall back to JPEG if too big.
-            let format = 'PNG';
-            let dataUrl = canvas.toDataURL('image/png');
-            if (!dataUrl || dataUrl.length > MAX_PNG_BYTES) {
-                const jpg = canvas.toDataURL('image/jpeg', jpegQuality);
-                if (jpg) { dataUrl = jpg; format = 'JPEG'; }
-            }
-            if (!dataUrl) return null;
-
-            return { dataUrl, widthPx: cw, heightPx: ch, format };
-        } catch (_) {
-            return null;
-        } finally {
-            try { URL.revokeObjectURL(url); } catch (_) { /* noop */ }
-        }
+    let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS || []));
+    const defaultIds = new Set(displayDS.map((d) => d.id));
+    if (analysis && Array.isArray(analysis.damageScenarios)) {
+      analysis.damageScenarios.forEach((ds) => {
+        if (!defaultIds.has(ds.id)) displayDS.push(ds);
+      });
     }
+    displayDS.sort((a, b) =>
+      a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' })
+    );
+    return displayDS;
+  }
 
-    // NOTE: We keep the conversion intentionally dependency-free (no svg2pdf).
-    // Graphviz SVG is converted to JPEG via canvas and embedded using doc.addImage.
+  function kstuToString(kstu) {
+    if (!kstu) return '';
+    const k = (kstu.k ?? '').toString();
+    const s = (kstu.s ?? '').toString();
+    const t = (kstu.t ?? '').toString();
+    const u = (kstu.u ?? '').toString();
+    return `K:${k}  S:${s}  T:${t}  U:${u}`;
+  }
 
-    // =============================================================
-    // General Utility Functions
-    // =============================================================
+  function fmtNumComma(val, digits = 2) {
+    const n = parseFloat(String(val ?? '').replace(',', '.'));
+    if (isNaN(n)) return '-';
+    return n.toFixed(digits).replace('.', ',');
+  }
 
-    // Delegates to the global getActiveAnalysis() from utils.js
-    // (kept as local alias for backward-compatible ReportHelpers.getActiveAnalysis namespace)
-
-    function riskClassFromValue(rVal) {
-        // Delegates to the global getRiskMeta() (utils.js) for single source of truth
-        const meta = getRiskMeta(rVal);
-        return { label: meta.label, color: meta.colorRGB || [127, 140, 141] };
-    }
-
-    function formatDate(iso) {
-        if (!iso) return '';
-        // Expects YYYY-MM-DD
-        const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
-        if (!m) return String(iso);
-        return `${m[3]}.${m[2]}.${m[1]}`;
-    }
-
-    function sanitizeFilename(s) {
-        return String(s || 'report')
-            .trim()
-            .replace(/[\\/?:*"<>|]+/g, '_')
-            .replace(/\s+/g, '_')
-            .substring(0, 80);
-    }
-
-    function getDisplayDamageScenarios(analysis) {
-        if (typeof window.getDisplayDamageScenarios === 'function') {
-            return window.getDisplayDamageScenarios(analysis);
-        }
-        let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS || []));
-        const defaultIds = new Set(displayDS.map(d => d.id));
-        if (analysis && Array.isArray(analysis.damageScenarios)) {
-            analysis.damageScenarios.forEach(ds => {
-                if (!defaultIds.has(ds.id)) displayDS.push(ds);
-            });
-        }
-        displayDS.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
-        return displayDS;
-    }
-
-    function kstuToString(kstu) {
-        if (!kstu) return '';
-        const k = (kstu.k ?? '').toString();
-        const s = (kstu.s ?? '').toString();
-        const t = (kstu.t ?? '').toString();
-        const u = (kstu.u ?? '').toString();
-        return `K:${k}  S:${s}  T:${t}  U:${u}`;
-    }
-
-    function fmtNumComma(val, digits = 2) {
-        const n = parseFloat(String(val ?? '').replace(',', '.'));
-        if (isNaN(n)) return '-';
-        return n.toFixed(digits).replace('.', ',');
-    }
-
-    function pVec(k, s, t, u) {
-        const f = (x) => {
-            if (x === null || x === undefined) return '-';
-            const xs = String(x).trim();
-            if (!xs) return '-';
-            return xs.replace('.', ',');
-        };
-        return `${f(k)} / ${f(s)} / ${f(t)} / ${f(u)}`;
-    }
-
-    function sanitizePdfText(input, preserveNewlines) {
-        let s = String(input ?? '');
-
-        // Unescape common HTML entities (data may arrive HTML-escaped)
-        s = s.replace(/&amp;/g, '&');
-        s = s.replace(/&lt;/g, '<');
-        s = s.replace(/&gt;/g, '>');
-        s = s.replace(/&quot;/g, '"');
-        s = s.replace(/&#0?39;/g, "'");
-
-        // Replace problematic glyphs (WinAnsi/Helvetica) for better print readability
-        s = s.replace(/\u00A0/g, ' ');            // NBSP
-        s = s.replace(/[→⇒]/g, '\u00BB');         // » (WinAnsi 0xBB) – jsPDF 4.x has issues with >
-        s = s.replace(/[←⇐]/g, '\u00AB');         // « (WinAnsi 0xAB)
-        s = s.replace(/->/g, '\u00BB');            // ASCII arrow -> to »
-        s = s.replace(/<-/g, '\u00AB');            // ASCII arrow <- to «
-        s = s.replace(/[–—−]/g, '-');
-        s = s.replace(/[""„‟]/g, '"');
-        s = s.replace(/[''‚‛]/g, "'");
-        s = s.replace(/…/g, '...');
-        s = s.replace(/[•·]/g, '*');
-        s = s.replace(/›/g, '/');
-
-        // Collapse whitespace but optionally preserve line breaks
-        if (preserveNewlines) {
-            s = s.replace(/[^\S\n]+/g, ' ');       // collapse horizontal WS only
-            s = s.replace(/\n{3,}/g, '\n\n');       // max 2 consecutive newlines
-            s = s.trim();
-        } else {
-            s = s.replace(/\s+/g, ' ').trim();
-        }
-
-        // Replace non-Latin1 chars (code > 255), which can show up as black boxes
-        s = Array.from(s).map(ch => (ch.charCodeAt(0) <= 255 ? ch : '?')).join('');
-        return s;
-    }
-
-    // Delegates to global computeRiskScore() (utils.js) — signature kept for backward compatibility
-    function riskNum(iNorm, k, s, t, u) {
-        return computeRiskScore(iNorm, { k, s, t, u });
-    }
-
-    // =============================================================
-    // Expose via namespace
-    // =============================================================
-    window.ReportHelpers = {
-        renderDotToSvg,
-        svgTextToPng,
-        getActiveAnalysis,
-        riskClassFromValue,
-        formatDate,
-        sanitizeFilename,
-        getDisplayDamageScenarios,
-        kstuToString,
-        fmtNumComma,
-        pVec,
-        sanitizePdfText,
-        riskNum
+  function pVec(k, s, t, u) {
+    const f = (x) => {
+      if (x === null || x === undefined) return '-';
+      const xs = String(x).trim();
+      if (!xs) return '-';
+      return xs.replace('.', ',');
     };
+    return `${f(k)} / ${f(s)} / ${f(t)} / ${f(u)}`;
+  }
+
+  function sanitizePdfText(input, preserveNewlines) {
+    let s = String(input ?? '');
+
+    // Unescape common HTML entities (data may arrive HTML-escaped)
+    s = s.replace(/&amp;/g, '&');
+    s = s.replace(/&lt;/g, '<');
+    s = s.replace(/&gt;/g, '>');
+    s = s.replace(/&quot;/g, '"');
+    s = s.replace(/&#0?39;/g, "'");
+
+    // Replace problematic glyphs (WinAnsi/Helvetica) for better print readability
+    s = s.replace(/\u00A0/g, ' '); // NBSP
+    s = s.replace(/[→⇒]/g, '\u00BB'); // » (WinAnsi 0xBB) – jsPDF 4.x has issues with >
+    s = s.replace(/[←⇐]/g, '\u00AB'); // « (WinAnsi 0xAB)
+    s = s.replace(/->/g, '\u00BB'); // ASCII arrow -> to »
+    s = s.replace(/<-/g, '\u00AB'); // ASCII arrow <- to «
+    s = s.replace(/[–—−]/g, '-');
+    s = s.replace(/[""„‟]/g, '"');
+    s = s.replace(/[''‚‛]/g, "'");
+    s = s.replace(/…/g, '...');
+    s = s.replace(/[•·]/g, '*');
+    s = s.replace(/›/g, '/');
+
+    // Collapse whitespace but optionally preserve line breaks
+    if (preserveNewlines) {
+      s = s.replace(/[^\S\n]+/g, ' '); // collapse horizontal WS only
+      s = s.replace(/\n{3,}/g, '\n\n'); // max 2 consecutive newlines
+      s = s.trim();
+    } else {
+      s = s.replace(/\s+/g, ' ').trim();
+    }
+
+    // Replace non-Latin1 chars (code > 255), which can show up as black boxes
+    s = Array.from(s)
+      .map((ch) => (ch.charCodeAt(0) <= 255 ? ch : '?'))
+      .join('');
+    return s;
+  }
+
+  // Delegates to global computeRiskScore() (utils.js) — signature kept for backward compatibility
+  function riskNum(iNorm, k, s, t, u) {
+    return computeRiskScore(iNorm, { k, s, t, u });
+  }
+
+  // =============================================================
+  // Expose via namespace
+  // =============================================================
+  window.ReportHelpers = {
+    renderDotToSvg,
+    svgTextToPng,
+    getActiveAnalysis,
+    riskClassFromValue,
+    formatDate,
+    sanitizeFilename,
+    getDisplayDamageScenarios,
+    kstuToString,
+    fmtNumComma,
+    pVec,
+    sanitizePdfText,
+    riskNum,
+  };
 })();

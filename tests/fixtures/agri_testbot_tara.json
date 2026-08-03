@@ -1395,27 +1395,39 @@
                     {
                       "text": "Schadcode per OTA-Update einspielen",
                       "ds": ["DS1", "DS2", "DS3", "DS5"],
-                      "k": "0.7", "s": "0.3", "t": "0.4", "u": "0.1",
+                      "k": "0.7",
+                      "s": "0.3",
+                      "t": "0.4",
+                      "u": "0.1",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000001-0001-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Mitigiert",
                         "note": "",
                         "securityConcept": "Signiertes OTA-Update mit Public-Key-Verifikation",
-                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                        "k": "0.1",
+                        "s": "0.1",
+                        "t": "0.1",
+                        "u": "0.1"
                       }
                     },
                     {
                       "text": "Kompromittierung des Maschinennetzes via Roboter",
                       "ds": ["DS2", "DS4", "DS6"],
-                      "k": "0.3", "s": "0.1", "t": "0.4", "u": "0.3",
+                      "k": "0.3",
+                      "s": "0.1",
+                      "t": "0.4",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000001-0002-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Mitigiert",
                         "note": "",
                         "securityConcept": "Netzwerksegmentierung und Firewall-Regeln",
-                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                        "k": "0.1",
+                        "s": "0.1",
+                        "t": "0.1",
+                        "u": "0.1"
                       }
                     }
                   ],
@@ -1432,14 +1444,20 @@
                     {
                       "text": "Reverse Engineering der Steuerungslogik",
                       "ds": ["DS3", "DS5"],
-                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "k": "0.5",
+                      "s": "0.1",
+                      "t": "0.3",
+                      "u": "0.1",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000001-0003-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Akzeptiert",
                         "note": "Reverse Engineering durch physischen Zugang bleibt möglich",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     }
                   ],
@@ -1467,14 +1485,20 @@
                     {
                       "text": "Betriebsgeheimnisse via Positionstracking ableiten",
                       "ds": ["DS4", "DS5"],
-                      "k": "0.3", "s": "0.5", "t": "0.4", "u": "0.5",
+                      "k": "0.3",
+                      "s": "0.5",
+                      "t": "0.4",
+                      "u": "0.5",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000001-0004-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Mitigiert",
                         "note": "",
                         "securityConcept": "Verschlüsselung der GPS-Telemetrie (TLS 1.3)",
-                        "k": "0.1", "s": "0.1", "t": "0.2", "u": "0.3"
+                        "k": "0.1",
+                        "s": "0.1",
+                        "t": "0.2",
+                        "u": "0.3"
                       }
                     }
                   ],
@@ -1491,27 +1515,39 @@
                     {
                       "text": "Roboter in Gefahrenzone navigieren",
                       "ds": ["DS1", "DS2"],
-                      "k": "0.1", "s": "0.3", "t": "0.2", "u": "0.3",
+                      "k": "0.1",
+                      "s": "0.3",
+                      "t": "0.2",
+                      "u": "0.3",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000001-0005-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Akzeptiert",
                         "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     },
                     {
                       "text": "Ernterouten verfälschen",
                       "ds": ["DS2", "DS3"],
-                      "k": "0.1", "s": "0.3", "t": "0.2", "u": "0.3",
+                      "k": "0.1",
+                      "s": "0.3",
+                      "t": "0.2",
+                      "u": "0.3",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000001-0006-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Akzeptiert",
                         "note": "Geofencing implementiert als sekundäre Schutzmaßnahme",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     }
                   ],
@@ -1565,14 +1601,20 @@
                     {
                       "text": "Manipuliertes Firmware-Paket einspielen",
                       "ds": ["DS1", "DS2", "DS3"],
-                      "k": "0.6", "s": "0.5", "t": "0.5", "u": "0.3",
+                      "k": "0.6",
+                      "s": "0.5",
+                      "t": "0.5",
+                      "u": "0.3",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000002-0001-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Mitigiert",
                         "note": "",
                         "securityConcept": "Certificate Pinning und signierte Update-Pakete",
-                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                        "k": "0.1",
+                        "s": "0.1",
+                        "t": "0.1",
+                        "u": "0.1"
                       }
                     }
                   ],
@@ -1589,27 +1631,39 @@
                     {
                       "text": "Analyse der Firmware-Binaries",
                       "ds": ["DS3", "DS5"],
-                      "k": "0.5", "s": "0.5", "t": "0.4", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.5",
+                      "t": "0.4",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000002-0002-4000-8000-100000000001",
                       "rr": {
                         "treatment": "",
                         "note": "",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     },
                     {
                       "text": "Erstellung kompatibler Schad-Firmware",
                       "ds": ["DS1", "DS2", "DS3"],
-                      "k": "0.5", "s": "0.5", "t": "0.4", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.5",
+                      "t": "0.4",
+                      "u": "0.3",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000002-0003-4000-8000-100000000001",
                       "rr": {
                         "treatment": "",
                         "note": "",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     }
                   ],
@@ -1637,27 +1691,39 @@
                     {
                       "text": "Installation veralteter Firmware mit bekannten Schwachstellen",
                       "ds": ["DS1", "DS3", "DS5"],
-                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "k": "0.3",
+                      "s": "0.3",
+                      "t": "0.3",
+                      "u": "0.5",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000002-0004-4000-8000-100000000001",
                       "rr": {
                         "treatment": "Mitigiert",
                         "note": "",
                         "securityConcept": "Anti-Rollback-Counter im Secure Element",
-                        "k": "0.1", "s": "0.1", "t": "0.1", "u": "0.1"
+                        "k": "0.1",
+                        "s": "0.1",
+                        "t": "0.1",
+                        "u": "0.1"
                       }
                     },
                     {
                       "text": "Nutzung bekannter CVEs in Altversion",
                       "ds": ["DS2", "DS3"],
-                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "k": "0.3",
+                      "s": "0.3",
+                      "t": "0.3",
+                      "u": "0.5",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000002-0005-4000-8000-100000000001",
                       "rr": {
                         "treatment": "",
                         "note": "",
                         "securityConcept": "",
-                        "k": "", "s": "", "t": "", "u": ""
+                        "k": "",
+                        "s": "",
+                        "t": "",
+                        "u": ""
                       }
                     }
                   ],
@@ -1711,7 +1777,10 @@
                     {
                       "text": "Vollständige Firmware-Kopie erstellen",
                       "ds": ["DS3", "DS5"],
-                      "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.1",
+                      "t": "0.5",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000003-0001-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1719,7 +1788,10 @@
                     {
                       "text": "Kryptographische Schlüssel extrahieren",
                       "ds": ["DS2", "DS4", "DS5"],
-                      "k": "0.5", "s": "0.1", "t": "0.5", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.1",
+                      "t": "0.5",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000003-0002-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1738,7 +1810,10 @@
                     {
                       "text": "Debug-Ausgaben mit Sensorwerten mitlesen",
                       "ds": ["DS4"],
-                      "k": "0.3", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "k": "0.3",
+                      "s": "0.1",
+                      "t": "0.3",
+                      "u": "0.1",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000003-0003-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1768,7 +1843,10 @@
                     {
                       "text": "Motorsteuerung manipulieren (Sicherheitsrisiko)",
                       "ds": ["DS1", "DS2", "DS3"],
-                      "k": "0.5", "s": "0.3", "t": "0.5", "u": "0.5",
+                      "k": "0.5",
+                      "s": "0.3",
+                      "t": "0.5",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000003-0004-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1776,7 +1854,10 @@
                     {
                       "text": "Garantieansprüche durch versteckte Manipulation",
                       "ds": ["DS2", "DS5"],
-                      "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.5",
+                      "k": "0.3",
+                      "s": "0.3",
+                      "t": "0.5",
+                      "u": "0.5",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000003-0005-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1795,7 +1876,10 @@
                     {
                       "text": "Secure Boot umgehen",
                       "ds": ["DS1", "DS3", "DS5"],
-                      "k": "0.3", "s": "0.3", "t": "0.5", "u": "0.3",
+                      "k": "0.3",
+                      "s": "0.3",
+                      "t": "0.5",
+                      "u": "0.3",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000003-0006-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1825,7 +1909,10 @@
                     {
                       "text": "Fehlerhafte Hinderniserkennung durch verfälschte LIDAR-Werte",
                       "ds": ["DS1", "DS2"],
-                      "k": "0.1", "s": "0.3", "t": "0.3", "u": "0.3",
+                      "k": "0.1",
+                      "s": "0.3",
+                      "t": "0.3",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000003-0007-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1881,7 +1968,10 @@
                     {
                       "text": "Ertragsdaten und Telemetrie mitlesen",
                       "ds": ["DS4"],
-                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.1",
+                      "t": "0.3",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000004-0001-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1889,7 +1979,10 @@
                     {
                       "text": "Positionsdaten und Einsatzzeiten ableiten",
                       "ds": ["DS4", "DS5"],
-                      "k": "0.5", "s": "0.1", "t": "0.3", "u": "0.1",
+                      "k": "0.5",
+                      "s": "0.1",
+                      "t": "0.3",
+                      "u": "0.1",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000004-0002-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1919,7 +2012,10 @@
                     {
                       "text": "Wiederholte Werkzeugaktivierung auf falscher Fläche",
                       "ds": ["DS1", "DS2", "DS3"],
-                      "k": "0.3", "s": "0.3", "t": "0.3", "u": "0.5",
+                      "k": "0.3",
+                      "s": "0.3",
+                      "t": "0.3",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000004-0003-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1938,7 +2034,10 @@
                     {
                       "text": "Kommunikationsausfall zum Cloud-Backend",
                       "ds": ["DS3", "DS6"],
-                      "k": "0.1", "s": "0.3", "t": "0.1", "u": "0.5",
+                      "k": "0.1",
+                      "s": "0.3",
+                      "t": "0.1",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000004-0004-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -1946,7 +2045,10 @@
                     {
                       "text": "Verlust der Fernsteuerbarkeit",
                       "ds": ["DS1", "DS3", "DS6"],
-                      "k": "0.1", "s": "0.3", "t": "0.1", "u": "0.5",
+                      "k": "0.1",
+                      "s": "0.3",
+                      "t": "0.1",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000004-0005-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -2002,7 +2104,10 @@
                     {
                       "text": "Fernsteuerung aller Roboter einer Flotte",
                       "ds": ["DS1", "DS2", "DS3"],
-                      "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.5",
+                      "k": "0.7",
+                      "s": "0.5",
+                      "t": "0.5",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000005-0001-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -2010,7 +2115,10 @@
                     {
                       "text": "Massenhaftes Auslesen von Kundendaten",
                       "ds": ["DS4", "DS5"],
-                      "k": "0.7", "s": "0.5", "t": "0.5", "u": "0.3",
+                      "k": "0.7",
+                      "s": "0.5",
+                      "t": "0.5",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000005-0002-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -2029,7 +2137,10 @@
                     {
                       "text": "Session-Übernahme eines Betreibers",
                       "ds": ["DS2", "DS3", "DS4"],
-                      "k": "0.5", "s": "0.5", "t": "0.3", "u": "0.5",
+                      "k": "0.5",
+                      "s": "0.5",
+                      "t": "0.3",
+                      "u": "0.5",
                       "i_norm": "1.00",
                       "uid": "leaf_a0000005-0003-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }
@@ -2059,7 +2170,10 @@
                     {
                       "text": "Ertragsdaten aller Kunden exfiltrieren",
                       "ds": ["DS2", "DS4", "DS5"],
-                      "k": "0.5", "s": "0.3", "t": "0.3", "u": "0.3",
+                      "k": "0.5",
+                      "s": "0.3",
+                      "t": "0.3",
+                      "u": "0.3",
                       "i_norm": "0.60",
                       "uid": "leaf_a0000005-0004-4000-8000-100000000001",
                       "rr": { "treatment": "", "note": "", "securityConcept": "", "k": "", "s": "", "t": "", "u": "" }

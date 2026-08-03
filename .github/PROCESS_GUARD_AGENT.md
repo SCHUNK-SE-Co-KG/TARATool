@@ -25,20 +25,20 @@ Test-Ergebnis:    PASSED / FAILED
 
 ## Pflichtregeln (Verletzung → Finding als Issue)
 
-| Regel | Beschreibung |
-|-------|-------------|
-| P-01 | Dev-Agent nennt TARA-ID in jeder Chat-Antwort |
-| P-02 | Item auf „In Progress" gesetzt **bevor** Arbeit begann |
-| P-03 | **Tests vor Implementierung** geschrieben (TDD Red-Phase) |
-| P-04 | Tests haben initial **fehlgeschlagen** (Red bewiesen) |
-| P-05 | Story-spezifische Tests **vor Commit** ausgeführt → alle grün |
-| P-06 | Vollständige Testsuite (`pytest -x -q`) grün vor PR |
-| P-07 | Branch-Name folgt `feature/TARA-XXXX-*` Schema |
-| P-08 | Commit-Messages referenzieren TARA-ID |
-| P-09 | Item auf „Review" gesetzt vor PR-Erstellung |
-| P-10 | Review-Agent aufgerufen (kein offenes Critical/High Finding) |
-| P-11 | Item erst auf „Done" nach Merge und Review-Abschluss |
-| P-14 | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
+| Regel | Beschreibung                                                                                                                                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort                                                                                                                                |
+| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                                                                                                       |
+| P-03  | **Tests vor Implementierung** geschrieben (TDD Red-Phase)                                                                                                                    |
+| P-04  | Tests haben initial **fehlgeschlagen** (Red bewiesen)                                                                                                                        |
+| P-05  | Story-spezifische Tests **vor Commit** ausgeführt → alle grün                                                                                                                |
+| P-06  | Vollständige Testsuite (`pytest -x -q`) grün vor PR                                                                                                                          |
+| P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                                                                               |
+| P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                        |
+| P-09  | Item auf „Review" gesetzt vor PR-Erstellung                                                                                                                                  |
+| P-10  | Review-Agent aufgerufen (kein offenes Critical/High Finding)                                                                                                                 |
+| P-11  | Item erst auf „Done" nach Merge und Review-Abschluss                                                                                                                         |
+| P-14  | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
 
 ---
 
@@ -64,15 +64,18 @@ Andernfalls: `❌ PROCESS BLOCKED` + Finding-Issues anlegen.
 
 **Story:** TARA-XXXX  
 **Regel:** P-XX – <Regelname>  
-**Schwere:** Kritisch | Hoch | Mittel  
+**Schwere:** Kritisch | Hoch | Mittel
 
 ### Problem
+
 <Was wurde nicht eingehalten?>
 
 ### Erwartung
+
 <Was hätte getan werden sollen?>
 
 ### Aktion
+
 <Was muss der Dev-Agent jetzt tun?>
 ```
 

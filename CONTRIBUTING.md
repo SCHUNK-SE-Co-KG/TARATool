@@ -8,11 +8,11 @@ main          ← Stable Release (nur via PR aus Development)
         └── feature/TARA-XXXX-kurzbeschreibung  ← Story-Branch
 ```
 
-| Branch | Zweck | Merge-Ziel |
-|--------|-------|-----------|
-| `main` | Stable, tagged Releases | – |
-| `Development` | Integration, immer lauffähig | `main` per PR |
-| `feature/TARA-XXXX-*` | Eine Story = ein Branch | `Development` per PR |
+| Branch                | Zweck                        | Merge-Ziel           |
+| --------------------- | ---------------------------- | -------------------- |
+| `main`                | Stable, tagged Releases      | –                    |
+| `Development`         | Integration, immer lauffähig | `main` per PR        |
+| `feature/TARA-XXXX-*` | Eine Story = ein Branch      | `Development` per PR |
 
 **Naming-Convention:** `feature/TARA-0003-review-agent-workflow`  
 **Kein direktes Pushen auf `main` oder `Development`.**
@@ -79,6 +79,7 @@ def test_feature_name():
 ```
 
 Ausführung:
+
 ```bash
 pytest tests/test_TARA_XXXX.py -v    # Story-Tests
 pytest -m "TARA_XXXX" -v             # per Marker
