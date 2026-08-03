@@ -14,6 +14,8 @@
 
 - [ ] Tests **vor** Implementierung geschrieben (`tests/test_TARA_XXXX.py`)
 - [ ] Tests haben initial **fehlgeschlagen** (Red-Phase ✓)
+- [ ] **Prettier** grün: `npm run format:check` → Exit-Code 0
+- [ ] **ESLint** grün: `npm run lint` → Exit-Code 0
 - [ ] Story-Tests nach Implementierung **grün**: `pytest tests/test_TARA_XXXX.py -v`
 - [ ] Vollständige Suite grün: `pytest -x -q`
 

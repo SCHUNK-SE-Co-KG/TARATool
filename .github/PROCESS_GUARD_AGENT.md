@@ -38,6 +38,8 @@ Test-Ergebnis:    PASSED / FAILED
 | P-09  | Item auf „Review" gesetzt vor PR-Erstellung                                                                                                                                  |
 | P-10  | Review-Agent aufgerufen (kein offenes Critical/High Finding)                                                                                                                 |
 | P-11  | Item erst auf „Done" nach Merge und Review-Abschluss                                                                                                                         |
+| P-12  | **Prettier** (`npm run format:check`) gibt Exit-Code 0 **vor** Testausführung                                                                                                |
+| P-13  | **ESLint** (`npm run lint`) gibt Exit-Code 0 **vor** Testausführung                                                                                                          |
 | P-14  | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
 
 ---
@@ -46,7 +48,7 @@ Test-Ergebnis:    PASSED / FAILED
 
 Der Prozess-Guard gibt **grünes Licht** (`✅ PROCESS OK`) wenn:
 
-- [ ] P-01 bis P-11 alle eingehalten
+- [ ] P-01 bis P-14 alle eingehalten
 - [ ] Kein offenes `review-finding` mit Schwere Kritisch oder Hoch
 - [ ] `pytest -x -q` → 0 Fehler
 
@@ -93,6 +95,6 @@ Bearbeitete Items: TARA-XXXX, ...
 | P-01  | ✅/❌  | –/#Nr  |
 ...
 
-Gesamt-Compliance: XX% (X/11 Regeln eingehalten)
+Gesamt-Compliance: XX% (X/14 Regeln eingehalten)
 Freigabe: ✅ PROCESS OK / ❌ PROCESS BLOCKED
 ```

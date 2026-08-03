@@ -1,6 +1,7 @@
 # Abhängigkeiten
 node_modules/
 tests/.venv/
+tests/*.py
 
 # index.html: Script-Ladereihenfolge ist architekturkritisch,
 # Prettier-HTML-Parser kann die Datei nicht korrekt parsen

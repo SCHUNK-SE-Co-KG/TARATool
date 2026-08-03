@@ -78,7 +78,7 @@ def test_process_guard_contains_all_rules():
     path = os.path.join(REPO_ROOT, ".github", "PROCESS_GUARD_AGENT.md")
     content = open(path).read()
     for rule in ["P-01", "P-02", "P-03", "P-04", "P-05",
-                 "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-14"]:
+                 "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-12", "P-13", "P-14"]:
         assert rule in content, f"Pflicht-Regel {rule} fehlt im PROCESS_GUARD_AGENT.md"
 
 @pytest.mark.TARA_0004

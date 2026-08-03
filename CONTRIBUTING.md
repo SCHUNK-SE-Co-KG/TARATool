@@ -45,8 +45,11 @@ Schritt 3 – Implementierung  (TDD Green-Phase)
 
         ↓
 Schritt 4 – Vor dem Commit (Pflicht-Checks)
-  • Story-Tests: pytest tests/test_TARA_XXXX.py -v  → PASSED ✅
-  • Vollständige Suite: pytest -x -q  → 0 Fehler ✅
+  • Schritt 4a – Prettier: npm run format:check → 0 Fehler ✅
+    (Bei Formatierungsfehlern: npm run format:write, Änderungen commiten)
+  • Schritt 4b – ESLint: npm run lint → Exit-Code 0 ✅
+  • Schritt 4c – Story-Tests: pytest tests/test_TARA_XXXX.py -v  → PASSED ✅
+  • Schritt 4d – Vollständige Suite: pytest -x -q  → 0 Fehler ✅
   • Commit: "TARA-XXXX: Beschreibung"
 
         ↓
