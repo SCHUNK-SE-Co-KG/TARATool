@@ -10,10 +10,19 @@
 const TARA_TOOL_VERSION = '1.0.0';
 
 /**
+ * @returns {'de'|'en'}
+ */
+function _aboutLang() {
+    return (window.TaraPrefs && TaraPrefs.getLang && TaraPrefs.getLang() === 'en') ? 'en' : 'de';
+}
+
+/**
  * Generates a CycloneDX 1.5 SBOM compliant with BSI TR-03183-2.
+ * Descriptions follow the current UI language.
  * @returns {Object} CycloneDX BOM object
  */
 function generateCycloneDxSbom() {
+    const en = _aboutLang() === 'en';
     return {
         "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
         "bomFormat": "CycloneDX",
@@ -33,7 +42,9 @@ function generateCycloneDxSbom() {
                 "type": "application",
                 "name": "TARATool",
                 "version": TARA_TOOL_VERSION,
-                "description": "Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA) im Kontext des EU Cyber Resilience Act (CRA)",
+                "description": en
+                    ? "Browser-based tool for threat and risk analyses (TARA) in the context of the EU Cyber Resilience Act (CRA)"
+                    : "Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA) im Kontext des EU Cyber Resilience Act (CRA)",
                 "licenses": [{ "license": { "id": "GPL-3.0-only" } }],
                 "supplier": {
                     "name": "SCHUNK SE & Co. KG",
@@ -45,8 +56,10 @@ function generateCycloneDxSbom() {
                     { "type": "website",    "url": "https://github.com/SCHUNK-SE-Co-KG/TARATool" },
                     { "type": "vcs",        "url": "https://github.com/SCHUNK-SE-Co-KG/TARATool.git" },
                     { "type": "license",    "url": "https://www.gnu.org/licenses/gpl-3.0.html" },
-                    { "type": "other",      "url": "https://kroki.io/",           "comment": "Externer Render-Service für DOT/Graphviz (primär)" },
-                    { "type": "other",      "url": "https://quickchart.io/graphviz", "comment": "Externer Render-Service für DOT/Graphviz (Fallback)" }
+                    { "type": "other",      "url": "https://kroki.io/",
+                      "comment": en ? "External render service for DOT/Graphviz (primary)" : "Externer Render-Service für DOT/Graphviz (primär)" },
+                    { "type": "other",      "url": "https://quickchart.io/graphviz",
+                      "comment": en ? "External render service for DOT/Graphviz (fallback)" : "Externer Render-Service für DOT/Graphviz (Fallback)" }
                 ]
             },
             "manufacture": {
@@ -59,11 +72,13 @@ function generateCycloneDxSbom() {
                 "type": "library",
                 "name": "Font Awesome Free",
                 "version": "6.5.1",
-                "description": "The iconic SVG, font, and CSS toolkit – Icons für die Benutzeroberfläche",
+                "description": en
+                    ? "The iconic SVG, font, and CSS toolkit – UI icons"
+                    : "The iconic SVG, font, and CSS toolkit – Icons für die Benutzeroberfläche",
                 "licenses": [
-                    { "license": { "id": "MIT",        "text": { "content": "Code-Lizenz" } } },
-                    { "license": { "id": "OFL-1.1",    "text": { "content": "Font-Lizenz" } } },
-                    { "license": { "id": "CC-BY-4.0",  "text": { "content": "Icon-Lizenz" } } }
+                    { "license": { "id": "MIT",        "text": { "content": en ? "Code license" : "Code-Lizenz" } } },
+                    { "license": { "id": "OFL-1.1",    "text": { "content": en ? "Font license" : "Font-Lizenz" } } },
+                    { "license": { "id": "CC-BY-4.0",  "text": { "content": en ? "Icon license" : "Icon-Lizenz" } } }
                 ],
                 "purl": "pkg:npm/%40fortawesome/fontawesome-free@6.5.1",
                 "scope": "required",
@@ -76,7 +91,9 @@ function generateCycloneDxSbom() {
                 "type": "library",
                 "name": "@hpcc-js/wasm",
                 "version": "latest",
-                "description": "HPCC Systems WASM-Wrapper für Graphviz – DOT-Rendering der Angriffsbäume im Browser",
+                "description": en
+                    ? "HPCC Systems WASM wrapper for Graphviz – in-browser DOT rendering of attack trees"
+                    : "HPCC Systems WASM-Wrapper für Graphviz – DOT-Rendering der Angriffsbäume im Browser",
                 "licenses": [{ "license": { "id": "Apache-2.0" } }],
                 "purl": "pkg:npm/%40hpcc-js/wasm",
                 "scope": "required",
@@ -89,7 +106,9 @@ function generateCycloneDxSbom() {
                 "type": "library",
                 "name": "jsPDF",
                 "version": "4.2.1",
-                "description": "Client-seitige PDF-Generierung – Erzeugung des TARA-PDF-Reports",
+                "description": en
+                    ? "Client-side PDF generation – TARA PDF report"
+                    : "Client-seitige PDF-Generierung – Erzeugung des TARA-PDF-Reports",
                 "licenses": [{ "license": { "id": "MIT" } }],
                 "purl": "pkg:npm/jspdf@4.2.1",
                 "scope": "required",
@@ -102,7 +121,9 @@ function generateCycloneDxSbom() {
                 "type": "library",
                 "name": "JSZip",
                 "version": "3.10.1",
-                "description": "JavaScript-Bibliothek für ZIP-Archive – Export von Baumdaten als ZIP",
+                "description": en
+                    ? "JavaScript library for ZIP archives – tree data ZIP export"
+                    : "JavaScript-Bibliothek für ZIP-Archive – Export von Baumdaten als ZIP",
                 "licenses": [
                     { "license": { "id": "MIT" } },
                     { "license": { "id": "GPL-3.0-only" } }
@@ -145,8 +166,9 @@ function _buildSbomTableRows() {
         const distRef  = (c.externalReferences || []).find(r => r.type === 'distribution');
         const webRef   = (c.externalReferences || []).find(r => r.type === 'website');
         const link     = webRef ? webRef.url : (distRef ? distRef.url : '#');
+        const tip = String(c.description || '').replace(/"/g, '&quot;');
         return `<tr>
-            <td><a href="${link}" target="_blank" rel="noopener" title="${c.description || ''}">${c.name}</a></td>
+            <td><a href="${link}" target="_blank" rel="noopener" title="${tip}">${c.name}</a></td>
             <td>${c.version}</td>
             <td><code>${licenses}</code></td>
             <td>${c.scope || '–'}</td>
@@ -162,6 +184,8 @@ function openAboutModal() {
     const modal = document.getElementById('aboutModal');
     if (!modal) return;
 
+    const _t = (key, fallback) => (typeof t === 'function' ? t(key) : fallback);
+
     document.getElementById('aboutBodyContent').innerHTML = `
         <div class="about-header-block">
             <div class="about-title-row">
@@ -172,93 +196,56 @@ function openAboutModal() {
                 </div>
             </div>
             <p class="about-tagline">
-                Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA)<br>
-                im Kontext des <strong>EU Cyber Resilience Act (CRA)</strong>
+                ${_t('about.tagline', 'Browser-basiertes Werkzeug für Bedrohungs- und Risikoanalysen (TARA)<br>im Kontext des <strong>EU Cyber Resilience Act (CRA)</strong>')}
             </p>
         </div>
 
         <div class="about-meta-grid">
-            <div class="about-meta-item">
-                <i class="fas fa-user"></i>
-                <div><strong>Autor</strong><br>Nico Peper</div>
-            </div>
-            <div class="about-meta-item">
-                <i class="fas fa-building"></i>
-                <div><strong>Organisation</strong><br>SCHUNK SE &amp; Co. KG</div>
-            </div>
-            <div class="about-meta-item">
-                <i class="fas fa-gavel"></i>
-                <div><strong>Lizenz</strong><br><a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GPL-3.0</a></div>
-            </div>
-            <div class="about-meta-item">
-                <i class="fab fa-github"></i>
-                <div><strong>Repository</strong><br><a href="https://github.com/SCHUNK-SE-Co-KG/TARATool" target="_blank" rel="noopener">SCHUNK-SE-Co-KG/TARATool</a></div>
+            <div><strong>${_t('about.author', 'Autor')}:</strong> Nico Peper</div>
+            <div><strong>${_t('about.org', 'Organisation')}:</strong> SCHUNK SE &amp; Co. KG</div>
+            <div><strong>${_t('about.license', 'Lizenz')}:</strong> GPL-3.0</div>
+            <div><strong>${_t('about.repo', 'Repository')}:</strong>
+                <a href="https://github.com/SCHUNK-SE-Co-KG/TARATool" target="_blank" rel="noopener">GitHub</a>
             </div>
         </div>
 
-        <div class="about-methodology">
-            <i class="fas fa-calculator"></i>
-            <div>
-                <strong>Methodik:</strong> SCHASAM – R = I<sub>norm</sub> × (K + S + T + U)<br>
-                <span style="color:#777; font-size:0.85em;">Komplexität, Skalierung, Zeitaufwand, Nutzen</span>
-            </div>
+        <div class="about-method-block">
+            <strong>${_t('about.method', 'Methodik:')}</strong>
+            <span style="color:#777; font-size:0.85em;">${_t('about.methodDetail', 'Komplexität, Skalierung, Zeitaufwand, Nutzen')}</span>
         </div>
 
-        <hr class="about-divider">
-
-        <div class="about-sbom-section">
+        <div class="about-sbom-block">
             <div class="about-sbom-header">
                 <div>
-                    <h3 style="margin:0;"><i class="fas fa-list-check"></i> Software Bill of Materials (SBOM)</h3>
-                    <p style="margin:4px 0 0; color:#777; font-size:0.85em;">
-                        Konform mit <strong>BSI TR-03183-2</strong> – Format: CycloneDX 1.5
-                    </p>
+                    <h3 style="margin:0 0 4px 0;">${_t('about.sbomTitle', 'Software Bill of Materials (SBOM)')}</h3>
+                    <p style="margin:0; font-size:0.85em; color:#666;">${_t('about.sbomSub', 'Konform mit <strong>BSI TR-03183-2</strong> – Format: CycloneDX 1.5')}</p>
                 </div>
-                <button onclick="downloadSbom()" class="action-button small" title="SBOM als CycloneDX-JSON herunterladen">
-                    <i class="fas fa-download"></i> SBOM exportieren
+                <button type="button" class="action-button small" onclick="downloadSbom()"
+                        title="${_t('about.sbomExportTip', 'SBOM als CycloneDX-JSON herunterladen')}">
+                    <i class="fas fa-download"></i> ${_t('about.sbomExport', 'SBOM exportieren')}
                 </button>
             </div>
-
-            <table class="about-sbom-table">
-                <thead>
-                    <tr>
-                        <th>Komponente</th>
-                        <th>Version</th>
-                        <th>Lizenz</th>
-                        <th>Scope</th>
-                        <th>PURL</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${_buildSbomTableRows()}
-                </tbody>
-            </table>
-
-            <div class="about-sbom-footer">
-                <i class="fas fa-info-circle"></i>
-                <span>
-                    Die SBOM wird gemäß <strong>BSI TR-03183-2</strong> im CycloneDX-1.5-Format bereitgestellt. 
-                    Alle Abhängigkeiten werden über CDN geladen – es gibt keine lokalen node_modules und keinen Build-Prozess.
-                    Externe Render-Dienste (Kroki, QuickChart) werden nur für die Graphviz-Vorschau genutzt.
-                </span>
+            <div class="about-sbom-table-wrap">
+                <table class="about-sbom-table">
+                    <thead>
+                        <tr>
+                            <th>${_t('about.col.component', 'Komponente')}</th>
+                            <th>${_t('about.col.version', 'Version')}</th>
+                            <th>${_t('about.col.license', 'Lizenz')}</th>
+                            <th>${_t('about.col.scope', 'Scope')}</th>
+                            <th>${_t('about.col.purl', 'PURL')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${_buildSbomTableRows()}
+                    </tbody>
+                </table>
             </div>
+            <p class="about-sbom-footer">
+                ${_t('about.sbomFooter', 'Die SBOM wird gemäß <strong>BSI TR-03183-2</strong> im CycloneDX-1.5-Format bereitgestellt. Alle Abhängigkeiten werden über CDN geladen – es gibt keine lokalen node_modules und keinen Build-Prozess. Externe Render-Dienste (Kroki, QuickChart) werden nur für die Graphviz-Vorschau genutzt.')}
+            </p>
         </div>
     `;
 
     modal.style.display = 'block';
 }
-
-/**
- * Closes the About modal.
- */
-function closeAboutModal() {
-    const modal = document.getElementById('aboutModal');
-    if (modal) modal.style.display = 'none';
-}
-
-// Expose globally
-window.openAboutModal  = openAboutModal;
-window.closeAboutModal = closeAboutModal;
-window.downloadSbom    = downloadSbom;
-window.generateCycloneDxSbom = generateCycloneDxSbom;
-window.TARA_TOOL_VERSION = TARA_TOOL_VERSION;

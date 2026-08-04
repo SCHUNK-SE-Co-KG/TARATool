@@ -26,6 +26,16 @@
         const L = (ri && ri.reportStrings) ? ri.reportStrings(lang) : {};
         const riskLabel = (deLabel) => (ri && ri.mapRiskLabel) ? ri.mapRiskLabel(deLabel, lang) : deLabel;
         const isHiCrit = (deLabel) => (ri && ri.isHighOrCritical) ? ri.isHighOrCritical(deLabel) : (deLabel === 'Hoch' || deLabel === 'Kritisch');
+        const locRoot = (entry) => {
+            if (!entry) return '-';
+            if (typeof getLocalizedField === 'function') {
+                return getLocalizedField({
+                    title: entry.rootName || entry.treeV2?.title || '',
+                    title_en: entry.rootName_en || entry.treeV2?.title_en || ''
+                }, 'title', lang, { fallback: true }) || entry.rootName || entry.id || '-';
+            }
+            return entry.rootName || entry.id || '-';
+        };
 
         const analysis = h.getActiveAnalysis();
         if (!analysis) {
@@ -147,7 +157,7 @@
             const topN = topOnlyHighCritical.slice(0, 5);
             pdf.addTable(
                 [L.colId, L.colDesc, L.colR, L.colClass],
-                topN.map(r => [r.id || '-', r.rootName || '-', (r.rootRiskValue ?? '-').toString(), riskLabel(r._riskLabel || 'Unbekannt')]),
+                topN.map(r => [r.id || '-', locRoot(r), (r.rootRiskValue ?? '-').toString(), riskLabel(r._riskLabel || 'Unbekannt')]),
                 [16, 100, 22, 30]
             );
         }
@@ -162,7 +172,7 @@
                 const topRRN = topRRHighCritical.slice(0, 5);
                 pdf.addTable(
                     [L.colId, L.colDesc, L.colRr, L.colClass],
-                    topRRN.map(r => [r.id || '-', r.rootName || '-', r._rrValueNum >= 0 ? r._rrValueNum.toFixed(2) : '-', riskLabel(r._rrLabel || 'Unbekannt')]),
+                    topRRN.map(r => [r.id || '-', locRoot(r), r._rrValueNum >= 0 ? r._rrValueNum.toFixed(2) : '-', riskLabel(r._rrLabel || 'Unbekannt')]),
                     [16, 100, 22, 30]
                 );
             }
@@ -249,7 +259,7 @@
                 const rScore = computeRiskScore(entry.i_norm, kstu);
                 const cls = h.riskClassFromValue(entry.rootRiskValue);
                 return [
-                    h.sanitizePdfText(entry.rootName || entry.id || ''),
+                    h.sanitizePdfText(locRoot(entry) || entry.id || ''),
                     h.pVec(kstu.k, kstu.s, kstu.t, kstu.u),
                     h.fmtNumComma(entry.i_norm, 2),
                     h.fmtNumComma(rScore, 2),
@@ -269,7 +279,7 @@
             const sorted = [...risks].sort((a, b) => (a.id || '').localeCompare(b.id || '', undefined, { numeric: true }));
             sorted.forEach(entry => {
                 const cls = h.riskClassFromValue(entry.rootRiskValue);
-                pdf.addH2(`${entry.id || ''}: ${entry.rootName || ''}`);
+                pdf.addH2(`${entry.id || ''}: ${locRoot(entry) || ''}`);
                 pdf.addKeyValue(L.riskScore, entry.rootRiskValue ?? '-');
                 pdf.addKeyValue(L.colRiskClass, riskLabel(cls.label));
                 if ((entry.notes || '').trim()) {
@@ -290,6 +300,9 @@
             for (let ti = 0; ti < sortedTrees.length; ti++) {
                 const entry = sortedTrees[ti];
                 let svgText = null;
+                const treeDpi = (typeof h.treeRasterDpi === 'function')
+                    ? h.treeRasterDpi(sortedTrees.length)
+                    : 180;
 
                 try {
                     const dotContent = (typeof window.exportRiskAnalysisToDot === 'function')
@@ -319,18 +332,9 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
                 doc.setTextColor(0);
-                doc.text(L.attackTree + ' ' + (entry.id || '') + ': ' + (entry.rootName || ''), treeMargin, treeMargin);
+                doc.text(L.attackTree + ' ' + (entry.id || '') + ': ' + (locRoot(entry) || ''), treeMargin, treeMargin);
                 doc.setFont('helvetica', 'normal');
-
-                // Watermark
-                try {
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(60);
-                    doc.setTextColor(245);
-                    doc.text(L.attackTreeWm, pageW / 2, pageH / 2, { align: 'center', angle: 35 });
-                } catch (_) { /* noop */ }
                 doc.setTextColor(0);
-                doc.setFont('helvetica', 'normal');
 
                 const topY = treeMargin + 10;
                 const availW = pageW - treeMargin * 2;
@@ -338,9 +342,14 @@
 
                 if (svgText && svgText.includes('<svg')) {
                     let png = null;
-                    // Target ~300 DPI relative to the printed width so large trees stay sharp.
-                    const targetPxW = Math.round((availW / 25.4) * 300);
-                    try { png = await h.svgTextToPng(svgText, targetPxW); } catch (e) { png = null; }
+                    // Adaptive DPI (many trees → lower) + JPEG to avoid OOM
+                    const targetPxW = Math.min(4000, Math.round((availW / 25.4) * treeDpi));
+                    try {
+                        png = await h.svgTextToPng(svgText, targetPxW, 0.95, { preferJpeg: true });
+                    } catch (e) {
+                        png = null;
+                    }
+                    svgText = null; // free SVG string early
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = availW;
@@ -352,19 +361,26 @@
                         const x = treeMargin + (availW - drawW) / 2;
                         const y = topY + (availH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
                         } catch (_) {
-                            doc.setFontSize(11);
-                            doc.text(L.vizEmbedFail, treeMargin, topY);
+                            try {
+                                doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
+                            } catch (__) {
+                                doc.setFontSize(11);
+                                doc.text(L.vizEmbedFail, treeMargin, topY);
+                            }
                         }
                     } else {
                         doc.setFontSize(11);
                         doc.text(L.vizSvgFail, treeMargin, topY);
                     }
+                    png = null;
                 } else {
                     doc.setFontSize(11);
                     doc.text(L.vizGraphvizFail, treeMargin, topY);
                 }
+
+                if (typeof h.yieldToUi === 'function') await h.yieldToUi();
             }
 
             // Reset builder state
@@ -443,7 +459,7 @@
                 const resKstu = (m && m.kstu) ? m.kstu : {};
                 const resMeta = h.riskClassFromValue(m ? m.riskValue : null);
                 rrOverviewRows.push([
-                    h.sanitizePdfText(base.rootName || base.id || ''),
+                    h.sanitizePdfText(locRoot(base) || base.id || ''),
                     h.pVec(resKstu.k, resKstu.s, resKstu.t, resKstu.u),
                     h.fmtNumComma(m ? m.i_norm : base.i_norm, 2),
                     origR,
@@ -474,7 +490,7 @@
                 if (!rrEntry) return;
                 const treeId = (rrEntry.id || rrEntry.uid || '').toString();
                 const origEntry = (analysis.riskEntries || []).find(e => String(e.id) === String(rrEntry.id));
-                const rootName = h.sanitizePdfText((rrEntry.rootName || origEntry?.rootName || rrEntry.name || rrEntry.root || '').toString());
+                const rootName = h.sanitizePdfText(locRoot(rrEntry) || locRoot(origEntry) || (rrEntry.name || rrEntry.root || '').toString() || '-');
 
                 // Map leafKey -> original leaf
                 const origLeafMap = {};
@@ -601,18 +617,9 @@
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(18);
                 doc.setTextColor(0);
-                doc.text(L.residualTree + ' ' + (entry.id || '') + ': ' + (entry.rootName || ''), rrMargin, rrMargin);
+                doc.text(L.residualTree + ' ' + (entry.id || '') + ': ' + (locRoot(entry) || ''), rrMargin, rrMargin);
                 doc.setFont('helvetica', 'normal');
-
-                // Watermark
-                try {
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(56);
-                    doc.setTextColor(245);
-                    doc.text(L.residualWm, rrPageW / 2, rrPageH / 2, { align: 'center', angle: 35 });
-                } catch (_) { /* noop */ }
                 doc.setTextColor(0);
-                doc.setFont('helvetica', 'normal');
 
                 const rrTopY = rrMargin + 10;
                 const rrAvailW = rrPageW - rrMargin * 2;
@@ -620,9 +627,16 @@
 
                 if (rrSvgText && rrSvgText.includes('<svg')) {
                     let png = null;
-                    // Target ~300 DPI relative to the printed width so large trees stay sharp.
-                    const targetPxW = Math.round((rrAvailW / 25.4) * 300);
-                    try { png = await h.svgTextToPng(rrSvgText, targetPxW); } catch (e) { png = null; }
+                    const rrDpi = (typeof h.treeRasterDpi === 'function')
+                        ? h.treeRasterDpi(sortedTrees.length)
+                        : 180;
+                    const targetPxW = Math.min(4000, Math.round((rrAvailW / 25.4) * rrDpi));
+                    try {
+                        png = await h.svgTextToPng(rrSvgText, targetPxW, 0.95, { preferJpeg: true });
+                    } catch (e) {
+                        png = null;
+                    }
+                    rrSvgText = null;
                     if (png && png.dataUrl) {
                         const imgRatio = (png.widthPx || 1) / (png.heightPx || 1);
                         let drawW = rrAvailW;
@@ -634,19 +648,26 @@
                         const x = rrMargin + (rrAvailW - drawW) / 2;
                         const y = rrTopY + (rrAvailH - drawH) / 2;
                         try {
-                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
+                            doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH, undefined, 'FAST');
                         } catch (_) {
-                            doc.setFontSize(11);
-                            doc.text(L.rrVizEmbedFail, rrMargin, rrTopY);
+                            try {
+                                doc.addImage(png.dataUrl, png.format || 'JPEG', x, y, drawW, drawH);
+                            } catch (__) {
+                                doc.setFontSize(11);
+                                doc.text(L.rrVizEmbedFail, rrMargin, rrTopY);
+                            }
                         }
                     } else {
                         doc.setFontSize(11);
                         doc.text(L.rrVizSvgFail, rrMargin, rrTopY);
                     }
+                    png = null;
                 } else {
                     doc.setFontSize(11);
                     doc.text(L.rrVizGraphvizFail, rrMargin, rrTopY);
                 }
+
+                if (typeof h.yieldToUi === 'function') await h.yieldToUi();
             }
 
             // Reset builder state

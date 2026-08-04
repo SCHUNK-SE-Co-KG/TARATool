@@ -10,6 +10,18 @@
 // Explicit DOM reference
 const riskAnalysisContainerEl = document.getElementById('riskAnalysisContainer');
 
+function _rootLabel(entry) {
+    if (!entry) return '';
+    const obj = {
+        title: entry.rootName || entry.treeV2?.title || '',
+        title_en: entry.rootName_en || entry.treeV2?.title_en || ''
+    };
+    if (typeof getLocalizedField === 'function') {
+        return getLocalizedField(obj, 'title') || entry.id || '';
+    }
+    return obj.title || entry.id || '';
+}
+
 function renderRiskAnalysis() {
     const analysis = getActiveAnalysis();
     if (!analysis) return;
@@ -89,17 +101,14 @@ function renderRootOverview(analysis) {
         const iNorm = entry.i_norm;
         const rScore = computeRiskScore(iNorm, kstu);
         const meta = getRiskMeta(entry.rootRiskValue);
-        const fill = rScore >= 2.0 ? '#ffcccc'
-                   : rScore >= 1.6 ? '#ffe0b3'
-                   : rScore >= 0.8 ? '#ffffcc'
-                   : '#ccffcc';
+        const bgClass = (typeof getRiskBgClass === 'function') ? getRiskBgClass(rScore) : 'risk-bg-unknown';
 
         html += `
-            <div class="root-overview-card" style="background:${fill}; border:1px solid #999;">
-                <div class="root-overview-title">${escapeHtml(entry.rootName || entry.id)}</div>
+            <div class="root-overview-card ${bgClass}">
+                <div class="root-overview-title">${escapeHtml(_rootLabel(entry))}</div>
                 <div class="root-overview-row">P = ${escapeHtml(pStr(kstu))}</div>
                 <div class="root-overview-row">I[norm] = ${escapeHtml(fmt(iNorm))}</div>
-                <div class="root-overview-row root-overview-risk">R = ${escapeHtml(fmt(rScore.toFixed(2)))}
+                <div class="root-overview-row root-overview-risk">R = <b style="color:${meta.color}">${escapeHtml(fmt(rScore.toFixed(2)))}</b>
                     <span class="root-overview-badge" style="background:${meta.color}; color:#fff;">${escapeHtml(_rl(meta.label))}</span>
                 </div>
             </div>`;
@@ -121,7 +130,9 @@ function renderExistingRiskEntries(analysis) {
     analysis.riskEntries.forEach(entry => {
         const meta = getRiskMeta(entry.rootRiskValue);
         const eId = escapeHtml(entry.id);
-        const eName = escapeHtml(entry.rootName);
+        const eName = (typeof localizeParenHtml === 'function')
+            ? localizeParenHtml(_rootLabel(entry))
+            : escapeHtml(_rootLabel(entry));
         const hasNotes = (entry.notes || '').trim().length > 0;
 
         html += `
@@ -185,7 +196,7 @@ window.saveTreeNotes = function() {
     modal.style.display = 'none';
 
     renderRiskAnalysis();
-    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('risk.notes') : 'Notiz') + ' OK', 'success');
+    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.notesSaved') : 'Notiz gespeichert.'), 'success');
 };
 
 window.editAttackTree = function(riskId) {
@@ -223,10 +234,12 @@ window.deleteAttackTree = function(riskId) {
     const entry = analysis.riskEntries.find(r => r.id === riskId);
     if (!entry) return;
 
-    const delLabel = (typeof t === 'function' ? t('btn.delete') : 'Löschen');
+    const delLabel = (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
     showConfirmation({
-        title: delLabel,
-        messageHtml: `<b>${escapeHtml(entry.id)}: ${escapeHtml(entry.rootName)}</b>`,
+        title: (typeof t === 'function' ? t('risk.delete.title') : 'Angriffsbaum löschen'),
+        messageHtml: (typeof tf === 'function')
+            ? tf('risk.delete.message', { id: escapeHtml(entry.id), name: escapeHtml(entry.rootName) })
+            : `<b>${escapeHtml(entry.id)}: ${escapeHtml(entry.rootName)}</b>`,
         confirmText: delLabel,
         onConfirm: () => {
             analysis.riskEntries = analysis.riskEntries.filter(r => r.id !== riskId);
@@ -245,7 +258,7 @@ window.deleteAttackTree = function(riskId) {
             if (attackTreeModalEl) attackTreeModalEl.style.display = 'none';
 
             renderRiskAnalysis();
-            showToast(delLabel + ' OK', 'success');
+            showToast((typeof t === 'function' ? t('toast.treeDeleted') : 'Angriffsbaum gelöscht.'), 'success');
         }
     });
 };

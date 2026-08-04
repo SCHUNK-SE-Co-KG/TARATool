@@ -28,7 +28,9 @@ function activateAnalysis(id) {
     // Status Bar Update
     const elStatusBar = document.getElementById('statusBarMessage');
     if (elStatusBar) {
-        elStatusBar.textContent = `Aktiv: ${analysis.name} (v${analysis.metadata.version})`;
+        elStatusBar.textContent = (typeof tf === 'function'
+            ? tf('status.active', { name: analysis.name, version: analysis.metadata.version })
+            : `Aktiv: ${analysis.name} (v${analysis.metadata.version})`);
     }
     
     // Dropdown Sync
@@ -50,7 +52,7 @@ function renderAnalysisSelector() {
     
     if (analysisData.length === 0) {
         const option = document.createElement('option');
-        option.textContent = 'Keine Analysen vorhanden';
+        option.textContent = (typeof t === 'function' ? t('status.noAnalyses') : 'Keine Analysen vorhanden');
         option.value = '';
         elSelector.appendChild(option);
         return;
@@ -82,10 +84,13 @@ function fillAnalysisForm(analysis) {
     if (elAuthor)   elAuthor.value = analysis.metadata.author; 
     
     if (elMetadata) {
+        const _lv = (typeof t === 'function' ? t('meta.version') : 'Version');
+        const _la = (typeof t === 'function' ? t('meta.author') : 'Autor');
+        const _ld = (typeof t === 'function' ? t('meta.date') : 'Datum');
         elMetadata.innerHTML = `
-            <span>Version: ${escapeHtml(analysis.metadata.version)}</span> | 
-            <span>Autor: ${escapeHtml(analysis.metadata.author)}</span> | 
-            <span>Datum: ${escapeHtml(analysis.metadata.date)}</span>
+            <span>${_lv}: ${escapeHtml(analysis.metadata.version)}</span> | 
+            <span>${_la}: ${escapeHtml(analysis.metadata.author)}</span> | 
+            <span>${_ld}: ${escapeHtml(analysis.metadata.date)}</span>
         `;
     }
     
@@ -180,7 +185,7 @@ function renderOverview(analysis) {
 function exportAnalysis() {
     const analysis = getActiveAnalysis();
     if (!analysis) {
-        showToast('Keine aktive Analyse zum Exportieren.', 'warning');
+        showToast((typeof t === 'function' ? t('toast.noAnalysisExport') : 'Keine aktive Analyse zum Exportieren.'), 'warning');
         return;
     }
     
@@ -197,7 +202,7 @@ function exportAnalysis() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    showToast('Analyse exportiert.', 'success');
+    showToast((typeof t === 'function' ? t('toast.exported') : 'Analyse exportiert.'), 'success');
 }
 
 function executeImport() {
@@ -205,7 +210,7 @@ function executeImport() {
     const elModal     = document.getElementById('importAnalysisModal');
 
     if (!elFileInput || !elFileInput.files[0]) {
-        showToast('Bitte eine Datei auswählen.', 'warning');
+        showToast((typeof t === 'function' ? t('toast.pickFile') : 'Bitte eine Datei auswählen.'), 'warning');
         return;
     }
     
@@ -243,13 +248,13 @@ function executeImport() {
 
                 if (elModal) elModal.style.display = 'none';
                 const names = imported.map(a => a.name).join(', ');
-                showToast(`${imported.length} Analyse(n) importiert: ${names}`, 'success');
+                showToast((typeof tf === 'function' ? tf('toast.importOk', { n: imported.length, names }) : `${imported.length} Analyse(n) importiert: ${names}`), 'success');
             } else {
-                showToast('Importfehler: Ungültige Datenstruktur.', 'error');
+                showToast((typeof t === 'function' ? t('toast.importBadStruct') : 'Importfehler: Ungültige Datenstruktur.'), 'error');
             }
         } catch (error) {
             console.error('Importfehler:', error);
-            showToast('Importfehler: Ungültiges JSON.', 'error');
+            showToast((typeof t === 'function' ? t('toast.importBadJson') : 'Importfehler: Ungültiges JSON.'), 'error');
         }
     };
     reader.readAsText(file);
@@ -269,7 +274,7 @@ function prepareNewAnalysisModal() {
     const btn = document.getElementById('btnToggleCopyExistingAnalysis');
 
     if (group) group.style.display = 'none';
-    if (btn) btn.textContent = 'Kopieren';
+    if (btn) btn.textContent = (typeof t === 'function') ? t('newAnalysis.copy') : 'Kopieren';
 
     if (!select) return;
 
@@ -277,7 +282,7 @@ function prepareNewAnalysisModal() {
     select.innerHTML = '';
     const placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = 'Bitte Vorlage wählen…';
+    placeholder.textContent = (typeof t === 'function') ? t('newAnalysis.templatePh') : 'Bitte Vorlage wählen…';
     select.appendChild(placeholder);
 
     (analysisData || []).forEach(a => {
@@ -299,13 +304,15 @@ function toggleCopyExistingAnalysisUI() {
     const willShow = group.style.display === 'none' || group.style.display === '';
     group.style.display = willShow ? 'block' : 'none';
 
-    if (btn) btn.textContent = willShow ? 'Kopieren ausblenden' : 'Kopieren';
+    if (btn) btn.textContent = willShow
+        ? ((typeof t === 'function') ? t('newAnalysis.copyHide') : 'Kopieren ausblenden')
+        : ((typeof t === 'function') ? t('newAnalysis.copy') : 'Kopieren');
     if (willShow) {
         // On first open, ensure options are up to date
         prepareNewAnalysisModal();
         // Then make visible again (prepareNewAnalysisModal hides it)
         group.style.display = 'block';
-        if (btn) btn.textContent = 'Kopieren ausblenden';
+        if (btn) btn.textContent = (typeof t === 'function') ? t('newAnalysis.copyHide') : 'Kopieren ausblenden';
         if (select) select.focus();
     } else {
         if (select) select.value = '';
@@ -350,7 +357,7 @@ function createNewAnalysis(e) {
     newAnalysis.id = newId;
     newAnalysis.name = newName;
     // Reset metadata/history for new analysis
-    if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: 'Unbekannt', date: today };
+    if (!newAnalysis.metadata) newAnalysis.metadata = { version: INITIAL_VERSION, author: (typeof t === 'function' ? t('analysis.unknownAuthor') : 'Unbekannt'), date: today };
     newAnalysis.metadata.version = INITIAL_VERSION;
     newAnalysis.metadata.date = today;
 
@@ -360,7 +367,9 @@ function createNewAnalysis(e) {
             version: INITIAL_VERSION,
             date: today,
             author: (newAnalysis.metadata && newAnalysis.metadata.author) ? newAnalysis.metadata.author : 'System',
-            comment: copySourceName ? `Kopie von: ${copySourceName}` : 'Initiale Erstellung',
+            comment: copySourceName
+                ? (typeof tf === 'function' ? tf('history.copyFrom', { name: copySourceName }) : `Kopie von: ${copySourceName}`)
+                : (typeof t === 'function' ? t('history.initial') : 'Initiale Erstellung'),
             state: {
                 name: newName,
                 metadata: { ...(newAnalysis.metadata || {}), version: INITIAL_VERSION, date: today },
@@ -389,7 +398,7 @@ function createNewAnalysis(e) {
     
     // Close modal and provide feedback
     if (modal) modal.style.display = 'none';
-    showToast(`Analyse "${newName}" wurde erstellt.`, 'success');
+    showToast((typeof tf === 'function' ? tf('toast.analysisCreated', { name: newName }) : `Analyse "${newName}" wurde erstellt.`), 'success');
 }
 
 /**
@@ -469,14 +478,18 @@ function deleteActiveAnalysis() {
         return;
     }
 
-    if (title) title.textContent = 'Gesamte Analyse löschen';
-    if (msg) msg.innerHTML = `Sind Sie sicher, dass Sie die Analyse <strong>${escapeHtml(analysis.name)}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
+    if (title) title.textContent = (typeof t === 'function') ? t('analysis.delete.title') : 'Gesamte Analyse löschen';
+    if (msg) {
+        msg.innerHTML = (typeof tf === 'function')
+            ? tf('analysis.delete.message', { name: escapeHtml(analysis.name) })
+            : `Sind Sie sicher, dass Sie die Analyse <strong>${escapeHtml(analysis.name)}</strong> unwiderruflich löschen möchten? <br><br><span style="color:red;">Warnung: Alle Assets, Schadensszenarien und Angriffsbäume gehen verloren!</span>`;
+    }
     
     // Reset button state (important since the confirmation modal is used for multiple actions)
     if (btnConfirm) {
         btnConfirm.className = 'primary-button';
         btnConfirm.classList.add('dangerous');
-        btnConfirm.textContent = 'Ja, alles löschen';
+        btnConfirm.textContent = (typeof t === 'function') ? t('analysis.delete.confirm') : 'Ja, alles löschen';
     }
     
     modal.style.display = 'block';
@@ -505,7 +518,7 @@ function deleteActiveAnalysis() {
         activateAnalysis(nextId);
         
         modal.style.display = 'none';
-        showToast('Analyse wurde erfolgreich gelöscht.', 'success');
+        showToast((typeof t === 'function' ? t('toast.analysisDeleted') : 'Analyse wurde erfolgreich gelöscht.'), 'success');
     };
 
     // Cancel
