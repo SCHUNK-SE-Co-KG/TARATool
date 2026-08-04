@@ -1,4 +1,4 @@
-"""Tests for TARA-0039: Playwright Runtime Infrastructure."""
+﻿"""Tests for TARA-0039: Playwright Runtime Infrastructure."""
 import json
 import sys
 from pathlib import Path
@@ -15,7 +15,7 @@ def test_start_review_session_opens_browser(tmp_path):
     html.write_text("<html><body><h1>Test</h1></body></html>", encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
-    from tools.review_agent.runtime_scanner import start_review_session, stop_review_session
+    from agents.review_agent.runtime_scanner import start_review_session, stop_review_session
 
     session = start_review_session(app_url)
     try:
@@ -34,7 +34,7 @@ def test_session_report_is_json_serializable(tmp_path):
     html.write_text("<html><body></body></html>", encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
-    from tools.review_agent.runtime_scanner import start_review_session, stop_review_session
+    from agents.review_agent.runtime_scanner import start_review_session, stop_review_session
 
     session = start_review_session(app_url)
     try:
@@ -54,7 +54,7 @@ def test_stop_review_session_no_exception(tmp_path):
     html.write_text("<html><body></body></html>", encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
-    from tools.review_agent.runtime_scanner import start_review_session, stop_review_session
+    from agents.review_agent.runtime_scanner import start_review_session, stop_review_session
 
     session = start_review_session(app_url)
     stop_review_session(session)  # Should not raise
@@ -70,7 +70,7 @@ def test_cli_creates_report_file(tmp_path, monkeypatch):
     reports_dir = tmp_path / "reports"
     reports_dir.mkdir()
 
-    import tools.review_agent.runtime_scanner as rs
+    import agents.review_agent.runtime_scanner as rs
 
     def patched_run_cli(story_id, url, full=False):
         session = rs.start_review_session(url)

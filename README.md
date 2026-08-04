@@ -125,10 +125,26 @@ TARATool/
 ├── docs/
 │   ├── SCHASAM_Methodenbeschreibung.docx   # Methodendokumentation
 │   └── PENTEST_REPORT_2026-02-23.md        # Pentest-Bericht
+├── agents/
+│   ├── README.md                           # Agenten-Übersicht
+│   ├── dev_agent/
+│   │   └── DEV_AGENT_ONBOARDING.md         # Dev-Agent Einrichtung, TDD-Workflow
+│   ├── review_agent/
+│   │   ├── REVIEW_AGENT_WORKFLOW.md        # Review-Checkliste R-01–R-30
+│   │   └── *.py                            # Browser-Runtime-Scanner-Module
+│   └── process_guard/
+│       └── PROCESS_GUARD_AGENT.md          # Compliance-Regeln P-01–P-15
+├── scripts/
+│   ├── README.md                           # Script-Dokumentation
+│   ├── sync_assessment_config.py           # JSON→JS Sync
+│   └── sync_assessment_config.bat          # Windows-Starter
 ├── security/
-│   ├── cve_scanner.py                      # CVE-Scanner (OSV-API)
-│   ├── requirements.txt                    # Python-Abhängigkeiten für Scanner
-│   └── reports/                            # Generierte CVE-Reports (JSON + Markdown)
+│   ├── reports/                            # Allgemeine Security-Reports
+│   ├── rf_pentest/                         # RF-Pentest-Module
+│   └── cve_scanner/
+│       ├── cve_scanner.py                  # CVE-Scanner (OSV-API)
+│       ├── requirements.txt                # Python-Abhängigkeiten für Scanner
+│       └── reports/                        # Generierte CVE-Reports (JSON + Markdown)
 ├── tests/                                  # E2E-Testsuite (pytest + Playwright)
 │   ├── conftest.py                         # Fixtures und Playwright-Setup
 │   ├── pytest.ini                          # Pytest-Konfiguration und Marker
@@ -335,6 +351,80 @@ pytest
 | `e2e`              | Vollständige Workflow-Tests                  | `pytest -m e2e`              |
 
 > Detaillierte Informationen zur Testsuite findest du in [tests/README.md](tests/README.md).
+
+---
+
+## Entwicklungsworkflow
+
+### 1. Branch-Modell
+
+```
+main ──────────────────────────────────────────────► stable releases
+       ↑ PR nach PO-Freigabe
+Development ──────────────────────────────────────► integration
+       ↑ PR nach Review + Prozess-Guard
+feature/TARA-XXXX-kurzbeschreibung ───────────────► story work
+```
+
+### 2. Story-Lifecycle
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  PO gibt Story frei (Status: Todo → In Progress)            │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Dev Agent: Branch anlegen + Tests ZUERST schreiben         │
+│  pytest → FAILED ✓  (TDD Red-Phase)                         │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Dev Agent: Implementierung                                  │
+│  pytest → PASSED ✓  (TDD Green-Phase)                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Prettier + ESLint → 0 Errors ✓                             │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Status → inReview                                          │
+│  Review Agent analysiert Diff (R-01..R-30)                  │
+│  → agents/review_agent/REVIEW_AGENT_WORKFLOW.md             │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Prozess-Guard prüft P-01..P-15                             │
+│  → agents/process_guard/PROCESS_GUARD_AGENT.md              │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                    ┌──────┴──────┐
+                    │             │
+               BLOCKED        PROCESS OK
+                    │             │
+                    ▼             ▼
+              Fix & retry    PR → Development
+                              Merge → Status: Freigabe
+                                      │
+                                      ▼
+                              PO: explizites OK
+                                      │
+                                      ▼
+                              Status → Done
+```
+
+### 3. Agenten
+
+| Agent | Aufgabe | Prozessdatei |
+|-------|---------|-------------|
+| Dev Agent | TDD-Implementierung, Branch-Management | [`agents/dev_agent/DEV_AGENT_ONBOARDING.md`](agents/dev_agent/DEV_AGENT_ONBOARDING.md) |
+| Review Agent | Diff-Review R-01–R-30, Browser Runtime Scan | [`agents/review_agent/REVIEW_AGENT_WORKFLOW.md`](agents/review_agent/REVIEW_AGENT_WORKFLOW.md) |
+| Prozess-Guard | P-01–P-15 Compliance-Check vor PR | [`agents/process_guard/PROCESS_GUARD_AGENT.md`](agents/process_guard/PROCESS_GUARD_AGENT.md) |
 
 ---
 

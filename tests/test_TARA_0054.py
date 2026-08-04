@@ -1,4 +1,4 @@
-"""Tests for TARA-0054: Clickjacking and Reverse Tabnabbing (R-27/28)."""
+﻿"""Tests for TARA-0054: Clickjacking and Reverse Tabnabbing (R-27/28)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -37,7 +37,7 @@ def test_tabnabbing_detects_missing_noopener(tmp_path):
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.clickjacking_checker import check_reverse_tabnabbing
+    from agents.review_agent.clickjacking_checker import check_reverse_tabnabbing
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

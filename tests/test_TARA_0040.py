@@ -1,4 +1,4 @@
-"""Tests for TARA-0040: Console error and warning monitor (R-13)."""
+﻿"""Tests for TARA-0040: Console error and warning monitor (R-13)."""
 import sys
 from pathlib import Path
 
@@ -24,8 +24,8 @@ setTimeout(() => { throw new Error("uncaught"); }, 50);
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.runtime_scanner import ReviewSession
-    from tools.review_agent.console_monitor import attach_console_monitor, get_console_findings
+    from agents.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.console_monitor import attach_console_monitor, get_console_findings
 
     import datetime
 

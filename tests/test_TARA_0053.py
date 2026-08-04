@@ -1,4 +1,4 @@
-"""Tests for TARA-0053: CORS header analysis (R-26)."""
+﻿"""Tests for TARA-0053: CORS header analysis (R-26)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -28,7 +28,7 @@ def _make_session(page, context, app_url):
 def test_cors_detects_wildcard_with_credentials(tmp_path):
     """Scanner should detect ACAO: * with ACAC: true."""
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.cors_checker import analyze_cors_headers
+    from agents.review_agent.cors_checker import analyze_cors_headers
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

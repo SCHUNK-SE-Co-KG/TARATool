@@ -1,4 +1,4 @@
-"""Tests for TARA-0047: Service Worker and Cross-Origin (R-20)."""
+﻿"""Tests for TARA-0047: Service Worker and Cross-Origin (R-20)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -39,7 +39,7 @@ window.postMessage("sensitive data", "*");
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.service_worker_checker import attach_postmessage_monitor, get_service_worker_findings
+    from agents.review_agent.service_worker_checker import attach_postmessage_monitor, get_service_worker_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
