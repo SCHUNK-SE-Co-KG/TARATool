@@ -1,16 +1,16 @@
-# Dev Agent Onboarding – TARATool
+﻿# Dev Agent Onboarding â€“ TARATool
 
-Diese Anleitung ermöglicht einem neuen Dev-Agenten (in einem frischen Agentenfenster,
-auf einem beliebigen Rechner) den Entwicklungsprozess **exakt** so durchzuführen wie
+Diese Anleitung ermÃ¶glicht einem neuen Dev-Agenten (in einem frischen Agentenfenster,
+auf einem beliebigen Rechner) den Entwicklungsprozess **exakt** so durchzufÃ¼hren wie
 definiert.
 
 ---
 
 ## Voraussetzungen
 
-Folgende Tools müssen auf dem System installiert sein:
+Folgende Tools mÃ¼ssen auf dem System installiert sein:
 
-| Tool                | Mindestversion | Prüfen              |
+| Tool                | Mindestversion | PrÃ¼fen              |
 | ------------------- | -------------- | ------------------- |
 | **git**             | 2.x            | `git --version`     |
 | **gh** (GitHub CLI) | 2.x            | `gh --version`      |
@@ -20,7 +20,7 @@ Folgende Tools müssen auf dem System installiert sein:
 
 ---
 
-## Schritt 1 – Repository klonen
+## Schritt 1 â€“ Repository klonen
 
 ```bash
 git clone git@github.com:Bheowulf/TARATool.git
@@ -34,13 +34,13 @@ git pull origin Development
 
 ---
 
-## Schritt 2 – GitHub CLI authentifizieren
+## Schritt 2 â€“ GitHub CLI authentifizieren
 
 ```bash
 # Login (Browser-Flow)
 gh auth login -h github.com
 
-# Erweiterte Scopes für GitHub Projects (Pflicht für Board-Operationen)
+# Erweiterte Scopes fÃ¼r GitHub Projects (Pflicht fÃ¼r Board-Operationen)
 gh auth refresh -h github.com -s project,read:project
 
 # Verifizieren
@@ -51,7 +51,7 @@ Der aktive User muss `Bheowulf` sein oder Schreibzugriff auf das Repository habe
 
 ---
 
-## Schritt 3 – Node.js Abhängigkeiten installieren
+## Schritt 3 â€“ Node.js AbhÃ¤ngigkeiten installieren
 
 ```bash
 npm install
@@ -62,13 +62,13 @@ Installiert: `prettier`, `eslint`, `@eslint/js`, `globals` (alle als devDependen
 **Verifizieren:**
 
 ```bash
-npm run format:check   # → "All matched files use Prettier code style!"
-npm run lint           # → Exit-Code 0 (Warnings sind OK, Errors nicht)
+npm run format:check   # â†’ "All matched files use Prettier code style!"
+npm run lint           # â†’ Exit-Code 0 (Warnings sind OK, Errors nicht)
 ```
 
 ---
 
-## Schritt 4 – Python Test-Umgebung einrichten
+## Schritt 4 â€“ Python Test-Umgebung einrichten
 
 ```bash
 cd tests
@@ -89,49 +89,49 @@ pip install -r requirements.txt
 ```bash
 # Aus dem tests/-Verzeichnis:
 .venv/bin/pytest test_TARA_0004.py --noconftest -v
-# → Alle Tests grün
+# â†’ Alle Tests grÃ¼n
 ```
 
-> ⚠️ **Wichtig:** `--noconftest` ist immer nötig, wenn Playwright **nicht** installiert ist.
-> `conftest.py` initialisiert Playwright beim Start — ohne `--noconftest` bricht der Test-Lauf ab.
-> Für Story-Tests (`test_TARA_XXXX.py`) reicht `--noconftest` vollständig aus.
+> âš ï¸ **Wichtig:** `--noconftest` ist immer nÃ¶tig, wenn Playwright **nicht** installiert ist.
+> `conftest.py` initialisiert Playwright beim Start â€” ohne `--noconftest` bricht der Test-Lauf ab.
+> FÃ¼r Story-Tests (`test_TARA_XXXX.py`) reicht `--noconftest` vollstÃ¤ndig aus.
 
 ---
 
-## Schritt 5 – Umgebung verifizieren (Smoke-Test)
+## Schritt 5 â€“ Umgebung verifizieren (Smoke-Test)
 
 ```bash
 cd tests
 .venv/bin/pytest test_TARA_0004.py test_TARA_0020.py test_TARA_0021.py test_TARA_0022.py test_TARA_0024.py test_TARA_0034_0037.py --noconftest -q
 ```
 
-Erwartetes Ergebnis: **Alle Tests grün**, 0 Fehler.
+Erwartetes Ergebnis: **Alle Tests grÃ¼n**, 0 Fehler.
 
 Wenn dieser Schritt erfolgreich ist, ist die Umgebung korrekt eingerichtet.
 
 ---
 
-## Schritt 6 – Workflow-Dokumente lesen (Pflicht)
+## Schritt 6 â€“ Workflow-Dokumente lesen (Pflicht)
 
 Bevor mit einer Story begonnen wird, diese Dokumente kennen:
 
 | Dokument                           | Inhalt                                                      |
 | ---------------------------------- | ----------------------------------------------------------- |
-| `CONTRIBUTING.md`                  | Vollständiger TDD-Workflow, Branch-Strategie, Commit-Format |
-| `.github/PROCESS_GUARD_AGENT.md`   | Regeln P-01–P-15, Compliance-Bericht-Format                 |
-| `docs/REVIEW_AGENT_WORKFLOW.md`    | Review-Agent-Checkliste R-01–R-12                           |
+| `CONTRIBUTING.md`                  | VollstÃ¤ndiger TDD-Workflow, Branch-Strategie, Commit-Format |
+| `agents/process_guard/PROCESS_GUARD_AGENT.md`   | Regeln P-01â€“P-15, Compliance-Bericht-Format                 |
+| `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Review-Agent-Checkliste R-01â€“R-12                           |
 | `docs/GITHUB_BOARD.md`             | Board-IDs, Status-IDs, GraphQL-Beispiele                    |
 | `.github/pull_request_template.md` | PR-Checkliste (TDD, Prettier, ESLint, Review, Freigabe)     |
 
 ---
 
-## Schritt 7 – Offene Stories finden
+## Schritt 7 â€“ Offene Stories finden
 
 ```bash
 # Alle offenen Stories auf dem Board
 gh issue list --label story --state open --limit 50
 
-# Nächste Story im Status "Todo" auf dem Board (via API)
+# NÃ¤chste Story im Status "Todo" auf dem Board (via API)
 gh api graphql -f query='{
   node(id: "PVT_kwHOBLN4284BfLtb") {
     ... on ProjectV2 {
@@ -150,46 +150,46 @@ gh api graphql -f query='{
 
 ---
 
-## Schritt 8 – Story bearbeiten (Kurzreferenz)
+## Schritt 8 â€“ Story bearbeiten (Kurzreferenz)
 
 ```
 1. PO gibt Story frei (Chat-Nachricht)
-2. Status → "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
+2. Status â†’ "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
-4. tests/test_TARA_XXXX.py schreiben → RED (müssen FEHLSCHLAGEN)
-5. Implementierung → GREEN
+4. tests/test_TARA_XXXX.py schreiben â†’ RED (mÃ¼ssen FEHLSCHLAGEN)
+5. Implementierung â†’ GREEN
 6. npm run format:check  (Prettier)
 7. npm run lint          (ESLint)
 8. pytest test_TARA_XXXX.py --noconftest -v
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
-11. Status → "inReview", PR öffnen
+11. Status â†’ "inReview", PR Ã¶ffnen
 12. Review-Agent aufrufen, Findings beheben
-13. Prozess-Guard aufrufen (P-01–P-15)
-14. PR mergen → Status → "Freigabe"
-15. Auf PO-OK warten → Status → "Done"
+13. Prozess-Guard aufrufen (P-01â€“P-15)
+14. PR mergen â†’ Status â†’ "Freigabe"
+15. Auf PO-OK warten â†’ Status â†’ "Done"
 ```
 
-Vollständige Beschreibung: `CONTRIBUTING.md`
+VollstÃ¤ndige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01–P-15)
+## Prozessregeln KurzÃ¼bersicht (P-01â€“P-15)
 
 | Regel | Kurzform                                          |
 | ----- | ------------------------------------------------- |
 | P-01  | TARA-ID in jeder Chat-Antwort nennen              |
-| P-02  | Status → In Progress VOR Arbeitsbeginn            |
+| P-02  | Status â†’ In Progress VOR Arbeitsbeginn            |
 | P-03  | Tests VOR Implementierung schreiben               |
-| P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)  |
-| P-05  | Story-Tests vor Commit grün                       |
-| P-06  | Vollständige Suite vor PR grün                    |
+| P-04  | Tests mÃ¼ssen initial FEHLSCHLAGEN (Red bewiesen)  |
+| P-05  | Story-Tests vor Commit grÃ¼n                       |
+| P-06  | VollstÃ¤ndige Suite vor PR grÃ¼n                    |
 | P-07  | Branch: `feature/TARA-XXXX-*`                     |
 | P-08  | Commits referenzieren TARA-ID                     |
-| P-09  | Status → inReview vor PR                          |
+| P-09  | Status â†’ inReview vor PR                          |
 | P-10  | Review-Agent aufgerufen, kein Critical/High offen |
-| P-11  | Nach Merge → Freigabe (nicht direkt Done)         |
-| P-12  | Prettier grün vor Tests                           |
-| P-13  | ESLint grün vor Tests                             |
-| P-14  | TARA-IDs sind atomar und unveränderlich           |
+| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)         |
+| P-12  | Prettier grÃ¼n vor Tests                           |
+| P-13  | ESLint grÃ¼n vor Tests                             |
+| P-14  | TARA-IDs sind atomar und unverÃ¤nderlich           |
 | P-15  | Done nur nach explizitem PO-OK                    |

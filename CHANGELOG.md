@@ -196,7 +196,7 @@ _clip = {
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **1. Button â€žBewertungsconfig laden"**              | Tab Ãœbersicht â†’ Datei-Dialog â†’ `assessment_config.json` wÃ¤hlen â†’ sofortige Aktualisierung **ohne** Seiten-Reload |
 | **2. `config/assessment_config.js`**                | Per `<script>` beim Start geladen (funktioniert mit Doppelklick/`file://`)                                       |
-| **3. Optional: `tools/sync_assessment_config.bat`** | Regeneriert `.js` aus `.json`                                                                                    |
+| **3. Optional: `scripts/sync_assessment_config.bat`** | Regeneriert `.js` aus `.json`                                                                                    |
 
 ### Technik
 
@@ -229,8 +229,8 @@ _(Hinweis: Zeile 61 enthÃ¤lt optional Tippfehler extra `)` bei IT-Netzwerk-Tex
 | `js/core/init.js`                    | Button + File-Input                   |
 | `js/attack_tree/attack_tree_calc.js` | `rebuildTreeRiskLevelsFromConfig`     |
 | `index.html`                         | Script-Tag, Button, hidden file input |
-| `tools/sync_assessment_config.py`    | JSONâ†’JS Sync                          |
-| `tools/sync_assessment_config.bat`   | Windows-Starter                       |
+| `scripts/sync_assessment_config.py`    | JSONâ†’JS Sync                          |
+| `scripts/sync_assessment_config.bat`   | Windows-Starter                       |
 
 ---
 
@@ -251,7 +251,7 @@ _(Hinweis: Zeile 61 enthÃ¤lt optional Tippfehler extra `)` bei IT-Netzwerk-Tex
 | `index.html`                              | Pfad einfÃ¼gen, Bewertungsconfig laden, assessment_config.js |
 | `config/assessment_config.json`           | S-Skalierung SES                                            |
 | `config/assessment_config.js`             | Portable Config                                             |
-| `tools/sync_assessment_config.*`          | JSONâ†’JS Sync                                                |
+| `scripts/sync_assessment_config.*`          | JSONâ†’JS Sync                                                |
 | `CHANGELOG_DEVSES.md`                     | Kurz-Changelog im Repo                                      |
 
 ---
@@ -389,7 +389,7 @@ Neue Baum-Bedienung innerhalb und zwischen Ebenen:
 1. **`config/assessment_config.js`** â€“ wird per `<script>` geladen (funktioniert mit Doppelklick/`file://`).
 2. **Button â€žBewertungsconfig ladenâ€œ** (Tab Ãœbersicht) â€“ Datei-Dialog fÃ¼r `assessment_config.json`, **ohne Webserver und ohne .bat**.
 3. **Laufzeit-Reload:** `syncGlobalsFromAssessmentConfig()` aktualisiert KSTU-Dropdowns, Schwellen, Impact-Skalen sofort.
-4. **Optional:** `tools/sync_assessment_config.bat` regeneriert `.js` aus `.json` (fÃ¼r automatischen Start ohne Button-Klick).
+4. **Optional:** `scripts/sync_assessment_config.bat` regeneriert `.js` aus `.json` (fÃ¼r automatischen Start ohne Button-Klick).
 5. **Diagnose:** F12-Konsole â†’ `taraConfigStatus()`.
 
 ### Config-Inhalt (SES): S (Skalierung) angepasst
@@ -409,8 +409,8 @@ Neue Texte in `assessment_config.json` (Beispiel):
 - `js/core/init.js` (Button + File-Input)
 - `js/attack_tree/attack_tree_calc.js` (`rebuildTreeRiskLevelsFromConfig`)
 - `index.html`
-- `tools/sync_assessment_config.py`
-- `tools/sync_assessment_config.bat`
+- `scripts/sync_assessment_config.py`
+- `scripts/sync_assessment_config.bat`
 
 ---
 
@@ -431,7 +431,7 @@ Neue Texte in `assessment_config.json` (Beispiel):
 | `index.html`                              | Pfad einfÃ¼gen, Bewertungsconfig laden, assessment_config.js |
 | `config/assessment_config.json`           | S-Skalierung SES                                            |
 | `config/assessment_config.js`             | Portable Config (auto aus JSON)                             |
-| `tools/sync_assessment_config.*`          | JSONâ†’JS Sync (optional)                                     |
+| `scripts/sync_assessment_config.*`          | JSONâ†’JS Sync (optional)                                     |
 | `docs/SCHASAM_Methodenbeschreibung.docx`  | Dokument aktualisiert                                       |
 | `CHANGELOG_DEVSES.md`                     | Diese Datei                                                 |
 
