@@ -52,7 +52,9 @@ function renderHistoryTable(analysis) {
                 <button onclick="revertToVersion('${eAnalysisId}', '${eVersion}')" 
                         class="action-button small" 
                         ${isCurrent ? 'disabled' : ''}>
-                    ${isCurrent ? 'Aktuell' : 'Wiederherstellen'}
+                    ${isCurrent
+                        ? ((typeof t === 'function') ? t('btn.current') : 'Aktuell')
+                        : ((typeof t === 'function') ? t('btn.restore') : 'Wiederherstellen')}
                 </button>
             </td>
         `;
@@ -68,14 +70,16 @@ window.revertToVersion = (analysisId, version) => {
     if (!entry) return;
 
     if (!entry.state) {
-        showToast('Diese Version kann nicht wiederhergestellt werden (kein gespeicherter Zustand).', 'error');
+        showToast((typeof t === 'function' ? t('toast.versionNoState') : 'Diese Version kann nicht wiederhergestellt werden (kein gespeicherter Zustand).'), 'error');
         return;
     }
 
     showConfirmation({
-        title: 'Versionswiederherstellung',
-        messageHtml: `Sind Sie sicher, dass Sie zur Version <b>${escapeHtml(version)}</b> (${escapeHtml(entry.comment)}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`,
-        confirmText: 'Ja, wiederherstellen',
+        title: (typeof t === 'function') ? t('version.restore.title') : 'Versionswiederherstellung',
+        messageHtml: (typeof tf === 'function')
+            ? tf('version.restore.message', { version: escapeHtml(version), comment: escapeHtml(entry.comment) })
+            : `Sind Sie sicher, dass Sie zur Version <b>${escapeHtml(version)}</b> (${escapeHtml(entry.comment)}) zurückkehren möchten? Aktuelle Änderungen werden dabei überschrieben.`,
+        confirmText: (typeof t === 'function') ? t('version.restore.confirm') : 'Ja, wiederherstellen',
         confirmClass: 'primary-button dangerous',
         onConfirm: () => {
             analysis.name = entry.state.name;
@@ -110,9 +114,9 @@ window.revertToVersion = (analysisId, version) => {
             saveAnalyses();
             if (versionControlModalEl) versionControlModalEl.style.display = 'none';
             
-            showToast(`Erfolgreich zur Version ${version} zurückgekehrt.`, 'success');
+            showToast((typeof tf === 'function' ? tf('toast.versionRestored', { version }) : `Erfolgreich zur Version ${version} zurückgekehrt.`), 'success');
             const elSB = document.getElementById('statusBarMessage');
-            if (elSB) elSB.textContent = `Version ${version} wiederhergestellt.`;
+            if (elSB) elSB.textContent = (typeof tf === 'function' ? tf('status.versionRestored', { version }) : `Version ${version} wiederhergestellt.`);
         }
     });
 };
@@ -157,7 +161,7 @@ function createNewVersion(comment) {
     saveAnalyses(); 
 
     if (!comment || comment.trim() === "") {
-        showToast('Abgebrochen. Versionskommentar ist notwendig.', 'info');
+        showToast((typeof t === 'function' ? t('toast.versionNeedComment') : 'Abgebrochen. Versionskommentar ist notwendig.'), 'info');
         return;
     }
     
@@ -212,9 +216,9 @@ function createNewVersion(comment) {
     fillAnalysisForm(analysis);
     renderHistoryTable(analysis);
     saveAnalyses();
-    showToast(`Neue Version ${newVersion} erstellt.`, 'success');
+    showToast((typeof tf === 'function' ? tf('toast.versionCreated', { version: newVersion }) : `Neue Version ${newVersion} erstellt.`), 'success');
     const elStatusBar = document.getElementById('statusBarMessage');
-    if (elStatusBar) elStatusBar.textContent = `Neue Version ${newVersion} erstellt.`;
+    if (elStatusBar) elStatusBar.textContent = (typeof tf === 'function' ? tf('status.versionCreated', { version: newVersion }) : `Neue Version ${newVersion} erstellt.`);
 
     if (versionControlModalEl) versionControlModalEl.style.display = 'none';
 }
@@ -236,7 +240,7 @@ if (versionCommentFormEl) {
             createNewVersion(comment); 
             if (versionCommentModalEl) versionCommentModalEl.style.display = 'none';
         } else {
-            showToast('Bitte geben Sie einen Versionskommentar ein.', 'warning');
+            showToast((typeof t === 'function' ? t('toast.versionCommentRequired') : 'Bitte geben Sie einen Versionskommentar ein.'), 'warning');
         }
     };
 }

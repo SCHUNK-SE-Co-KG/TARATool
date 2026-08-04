@@ -59,7 +59,7 @@
                 </div>
                 <button id="btnImportAnalysis" class="action-button small" data-i18n="nav.import"><i class="fas fa-file-import"></i> Import</button>
                 <button id="btnExportAnalysis" class="action-button small" data-i18n="nav.export"><i class="fas fa-file-export"></i> Export</button>
-                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="Über TARA Tool & SBOM" data-i18n="nav.about"><i class="fas fa-info-circle"></i> About</button>
+                <button id="btnAbout" class="action-button small" onclick="openAboutModal()" title="About TARA Tool & SBOM" data-i18n="nav.about" data-i18n-title="nav.about"><i class="fas fa-info-circle"></i> About</button>
             </div>
         </div>
 
@@ -69,7 +69,7 @@
                 <div style="width: 100%; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <h2 id="analysisNameDisplay" style="margin:0; font-size:1.2em;">Analyse wählen oder neu starten</h2>
-                        <div class="metadata" id="analysisMetadata" style="font-size:0.85em; color:#777; margin-top:2px;"></div>
+                        <div class="metadata" id="analysisMetadata" style="font-size:0.85em; margin-top:2px;"></div>
                     </div>
                     <div class="header-actions">
                         <button id="btnSave" class="primary-button" data-i18n="nav.save"><i class="fas fa-save"></i> Speichern</button>
@@ -93,7 +93,8 @@
                     <div style="display:flex; gap:8px; align-items:center;">
                         <input type="file" id="assessmentConfigFileInput" accept=".json,application/json" hidden>
                         <button type="button" id="btnReloadAssessmentConfig" class="action-button" data-i18n="btn.config"
-                                title="Lädt config/assessment_config.json nach JSON-Änderung (ohne Webserver/.bat).">
+                                title="Lädt config/assessment_config.json nach JSON-Änderung (ohne Webserver/.bat)."
+                                data-i18n-title="btn.configTip">
                             <i class="fas fa-sliders-h"></i> Bewertungsconfig laden
                         </button>
                     </div>
@@ -171,7 +172,7 @@
 
             <div id="tabDamageScenarios" class="tab-content" style="display: none;">
                 <div class="two-column-layout">
-                    <div class="column-left" style="flex:1;">
+                    <div class="column-left">
                         <div class="panel">
                             <div class="panel-header" style="display:flex; justify-content:space-between;">
                                 <h3 style="margin:0;" data-i18n="ds.admin">Verwaltung</h3>
@@ -180,7 +181,7 @@
                             <div id="dsManagementContainer" style="margin-top:10px;"></div>
                         </div>
                     </div>
-                    <div class="column-right" style="flex:3;">
+                    <div class="column-right">
                         <div class="panel">
                             <h3 style="margin-top:0;" data-i18n="ds.matrixTitle">Schadensauswirkungsmatrix</h3>
                             <div id="dsMatrixContainer"></div>
@@ -207,8 +208,8 @@
 
             <div id="tabResidualRisk" class="tab-content" style="display: none;">
                 <div class="panel">
-                    <h3>Restrisikoanalyse</h3>
-                    <p style="color:#666; margin-top:0;">Erfassen Sie für jede Auswirkung eine Risikomaßnahme sowie Anmerkung und Security Maßnahme. Bei <b>Mitigiert</b> ist zusätzlich eine Neubewertung (K/S/T/U) erforderlich. Die Risikoanalyse bleibt dabei unverändert.</p>
+                    <h3 data-i18n="rr.panelTitle">Restrisikoanalyse</h3>
+                    <p style="color:#666; margin-top:0;" data-i18n="rr.panelHint" data-i18n-html="1">Erfassen Sie für jede Auswirkung eine Risikomaßnahme sowie Anmerkung und Security Maßnahme. Bei <b>Mitigiert</b> ist zusätzlich eine Neubewertung (K/S/T/U) erforderlich. Die Risikoanalyse bleibt dabei unverändert.</p>
                     <div id="residualRiskScrollArea" class="scroll-area">
                         <div id="residualRiskContainer"></div>
                     </div>
@@ -217,49 +218,49 @@
 
         
         <footer class="status-bar" style="background: #333; color: #fff; padding: 4px 20px; font-size: 0.8em; margin-top: auto;">
-            <span id="statusBarMessage">Bereit.</span>
+            <span id="statusBarMessage" data-i18n="status.ready">Bereit.</span>
         </footer>
     </div>
 
     <div id="assetModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close-button" id="closeAssetModal">&times;</span>
-            <h2 id="assetModalTitle">Neues Asset</h2>
+            <h2 id="assetModalTitle" data-i18n="assets.modal.new">Neues Asset</h2>
             <form id="assetForm">
                 <input type="hidden" id="assetIdField">
                 <div class="form-group">
-                    <label>Name</label> <input type="text" id="assetName" required>
+                    <label data-i18n="assets.modal.name">Name</label> <input type="text" id="assetName" required>
                 </div>
                 <div class="form-group">
-                    <label>Typ</label> <input type="text" id="assetType">
+                    <label data-i18n="assets.modal.type">Typ</label> <input type="text" id="assetType">
                 </div>
                 <div class="form-group">
-                    <label>Beschreibung</label> <textarea id="assetDescription" rows="3"></textarea>
+                    <label data-i18n="assets.modal.description">Beschreibung</label> <textarea id="assetDescription" rows="3"></textarea>
                 </div>
                 <fieldset style="border:1px solid #ddd; padding:10px;">
-                    <legend>Schutzbedarf (CIA)</legend>
+                    <legend data-i18n="assets.modal.cia">Schutzbedarf (CIA)</legend>
                     <div class="cia-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
                         <div>
-                            <label>Confidentiality</label><br>
+                            <label data-i18n="assets.modal.confidentiality">Confidentiality</label><br>
                             <label><input type="radio" name="confidentiality" value="I"> I</label>
                             <label><input type="radio" name="confidentiality" value="II"> II</label>
                             <label><input type="radio" name="confidentiality" value="III"> III</label>
                         </div>
                         <div>
-                            <label>Integrity</label><br>
+                            <label data-i18n="assets.modal.integrity">Integrity</label><br>
                             <label><input type="radio" name="integrity" value="I"> I</label>
                             <label><input type="radio" name="integrity" value="II"> II</label>
                             <label><input type="radio" name="integrity" value="III"> III</label>
                         </div>
                         <div>
-                            <label>Availability</label><br>
+                            <label data-i18n="assets.modal.availability">Availability</label><br>
                             <label><input type="radio" name="authenticity" value="I"> I</label>
                             <label><input type="radio" name="authenticity" value="II"> II</label>
                             <label><input type="radio" name="authenticity" value="III"> III</label>
                         </div>
                     </div>
                 </fieldset>
-                <button type="submit" class="primary-button" style="margin-top:15px;">Speichern</button>
+                <button type="submit" class="primary-button" style="margin-top:15px;" data-i18n="nav.save">Speichern</button>
             </form>
         </div>
     </div>
@@ -267,13 +268,13 @@
     <div id="damageScenarioModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close-button" id="closeDamageScenarioModal">&times;</span>
-            <h2 id="dsModalTitle">Schadensszenario</h2>
+            <h2 id="dsModalTitle" data-i18n="ds.modal.title">Schadensszenario</h2>
             <form id="damageScenarioForm">
                 <input type="hidden" id="dsIdField">
-                <div class="form-group"><label>Name</label><input type="text" id="dsName" required></div>
-                <div class="form-group"><label>Kurzbeschreibung</label><input type="text" id="dsShort" required maxlength="10"></div>
-                <div class="form-group"><label>Beschreibung</label><textarea id="dsDescription" rows="3"></textarea></div>
-                <button type="submit" class="primary-button">Speichern</button>
+                <div class="form-group"><label data-i18n="ds.modal.name">Name</label><input type="text" id="dsName" required></div>
+                <div class="form-group"><label data-i18n="ds.modal.short">Kurzbeschreibung</label><input type="text" id="dsShort" required maxlength="10"></div>
+                <div class="form-group"><label data-i18n="ds.modal.description">Beschreibung</label><textarea id="dsDescription" rows="3"></textarea></div>
+                <button type="submit" class="primary-button" data-i18n="nav.save">Speichern</button>
             </form>
         </div>
     </div>
@@ -281,17 +282,17 @@
     <div id="securityGoalModal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close-button" id="closeSecurityGoalModal">&times;</span>
-            <h2 id="securityGoalModalTitle">Security Ziel</h2>
+            <h2 id="securityGoalModalTitle" data-i18n="btn.addSg">Security Ziel</h2>
             <form id="securityGoalForm">
                 <input type="hidden" id="sgIdField">
-                <div class="form-group"><label>Name</label><input type="text" id="sgName" required></div>
-                <div class="form-group"><label>Beschreibung</label><textarea id="sgDescription" rows="4"></textarea></div>
+                <div class="form-group"><label data-i18n="sg.modal.name">Name</label><input type="text" id="sgName" required></div>
+                <div class="form-group"><label data-i18n="sg.modal.description">Beschreibung</label><textarea id="sgDescription" rows="4"></textarea></div>
                 <div class="form-group">
-                    <label>Referenzierte Angriffsziel(e) (Root)</label>
-                    <select id="sgRootRefs" multiple size="6" style="width:100%;"></select>
-                    <div style="font-size:0.8em; color:#777; margin-top:4px;">Mehrfachauswahl: Strg/⌘</div>
+                    <label data-i18n="sg.modal.rootRefs">Referenzierte Angriffsziel(e) (Root)</label>
+                    <div id="sgRootRefs" class="sg-root-refs" role="group" aria-label="Root references"></div>
+                    <div class="sg-root-refs-hint" data-i18n="sg.modal.multi">Mehrfachauswahl per Checkbox</div>
                 </div>
-                <button type="submit" class="primary-button">Speichern</button>
+                <button type="submit" class="primary-button" data-i18n="nav.save">Speichern</button>
             </form>
         </div>
     </div>
@@ -308,22 +309,23 @@
 
                 <div class="at-card at-root-card" style="background:#f0f0f0; border-color:#ccc; margin-bottom:10px;">
                     <div class="at-card-header">
-                        <strong style="white-space:nowrap;">Angriffsziel (Root):</strong>
+                        <strong style="white-space:nowrap;" data-i18n="risk.modal.root">Angriffsziel (Root):</strong>
                         <input type="text" name="at_root" placeholder="z.B. Manipulation der Firmware" required class="at-root-input" style="flex-grow:1; font-weight:bold;"
-                               title="Oberstes Angriffsziel (Root)">
+                               title="Oberstes Angriffsziel (Root)" data-i18n-title="risk.modal.rootTitle"
+                               data-i18n-placeholder="risk.modal.rootPh">
                         <div id="at_root_kstu_summary" class="node-stats-box at-node-summary" style="width:220px; margin-top:0;"></div>
                     </div>
                     <div class="at-card-actions">
                         <button type="button" id="btnAddAttackPath" class="action-button small"
-                                title="Legt einen neuen Angriffspfad (Kindknoten unter Root) an.">
-                            <i class="fas fa-plus"></i> Angriffspfad anlegen
+                                title="Legt einen neuen Angriffspfad (Kindknoten unter Root) an." data-i18n-title="risk.modal.addPathTitle">
+                            <i class="fas fa-plus"></i> <span data-i18n="risk.modal.addPath">Angriffspfad anlegen</span>
                         </button>
                         <button type="button" id="btnPasteAttackPath" class="action-button small"
-                                title="Kopierten/ausgeschnittenen Pfad als neuen Angriffspfad einfügen.">
-                            <i class="fas fa-paste"></i> Pfad einfügen
+                                title="Kopierten/ausgeschnittenen Pfad als neuen Angriffspfad einfügen." data-i18n-title="risk.modal.pastePathTitle">
+                            <i class="fas fa-paste"></i> <span data-i18n="risk.modal.pastePath">Pfad einfügen</span>
                         </button>
-                        <span class="at-hint" title="Innerhalb eines Pfads kannst du Auswirkungen (Blätter) oder Zwischenpfade anlegen. Über Kopieren/Ausschneiden/Einfügen lassen sich Elemente zwischen Ebenen verschieben.">
-                            <i class="fas fa-info-circle"></i> Baum wächst dort, wo du klickst.
+                        <span class="at-hint" title="Innerhalb eines Pfads kannst du Auswirkungen (Blätter) oder Zwischenpfade anlegen. Über Kopieren/Ausschneiden/Einfügen lassen sich Elemente zwischen Ebenen verschieben." data-i18n-title="risk.modal.growHintTitle">
+                            <i class="fas fa-info-circle"></i> <span data-i18n="risk.modal.growHint">Baum wächst dort, wo du klickst.</span>
                         </span>
                     </div>
                 </div>
@@ -331,16 +333,16 @@
                 <div id="atTreeEditorV2" class="at-tree-editor"></div>
 
                 <div class="modal-actions" style="margin-top: 20px; display:flex; justify-content:space-between;">
-                    <button type="button" id="btnDeleteAttackTree" class="action-button dangerous" style="display:none;">Löschen</button>
-                    <button type="submit" class="primary-button large">Speichern &amp; Schließen</button>
+                    <button type="button" id="btnDeleteAttackTree" class="action-button dangerous" style="display:none;" data-i18n="btn.delete">Löschen</button>
+                    <button type="submit" class="primary-button large" data-i18n="risk.modal.saveClose">Speichern &amp; Schließen</button>
                 </div>
             </form>
 
             <div style="margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px;">
-                <h4 style="margin:0 0 10px 0;">DOT Vorschau</h4>
+                <h4 style="margin:0 0 10px 0;" data-i18n="risk.modal.dotPreview">DOT Vorschau</h4>
                 <button type="button" onclick="renderCurrentTreePreview()" class="action-button small"
-                        title="Erzeugt eine DOT Vorschau aus dem aktuellen Editor-Inhalt.">
-                    <i class="fas fa-eye"></i> Generieren
+                        title="Erzeugt eine DOT Vorschau aus dem aktuellen Editor-Inhalt." data-i18n-title="risk.modal.dotGenerateTitle">
+                    <i class="fas fa-eye"></i> <span data-i18n="risk.modal.dotGenerate">Generieren</span>
                 </button>
                 <div id="graph-preview-container" style="margin-top: 10px; overflow: auto; max-height: 400px; border: 1px solid #eee;"></div>
             </div>
@@ -351,13 +353,13 @@
     <div id="impactCommentModal" class="modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content" style="width:500px;">
             <span class="close-button" onclick="document.getElementById('impactCommentModal').style.display='none'">&times;</span>
-            <h2 id="impactCommentTitle">Kommentar</h2>
-            <textarea id="impactCommentText" class="rr-textarea" style="width:100%; min-height:150px; resize:vertical;" placeholder="Kommentar zur Bewertung..."></textarea>
+            <h2 id="impactCommentTitle" data-i18n="impact.comment.label">Kommentar</h2>
+            <textarea id="impactCommentText" class="rr-textarea" style="width:100%; min-height:150px; resize:vertical;" placeholder="Kommentar zur Bewertung..." data-i18n-placeholder="impact.comment.ph"></textarea>
             <input type="hidden" id="impactCommentAssetId">
             <input type="hidden" id="impactCommentDsId">
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-                <button class="action-button" onclick="document.getElementById('impactCommentModal').style.display='none'">Abbrechen</button>
-                <button class="primary-button" onclick="saveImpactComment()">Speichern</button>
+                <button class="action-button" onclick="document.getElementById('impactCommentModal').style.display='none'" data-i18n="btn.cancel">Abbrechen</button>
+                <button class="primary-button" onclick="saveImpactComment()" data-i18n="nav.save">Speichern</button>
             </div>
         </div>
     </div>
@@ -366,11 +368,11 @@
     <div id="atNodeNoteModal" class="modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content" style="width:500px;">
             <span class="close-button" onclick="document.getElementById('atNodeNoteModal').style.display='none'">&times;</span>
-            <h2 id="atNodeNoteTitle">Notiz</h2>
-            <textarea id="atNodeNoteText" class="rr-textarea" style="width:100%; min-height:150px; resize:vertical;" placeholder="Notiz zum Knoten / zur Auswirkung..."></textarea>
+            <h2 id="atNodeNoteTitle" data-i18n="note.title">Notiz</h2>
+            <textarea id="atNodeNoteText" class="rr-textarea" style="width:100%; min-height:150px; resize:vertical;" placeholder="Notiz zum Knoten / zur Auswirkung..." data-i18n-placeholder="note.ph"></textarea>
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-                <button class="action-button" onclick="document.getElementById('atNodeNoteModal').style.display='none'">Abbrechen</button>
-                <button class="primary-button" id="atNodeNoteSaveBtn">Speichern</button>
+                <button class="action-button" onclick="document.getElementById('atNodeNoteModal').style.display='none'" data-i18n="btn.cancel">Abbrechen</button>
+                <button class="primary-button" id="atNodeNoteSaveBtn" data-i18n="nav.save">Speichern</button>
             </div>
         </div>
     </div>
@@ -379,39 +381,39 @@
     <div id="treeNotesModal" class="modal" style="display:none;" onclick="if(event.target===this)this.style.display='none'">
         <div class="modal-content" style="width:600px;">
             <span class="close-button" onclick="document.getElementById('treeNotesModal').style.display='none'">&times;</span>
-            <h2 id="treeNotesTitle">Notizen</h2>
-            <textarea id="treeNotesText" class="rr-textarea" style="width:100%; min-height:200px; resize:vertical;" placeholder="Interne Notizen zum Angriffsbaum..."></textarea>
+            <h2 id="treeNotesTitle" data-i18n="treeNotes.title">Notizen</h2>
+            <textarea id="treeNotesText" class="rr-textarea" style="width:100%; min-height:200px; resize:vertical;" placeholder="Interne Notizen zum Angriffsbaum..." data-i18n-placeholder="treeNotes.ph"></textarea>
             <div style="margin-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-                <button class="action-button" onclick="document.getElementById('treeNotesModal').style.display='none'">Abbrechen</button>
-                <button class="primary-button" onclick="saveTreeNotes()">Speichern</button>
+                <button class="action-button" onclick="document.getElementById('treeNotesModal').style.display='none'" data-i18n="btn.cancel">Abbrechen</button>
+                <button class="primary-button" onclick="saveTreeNotes()" data-i18n="nav.save">Speichern</button>
             </div>
         </div>
     </div>
 
     <div id="newAnalysisModal" class="modal" style="display:none;">
         <div class="modal-content"><span class="close-button" id="closeNewAnalysisModal">&times;</span>
-        <h2>Neue Analyse</h2>
+        <h2 data-i18n="newAnalysis.title">Neue Analyse</h2>
         <form id="newAnalysisForm">
             <div class="form-group">
-                <label>Name</label>
+                <label data-i18n="newAnalysis.name">Name</label>
                 <input type="text" id="newAnalysisName" required>
             </div>
 
             <div class="form-group" style="display:flex; gap:10px; align-items:center;">
-                <button type="button" id="btnToggleCopyExistingAnalysis" class="action-button small">Kopieren</button>
+                <button type="button" id="btnToggleCopyExistingAnalysis" class="action-button small" data-i18n="newAnalysis.copy">Kopieren</button>
             </div>
 
             <div class="form-group" id="copyExistingAnalysisGroup" style="display:none;">
-                <label>Vorlage</label>
+                <label data-i18n="newAnalysis.template">Vorlage</label>
                 <select id="copyExistingAnalysisSelect"></select>
             </div>
 
-            <button type="submit" class="primary-button">Erstellen</button>
+            <button type="submit" class="primary-button" data-i18n="btn.create">Erstellen</button>
         </form>
         </div>
     </div>
     <div id="importAnalysisModal" class="modal" style="display:none;">
-        <div class="modal-content"><span class="close-button" id="closeImportAnalysisModal">&times;</span><h2>Import</h2><input type="file" id="importFileInput" accept=".json"><div style="margin-top:10px;"><button class="primary-button" onclick="executeImport()">Importieren</button></div></div>
+        <div class="modal-content"><span class="close-button" id="closeImportAnalysisModal">&times;</span><h2 data-i18n="import.title">Import</h2><input type="file" id="importFileInput" accept=".json"><div style="margin-top:10px;"><button class="primary-button" onclick="executeImport()" data-i18n="import.button">Importieren</button></div></div>
     </div>
     
 
@@ -419,10 +421,10 @@
     <div id="residualRiskModal" class="modal large-modal" style="display:none;">
         <div class="modal-content">
             <span class="close-button" id="closeResidualRiskModal">&times;</span>
-            <h2 id="residualRiskModalTitle">Restrisiko bearbeiten</h2>
+            <h2 id="residualRiskModalTitle" data-i18n="rr.editTitle">Restrisiko bearbeiten</h2>
             <div id="residualRiskModalBody"></div>
             <div style="text-align:right; margin-top:15px;">
-                <button id="btnCloseResidualRiskModalFooter" class="primary-button">Fertig</button>
+                <button id="btnCloseResidualRiskModalFooter" class="primary-button" data-i18n="btn.finish">Fertig</button>
             </div>
         </div>
     </div>
@@ -430,47 +432,47 @@
     <div id="versionControlModal" class="modal" style="display:none;">
         <div class="modal-content large-content">
             <span class="close-button" id="closeVersionControlModal">&times;</span>
-            <h2>Versionen</h2>
+            <h2 data-i18n="version.title">Versionen</h2>
             <table class="history-table">
                 <thead>
                     <tr>
-                        <th>Ver.</th>
-                        <th>Datum</th>
-                        <th>Autor</th>
-                        <th>Kommentar</th>
-                        <th>Aktion</th>
+                        <th data-i18n="version.ver">Ver.</th>
+                        <th data-i18n="version.date">Datum</th>
+                        <th data-i18n="version.author">Autor</th>
+                        <th data-i18n="version.comment">Kommentar</th>
+                        <th data-i18n="version.action">Aktion</th>
                     </tr>
                 </thead>
                 <tbody id="historyTableBody"></tbody>
             </table>
             <div style="margin-top:10px;">
-                <button class="primary-button" onclick="openVersionCommentModal()">Neue Version</button>
+                <button class="primary-button" onclick="openVersionCommentModal()" data-i18n="version.new">Neue Version</button>
             </div>
         </div>
     </div>
     <div id="versionCommentModal" class="modal" style="display:none;">
         <div class="modal-content">
             <span class="close-button" id="closeVersionCommentModal">&times;</span>
-            <h2>Neue Version</h2>
-            <div style="color:#666; font-size:0.9em; margin-bottom:8px;">Aktuelle Version: <b id="currentVersionInModal">-</b></div>
+            <h2 data-i18n="version.new">Neue Version</h2>
+            <div style="color:#666; font-size:0.9em; margin-bottom:8px;"><span data-i18n="version.current">Aktuelle Version:</span> <b id="currentVersionInModal">-</b></div>
             <div class="form-group" style="margin-bottom:10px;">
-                <label style="font-weight:600;">Versionstyp</label>
+                <label style="font-weight:600;" data-i18n="version.type">Versionstyp</label>
                 <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;">
                     <label style="display:flex; gap:6px; align-items:center;">
                         <input type="radio" name="versionType" value="minor" checked>
-                        Inkrementell (x.y → x.(y+1))
+                        <span data-i18n="version.type.minor">Inkrementell (x.y → x.(y+1))</span>
                     </label>
                     <label style="display:flex; gap:6px; align-items:center;">
                         <input type="radio" name="versionType" value="major">
-                        Hauptversion ((x).y → (x+1).0)
+                        <span data-i18n="version.type.major">Hauptversion ((x).y → (x+1).0)</span>
                     </label>
                 </div>
             </div>
             <form id="versionCommentForm">
-                <label style="font-weight:600;">Kommentar</label>
-                <textarea id="inputVersionComment" required placeholder="Kurz beschreiben, was sich geändert hat..."></textarea>
+                <label style="font-weight:600;" data-i18n="version.commentLabel">Kommentar</label>
+                <textarea id="inputVersionComment" required placeholder="Kurz beschreiben, was sich geändert hat..." data-i18n-placeholder="version.commentPh"></textarea>
                 <div style="text-align:right; margin-top:10px;">
-                    <button type="submit" class="primary-button">Speichern</button>
+                    <button type="submit" class="primary-button" data-i18n="nav.save">Speichern</button>
                 </div>
             </form>
         </div>
@@ -479,8 +481,8 @@
     <div id="confirmationModal" class="modal" style="display:none;">
         <div class="modal-content small">
             <span class="close-button" id="closeConfirmationModal">&times;</span>
-            <h2 id="confirmationTitle">Bestätigung</h2>
-            <p id="confirmationMessage">Sicher?</p>
+            <h2 id="confirmationTitle" data-i18n="confirm.title">Bestätigung</h2>
+            <p id="confirmationMessage" data-i18n="confirm.sure">Sicher?</p>
             <div style="text-align:right;">
                 <button id="btnCancelConfirmation" class="action-button" data-i18n="confirm.cancel">Abbrechen</button> 
                 <button id="btnConfirmAction" class="primary-button" data-i18n="confirm.ok">OK</button>

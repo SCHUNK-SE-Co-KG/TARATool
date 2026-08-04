@@ -23,7 +23,8 @@ const DEFAULT_DS_IDS = new Set(
 function _t(k) { return (typeof t === 'function') ? t(k) : k; }
 function _loc(obj, field, fallback) {
     if (typeof getLocalizedField === 'function') {
-        return getLocalizedField(obj, field, undefined, { fallback: !!fallback });
+        if (fallback === 'raw') return getLocalizedField(obj, field, undefined, { raw: true });
+        return getLocalizedField(obj, field, undefined, { fallback: fallback === true });
     }
     return obj?.[field] != null ? String(obj[field]) : '';
 }
@@ -56,12 +57,17 @@ function renderDamageScenarios() {
     dsList.forEach(ds => {
         const isDefault = DEFAULT_DS_IDS.has(ds.id);
         const eId = escapeHtml(ds.id);
-        const name = _loc(ds, 'name');
-        const short = _loc(ds, 'short') || (ds.short || '');
-        const desc = _loc(ds, 'description');
-        const eName = escapeHtml(name);
-        const eShort = escapeHtml(short);
-        const eDesc = desc ? escapeHtml(desc) : _t('ds.noDesc');
+        // Standard-DS nicht editierbar → kein Paren-Fallback, plain EN/DE
+        const name = _loc(ds, 'name', isDefault);
+        const short = _loc(ds, 'short', isDefault) || (ds.short || '');
+        const desc = _loc(ds, 'description', isDefault);
+        const eName = (typeof localizeParenHtml === 'function') ? localizeParenHtml(name) : escapeHtml(name);
+        const shortHtml = (/^\([\s\S]*\)$/.test(String(short).trim())
+            ? ((typeof localizeParenHtml === 'function') ? localizeParenHtml(short) : escapeHtml(short))
+            : `(${escapeHtml(short)})`);
+        const eDesc = desc
+            ? ((typeof localizeParenHtml === 'function') ? localizeParenHtml(desc) : escapeHtml(desc))
+            : _t('ds.noDesc');
 
         html += `<li data-id="${eId}">
             <div class="ds-header-row">
@@ -70,7 +76,7 @@ function renderDamageScenarios() {
                         <strong>${eId}:</strong> ${eName}
                     </div>
                     <div class="ds-subtitle-row">
-                        (${eShort})
+                        ${shortHtml}
                         ${isDefault ? `<span style="color: #2ecc71; margin-left: 5px; font-weight:600;">${_t('ds.standard')}</span>` : ''}
                     </div>
                 </div>
@@ -99,7 +105,7 @@ window.saveDamageScenario = function(e) {
     const descriptionVal = document.getElementById('dsDescription').value.trim();
 
     if (!nameVal || !shortVal) {
-        showToast(_t('assets.empty'), 'warning');
+        showToast(_t('toast.needName'), 'warning');
         return;
     }
 
@@ -119,7 +125,7 @@ window.saveDamageScenario = function(e) {
                 updated.description = descriptionVal;
             }
             analysis.damageScenarios[index] = updated;
-            showToast(`DS ${dsId} OK`, 'success');
+            showToast((typeof tf === 'function' ? tf('toast.dsOk', { id: dsId }) : `DS ${dsId} OK`), 'success');
         }
     } else {
         const allDS = [...DEFAULT_DAMAGE_SCENARIOS, ...analysis.damageScenarios];
@@ -137,7 +143,7 @@ window.saveDamageScenario = function(e) {
             created.description = descriptionVal;
         }
         analysis.damageScenarios.push(created);
-        showToast(`DS ${newId} OK`, 'success');
+        showToast((typeof tf === 'function' ? tf('toast.dsOk', { id: newId }) : `DS ${newId} OK`), 'success');
     }
 
     saveAnalyses();
@@ -148,7 +154,7 @@ window.saveDamageScenario = function(e) {
 
 window.editDamageScenario = function(dsId) {
     if (DEFAULT_DS_IDS.has(dsId)) {
-        showToast('Standard', 'warning');
+        showToast((typeof t === 'function' ? t('toast.dsStandard') : 'Standard-Szenarien können nicht bearbeitet werden.'), 'warning');
         return;
     }
 
@@ -162,19 +168,45 @@ window.editDamageScenario = function(dsId) {
 
     const titleEl = document.getElementById('dsModalTitle');
     const idField = document.getElementById('dsIdField');
-    if (titleEl) titleEl.textContent = `DS ${ds.id}`;
+    if (titleEl) {
+        titleEl.textContent = (typeof tf === 'function')
+            ? tf('ds.modal.edit', { id: ds.id })
+            : `DS ${ds.id}`;
+    }
     if (idField) idField.value = ds.id;
 
-    document.getElementById('dsName').value = _loc(ds, 'name');
-    document.getElementById('dsShort').value = _loc(ds, 'short') || (ds.short || '');
-    document.getElementById('dsDescription').value = _loc(ds, 'description');
+    document.getElementById('dsName').value = _loc(ds, 'name', 'raw');
+    document.getElementById('dsShort').value = _loc(ds, 'short', 'raw') || '';
+    document.getElementById('dsDescription').value = _loc(ds, 'description', 'raw');
+    const nameEl = document.getElementById('dsName');
+    const shortEl = document.getElementById('dsShort');
+    const descEl = document.getElementById('dsDescription');
+    if (typeof syncLocalizedInputHint === 'function') {
+        syncLocalizedInputHint(nameEl, ds, 'name', '');
+        syncLocalizedInputHint(shortEl, ds, 'short', '');
+        syncLocalizedInputHint(descEl, ds, 'description', '');
+    } else {
+        const lang = (window.TaraPrefs && TaraPrefs.getLang()) || 'de';
+        if (lang === 'en') {
+            const deN = (typeof getPrimaryField === 'function') ? getPrimaryField(ds, 'name') : (ds.name || '');
+            const deS = (typeof getPrimaryField === 'function') ? getPrimaryField(ds, 'short') : (ds.short || '');
+            const deD = (typeof getPrimaryField === 'function') ? getPrimaryField(ds, 'description') : (ds.description || '');
+            nameEl.placeholder = deN ? `(${deN})` : '';
+            shortEl.placeholder = deS ? `(${deS})` : '';
+            descEl.placeholder = deD ? `(${deD})` : '';
+        } else {
+            nameEl.placeholder = '';
+            shortEl.placeholder = '';
+            descEl.placeholder = '';
+        }
+    }
 
     if (damageScenarioModal) damageScenarioModal.style.display = 'block';
 };
 
 window.removeDamageScenario = function(dsId) {
     if (DEFAULT_DS_IDS.has(dsId)) {
-        showToast('Standard', 'warning');
+        showToast((typeof t === 'function' ? t('toast.dsStandard') : 'Standard-Szenarien können nicht bearbeitet werden.'), 'warning');
         return;
     }
 
@@ -186,9 +218,11 @@ window.removeDamageScenario = function(dsId) {
 
     const displayName = _loc(ds, 'name', true) || ds.name || dsId;
     showConfirmation({
-        title: _t('btn.delete'),
-        messageHtml: `<b>${escapeHtml(displayName)} (${escapeHtml(dsId)})</b>`,
-        confirmText: _t('btn.delete'),
+        title: _t('ds.delete.title'),
+        messageHtml: (typeof tf === 'function')
+            ? tf('ds.delete.message', { name: escapeHtml(displayName), id: escapeHtml(dsId) })
+            : `<b>${escapeHtml(displayName)} (${escapeHtml(dsId)})</b>`,
+        confirmText: _t('confirm.delete'),
         onConfirm: () => {
             analysis.damageScenarios = analysis.damageScenarios.filter(d => d.id !== dsId);
 
@@ -214,7 +248,7 @@ window.removeDamageScenario = function(dsId) {
             saveAnalyses();
             renderDamageScenarios();
             renderImpactMatrix();
-            showToast(`DS ${dsId} OK`, 'success');
+            showToast((typeof tf === 'function' ? tf('toast.dsOk', { id: dsId }) : `DS ${dsId} OK`), 'success');
         }
     });
 };
@@ -231,7 +265,7 @@ if (btnAddDamageScenario) {
         }
         const titleEl = document.getElementById('dsModalTitle');
         const idField = document.getElementById('dsIdField');
-        if (titleEl) titleEl.textContent = _t('btn.addDs');
+        if (titleEl) titleEl.textContent = _t('ds.modal.title');
         if (idField) idField.value = '';
         if (damageScenarioForm) damageScenarioForm.reset();
         const desc = document.getElementById('dsDescription');
@@ -245,3 +279,22 @@ if (closeDamageScenarioModal) {
         if (damageScenarioModal) damageScenarioModal.style.display = 'none';
     };
 }
+
+/** Persist open DS form into language slot before DE/EN switch. */
+window.flushDsModalLang = function (lang) {
+    const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
+    if (!analysis) return;
+    const id = document.getElementById('dsIdField')?.value;
+    if (!id || (typeof DEFAULT_DS_IDS !== 'undefined' && DEFAULT_DS_IDS.has(id))) return;
+    const ds = (analysis.damageScenarios || []).find(d => d.id === id);
+    if (!ds) return;
+    const nameVal = document.getElementById('dsName')?.value ?? '';
+    const shortVal = document.getElementById('dsShort')?.value ?? '';
+    const descriptionVal = document.getElementById('dsDescription')?.value ?? '';
+    if (typeof setLocalizedField === 'function') {
+        setLocalizedField(ds, 'name', nameVal, lang);
+        setLocalizedField(ds, 'short', shortVal, lang);
+        setLocalizedField(ds, 'description', descriptionVal, lang);
+    }
+    try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (_) {}
+};

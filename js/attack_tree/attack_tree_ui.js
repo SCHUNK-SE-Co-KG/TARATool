@@ -36,7 +36,9 @@ function populateAttackTreeDropdowns() {
             PROBABILITY_CRITERIA[type].options.forEach(opt => {
                 const el = document.createElement('option');
                 el.value = opt.value;
-                el.textContent = opt.text;
+                el.textContent = (typeof getLocalizedOptionText === 'function')
+                    ? getLocalizedOptionText(opt, 'text')
+                    : (opt.text || opt.value);
                 select.appendChild(el);
             });
             
@@ -108,10 +110,10 @@ function saveAttackTree(e) {
         const prev = analysis.riskEntries[existingIdx];
         if (prev.notes !== undefined) entry.notes = prev.notes;
         analysis.riskEntries[existingIdx] = entry;
-        if (typeof showToast === 'function') showToast('Angriffsbaum aktualisiert.', 'success');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeUpdated') : 'Angriffsbaum aktualisiert.'), 'success');
     } else {
         analysis.riskEntries.push(entry);
-        if (typeof showToast === 'function') showToast('Angriffsbaum hinzugefügt.', 'success');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeAdded') : 'Angriffsbaum hinzugefügt.'), 'success');
     }
 
     try { if (typeof reindexRiskIDs === 'function') reindexRiskIDs(analysis); } catch (e) { console.warn('[AT UI] reindexRiskIDs:', e.message || e); }
@@ -198,7 +200,7 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
     const riskClass = _getRiskCssClass(riskScore); 
 
     return `
-        <div class="ns-row" style="background-color: #f0f0f0;">
+        <div class="ns-row ns-row-head">
             <div style="display:flex; align-items:center;">
                 <span class="ns-label">R=</span>
                 <span class="ns-value ${riskClass}">${riskR}</span>
@@ -208,7 +210,7 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
                 <span class="ns-value">${dispI}</span>
             </div>
         </div>
-        <div class="ns-row" style="border-bottom:none; font-size:0.8em; color:#666;">
+        <div class="ns-row ns-row-kstu">
             <div class="ns-kstu">
                 <span>K:${dispK}</span>
                 <span>S:${dispS}</span>
@@ -428,7 +430,7 @@ window.renderCurrentTreePreview = function() {
     previewContainer.innerHTML = '';
     const pre = document.createElement('pre');
     pre.style.whiteSpace = 'pre-wrap';
-    pre.textContent = dot || '(DOT konnte nicht erzeugt werden)';
+    pre.textContent = dot || (typeof t === 'function' ? t('toast.dotFail') : '(DOT konnte nicht erzeugt werden)');
     previewContainer.appendChild(pre);
 };
 
@@ -439,12 +441,12 @@ window.renderCurrentTreePreview = function() {
 window.downloadTreeDataZip = async function() {
     const analysis = getActiveAnalysis();
     if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
-        if (typeof showToast === 'function') showToast('Keine Baumdaten vorhanden.', 'warning');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.noTreeData') : 'Keine Baumdaten vorhanden.'), 'warning');
         return;
     }
 
     if (typeof JSZip === 'undefined') {
-        if (typeof showToast === 'function') showToast('JSZip-Bibliothek nicht geladen.', 'error');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.jszipMissing') : 'JSZip-Bibliothek nicht geladen.'), 'error');
         return;
     }
 
@@ -454,7 +456,7 @@ window.downloadTreeDataZip = async function() {
     const entries = analysis.riskEntries;
     let fileCount = 0;
 
-    if (typeof showToast === 'function') showToast('Erzeuge Baumdaten-Export…', 'info');
+    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeExportStart') : 'Erzeuge Baumdaten-Export…'), 'info');
 
     // --- Risk Analysis Trees ---
     for (const entry of entries) {
@@ -520,7 +522,7 @@ window.downloadTreeDataZip = async function() {
     } catch (_) {}
 
     if (fileCount === 0) {
-        if (typeof showToast === 'function') showToast('Keine Baumdaten zum Exportieren gefunden.', 'warning');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.noTreeExport') : 'Keine Baumdaten zum Exportieren gefunden.'), 'warning');
         return;
     }
 
@@ -535,10 +537,10 @@ window.downloadTreeDataZip = async function() {
         a.click();
         setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
 
-        if (typeof showToast === 'function') showToast(`Baumdaten-Export erstellt (${fileCount} Dateien).`, 'success');
+        if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.treeExportOk', { n: fileCount }) : `Baumdaten-Export erstellt (${fileCount} Dateien).`), 'success');
     } catch (err) {
         console.error('[TreeExport] ZIP generation failed:', err);
-        if (typeof showToast === 'function') showToast('ZIP-Export fehlgeschlagen.', 'error');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.zipFail') : 'ZIP-Export fehlgeschlagen.'), 'error');
     }
 };
 
@@ -548,9 +550,9 @@ window.downloadDotFile = function() {
 
     if (!dotContent) {
         if (typeof showToast === 'function') {
-            showToast('Keine Daten für den Export vorhanden.', 'warning');
+            showToast((typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.'), 'warning');
         } else {
-            alert('Keine Daten für den Export vorhanden.');
+            alert((typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.'));
         }
         return;
     }
@@ -574,12 +576,12 @@ window.downloadDotFile = function() {
         }, 0);
 
         if (typeof showToast === 'function') {
-            showToast('.dot Datei wurde erfolgreich erstellt.', 'success');
+            showToast((typeof t === 'function' ? t('toast.dotOk') : '.dot Datei wurde erfolgreich erstellt.'), 'success');
         }
     } catch (err) {
         console.error('Error during DOT export:', err);
         if (typeof showToast === 'function') {
-            showToast('Export fehlgeschlagen.', 'error');
+            showToast((typeof t === 'function' ? t('toast.exportFail') : 'Export fehlgeschlagen.'), 'error');
         }
     }
 };

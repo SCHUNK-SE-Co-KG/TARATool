@@ -25,8 +25,72 @@ document.addEventListener('DOMContentLoaded', () => {
     window.onTaraLangChanged = function () {
         const analysis = (typeof getActiveAnalysis === 'function') ? getActiveAnalysis() : null;
         const activeTab = document.querySelector('.tab-button.active')?.dataset?.tab || 'tabOverview';
-        if (analysis && typeof renderActiveTab === 'function') {
-            renderActiveTab(analysis, activeTab);
+        if (analysis) {
+            if (typeof fillAnalysisForm === 'function') fillAnalysisForm(analysis);
+            if (typeof renderActiveTab === 'function') renderActiveTab(analysis, activeTab);
+        } else {
+            const nameEl = document.getElementById('analysisNameDisplay');
+            if (nameEl) nameEl.textContent = (typeof t === 'function' ? t('header.pickAnalysis') : 'Analyse wählen oder neu starten');
+            const statusEl = document.getElementById('statusBarMessage');
+            if (statusEl) statusEl.textContent = (typeof t === 'function' ? t('status.start') : 'Bitte starten Sie eine neue Analyse.');
+        }
+        const atModal = document.getElementById('attackTreeModal');
+        if (atModal && atModal.style.display === 'block' && window.atV2 && typeof window.atV2.reloadLocalizedInputs === 'function') {
+            window.atV2.reloadLocalizedInputs();
+        }
+        // Restrisiko-Modal: Labels/Dropdowns neu (Werte bereits persistiert)
+        const rrModal = document.getElementById('residualRiskModal');
+        if (rrModal && rrModal.style.display === 'block' && rrModal.dataset.rrEditingUid
+            && typeof window.editResidualRiskTree === 'function') {
+            window.editResidualRiskTree(rrModal.dataset.rrEditingUid);
+        }
+        // Asset-/DS-Modal: Felder + DE-Hinweise neu laden
+        const assetModal = document.getElementById('assetModal');
+        if (assetModal && assetModal.style.display === 'block') {
+            const id = document.getElementById('assetIdField')?.value;
+            if (id && typeof window.editAsset === 'function') window.editAsset(id);
+        }
+        const dsModal = document.getElementById('damageScenarioModal');
+        if (dsModal && dsModal.style.display === 'block') {
+            const id = document.getElementById('dsIdField')?.value;
+            if (id && typeof window.editDamageScenario === 'function') window.editDamageScenario(id);
+        }
+        const sgModal = document.getElementById('securityGoalModal');
+        if (sgModal && sgModal.style.display === 'block') {
+            const id = sgModal.dataset.sgId;
+            if (id && typeof window.editSecurityGoal === 'function') window.editSecurityGoal(id);
+        }
+        const impactModal = document.getElementById('impactCommentModal');
+        if (impactModal && impactModal.style.display === 'block') {
+            const assetId = document.getElementById('impactCommentAssetId')?.value;
+            const dsId = document.getElementById('impactCommentDsId')?.value;
+            if (assetId && dsId && typeof window.openImpactComment === 'function') window.openImpactComment(assetId, dsId);
+        }
+        const versionModal = document.getElementById('versionControlModal');
+        if (versionModal && versionModal.style.display === 'block' && analysis && typeof renderHistoryTable === 'function') {
+            renderHistoryTable(analysis);
+        }
+        const aboutModal = document.getElementById('aboutModal');
+        if (aboutModal && aboutModal.style.display === 'block' && typeof openAboutModal === 'function') {
+            openAboutModal();
+        }
+    };
+
+    window.beforeTaraLangChange = function (fromLang) {
+        if (window.atV2 && typeof window.atV2.flushLocalizedInputs === 'function') {
+            const atModal = document.getElementById('attackTreeModal');
+            if (atModal && atModal.style.display === 'block') {
+                window.atV2.flushLocalizedInputs(fromLang);
+            }
+        }
+        // Offene Asset-/DS-Formulare in aktuelle Sprache speichern, bevor Umschalten
+        const assetModal = document.getElementById('assetModal');
+        if (assetModal && assetModal.style.display === 'block' && typeof window.flushAssetModalLang === 'function') {
+            window.flushAssetModalLang(fromLang);
+        }
+        const dsModal = document.getElementById('damageScenarioModal');
+        if (dsModal && dsModal.style.display === 'block' && typeof window.flushDsModalLang === 'function') {
+            window.flushDsModalLang(fromLang);
         }
     };
 
@@ -43,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         if (typeof fillAnalysisForm === 'function') fillAnalysisForm(createDefaultAnalysis());
         const elStatus = document.getElementById('statusBarMessage');
-        if (elStatus) elStatus.textContent = 'Bitte starten Sie eine neue Analyse.';
+        if (elStatus) elStatus.textContent = (typeof t === 'function' ? t('status.start') : 'Bitte starten Sie eine neue Analyse.');
     }
     
     // 2. Listener for the analysis selector
@@ -143,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elBtnSave.onclick = () => {
             if (typeof saveCurrentAnalysisState === 'function') saveCurrentAnalysisState();
             if (typeof saveAnalyses === 'function') saveAnalyses();
-            if (typeof showToast === 'function') showToast('Analyse gespeichert.', 'success');
+            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.saved') : 'Analyse gespeichert.'), 'success');
         };
     }
 
@@ -171,11 +235,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ok = (typeof reloadAssessmentConfigFromJsonText === 'function')
                     && reloadAssessmentConfigFromJsonText(ev.target.result, file.name);
                 if (ok && typeof showToast === 'function') {
-                    showToast(`Bewertungsconfig geladen: ${file.name}`, 'success');
+                    showToast((typeof tf === 'function' ? tf('toast.configLoaded', { name: file.name }) : `Bewertungsconfig geladen: ${file.name}`), 'success');
                 }
             };
             reader.onerror = () => {
-                if (typeof showToast === 'function') showToast('Datei konnte nicht gelesen werden.', 'error');
+                if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.fileReadFail') : 'Datei konnte nicht gelesen werden.'), 'error');
             };
             reader.readAsText(file, 'UTF-8');
         });
@@ -203,15 +267,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (p && typeof p.then === 'function') {
                         p.catch((e) => {
                             console.error('[TreeExport]', e);
-                            if (typeof showToast === 'function') showToast('Baumdaten-Export fehlgeschlagen.', 'error');
+                            if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeExportFail') : 'Baumdaten-Export fehlgeschlagen.'), 'error');
                         });
                     }
                 } catch (e) {
                     console.error('[TreeExport]', e);
-                    if (typeof showToast === 'function') showToast('Baumdaten-Export fehlgeschlagen.', 'error');
+                    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeExportFail') : 'Baumdaten-Export fehlgeschlagen.'), 'error');
                 }
             } else if (typeof showToast === 'function') {
-                showToast('Export-Funktion nicht verfügbar.', 'error');
+                showToast((typeof t === 'function' ? t('toast.exportUnavailable') : 'Export-Funktion nicht verfügbar.'), 'error');
             }
         };
     }
@@ -225,17 +289,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (p && typeof p.then === 'function') {
                         p.catch(() => {
                             if (typeof showToast === "function") {
-                                showToast("Report-Erzeugung fehlgeschlagen.", "error");
+                                showToast((typeof t === 'function' ? t('toast.reportFail') : 'Report-Erzeugung fehlgeschlagen.'), 'error');
                             }
                         });
                     }
                 } catch (_) {
                     if (typeof showToast === "function") {
-                        showToast("Report-Erzeugung fehlgeschlagen.", "error");
+                        showToast((typeof t === 'function' ? t('toast.reportFail') : 'Report-Erzeugung fehlgeschlagen.'), 'error');
                     }
                 }
             } else if (typeof showToast === "function") {
-                showToast("Report-Funktion nicht verfügbar (jsPDF fehlt?).", "error");
+                showToast((typeof t === 'function' ? t('toast.reportUnavailable') : 'Report-Funktion nicht verfügbar (jsPDF fehlt?).'), 'error');
             }
         };
     }
@@ -271,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (typeof showToast === 'function') {
-            showToast('Daten wurden in einem anderen Fenster geändert – Ansicht aktualisiert.', 'info');
+            showToast((typeof t === 'function' ? t('toast.syncOtherWindow') : 'Daten wurden in einem anderen Fenster geändert – Ansicht aktualisiert.'), 'info');
         }
     });
 

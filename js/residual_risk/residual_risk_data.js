@@ -71,7 +71,9 @@
             let nodeCounter = 0;
             const walk = (node, bNum, parts) => {
                 nodeCounter++;
-                const nodeTitle = (node && (node.title || node.name)) ? String(node.title || node.name) : '';
+                const nodeTitle = (typeof getLocalizedField === 'function' && node)
+                    ? (getLocalizedField(node, 'title') || '')
+                    : ((node && (node.title || node.name)) ? String(node.title || node.name) : '');
                 const nextParts = nodeTitle ? parts.concat([nodeTitle]) : parts;
                 (node.impacts || []).forEach((leaf, lIdx) => {
                     const leafUid = leaf.uid || ('leaf_' + (lIdx + 1));

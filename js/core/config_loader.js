@@ -102,7 +102,7 @@ function reloadAssessmentConfigFromJsonText(jsonText, sourceLabel) {
         return reloadAssessmentConfigFromObject(parsed, sourceLabel || 'JSON text');
     } catch (e) {
         console.error('[config_loader] Invalid JSON:', e);
-        if (typeof showToast === 'function') showToast('Ungültige JSON-Datei: ' + (e.message || e), 'error');
+        if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.configInvalidJson', { msg: e.message || e }) : 'Ungültige JSON-Datei: ' + (e.message || e)), 'error');
         return false;
     }
 }
@@ -111,7 +111,7 @@ function reloadAssessmentConfigFromJsonText(jsonText, sourceLabel) {
 function promptReloadAssessmentConfig() {
     const input = document.getElementById('assessmentConfigFileInput');
     if (!input) {
-        if (typeof showToast === 'function') showToast('Dateiauswahl nicht verfügbar.', 'error');
+        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.filePickerUnavailable') : 'Dateiauswahl nicht verfügbar.'), 'error');
         return;
     }
     input.value = '';
@@ -173,7 +173,7 @@ const _configLoaded = loadAssessmentConfig();
 
 if (!_configLoaded) {
     console.warn('[config_loader] Falling back to hardcoded defaults – config could not be loaded.');
-    console.warn('[config_loader] Nutze auf der Übersicht „Bewertungsconfig laden“ oder tools/sync_assessment_config.bat');
+    console.warn('[config_loader] Nutze auf der Übersicht „Bewertungsconfig laden“ oder tools/sync_assessment_config.sh / .bat / .py');
 } else {
     window.ASSESSMENT_CONFIG = ASSESSMENT_CONFIG;
 }

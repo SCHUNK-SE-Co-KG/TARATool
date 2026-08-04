@@ -32,32 +32,32 @@ let todayISO = getTodayISO();
 // ═════════════════════════════════════════════════════════════════════
 
 const _FALLBACK_DAMAGE_SCENARIOS = [
-    { id: 'DS1', name: 'Gefahr für Leib und Leben', short: 'Safety', description: 'Verletzung von Personen oder lebensbedrohliche Situationen.' },
-    { id: 'DS2', name: 'Finanzieller Schaden', short: 'Financial', description: 'Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).' },
-    { id: 'DS3', name: 'Verlust von geistigem Eigentum', short: 'IP loss', description: 'Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).' },
-    { id: 'DS4', name: 'Verlust Privatsphäre/Daten', short: 'Privacy', description: 'Verlust sensibler persönlicher oder technischer Daten.' },
-    { id: 'DS5', name: 'Rechtliche Konsequenzen', short: 'Legal', description: 'Verstoß gegen Gesetze oder Vorschriften.' }
+    { id: 'DS1', name: 'Gefahr für Leib und Leben', name_en: 'Danger to life and limb', short: 'Safety', short_en: 'Safety', description: 'Verletzung von Personen oder lebensbedrohliche Situationen.', description_en: 'Injury to persons or life-threatening situations.' },
+    { id: 'DS2', name: 'Finanzieller Schaden', name_en: 'Financial damage', short: 'Financial', short_en: 'Financial', description: 'Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).', description_en: 'Direct or indirect financial losses (recall, damages).' },
+    { id: 'DS3', name: 'Verlust von geistigem Eigentum', name_en: 'Loss of intellectual property', short: 'IP loss', short_en: 'IP loss', description: 'Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).', description_en: 'Loss of intellectual property (patents, copyrights, etc.).' },
+    { id: 'DS4', name: 'Verlust Privatsphäre/Daten', name_en: 'Loss of privacy/data', short: 'Privacy', short_en: 'Privacy', description: 'Verlust sensibler persönlicher oder technischer Daten.', description_en: 'Loss of sensitive personal or technical data.' },
+    { id: 'DS5', name: 'Rechtliche Konsequenzen', name_en: 'Legal consequences', short: 'Legal', short_en: 'Legal', description: 'Verstoß gegen Gesetze oder Vorschriften.', description_en: 'Violation of laws or regulations.' }
 ];
 
 const _FALLBACK_PROBABILITY_CRITERIA = {
-    'K': { label: 'K (Komplexität)', fullLabel: 'Komplexität (Knowledge / Complexity)',
-           options: [ { value: '0.7', text: '0,7 - Bekannte Schwachstellen (z.B. CVE, Errata)' },
-                      { value: '0.6', text: '0,6 - Einfache Internetrecherche (z.B. einfache Foren)' },
-                      { value: '0.3', text: '0,3 - Experten Recherche (z.B. spezifische Foren, Onionnet)' },
-                      { value: '0.1', text: '0,1 - Expertenwissen' } ] },
-    'S': { label: 'S (Skalierung)', fullLabel: 'Skalierung (Scaling)',
-           options: [ { value: '0.5', text: '0,5 - Produktportfolio (z.B. BKE)' },
-                      { value: '0.3', text: '0,3 - Produktfamilie (z.B. EGU / EGK)' },
-                      { value: '0.1', text: '0,1 - Einzelprodukt (z.B. einzelner Greifer)' } ] },
-    'T': { label: 'T (Zeit)', fullLabel: 'Zeit / Aufwand (Time)',
-           options: [ { value: '0.5', text: '0,5 - < 1 Woche' },
-                      { value: '0.4', text: '0,4 - < 4 Wochen' },
-                      { value: '0.2', text: '0,2 - < 3 Monate' },
-                      { value: '0.1', text: '0,1 - > 3 Monate' } ] },
-    'U': { label: 'U (Nutzen)', fullLabel: 'Sichtbarer Nutzen für Angreifer (Utility)',
-           options: [ { value: '0.5', text: '0,5 - Groß' },
-                      { value: '0.3', text: '0,3 - Mittel' },
-                      { value: '0.1', text: '0,1 - Klein' } ] }
+    'K': { label: 'K (Komplexität)', label_en: 'K (Complexity)', fullLabel: 'Komplexität (Knowledge / Complexity)',
+           options: [ { value: '0.7', text: '0,7 - Bekannte Schwachstellen (z.B. CVE, Errata)', text_en: '0.7 - Known vulnerabilities (e.g. CVE, errata)' },
+                      { value: '0.6', text: '0,6 - Einfache Internetrecherche (z.B. einfache Foren)', text_en: '0.6 - Simple internet research (e.g. basic forums)' },
+                      { value: '0.3', text: '0,3 - Experten Recherche (z.B. spezifische Foren, Onionnet)', text_en: '0.3 - Expert research (e.g. specialised forums, onion network)' },
+                      { value: '0.1', text: '0,1 - Expertenwissen', text_en: '0.1 - Expert knowledge' } ] },
+    'S': { label: 'S (Skalierung)', label_en: 'S (Scaling)', fullLabel: 'Skalierung (Scaling)',
+           options: [ { value: '0.5', text: '0,5 - IT-Netzwerk beim Kunden', text_en: '0.5 - Customer IT network' },
+                      { value: '0.3', text: '0,3 - OT-Netzwerk beim Kunden', text_en: '0.3 - Customer OT network' },
+                      { value: '0.1', text: '0,1 - Einzelprodukt/ lokale Maschine', text_en: '0.1 - Single product / local machine' } ] },
+    'T': { label: 'T (Zeit)', label_en: 'T (Time)', fullLabel: 'Zeit / Aufwand (Time)',
+           options: [ { value: '0.5', text: '0,5 - < 1 Woche', text_en: '0.5 - < 1 week' },
+                      { value: '0.4', text: '0,4 - < 4 Wochen', text_en: '0.4 - < 4 weeks' },
+                      { value: '0.2', text: '0,2 - < 3 Monate', text_en: '0.2 - < 3 months' },
+                      { value: '0.1', text: '0,1 - > 3 Monate', text_en: '0.1 - > 3 months' } ] },
+    'U': { label: 'U (Nutzen)', label_en: 'U (Utility)', fullLabel: 'Sichtbarer Nutzen für Angreifer (Utility)',
+           options: [ { value: '0.5', text: '0,5 - Groß', text_en: '0.5 - High' },
+                      { value: '0.3', text: '0,3 - Mittel', text_en: '0.3 - Medium' },
+                      { value: '0.1', text: '0,1 - Klein', text_en: '0.1 - Low' } ] }
 };
 
 // var (not const) so runtime config reload can replace references
@@ -130,14 +130,17 @@ let activeAnalysisId = null;
  */
 function createDefaultAnalysis() {
     const today = getTodayISO();
+    const _name = (typeof t === 'function' ? t('analysis.defaultName') : 'Neue Analyse');
+    const _author = (typeof t === 'function' ? t('analysis.unknownAuthor') : 'Unbekannt');
+    const _initial = (typeof t === 'function' ? t('history.initial') : 'Initiale Erstellung');
     return {
         id: 'tara-001',
-        name: 'Neue Analyse',
+        name: _name,
         description: '',
         intendedUse: '',
         metadata: {
             version: INITIAL_VERSION,
-            author: 'Unbekannt',
+            author: _author,
             date: today
         },
         history: [
@@ -145,7 +148,7 @@ function createDefaultAnalysis() {
                 version: INITIAL_VERSION,
                 date: today,
                 author: 'System',
-                comment: 'Initiale Erstellung',
+                comment: _initial,
                 state: null 
             }
         ],
