@@ -1,2 +1,14 @@
 # CVE-Scanner Reports – werden via GitHub Actions auf main committed
 # (nicht ignorieren, damit der tägliche Scan sie committen kann)
+
+# Trivy-Artefakte (lokale Scan-Outputs, nicht einchecken)
+trivy_output.txt
+*_trivy.json
+
+# Node.js
+node_modules/
+
+# Python
+**/__pycache__/
+**/*.pyc
+tests/.venv/

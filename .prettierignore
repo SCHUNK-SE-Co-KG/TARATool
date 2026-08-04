@@ -1,0 +1,31 @@
+# Abhängigkeiten
+node_modules/
+tests/.venv/
+tests/*.py
+
+# index.html: Script-Ladereihenfolge ist architekturkritisch,
+# Prettier-HTML-Parser kann die Datei nicht korrekt parsen
+index.html
+
+# Build-Artefakte
+*.min.js
+*.min.css
+
+# Binärdateien & Dokumente
+*.docx
+*.pdf
+*.png
+*.jpg
+*.svg
+
+# Generierte Reports (werden von GitHub Actions committed)
+security/reports/
+
+# Testberichte
+tests/report.html
+tests/.pytest_cache/
+
+# Trivy-Artefakte
+trivy_output.txt
+*_trivy.json
+.gitignore
