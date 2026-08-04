@@ -1,4 +1,4 @@
-﻿# Dev Agent Onboarding â€“ TARATool
+# Dev Agent Onboarding â€“ TARATool
 
 Diese Anleitung ermÃ¶glicht einem neuen Dev-Agenten (in einem frischen Agentenfenster,
 auf einem beliebigen Rechner) den Entwicklungsprozess **exakt** so durchzufÃ¼hren wie
@@ -47,7 +47,7 @@ gh auth refresh -h github.com -s project,read:project
 gh auth status
 ```
 
-Der aktive User muss `Bheowulf` sein oder Schreibzugriff auf das Repository haben.
+Der aktive User muss **Schreibrechte im Repository** haben.
 
 ---
 

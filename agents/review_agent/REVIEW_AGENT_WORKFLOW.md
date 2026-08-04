@@ -1,4 +1,4 @@
-﻿# Review-Agent Workflow
+# Review-Agent Workflow
 
 **Version:** 1.0 | **Stand:** 2026-08-02 | **Branch:** Development
 

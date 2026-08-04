@@ -1,4 +1,4 @@
-﻿# TARATool â€“ Entwicklungsprozess
+# TARATool â€“ Entwicklungsprozess
 
 **Dieses Dokument** beschreibt den vollstÃ¤ndigen Entwicklungsprozess fÃ¼r das TARATool-Projekt.
 Es richtet sich an den **Product Owner (PO)** und an **neue Dev-Agenten**, die mit der

@@ -1,4 +1,4 @@
-﻿# Contributing â€“ TARATool
+# Contributing â€“ TARATool
 
 ## Branch-Strategie
 
@@ -75,7 +75,7 @@ Schritt 7b - Lokalen Dev-Stand aktualisieren (Pflicht)
   * Dev-Agent pullt nach jedem Merge aktuellen Development-Stand:
     git checkout Development
     git pull
-  * Lokales Verzeichnis: C:\Users\R011239\Documents\Development
+  * Lokales Verzeichnis: <lokales-repo-verzeichnis>
   * PO kann anschliessend lokal testen bevor er die Freigabe erteilt
 
         u{2193}

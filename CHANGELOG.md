@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 <!-- AENDERUNGEN_DEVSES.md (neuester Inhalt) -->
 
