@@ -71,6 +71,15 @@ Schritt 7 â€“ Merge
   â€¢ Dev-Agent wartet auf explizites PO-OK (Chat-Nachricht oder Issue-Kommentar)
 
         â†“
+Schritt 7b - Lokalen Dev-Stand aktualisieren (Pflicht)
+  * Dev-Agent pullt nach jedem Merge aktuellen Development-Stand:
+    git checkout Development
+    git pull
+  * Lokales Verzeichnis: C:\Users\R011239\Documents\Development
+  * PO kann anschliessend lokal testen bevor er die Freigabe erteilt
+
+        u{2193}
+
 Schritt 8 â€“ PO-Freigabe (Pflicht)
   â€¢ Product Owner prÃ¼ft das Ergebnis
   â€¢ PO gibt explizites OK â†’ Status â†’ "Done"
