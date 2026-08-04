@@ -1,4 +1,4 @@
-"""Tests for TARA-0041: Network monitoring (R-14)."""
+﻿"""Tests for TARA-0041: Network monitoring (R-14)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -39,7 +39,7 @@ fetch('https://nonexistent.example.invalid/resource.js').catch(() => {});
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.network_monitor import attach_network_monitor, get_network_findings
+    from agents.review_agent.network_monitor import attach_network_monitor, get_network_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -78,7 +78,7 @@ def test_network_monitor_tracks_requests(tmp_path):
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.network_monitor import attach_network_monitor
+    from agents.review_agent.network_monitor import attach_network_monitor
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

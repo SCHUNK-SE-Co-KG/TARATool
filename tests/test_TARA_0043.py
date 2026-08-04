@@ -1,4 +1,4 @@
-"""Tests for TARA-0043: Storage analysis (R-16)."""
+﻿"""Tests for TARA-0043: Storage analysis (R-16)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -39,7 +39,7 @@ localStorage.setItem("test", "value123");
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.storage_inspector import inspect_storage
+    from agents.review_agent.storage_inspector import inspect_storage
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -70,7 +70,7 @@ document.cookie = "session=abc123; path=/";
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.storage_inspector import inspect_storage, get_storage_findings
+    from agents.review_agent.storage_inspector import inspect_storage, get_storage_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

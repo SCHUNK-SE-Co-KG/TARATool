@@ -1,4 +1,4 @@
-"""Tests for TARA-0044: Performance and memory monitoring (R-17)."""
+﻿"""Tests for TARA-0044: Performance and memory monitoring (R-17)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -32,7 +32,7 @@ def test_measure_performance_returns_timing(tmp_path):
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.performance_monitor import measure_performance
+    from agents.review_agent.performance_monitor import measure_performance
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -57,7 +57,7 @@ def test_measure_memory_returns_number(tmp_path):
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.performance_monitor import measure_memory
+    from agents.review_agent.performance_monitor import measure_memory
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -93,7 +93,7 @@ window.growMemory = growMemory;
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.performance_monitor import detect_memory_leak
+    from agents.review_agent.performance_monitor import detect_memory_leak
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

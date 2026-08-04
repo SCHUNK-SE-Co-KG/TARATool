@@ -1,4 +1,4 @@
-"""Tests for TARA-0048: Browser permissions (R-21)."""
+﻿"""Tests for TARA-0048: Browser permissions (R-21)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -39,7 +39,7 @@ navigator.geolocation.getCurrentPosition(function() {}, function() {});
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.permissions_checker import attach_permissions_monitor, get_permissions_findings
+    from agents.review_agent.permissions_checker import attach_permissions_monitor, get_permissions_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])

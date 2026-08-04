@@ -1,4 +1,4 @@
-"""Tests for TARA-0042: DOM state and event listener inspector (R-15)."""
+﻿"""Tests for TARA-0042: DOM state and event listener inspector (R-15)."""
 import sys
 import datetime
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
 def _make_session(page, context, app_url):
-    from tools.review_agent.runtime_scanner import ReviewSession
+    from agents.review_agent.runtime_scanner import ReviewSession
     return ReviewSession(
         page=page,
         context=context,
@@ -32,7 +32,7 @@ def test_dom_snapshot_captures_metrics(tmp_path):
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.dom_inspector import capture_dom_snapshot
+    from agents.review_agent.dom_inspector import capture_dom_snapshot
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -68,7 +68,7 @@ window.addListeners = addListeners;
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.dom_inspector import detect_listener_leak
+    from agents.review_agent.dom_inspector import detect_listener_leak
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
@@ -106,7 +106,7 @@ window.noLeak = noLeak;
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from tools.review_agent.dom_inspector import detect_listener_leak
+    from agents.review_agent.dom_inspector import detect_listener_leak
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
