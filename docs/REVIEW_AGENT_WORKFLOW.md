@@ -86,8 +86,8 @@ TDD-Tests:         tests/test_TARA_XXXX.py (PASSED)
 
 ## Merge-Freigabe
 
-| Ergebnis           | Vorgehen                                               |
-| ------------------ | ------------------------------------------------------ |
-| Keine Findings     | PR auf Development, Item → Done                        |
-| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen    |
-| Hoch/Kritisch      | Item zurück auf „In Progress", Findings zuerst beheben |
+| Ergebnis           | Vorgehen                                                           |
+| ------------------ | ------------------------------------------------------------------ |
+| Keine Findings     | PR auf Development, Item → **Freigabe** (PO-OK abwarten → Done)    |
+| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen → **Freigabe** |
+| Hoch/Kritisch      | Item zurück auf „In Progress", Findings zuerst beheben             |

@@ -102,7 +102,7 @@ pip install -r requirements.txt
 
 ```bash
 cd tests
-.venv/bin/pytest test_TARA_0004.py test_TARA_0020.py test_TARA_0021.py test_TARA_0022.py --noconftest -q
+.venv/bin/pytest test_TARA_0004.py test_TARA_0020.py test_TARA_0021.py test_TARA_0022.py test_TARA_0024.py test_TARA_0034_0037.py --noconftest -q
 ```
 
 Erwartetes Ergebnis: **Alle Tests grün**, 0 Fehler.

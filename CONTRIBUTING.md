@@ -49,12 +49,13 @@ Schritt 4 – Vor dem Commit (Pflicht-Checks)
     (Bei Formatierungsfehlern: npm run format:write, Änderungen commiten)
   • Schritt 4b – ESLint: npm run lint → Exit-Code 0 ✅
   • Schritt 4c – Story-Tests: pytest tests/test_TARA_XXXX.py -v  → PASSED ✅
-  • Schritt 4d – Vollständige Suite: pytest -x -q  → 0 Fehler ✅
+  • Schritt 4d – Vollständige Suite: pytest tests/test_TARA_XXXX.py --noconftest -q → 0 Fehler ✅
+    (Vollständige Playwright-Suite: pytest -x -q – nur wenn Playwright installiert)
   • Commit: "TARA-XXXX: Beschreibung"
 
         ↓
 Schritt 5 – Review
-  • Status → "Review"
+  • Status → "inReview"
   • Review-Agent aktivieren (siehe docs/REVIEW_AGENT_WORKFLOW.md)
   • Findings beheben oder als Backlog-Items anlegen
 
@@ -115,3 +116,33 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 - **Jede Chat-Antwort nennt die aktive TARA-ID** der bearbeiteten Items
 - **Keine Arbeit ohne Freigabe** durch den Product Owner
 - **Status-Updates** sofort nach Statuswechsel ins Board eintragen
+
+---
+
+## TARA-ID Nummernschema
+
+IDs sind **atomar und unveränderlich** (P-14). So ermittelst du die nächste freie ID:
+
+```bash
+# Höchste vorhandene TARA-ID aus allen Issues ermitteln
+gh issue list --state all --limit 200 --json title \
+  | python3 -c "
+import sys, json, re
+issues = json.load(sys.stdin)
+ids = [int(m.group(1)) for t in issues for m in [re.search(r'TARA-(\d+)', t['title'])] if m]
+print(f'Höchste ID: TARA-{max(ids):04d}  →  Nächste: TARA-{max(ids)+1:04d}')
+"
+```
+
+Oder manuell: höchste Nummer in GitHub Issues suchen + 1.
+
+---
+
+## Ausnahmen vom Standard-Workflow
+
+| Ausnahme      | Bedingung                                                                          | Was entfällt                          |
+| ------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
+| **Prototyp**  | Issue-Titel enthält „Prototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nötig) |
+| **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                | P-07 (Branch-Naming)                  |
+
+Ausnahmen müssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.

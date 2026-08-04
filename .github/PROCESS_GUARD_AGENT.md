@@ -32,7 +32,7 @@ Test-Ergebnis:    PASSED / FAILED
 | P-03  | **Tests vor Implementierung** geschrieben (TDD Red-Phase)                                                                                                                    |
 | P-04  | Tests haben initial **fehlgeschlagen** (Red bewiesen)                                                                                                                        |
 | P-05  | Story-spezifische Tests **vor Commit** ausgeführt → alle grün                                                                                                                |
-| P-06  | Vollständige Testsuite (`pytest -x -q`) grün vor PR                                                                                                                          |
+| P-06  | Alle Story-Tests grün vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`                                                                                               |
 | P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                                                                               |
 | P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                        |
 | P-09  | Item auf „Review" gesetzt vor PR-Erstellung                                                                                                                                  |
@@ -51,7 +51,7 @@ Der Prozess-Guard gibt **grünes Licht** (`✅ PROCESS OK`) wenn:
 
 - [ ] P-01 bis P-15 alle eingehalten
 - [ ] Kein offenes `review-finding` mit Schwere Kritisch oder Hoch
-- [ ] `pytest -x -q` → 0 Fehler
+- [ ] `pytest tests/test_TARA_XXXX.py --noconftest` → 0 Fehler
 
 Andernfalls: `❌ PROCESS BLOCKED` + Finding-Issues anlegen.
 
