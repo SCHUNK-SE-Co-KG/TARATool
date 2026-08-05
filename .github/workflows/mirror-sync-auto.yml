@@ -1,0 +1,150 @@
+name: Mirror-Sync Auto-Fix – Bheowulf → SCHUNK
+
+# Automatischer Board-Sync:
+# 1. Erkennt fehlende Items auf SCHUNK
+# 2. Öffnet ein GitHub Issue wenn ein manueller Sync nötig ist
+# 3. Kann manuell mit 'apply_fix: true' getriggert werden um tatsächlich zu syncen
+#
+# Hinweis: Schreibzugriff auf das SCHUNK-Org-Projekt erfordert einen PAT
+# (SCHUNK_SYNC_TOKEN) mit Berechtigung: project, read:org, repo
+# → In GitHub Secrets hinterlegen: Settings → Secrets → SCHUNK_SYNC_TOKEN
+
+on:
+  schedule:
+    # Täglich um 03:00 UTC – nach Mirror-Sync Analyse
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      apply_fix:
+        description: 'Sync-Differenzen aktiv beheben (benötigt SCHUNK_SYNC_TOKEN)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync-check:
+    name: Board-Sync Differenz-Analyse
+    runs-on: ubuntu-latest
+    outputs:
+      in_sync: ${{ steps.check.outputs.in_sync }}
+      diff_count: ${{ steps.check.outputs.diff_count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Sync-Analyse ausführen
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/sync_project_boards.py --limit 100 > /tmp/sync_report.txt 2>&1
+          cat /tmp/sync_report.txt
+
+          if grep -q "\[!\] BOARDS NOT IN SYNC" /tmp/sync_report.txt; then
+            echo "in_sync=false" >> $GITHUB_OUTPUT
+            DIFF=$(grep -oP '\d+ item' /tmp/sync_report.txt | head -1 | grep -oP '\d+' || echo "?")
+            echo "diff_count=$DIFF" >> $GITHUB_OUTPUT
+          else
+            echo "in_sync=true" >> $GITHUB_OUTPUT
+            echo "diff_count=0" >> $GITHUB_OUTPUT
+          fi
+
+          echo "## 🔄 Mirror-Sync Status" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/sync_report.txt >> $GITHUB_STEP_SUMMARY
+
+  create-sync-issue:
+    name: Sync-Issue erstellen
+    needs: sync-check
+    runs-on: ubuntu-latest
+    if: needs.sync-check.outputs.in_sync == 'false'
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Prüfe ob offenes Sync-Issue existiert
+        id: existing
+        run: |
+          COUNT=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --label "mirror-sync" \
+            --state open \
+            --json number --jq 'length' 2>/dev/null || echo "0")
+          echo "open_issues=$COUNT" >> $GITHUB_OUTPUT
+
+      - name: Sync-Issue erstellen (falls noch keins offen)
+        if: steps.existing.outputs.open_issues == '0'
+        run: |
+          DATE=$(date -u +"%Y-%m-%d")
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "🔄 [MIRROR-SYNC] Board-Differenz erkannt (${DATE})" \
+            --label "mirror-sync" \
+            --body "## Mirror-Sync Warnung
+
+Board-Differenz erkannt: **${{ needs.sync-check.outputs.diff_count }}** Item(s) fehlen auf SCHUNK.
+
+### Behebung
+
+Option A – Manuell via Workflow:
+1. Gehe zu Actions → Mirror-Sync Auto-Fix
+2. Klicke 'Run workflow'
+3. Setze \`apply_fix\` auf \`true\`
+4. **Voraussetzung:** Secret \`SCHUNK_SYNC_TOKEN\` muss gesetzt sein (PAT mit \`project\` + \`read:org\` Scope)
+
+Option B – Lokal ausführen:
+\`\`\`bash
+python scripts/full_sync_100.py
+\`\`\`
+
+*Automatisch erstellt von Mirror-Sync Workflow*" 2>/dev/null || echo "Label 'mirror-sync' fehlt – wird angelegt"
+
+          # Label anlegen falls noch nicht vorhanden
+          gh label create "mirror-sync" \
+            --description "Mirror-Sync zwischen Bheowulf und SCHUNK" \
+            --color "0075ca" \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+
+          # Nochmal versuchen nach Label-Anlage
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "🔄 [MIRROR-SYNC] Board-Differenz erkannt ($(date -u +%Y-%m-%d))" \
+            --label "mirror-sync" \
+            --body "Board-Differenz erkannt. Bitte \`python scripts/full_sync_100.py\` ausführen." \
+            2>/dev/null || true
+
+  apply-sync-fix:
+    name: Sync aktiv anwenden
+    needs: sync-check
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.apply_fix == 'true' &&
+      needs.sync-check.outputs.in_sync == 'false'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Full-Sync ausführen (PAT erforderlich)
+        env:
+          GH_TOKEN: ${{ secrets.SCHUNK_SYNC_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "❌ SCHUNK_SYNC_TOKEN nicht gesetzt – Sync nicht möglich"
+            echo "Bitte Secret in Repository-Settings hinterlegen"
+            exit 1
+          fi
+          echo "✅ PAT vorhanden – starte Full-Sync"
+          python scripts/full_sync_100.py 2>&1 | tee /tmp/fix_report.txt
+          echo "## ✅ Full-Sync Ergebnis" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/fix_report.txt >> $GITHUB_STEP_SUMMARY

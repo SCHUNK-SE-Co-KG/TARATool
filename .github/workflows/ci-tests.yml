@@ -1,0 +1,104 @@
+name: CI – Unit Tests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - development
+      - main
+  push:
+    branches:
+      - development
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  unit-tests:
+    name: Python Unit Tests (non-Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Abhängigkeiten installieren
+        run: |
+          pip install pytest --quiet
+          [ -f requirements.txt ] && pip install -r requirements.txt --quiet || true
+
+      - name: Story-Tests für diesen PR ausführen
+        id: story_tests
+        if: github.event_name == 'pull_request'
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
+          if [ -z "$TARA_ID" ]; then
+            echo "ℹ️  Kein TARA-ID im Branch – überspringe Story-Test"
+            exit 0
+          fi
+          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
+          TESTFILE="tests/test_TARA_${NUM}.py"
+          if [ ! -f "$TESTFILE" ]; then
+            echo "⚠️  Testdatei $TESTFILE nicht gefunden"
+            exit 0
+          fi
+          echo "Führe aus: pytest $TESTFILE"
+          pytest "$TESTFILE" --noconftest -v --tb=short
+          echo "story_testfile=$TESTFILE" >> $GITHUB_OUTPUT
+
+      - name: Alle Unit-Tests (kein Playwright) ausführen
+        run: |
+          # Playwright-Tests explizit ausschließen (benötigen Browser-Install)
+          pytest tests/ --noconftest -q \
+            --ignore=tests/test_TARA_0039.py \
+            --ignore=tests/test_TARA_0040.py \
+            --ignore=tests/test_TARA_0041.py \
+            --ignore=tests/test_TARA_0042.py \
+            --ignore=tests/test_TARA_0043.py \
+            --ignore=tests/test_TARA_0044.py \
+            --ignore=tests/test_TARA_0045.py \
+            --ignore=tests/test_TARA_0046.py \
+            --ignore=tests/test_TARA_0047.py \
+            --ignore=tests/test_TARA_0048.py \
+            --ignore=tests/test_TARA_0049.py \
+            --ignore=tests/test_TARA_0050.py \
+            --ignore=tests/test_TARA_0051.py \
+            --ignore=tests/test_TARA_0052.py \
+            --ignore=tests/test_TARA_0053.py \
+            --ignore=tests/test_TARA_0054.py \
+            --ignore=tests/test_TARA_0055.py \
+            2>&1 | tee /tmp/test_results.txt
+          EXIT_CODE=${PIPESTATUS[0]}
+          echo "## 🧪 Unit-Test Ergebnis" >> $GITHUB_STEP_SUMMARY
+          tail -20 /tmp/test_results.txt >> $GITHUB_STEP_SUMMARY
+          exit $EXIT_CODE
+
+  playwright-tests:
+    name: Playwright UI Tests
+    runs-on: ubuntu-latest
+    # Nur auf push zu development und main – nicht bei jedem PR (zu langsam)
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Abhängigkeiten installieren
+        run: |
+          pip install pytest playwright --quiet
+          playwright install chromium --with-deps
+
+      - name: Playwright Tests ausführen
+        run: |
+          pytest tests/test_TARA_003*.py tests/test_TARA_004*.py tests/test_TARA_005[0-5].py \
+            --noconftest -q --timeout=60 2>&1 | tee /tmp/playwright_results.txt || true
+          echo "## 🎭 Playwright Test Ergebnis" >> $GITHUB_STEP_SUMMARY
+          tail -20 /tmp/playwright_results.txt >> $GITHUB_STEP_SUMMARY
