@@ -84,7 +84,7 @@ class Finding:
 # ── Validierung ───────────────────────────────────────────────────────────────
 
 _SPECULATIVE_WORDS = (
-    "könnte", "koennnte", "koennte",
+    "könnte", "koennte",
     "möglicherweise", "moeglicherweise",
     "eventuell", "vielleicht", "ggf.",
     "wahrscheinlich", "vermutlich",
