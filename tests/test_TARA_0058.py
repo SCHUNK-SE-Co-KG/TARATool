@@ -55,13 +55,11 @@ async function processAll(items) {
 """
 
 RACE_CONDITION_JS = """\
-document.getElementById('save-btn').addEventListener('click', function() {
-    localStorage.setItem('taraData', JSON.stringify(state));
-});
-
-window.addEventListener('beforeunload', function() {
-    localStorage.setItem('taraData', JSON.stringify(state));
-});
+async function autoSave() {
+    const current = localStorage.getItem('taraData');
+    const parsed = await processData(current);
+    localStorage.setItem('taraData', JSON.stringify(parsed));
+}
 """
 
 CORRECT_CODE_JS = """\

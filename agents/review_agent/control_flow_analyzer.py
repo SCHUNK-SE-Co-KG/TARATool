@@ -2,10 +2,15 @@
 
 Prüft JavaScript/TypeScript-Code auf:
   R-31 – Toter Code nach return/throw
-  R-32 – Race Conditions bei localStorage.setItem in mehreren Event-Handlern
+  R-32 – Potenzielle Lost-Update-Patterns bei localStorage.setItem
+          (getItem → Mutation → setItem mit async/await dazwischen)
   R-36 – Fehlendes await vor asynchronen Aufrufen in async-Funktionen
 
-Jedes Finding nutzt das Finding-Framework aus TARA-0062.
+Review-Fixes H1/H2/H3:
+  H1: R-32 brace_depth-Boundary fixed (<=0 statt <0)
+  H2: R-32 konzeptionell überarbeitet – nur getItem+setItem auf GLEICHEN Key
+      ohne await → echter Lost-Update-Verdacht; Confidence.Low wegen Regex-Grenzen
+  H3: R-36 Stack statt einzelner Variable für verschachtelte async-Funktionen
 """
 from __future__ import annotations
 
@@ -26,19 +31,21 @@ _NON_EMPTY_CODE  = re.compile(r'^\s*\S')
 _BLOCK_CLOSER    = re.compile(r'^\s*\}')
 _COMMENT_LINE    = re.compile(r'^\s*//')
 
-# R-36
+# R-36 – Stack-basierter Async-Scope
 _ASYNC_FUNC_START = re.compile(
     r'^\s*(?:export\s+)?async\s+function\s+\w+'
     r'|^\s*(?:const|let|var)\s+\w+\s*=\s*async\s*\('
+    r'|^\s*(?:const|let|var)\s+\w+\s*=\s*async\s+\('
 )
-# const/let/var x = fn(  -- but NOT  const x = await fn(
+# const/let/var x = fn(  – aber NICHT  const x = await fn(
 _ASSIGN_CALL_NO_AWAIT = re.compile(
     r'^\s*(?:const|let|var)\s+\w+\s*=\s*(?!await\s)(\w+)\s*\('
 )
 
-# R-32
-_ADD_EVENT_LISTENER = re.compile(r'\.addEventListener\s*\(')
-_LOCALSTORAGE_SET   = re.compile(r'localStorage\.setItem\s*\(')
+# R-32 – Lost-Update: getItem + setItem auf gleichem Key ohne await dazwischen
+_LOCALSTORAGE_GET = re.compile(r'localStorage\.getItem\s*\(\s*([\'"][\w-]+[\'"])\s*\)')
+_LOCALSTORAGE_SET = re.compile(r'localStorage\.setItem\s*\(\s*([\'"][\w-]+[\'"])')
+_HAS_AWAIT        = re.compile(r'\bawait\b')
 
 # Sync-Builtins – niemals async, R-36 überspringen
 _SYNC_BUILTINS = frozenset({
@@ -49,10 +56,7 @@ _SYNC_BUILTINS = frozenset({
 
 
 class ControlFlowAnalyzer:
-    """Analysiert JS/TS-Code-Strings auf R-31, R-32, R-36 Defekte.
-
-    Gibt Liste von Finding-Objekten zurück (Finding-Framework TARA-0062).
-    """
+    """Analysiert JS/TS-Code auf R-31, R-32, R-36 Defekte."""
 
     def analyze_code(self, code: str, file_path: str) -> list[Finding]:
         """Vollständige Analyse eines Code-Strings."""
@@ -98,32 +102,35 @@ class ControlFlowAnalyzer:
                 break
         return findings
 
-    # ── R-36: Fehlendes await ─────────────────────────────────────────────────
+    # ── R-36: Fehlendes await (Stack-basiert, H3-Fix) ────────────────────────
 
     def _check_missing_await(self, lines: list[str], file_path: str) -> list[Finding]:
-        """Erkennt fehlende await-Aufrufe in async-Funktionen."""
+        """Erkennt fehlende await-Aufrufe in async-Funktionen.
+
+        Stack-basierter Ansatz (H3-Fix): verschachtelte async-Funktionen werden
+        korrekt behandelt.
+        """
         findings: list[Finding] = []
-        in_async   = False
-        depth      = 0
-        func_depth = 0
+        depth       = 0
+        # Stack: list of (func_entry_depth) – jede async-Funktion schiebt ihren Eintrittslevel
+        async_stack: list[int] = []
 
         for i, line in enumerate(lines):
             if _ASYNC_FUNC_START.match(line):
-                in_async   = True
-                func_depth = depth
+                async_stack.append(depth)
 
             opens  = line.count("{")
             closes = line.count("}")
             depth += opens - closes
 
-            if not in_async:
+            # Pop vollständig beendete async-Kontexte
+            while async_stack and closes > 0 and depth <= async_stack[-1]:
+                async_stack.pop()
+
+            if not async_stack:
                 continue
 
-            # Funktion endet wenn Tiefe auf Eintrittstiefe fällt
-            if closes > 0 and depth <= func_depth:
-                in_async = False
-                continue
-
+            # Prüfe nur wenn wir innerhalb einer async-Funktion sind
             m = _ASSIGN_CALL_NO_AWAIT.match(line)
             if m:
                 fn_name = m.group(1)
@@ -145,44 +152,62 @@ class ControlFlowAnalyzer:
 
         return findings
 
-    # ── R-32: Race Conditions ─────────────────────────────────────────────────
+    # ── R-32: Lost-Update-Pattern (H1/H2-Fix) ────────────────────────────────
 
     def _check_race_conditions(self, lines: list[str], file_path: str) -> list[Finding]:
-        """Erkennt localStorage.setItem in mehreren Event-Handler-Callbacks."""
+        """Erkennt getItem → [await/async gap] → setItem auf GLEICHEM Key.
+
+        H1-Fix: Nur GLEICHER Storage-Key wird als Lost-Update gewertet.
+        H2-Fix: Confidence.Low – Regex-Analyse kann async-Grenzen nicht zuverlässig bestimmen.
+
+        Erkennt: localStorage.getItem('key') ... await ... localStorage.setItem('key', ...)
+        ohne dass der Wert explizit re-gelesen wird → potentielles Lost-Update.
+        """
         findings: list[Finding] = []
-        in_handler  = False
-        brace_depth = 0
-        set_lines: list[int] = []
+        # Sammel getItem-Keys und ihre Zeilennummern
+        get_keys: dict[str, int] = {}  # key → first getItem line
+        # Zwischen getItem und setItem: flag ob await gesehen
+        has_await_between: dict[str, bool] = {}
 
         for i, line in enumerate(lines):
-            if _ADD_EVENT_LISTENER.search(line):
-                in_handler  = True
-                brace_depth = 0
+            # getItem registrieren
+            gm = _LOCALSTORAGE_GET.search(line)
+            if gm:
+                key = gm.group(1)
+                if key not in get_keys:
+                    get_keys[key] = i + 1
+                    has_await_between[key] = False
 
-            if in_handler:
-                brace_depth += line.count("{") - line.count("}")
-                if _LOCALSTORAGE_SET.search(line):
-                    set_lines.append(i + 1)
-                if brace_depth < 0:
-                    in_handler  = False
-                    brace_depth = 0
+            # await zwischen getItem und setItem merken
+            if _HAS_AWAIT.search(line):
+                for key in get_keys:
+                    has_await_between[key] = True
 
-        if len(set_lines) >= 2:
-            evidence_str = f"localStorage.setItem in Zeilen: {', '.join(map(str, set_lines))}"
-            findings.append(create_finding(
-                tara_id="0058",
-                rule="R-32",
-                severity=Severity.Hoch,
-                confidence=Confidence.Medium,
-                file=file_path,
-                line=set_lines[0],
-                finding_type="RaceCondition",
-                evidence={"code_snippet": evidence_str},
-                reasoning=(
-                    f"localStorage.setItem in {len(set_lines)} Event-Handlern ohne "
-                    "Synchronisierungslogik. Gleichzeitige Events können zu "
-                    "inkonsistenten Speicherzuständen führen (R-32)."
-                ),
-            ))
+            # setItem auf bekanntem getItem-Key mit await dazwischen → Lost-Update
+            sm = _LOCALSTORAGE_SET.search(line)
+            if sm:
+                key = sm.group(1)
+                if key in get_keys and has_await_between.get(key, False):
+                    evidence_str = (
+                        f"localStorage.getItem({key}) in Zeile {get_keys[key]}, "
+                        f"localStorage.setItem({key}) in Zeile {i + 1} mit await dazwischen"
+                    )
+                    findings.append(create_finding(
+                        tara_id="0058",
+                        rule="R-32",
+                        severity=Severity.Mittel,
+                        confidence=Confidence.Low,
+                        file=file_path,
+                        line=i + 1,
+                        finding_type="RaceCondition",
+                        evidence={"code_snippet": evidence_str},
+                        reasoning=(
+                            f"Potentielles Lost-Update: localStorage.getItem({key}) gefolgt von "
+                            f"await und localStorage.setItem({key}). Ein anderer Handler könnte "
+                            "den Wert zwischen Read und Write überschreiben (R-32)."
+                        ),
+                    ))
+                    # Key entfernen, nicht doppelt melden
+                    del get_keys[key]
 
         return findings
