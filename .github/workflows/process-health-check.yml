@@ -1,0 +1,75 @@
+name: Prozess Health-Check – Tägliche Compliance
+
+on:
+  schedule:
+    # Täglich um 07:00 UTC (08:00 MEZ)
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+    paths:
+      - 'docs/**'
+      - 'agents/**'
+      - 'scripts/**'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  health-check:
+    name: Prozess-Health-Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python 3.12 einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Health-Check ausführen
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/process_health_check.py > /tmp/health_report.txt 2>&1
+          EXIT_CODE=$?
+          cat /tmp/health_report.txt
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "status=OK" >> $GITHUB_OUTPUT
+          elif [ $EXIT_CODE -eq 1 ]; then
+            echo "status=WARNING" >> $GITHUB_OUTPUT
+          else
+            echo "status=BLOCKED" >> $GITHUB_OUTPUT
+          fi
+
+          echo "## 🏥 Prozess Health-Check" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/health_report.txt >> $GITHUB_STEP_SUMMARY
+          exit $EXIT_CODE
+
+      - name: Issue bei BLOCKED erstellen
+        if: failure() && steps.check.outputs.status == 'BLOCKED'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date -u +"%Y-%m-%d")
+          gh issue create \
+            --repo "${{ github.repository }}" \
+            --title "🚨 [PROCESS-GUARD] Health-Check BLOCKED (${DATE})" \
+            --label "review-finding" \
+            --body "## Prozess Health-Check fehlgeschlagen
+
+Der automatische Prozess-Health-Check hat **BLOCKER** gefunden.
+
+**Datum:** ${DATE}
+**Workflow:** [Zum Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+### Bitte prüfen:
+- Fehlende Docs-Abschnitte in \`docs/ENTWICKLUNGSPROZESS.md\`
+- Board-Sync-Differenzen
+- Blocking Issues ohne Bearbeitung
+
+*Automatisch erstellt von Process-Health-Check Workflow*" 2>/dev/null || true
