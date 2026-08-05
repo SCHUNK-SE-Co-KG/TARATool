@@ -1,0 +1,191 @@
+name: PO-Approve – Freigabe → Done (P-15 Enforcement)
+
+# Dieser Workflow erzwingt P-15: Done darf NUR gesetzt werden wenn
+# der PO "PO-OK" oder "Freigabe erteilt" als Issue-Kommentar hinterlassen hat.
+#
+# Trigger: Neuer Kommentar an einem Issue
+# Ablauf:
+#   1. Prüfe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
+#   2. Prüfe ob Kommentar "PO-OK" oder "Freigabe erteilt" enthält
+#   3. Extrahiere TARA-ID(s) aus dem Issue
+#   4. Setze alle gefundenen Items auf "Done" auf beiden Boards
+#   5. Bestätigung als Reply-Kommentar
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-po-approval:
+    name: PO-Freigabe prüfen
+    runs-on: ubuntu-latest
+    # Nur bei Issues (nicht bei PR-Kommentaren) und nur bei relevanten Keywords
+    if: |
+      github.event.issue.pull_request == null &&
+      (
+        contains(github.event.comment.body, 'PO-OK') ||
+        contains(github.event.comment.body, 'Freigabe erteilt') ||
+        contains(github.event.comment.body, 'po-ok') ||
+        contains(github.event.comment.body, 'freigabe erteilt')
+      )
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prüfe Berechtigungen des Kommentators
+        id: permission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const level = perm.permission;
+            console.log(`${context.actor} hat Berechtigung: ${level}`);
+            // Nur write, maintain oder admin dürfen freigeben
+            const allowed = ['write', 'maintain', 'admin'].includes(level);
+            core.setOutput('allowed', String(allowed));
+            if (!allowed) {
+              core.warning(`${context.actor} hat keine Schreibberechtigung – Freigabe ignoriert`);
+            }
+            return allowed;
+
+      - name: Freigabe verarbeiten
+        if: steps.permission.outputs.allowed == 'true'
+        uses: actions/github-script@v7
+        env:
+          BH_PROJECT:   "PVT_kwHOBLN4284BfLtb"
+          BH_FIELD:     "PVTSSF_lAHOBLN4284BfLtbzhZgYuI"
+          SK_PROJECT:   "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+          DONE_OPTION:  "98236657"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issueNumber = context.issue.number;
+            const issueTitle  = context.payload.issue.title;
+            const issueBody   = context.payload.issue.body || '';
+            const comment     = context.payload.comment.body;
+
+            console.log(`Issue #${issueNumber}: ${issueTitle}`);
+            console.log(`Kommentar von ${context.actor}: ${comment}`);
+
+            // TARA-IDs aus Titel und Body extrahieren
+            const taraPattern = /TARA-(\d{4})/g;
+            const ids = new Set();
+            for (const match of (issueTitle + ' ' + issueBody).matchAll(taraPattern)) {
+              ids.add(match[0]);
+            }
+            console.log(`Gefundene TARA-IDs: ${[...ids].join(', ')}`);
+
+            if (ids.size === 0) {
+              console.log('Keine TARA-IDs im Issue – keine Board-Aktion');
+              return;
+            }
+
+            // Für jede TARA-ID: Items auf beiden Boards auf Done setzen
+            const bhProject  = process.env.BH_PROJECT;
+            const skProject  = process.env.SK_PROJECT;
+            const bhField    = process.env.BH_FIELD;
+            const skField    = process.env.SK_FIELD;
+            const doneOption = process.env.DONE_OPTION;
+
+            for (const taraId of ids) {
+              // Board-Items für diese TARA-ID suchen (beide Boards)
+              for (const [projectId, fieldId] of [[bhProject, bhField], [skProject, skField]]) {
+                try {
+                  // Alle Items des Projekts abrufen und nach TARA-ID filtern
+                  const query = `
+                    query($projectId: ID!) {
+                      node(id: $projectId) {
+                        ... on ProjectV2 {
+                          items(first: 100) {
+                            nodes {
+                              id
+                              content {
+                                ... on Issue { title number }
+                              }
+                              fieldValues(first: 10) {
+                                nodes {
+                                  ... on ProjectV2ItemFieldSingleSelectValue {
+                                    name
+                                    field { ... on ProjectV2SingleSelectField { name } }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }`;
+                  const result = await github.graphql(query, { projectId });
+                  const items = result.node.items.nodes;
+                  const matching = items.filter(item =>
+                    item.content && item.content.title && item.content.title.includes(taraId)
+                  );
+
+                  for (const item of matching) {
+                    // Aktuellen Status prüfen (nur Freigabe-Items auf Done setzen)
+                    const statusField = item.fieldValues.nodes.find(
+                      fv => fv.field && fv.field.name === 'Status'
+                    );
+                    const currentStatus = statusField ? statusField.name : 'unknown';
+                    console.log(`${taraId} [${projectId.slice(-8)}]: Status=${currentStatus}, Item=${item.id}`);
+
+                    if (currentStatus !== 'Freigabe') {
+                      console.log(`  → Übersprungen (nicht Freigabe: ${currentStatus})`);
+                      continue;
+                    }
+
+                    // Status → Done setzen
+                    const mutation = `
+                      mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                        updateProjectV2ItemFieldValue(input: {
+                          projectId: $projectId
+                          itemId: $itemId
+                          fieldId: $fieldId
+                          value: { singleSelectOptionId: $optionId }
+                        }) {
+                          projectV2Item { id }
+                        }
+                      }`;
+                    await github.graphql(mutation, {
+                      projectId,
+                      itemId: item.id,
+                      fieldId,
+                      optionId: doneOption,
+                    });
+                    console.log(`  ✅ ${taraId} → Done (Board: ${projectId.slice(-8)})`);
+                  }
+                } catch (err) {
+                  console.error(`  ❌ Fehler bei ${taraId} (Board ${projectId.slice(-8)}): ${err.message}`);
+                }
+              }
+            }
+
+            // Bestätigungs-Kommentar
+            const taraList = [...ids].map(id => `\`${id}\``).join(', ');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `✅ **PO-Freigabe registriert** (${context.actor})\n\nFolgende Items wurden automatisch auf **Done** gesetzt: ${taraList}\n\n*Ausgelöst durch: "${comment.split('\n')[0].substring(0, 80)}"*`,
+            });
+
+      - name: Keine Berechtigung – Warnung
+        if: steps.permission.outputs.allowed == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `⚠️ **P-15 – Keine Berechtigung**: ${context.actor} hat keine Schreibberechtigung und kann keine Freigabe erteilen. Nur Repository-Maintainer können \`PO-OK\` erteilen.`,
+            });
