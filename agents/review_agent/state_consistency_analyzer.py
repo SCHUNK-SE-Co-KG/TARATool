@@ -18,7 +18,7 @@ from agents.review_agent.finding_framework import (
 # ─── Patterns ────────────────────────────────────────────────────────────────
 
 # R-37 – State-Konsistenz
-_LOCALSTORAGE_SET  = re.compile(r'localStorage\.setItem\s*\(')
+_LOCALSTORAGE_SET  = re.compile(r'(?:localStorage|sessionStorage)\.setItem\s*\(')
 # UI-Refresh-Signale: Funktionen die den UI-State aktualisieren
 _UI_REFRESH_CALLS  = re.compile(
     r'\b(render\w*|getActiveAnalysis|refreshTab|updateUI|repaint|'

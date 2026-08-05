@@ -67,6 +67,7 @@ class ControlFlowAnalyzer:
         results.extend(self._check_dead_code(lines, file_path))
         results.extend(self._check_missing_await(lines, file_path))
         results.extend(self._check_race_conditions(lines, file_path))
+        results.extend(self._check_unhandled_promises(lines, file_path))
         return results
 
     # ── R-31: Toter Code ─────────────────────────────────────────────────────
@@ -210,4 +211,38 @@ class ControlFlowAnalyzer:
                     # Key entfernen, nicht doppelt melden
                     del get_keys[key]
 
+        return findings
+
+    # ── R-36b: Unbehandelte Promise-Rejection (.then ohne .catch) ────────────
+
+    def _check_unhandled_promises(self, lines: list[str], file_path: str) -> list[Finding]:
+        """Erkennt .then()-Aufrufe ohne anschließendes .catch() oder .finally()."""
+        findings: list[Finding] = []
+        for i, line in enumerate(lines):
+            if line.strip().startswith("//"):
+                continue
+            if ".then(" not in line:
+                continue
+            # Prüfe ob .catch( oder .finally( in den nächsten 6 Zeilen folgt (gesamte Chain)
+            context = "\n".join(lines[i:min(i + 6, len(lines))])
+            if ".catch(" in context or ".finally(" in context:
+                continue
+            # await-Kontext: Fehler durch umgebenden try/catch abgefangen
+            if "await" in line or "try" in line:
+                continue
+            findings.append(create_finding(
+                tara_id="0058",
+                rule="R-36",
+                severity=Severity.Mittel,
+                confidence=Confidence.Medium,
+                file=file_path,
+                line=i + 1,
+                finding_type="AsyncSequenz",
+                evidence={"code_snippet": line.strip()},
+                reasoning=(
+                    ".then() ohne .catch() oder .finally(): Promise-Rejection-Fehler werden "
+                    "nicht behandelt → unhandledRejection und stille Bugs. "
+                    ".catch(err => ...) an die Promise-Chain anhängen."
+                ),
+            ))
         return findings

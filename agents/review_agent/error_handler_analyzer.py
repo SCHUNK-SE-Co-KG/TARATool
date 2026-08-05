@@ -19,12 +19,15 @@ from agents.review_agent.finding_framework import (
 # ─── Patterns ────────────────────────────────────────────────────────────────
 
 # R-33
-_CATCH_START     = re.compile(r'^\s*\}\s*catch\s*\(')
-_EMPTY_LINE      = re.compile(r'^\s*$')
-_BLOCK_CLOSER    = re.compile(r'^\s*\}')
-_CONSOLE_ONLY    = re.compile(r'^\s*console\.\w+\s*\(')
-_JSON_PARSE      = re.compile(r'\bJSON\.parse\s*\(')
-_TRY_START       = re.compile(r'^\s*try\s*\{')
+_CATCH_START        = re.compile(r'^\s*(?:\}\s*)?catch\s*\(')  # } catch( oder standalone catch(
+_EMPTY_LINE         = re.compile(r'^\s*$')
+_BLOCK_CLOSER       = re.compile(r'^\s*\}')
+_CONSOLE_ONLY       = re.compile(r'^\s*console\.\w+\s*\(')
+_JSON_PARSE         = re.compile(r'\bJSON\.parse\s*\(')
+_TRY_START          = re.compile(r'^\s*try\s*\{')
+# Zeilen, die nur Kommentare enthalten – kein echter Code im catch-Block
+_LINE_COMMENT       = re.compile(r'^\s*//')
+_BLOCK_COMMENT_LINE = re.compile(r'^\s*/\*.*\*/\s*$')  # einzeiliger /* ... */
 
 # R-34 – || Operator mit Literal-Default (potenziell falsy-Problem)
 # Sucht: varname = expr || default  -- nicht in kommentaren
@@ -33,6 +36,8 @@ _OR_DEFAULT      = re.compile(
 )
 # Schließt reine boolean-Defaults aus: || true / || false -> häufig bewusst
 _BOOLEAN_DEFAULT = re.compile(r'\|\|\s*(true|false)\s*[;,\n]')
+# R-34b: ||= Zuweisungsoperator (gleiche Semantik wie ||)
+_OR_ASSIGN       = re.compile(r'(\w[\w.]*)\s*\|\|=\s*(\w+|["\'].*?["\']|\d+)')
 
 # R-35 – mehrstufige Property-Zugriffe ohne Optional-Chaining
 # Erkennt: a.b.c (ohne ?.) wobei mindestens 2 Ebenen tief
@@ -47,6 +52,9 @@ _SAFE_ROOTS      = frozenset({
     "Promise", "Error", "RegExp", "Map", "Set", "WeakMap",
     "globalThis", "self", "global",
 })
+# R-35b: Partielles Optional-Chaining a?.b.c.d – letztes Segment noch unsicher
+# Erkennt: \w+\?\.(\w+)\.(\w+)  (ein ?. vorhanden aber noch .x.y dahinter)
+_PARTIAL_OPTIONAL = re.compile(r'\w+\?\.\w+\.(\w+)(?![\?\.])')
 # Pattern für inline-Code nach dem { auf einer catch-Zeile
 _CATCH_INLINE_CODE = re.compile(r'\}\s*catch\s*\([^)]*\)\s*\{(.+)')
 
@@ -89,10 +97,12 @@ class ErrorHandlerAnalyzer:
                 block_lines.append((j, l))
                 j += 1
 
-            # Filtere reine Leerzeilen
+            # Filtere Leerzeilen und reine Kommentarzeilen (kein echter Code)
             code_lines = [
                 (ln, l) for ln, l in block_lines
                 if not _EMPTY_LINE.match(l)
+                and not _LINE_COMMENT.match(l)
+                and not _BLOCK_COMMENT_LINE.match(l)
             ]
 
             # Prüfe ob catch-Header-Zeile selbst Code enthält (single-line catch)
@@ -100,8 +110,8 @@ class ErrorHandlerAnalyzer:
             catch_inline = _CATCH_INLINE_CODE.search(line)
             if catch_inline:
                 inline_code = catch_inline.group(1).strip()
-                if inline_code:
-                    # Inline-Code als erste(n) Block-Inhalt hinzufügen
+                # Inline-Code nur hinzufügen wenn es echter Code ist (kein Kommentar)
+                if inline_code and not _LINE_COMMENT.match(inline_code) and not _BLOCK_COMMENT_LINE.match(inline_code):
                     code_lines = [(i, inline_code)] + code_lines
 
             if not code_lines:
@@ -179,52 +189,89 @@ class ErrorHandlerAnalyzer:
     # ── R-34: Defaultwerte ────────────────────────────────────────────────────
 
     def _check_or_defaults(self, lines: list[str], file_path: str) -> list[Finding]:
-        """Erkennt || statt ?? bei potenziell falschen Defaults."""
+        """Erkennt || und ||= statt ?? bei potenziell falschen Defaults."""
         findings: list[Finding] = []
         for i, line in enumerate(lines):
-            # Kommentare überspringen
             if line.strip().startswith("//"):
                 continue
+
+            # R-34: const/let/var x = expr || default
             m = _OR_DEFAULT.search(line)
-            if not m:
-                continue
-            # Bewusste boolean Defaults (|| true/false) ausschließen
-            if _BOOLEAN_DEFAULT.search(line):
-                continue
-            default_val = m.group(1)
-            findings.append(create_finding(
-                tara_id="0059",
-                rule="R-34",
-                severity=Severity.Mittel,
-                confidence=Confidence.Medium,
-                file=file_path,
-                line=i + 1,
-                finding_type="Defaultwert",
-                evidence={"code_snippet": line.strip()},
-                reasoning=(
-                    f"|| mit Default '{default_val}': Der ||-Operator greift bei ALLEN "
-                    "falsy-Werten (0, '', false, NaN). Falls der linke Operand 0 oder '' "
-                    "sein kann, verwende ?? (Nullish-Coalescing) stattdessen."
-                ),
-            ))
+            if m and not _BOOLEAN_DEFAULT.search(line):
+                default_val = m.group(1)
+                findings.append(create_finding(
+                    tara_id="0059",
+                    rule="R-34",
+                    severity=Severity.Mittel,
+                    confidence=Confidence.Medium,
+                    file=file_path,
+                    line=i + 1,
+                    finding_type="Defaultwert",
+                    evidence={"code_snippet": line.strip()},
+                    reasoning=(
+                        f"|| mit Default '{default_val}': Der ||-Operator greift bei ALLEN "
+                        "falsy-Werten (0, '', false, NaN). Falls der linke Operand 0 oder '' "
+                        "sein kann, verwende ?? (Nullish-Coalescing) stattdessen."
+                    ),
+                ))
+
+            # R-34b: x ||= default  (OR-Zuweisung – gleiche Semantik)
+            m2 = _OR_ASSIGN.search(line)
+            if m2 and not _BOOLEAN_DEFAULT.search(line):
+                target, default_val = m2.group(1), m2.group(2)
+                findings.append(create_finding(
+                    tara_id="0059",
+                    rule="R-34",
+                    severity=Severity.Mittel,
+                    confidence=Confidence.Medium,
+                    file=file_path,
+                    line=i + 1,
+                    finding_type="Defaultwert",
+                    evidence={"code_snippet": line.strip()},
+                    reasoning=(
+                        f"||= Zuweisung auf '{target}' mit Default '{default_val}': "
+                        "||= überschreibt bei ALLEN falsy-Werten (0, '', false, NaN). "
+                        "Verwende ??= (Nullish-Assignment) wenn nur null/undefined ersetzt werden soll."
+                    ),
+                ))
+
         return findings
 
     # ── R-35: Null/Undefined Chains ───────────────────────────────────────────
 
     def _check_null_chains(self, lines: list[str], file_path: str) -> list[Finding]:
-        """Erkennt mehrstufige Property-Zugriffe ohne Optional-Chaining."""
+        """Erkennt mehrstufige Property-Zugriffe ohne Optional-Chaining (R-35)
+        und partielles Optional-Chaining wo letzte Ebene noch unsicher ist (R-35b)."""
         findings: list[Finding] = []
         for i, line in enumerate(lines):
-            # Kommentare und import/require überspringen
             stripped = line.strip()
             if stripped.startswith("//") or "require(" in line or "import " in line:
-                continue
-            # Hat bereits optional chaining → OK
-            if _OPTIONAL_CHAIN.search(line):
                 continue
             # typeof-Guard vorhanden → OK
             if _TYPEOF_GUARD.search(line):
                 continue
+
+            if _OPTIONAL_CHAIN.search(line):
+                # R-35b: Hat ?. aber noch unsicheres Trailing-Segment (a?.b.c.d)
+                m_p = _PARTIAL_OPTIONAL.search(line)
+                if m_p:
+                    findings.append(create_finding(
+                        tara_id="0059",
+                        rule="R-35",
+                        severity=Severity.Niedrig,
+                        confidence=Confidence.Low,
+                        file=file_path,
+                        line=i + 1,
+                        finding_type="NullSafety",
+                        evidence={"code_snippet": stripped},
+                        reasoning=(
+                            "Partielles Optional-Chaining: Die Chain verwendet ?. an einer "
+                            f"Stelle, hat danach aber noch unsichere Property-Zugriffe (.{m_p.group(1)}). "
+                            "Optional-Chaining konsequent auf alle Ebenen ausweiten."
+                        ),
+                    ))
+                continue  # Normale R-35-Prüfung überspringen
+
             m = _DEEP_CHAIN.search(line)
             if m:
                 root = m.group(1)
@@ -243,7 +290,7 @@ class ErrorHandlerAnalyzer:
                     reasoning=(
                         f"Property-Chain '{chain}' ohne Optional-Chaining (?.) oder "
                         f"null-Guard. Falls '{m.group(1)}.{m.group(2)}' null/undefined ist, "
-                        "wirft der Zugriff auf '.{m.group(3)}' einen TypeError."
+                        f"wirft der Zugriff auf '.{m.group(3)}' einen TypeError."
                     ),
                 ))
         return findings

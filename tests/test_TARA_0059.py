@@ -172,3 +172,88 @@ def test_no_false_positives_on_correct_code():
     findings = analyzer.analyze_code(CORRECT_CODE_JS, file_path="js/correct.js")
     target_rules = {f.rule for f in findings} & {"R-33", "R-34", "R-35"}
     assert len(target_rules) == 0
+
+
+# ─── Neue Tests: Fix R-33a Kommentare + R-34b ||= + R-35b partiales Chaining ─
+
+COMMENT_ONLY_CATCH_JS = """\
+function loadConfig(path) {
+    try {
+        return readFile(path);
+    } catch (e) {
+        // deliberately empty
+    }
+}
+"""
+
+BLOCK_COMMENT_CATCH_JS = """\
+function foo() {
+    try { doSomething(); }
+    catch (e) { /* ignore */ }
+}
+"""
+
+OR_ASSIGN_JS = """\
+function initCounter(obj) {
+    obj.count ||= 0;
+    obj.name ||= 'default';
+}
+"""
+
+PARTIAL_OPTIONAL_JS = """\
+function getCity(response) {
+    return response?.user.address.city;
+}
+"""
+
+
+def test_comment_only_catch_detected():
+    """R-33a Fix: Nur-Kommentar im catch-Block wird als leerer catch erkannt."""
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(COMMENT_ONLY_CATCH_JS, "test.js")
+    r33 = [f for f in findings if f.rule == "R-33"]
+    assert len(r33) >= 1, "Kommentar-only catch muss als leer erkannt werden"
+
+
+def test_block_comment_catch_detected():
+    """R-33a Fix: Einzeiliger Block-Kommentar zaehlt ebenfalls als leer."""
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(BLOCK_COMMENT_CATCH_JS, "test.js")
+    r33 = [f for f in findings if f.rule == "R-33"]
+    assert len(r33) >= 1
+
+
+def test_or_assign_operator_detected():
+    """R-34b: Zuweisungsoperator auf OR-Basis erzeugt R-34."""
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(OR_ASSIGN_JS, "test.js")
+    r34 = [f for f in findings if f.rule == "R-34"]
+    assert len(r34) >= 2, f"Zwei OR-Assign sollten 2 R-34 ergeben, got {len(r34)}"
+    assert any("Nullish-Assignment" in f.reasoning for f in r34)
+
+
+def test_nullish_assign_no_finding():
+    """Nullish-Assignment Operator ist korrekt und erzeugt kein R-34."""
+    code = "obj.count ??= 0;"
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(code, "test.js")
+    r34 = [f for f in findings if f.rule == "R-34"]
+    assert len(r34) == 0
+
+
+def test_partial_optional_chain_detected():
+    """R-35b: Partielles Optional-Chaining mit noch unsicherem Trailing wird erkannt."""
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(PARTIAL_OPTIONAL_JS, "test.js")
+    r35 = [f for f in findings if f.rule == "R-35"]
+    assert len(r35) >= 1, "Partielles Chaining muss als R-35 gemeldet werden"
+    assert r35[0].severity.value == "Niedrig"
+
+
+def test_full_optional_chain_no_r35_finding():
+    """Vollstaendiges Optional-Chaining erzeugt kein R-35."""
+    code = "const city = response?.user?.address?.city;"
+    analyzer = ErrorHandlerAnalyzer()
+    findings = analyzer.analyze_code(code, "test.js")
+    r35 = [f for f in findings if f.rule == "R-35"]
+    assert len(r35) == 0

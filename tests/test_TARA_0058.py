@@ -179,3 +179,56 @@ def test_analyze_returns_list_of_findings():
     analyzer = ControlFlowAnalyzer()
     result = analyzer.analyze_code("", file_path="empty.js")
     assert isinstance(result, list)
+
+
+# ─── Neue Tests: R-36b .then() ohne .catch() ──────────────────────────────────
+
+THEN_WITHOUT_CATCH_JS = """\
+function loadUser(id) {
+    fetch('/api/users/' + id)
+        .then(response => response.json())
+        .then(data => { this.user = data; });
+}
+"""
+
+THEN_WITH_CATCH_JS = """\
+function loadUser(id) {
+    fetch('/api/users/' + id)
+        .then(response => response.json())
+        .then(data => { this.user = data; })
+        .catch(err => console.error(err));
+}
+"""
+
+THEN_WITH_FINALLY_JS = """\
+function loadUser(id) {
+    fetch('/api/users/' + id)
+        .then(data => process(data))
+        .finally(() => { this.loading = false; });
+}
+"""
+
+
+def test_then_without_catch_detected():
+    """R-36b: .then() ohne .catch() wird als R-36 gemeldet."""
+    analyzer = ControlFlowAnalyzer()
+    findings = analyzer.analyze_code(THEN_WITHOUT_CATCH_JS, "test.js")
+    r36 = [f for f in findings if f.rule == "R-36"]
+    assert len(r36) >= 1, ".then() ohne .catch() muss als R-36 erkannt werden"
+
+
+def test_then_with_catch_no_finding():
+    """R-36b: .then().catch() ist korrekt und erzeugt kein R-36."""
+    analyzer = ControlFlowAnalyzer()
+    findings = analyzer.analyze_code(THEN_WITH_CATCH_JS, "test.js")
+    # Kein .then-without-catch Finding (andere R-36 von missing-await sind ok)
+    then_findings = [f for f in findings if ".then(" in f.evidence.get("code_snippet", "")]
+    assert len(then_findings) == 0
+
+
+def test_then_with_finally_no_finding():
+    """R-36b: .then().finally() ist ebenfalls korrekt."""
+    analyzer = ControlFlowAnalyzer()
+    findings = analyzer.analyze_code(THEN_WITH_FINALLY_JS, "test.js")
+    then_findings = [f for f in findings if ".then(" in f.evidence.get("code_snippet", "")]
+    assert len(then_findings) == 0
