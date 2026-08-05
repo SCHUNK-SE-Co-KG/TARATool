@@ -17,7 +17,7 @@ Entwicklung starten mÃ¶chten.
 4. [Der vollstÃ¤ndige Story-Workflow](#4-der-vollstÃ¤ndige-story-workflow)
 5. [Board-StatusÃ¼bergÃ¤nge](#5-board-statusÃ¼bergÃ¤nge)
 6. [Technische QualitÃ¤tssicherung](#6-technische-qualitÃ¤tssicherung)
-7. [Prozessregeln (P-01 bis P-16)](#7-prozessregeln-p-01-bis-p-16)
+7. [Prozessregeln (P-01 bis P-17)](#7-prozessregeln-p-01-bis-p-16)
 8. [Ausnahmen und SonderfÃ¤lle](#8-ausnahmen-und-sonderfÃ¤lle)
 9. [Dokumente auf einen Blick](#9-dokumente-auf-einen-blick)
 
@@ -38,7 +38,27 @@ Entwicklung starten mÃ¶chten.
 - Dev-Agent **beginnt keine Arbeit** ohne explizite PO-Freigabe
 - Review-Agent und Prozess-Guard kommunizieren **ausschlieÃŸlich Ã¼ber GitHub Issues**
   (Label: `review-finding`) â€” kein direkter Dialog mit dem Dev-Agent
-- PO-Freigabe erfolgt per **Chat-Nachricht** (z. B. â€žOK" oder â€žfreigegeben")
+- **PO-Freigabe (Done)** erfolgt ausschliesslich per **Issue-Kommentar** mit dem Schluesselwort
+  `PO-OK` oder `Freigabe erteilt` - **nicht** per Chat-Nachricht.
+- Die GitHub-Automation (`po-approve.yml`) erkennt diese Kommentare und setzt den Status automatisch.
+
+### Merge-Berechtigung des Dev-Agents
+
+Der Dev-Agent darf **eigenstaendig mergen** wenn:
+1. Review abgeschlossen (keine offenen Critical/High Findings)
+2. Prozess-Guard: PROCESS OK
+3. Alle Story-Tests gruen
+
+Nach dem Merge: Status -> **Freigabe** setzen und auf PO-Abnahme warten.
+
+### Epic-Batch-Testing (Regel P-17)
+
+Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
+1. Dev-Agent zieht `development` lokal (git pull)
+2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Freigabe - bitte testen"
+3. PO testet den aktuellen Stand auf dem development-Branch
+4. PO kommentiert im Epic-Issue: `PO-OK` oder `Freigabe erteilt`
+5. GitHub-Automation (po-approve.yml) setzt alle betroffenen Stories automatisch auf **Done** (z. B. â€žOK" oder â€žfreigegeben")
 
 ---
 
@@ -195,7 +215,7 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”‚  SCHRITT 6 â€“ Prozess-Guard                                      â”‚
 â”‚  â€¢ Dev-Agent aktiviert Prozess-Guard als Sub-Agent              â”‚
 â”‚  â€¢ Guard prÃ¼ft P-01 bis P-15                                    â”‚
-â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf Development Ã¶ffnen                   â”‚
+â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf development MERGEN (Dev-Agent, nach Review-OK) Ã¶ffnen                   â”‚
 â”‚  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurÃ¼ck zu Schritt 4   â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
@@ -210,7 +230,7 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 8 â€“ PO-Freigabe (Pflicht)                              â”‚
 â”‚  â€¢ PO prÃ¼ft das Ergebnis im Browser / Repository                â”‚
-â”‚  â€¢ PO gibt per Chat frei: "OK", "freigegeben", o.Ã¤.             â”‚
+â”‚  â€¢ PO kommentiert im Issue: `PO-OK` oder `Freigabe erteilt`Ã¤.             â”‚
 â”‚  â€¢ Dev-Agent setzt Status â†’ "Done"                              â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
@@ -230,7 +250,7 @@ Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â�
 | **In Progress** | Aktiv in Bearbeitung         | Dev-Agent (vor Arbeitsbeginn) |
 | **inReview**    | Review lÃ¤uft, PR offen       | Dev-Agent                     |
 | **Freigabe**    | Gemergt, wartet auf PO-OK    | Dev-Agent                     |
-| **Done**        | Abgeschlossen âœ…             | **Product Owner**             |
+| **Done**        | Abgeschlossen (PO-OK im Issue) âœ…             | **Product Owner**             |
 
 ---
 
@@ -273,7 +293,7 @@ cd tests
 
 ---
 
-## 7. Prozessregeln (P-01 bis P-16)
+## 7. Prozessregeln (P-01 bis P-17)
 
 Der **Prozess-Guard** prÃ¼ft am Ende jeder Story die Einhaltung aller Regeln.
 Verletzungen werden als GitHub Issues mit Label `review-finding` gemeldet.
@@ -294,8 +314,9 @@ Verletzungen werden als GitHub Issues mit Label `review-finding` gemeldet.
 | **P-12** | Prettier grÃ¼n vor Tests                           | Vor Commit    |
 | **P-13** | ESLint grÃ¼n vor Tests                             | Vor Commit    |
 | **P-14** | TARA-IDs unverÃ¤nderlich (atomar)                  | Jederzeit     |
-| **P-15** | Done nur nach explizitem PO-OK                    | Nach Merge    |
+| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml)                    | Nach Merge    |
 | **P-16** | Feature-Branch nach Merge löschen                 | Nach Merge    |
+| **P-17** | Alle Epic-Stories Freigabe -> development lokal pullen + PO per Issue informieren | Nach letztem Merge |
 
 VollstÃ¤ndige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 
