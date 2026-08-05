@@ -31,7 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python scripts/sync_project_boards.py > /tmp/sync_report.txt 2>&1
+          python scripts/sync_project_boards.py --limit 100 > /tmp/sync_report.txt 2>&1
           cat /tmp/sync_report.txt
 
       - name: Comment on sync report (if differences found)

@@ -42,6 +42,7 @@ Test-Ergebnis:    PASSED / FAILED
 | P-13  | **ESLint** (`npm run lint`) gibt Exit-Code 0 **vor** Testausführung                                                                                                          |
 | P-14  | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
 | P-15  | **Done erst nach expliziter PO-Freigabe** – Dev-Agent setzt Status nur auf „Done" nach ausdrücklichem OK des Product Owners (Chat oder Issue-Kommentar)                      |
+| P-16  | **Feature-Branch nach Merge löschen** (`git push origin --delete feature/TARA-XXXX-*`) |
 
 ---
 

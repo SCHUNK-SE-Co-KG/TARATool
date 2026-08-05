@@ -129,3 +129,20 @@ python agents/review_agent/runtime_scanner.py \
 | Keine Findings     | PR auf Development, Item â†’ **Freigabe** (PO-OK abwarten â†’ Done)    |
 | Nur Niedrig/Mittel | PR mÃ¶glich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
 | Hoch/Kritisch      | Item zurÃ¼ck auf â€žIn Progress", Findings zuerst beheben             |
+
+
+## Scope-Entscheidung: Welche R-Checks laufen wann?
+
+| Änderungen betreffen | Pflicht-Checks | Optionale Checks |
+| --------------------- | -------------- | ---------------- |
+| `js/`, `index.html` | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
+| `agents/`, `scripts/` | R-01–R-12 | R-22–R-30 entfallen (kein Browser-Code) |
+| `tests/` | R-09, R-10 | – |
+| `docs/`, `*.md` | R-01 | – |
+
+**Runtime-Checks (R-13–R-30) sind Pflicht** für alle Commits, die `index.html`, `js/` oder
+`agents/review_agent/` verändern. Sie erfordern eine lauffähige App-Instanz.
+
+Wenn keine App-URL übergeben wird, **entfallen R-13–R-30 ohne Fehler** — der Review-Agent
+vermerkt dies im Finding-Bericht als `[SKIP Runtime: kein App-URL übergeben]`.
+

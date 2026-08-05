@@ -6,6 +6,17 @@
 
 ---
 
+## Definition of Ready – Bestätigung
+
+> Vor dem ersten Commit muss der Dev-Agent alle Punkte bestätigt haben.
+
+- [ ] TARA-ID vergeben, Akzeptanzkriterien ≥ 2 vorhanden
+- [ ] Story Points (Label `sp:N`) gesetzt
+- [ ] Kein offenes Blocking-Finding zu dieser Story
+- [ ] PO-Freigabe erhalten (Chat)
+
+---
+
 ## Änderungen
 
 <!-- Was wurde implementiert? -->
@@ -36,8 +47,13 @@
 
 ## Review-Agent
 
-- [ ] Review-Agent aktiviert (Status → Review)
+- [ ] Review-Agent aktiviert (Status → inReview)
 - [ ] Alle Kritisch/Hoch-Findings behoben
+
+## Nach dem Merge (P-11, P-16)
+
+- [ ] Status → **Freigabe** gesetzt (nicht Done!)
+- [ ] Feature-Branch gelöscht: `git push origin --delete feature/TARA-XXXX-...`
 
 ## PO-Freigabe (nach Merge)
 

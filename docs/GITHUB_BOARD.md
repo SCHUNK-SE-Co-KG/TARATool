@@ -27,10 +27,26 @@ Alle IDs für programmatischen Zugriff via `gh api graphql`.
 | Eigenschaft      | Wert                                         |
 | ---------------- | -------------------------------------------- |
 | **Project Name** | TARATool                                     |
-| **Project ID**   | (See query below)                            |
+| **Project ID**   | `PVT_kwDOBu4dv84BfbaR`                       |
 | **Owner**        | `SCHUNK-SE-Co-KG` (Organization)             |
 | **Repo**         | `https://github.com/SCHUNK-SE-Co-KG/TARATool` |
 | **Status**       | Mirror / Secondary (should sync with #1)   |
+
+#### SCHUNK Status-Feld
+
+| Eigenschaft   | Wert                                |
+| ------------- | ----------------------------------- |
+| **Feld-Name** | Status                              |
+| **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME`   |
+
+| Status          | Option-ID  |
+| --------------- | ---------- |
+| **Todo**        | `f75ad846` |
+| **In Progress** | `47fc9ee4` |
+| **inReview**    | `2338665f` |
+| **Freigabe**    | `d98e05b2` |
+| **Blocking**    | `a21de5e9` |
+| **Done**        | `98236657` |
 
 #### SCHUNK Project ID ermitteln:
 

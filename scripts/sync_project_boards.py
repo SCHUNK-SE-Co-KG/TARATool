@@ -26,6 +26,7 @@ SCHUNK_PROJECT = 4
 
 DRY_RUN = False
 VERBOSE = False
+ITEM_LIMIT = 100  # fetch up to N items per board (default 30 is too low)
 
 
 def run_command(cmd: list[str]) -> str:
@@ -62,7 +63,8 @@ def fetch_project_items(owner: str, project_num: int) -> list[dict]:
         cmd = [
             'gh', 'project', 'item-list', str(project_num),
             '--owner', owner,
-            '--format', 'json'
+            '--format', 'json',
+            '--limit', str(ITEM_LIMIT),
         ]
         
         result = subprocess.run(
@@ -205,9 +207,14 @@ def print_sync_report(analysis: dict) -> None:
 
 def main() -> int:
     """Main routine."""
-    global DRY_RUN, VERBOSE
+    global DRY_RUN, VERBOSE, ITEM_LIMIT
     DRY_RUN = '--dry-run' in sys.argv
     VERBOSE = '--verbose' in sys.argv
+    for arg in sys.argv:
+        if arg.startswith('--limit='):
+            ITEM_LIMIT = int(arg.split('=', 1)[1])
+        elif arg == '--limit' and sys.argv.index(arg) + 1 < len(sys.argv):
+            ITEM_LIMIT = int(sys.argv[sys.argv.index(arg) + 1])
     
     print("=" * 70)
     print("[SYNC] GitHub Project Board Mirror Analysis")
