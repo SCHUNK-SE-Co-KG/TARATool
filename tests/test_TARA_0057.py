@@ -134,22 +134,24 @@ def test_caller_graph_contains_all_three_callers():
     assert total_callers == 3
 
 
-def test_caller_graph_keys_match_function_names():
-    """Caller graph keys match the names of changed functions."""
+def test_caller_graph_keys_match_function_uids():
+    """Caller graph keys are UIDs ('file::name') for each changed function."""
     analyzer = ChangeScopeAnalyzer(grep_runner=_make_mock_runner(MOCK_GREP_RESULTS))
     report = analyzer.analyze_from_diff(MOCK_DIFF, search_root="js/")
-    assert "calculateRisk" in report.caller_graph
-    assert "getRiskSummary" in report.caller_graph
+    # UIDs contain the function name — same-name functions in different files are distinct
+    uid_names = [uid.split("::")[-1] for uid in report.caller_graph.keys()]
+    assert "calculateRisk" in uid_names
+    assert "getRiskSummary" in uid_names
 
 
 def test_contract_violations_detected_for_signature_changes():
     """Functions with changed signatures produce ContractViolation entries."""
     analyzer = ChangeScopeAnalyzer(grep_runner=_make_mock_runner(MOCK_GREP_RESULTS))
     report = analyzer.analyze_from_diff(MOCK_DIFF, search_root="js/")
-    violated_fns = [cv.function_name for cv in report.contract_violations]
-    # All 3 functions changed signature → all 3 should appear
-    assert "calculateRisk" in violated_fns
-    assert "getRiskSummary" in violated_fns
+    # UIDs contain the function name
+    violated_names = [cv.function_name.split("::")[-1] for cv in report.contract_violations]
+    assert "calculateRisk" in violated_names
+    assert "getRiskSummary" in violated_names
 
 
 def test_missing_context_flagged_when_callers_present():
