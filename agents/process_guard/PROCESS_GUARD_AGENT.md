@@ -25,35 +25,51 @@ Test-Ergebnis:    PASSED / FAILED
 
 ## Pflichtregeln (Verletzung → Finding als Issue)
 
-| Regel | Beschreibung                                                                                                                                                                 |
-| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort                                                                                                                                |
-| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                                                                                                       |
-| P-03  | **Tests vor Implementierung** geschrieben (TDD Red-Phase)                                                                                                                    |
-| P-04  | Tests haben initial **fehlgeschlagen** (Red bewiesen)                                                                                                                        |
-| P-05  | Story-spezifische Tests **vor Commit** ausgeführt → alle grün                                                                                                                |
-| P-06  | Alle Story-Tests grün vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`                                                                                               |
+| Regel | Beschreibung                                                                                                                                                                  |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort                                                                                                                                 |
+| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                                                                                                        |
+| P-03  | **Tests vor Implementierung** geschrieben (TDD Red-Phase)                                                                                                                     |
+| P-04  | Tests haben initial **fehlgeschlagen** (Red bewiesen)                                                                                                                         |
+| P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen                                                                                                               |
+| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`                                                                                               |
 | P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                                                                               |
-| P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                        |
-| P-09  | Item auf „Review" gesetzt vor PR-Erstellung                                                                                                                                  |
-| P-10  | Review-Agent aufgerufen (kein offenes Critical/High Finding)                                                                                                                 |
-| P-11  | Item auf „Freigabe" gesetzt nach Merge – **nicht** direkt auf „Done"                                                                                                         |
-| P-12  | **Prettier** (`npm run format:check`) gibt Exit-Code 0 **vor** Testausführung                                                                                                |
-| P-13  | **ESLint** (`npm run lint`) gibt Exit-Code 0 **vor** Testausführung                                                                                                          |
-| P-14  | **TARA-IDs sind atomar und unveränderlich** – keine ID darf umbenannt, ersetzt oder auf eine andere gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden. |
-| P-15  | **Done erst nach expliziter PO-Freigabe** – Dev-Agent setzt Status nur auf „Done" nach ausdrücklichem OK des Product Owners (Chat oder Issue-Kommentar)                      |
+| P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                         |
+| P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung                                                                                                                             |
+| P-10  | Review-Agent aufgerufen, kein offenes Critical/High Finding – dann **darf Dev-Agent mergen**                                                                                  |
+| P-11  | Nach Merge: Item auf „Freigabe" setzen – **nicht** direkt auf „Done"                                                                                                          |
+| P-12  | **Prettier** (`npm run format:check`) Exit-Code 0 vor Testausfuehrung (N/A fuer reine Python-Module)                                                                          |
+| P-13  | **ESLint** (`npm run lint`) Exit-Code 0 vor Testausfuehrung (N/A fuer reine Python-Module)                                                                                    |
+| P-14  | **TARA-IDs sind atomar und unveraenderlich** – keine ID darf umbenannt, ersetzt oder gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden.                 |
+| P-15  | **Done NUR nach PO-OK als Issue-Kommentar** – `PO-OK` oder `Freigabe erteilt` im Issue-Kommentar. `po-approve.yml` setzt Status automatisch. Dev-Agent darf Done NICHT setzen.|
+| P-16  | **Feature-Branch nach Merge loeschen** (`git push origin --delete feature/TARA-XXXX-*`)                                                                                      |
+| P-17  | **Epic-Batch-Testing**: Wenn alle Epic-Stories auf Freigabe → `git pull development`, PO im Epic-Issue informieren: „Alle Stories auf Freigabe – bitte testen"                |
+
+---
+
+## Wer darf was setzen?
+
+| Status-Uebergang        | Wer                        | Voraussetzung                                  |
+| ----------------------- | -------------------------- | ---------------------------------------------- |
+| Todo → In Progress      | Dev-Agent                  | PO hat Story freigegeben (Chat/Issue)          |
+| In Progress → inReview  | Dev-Agent                  | Tests gruen, Commit gepusht                    |
+| inReview → In Progress  | Dev-Agent                  | Critical/High Finding gefunden, Fix noetig     |
+| inReview → Freigabe     | Dev-Agent                  | Review OK, Merge durchgefuehrt (P-10/P-11)    |
+| **Freigabe → Done**     | **GitHub Automation**      | PO-OK oder Freigabe erteilt im Issue-Kommentar |
+| Freigabe → Done         | Dev-Agent (Notfall)        | Nur nach expliziter Chat-Anweisung vom PO      |
 
 ---
 
 ## Freigabe-Checkliste
 
-Der Prozess-Guard gibt **grünes Licht** (`✅ PROCESS OK`) wenn:
+Der Prozess-Guard gibt **gruenes Licht** (`PROCESS OK`) wenn:
 
-- [ ] P-01 bis P-15 alle eingehalten
+- [ ] P-01 bis P-17 alle eingehalten
 - [ ] Kein offenes `review-finding` mit Schwere Kritisch oder Hoch
 - [ ] `pytest tests/test_TARA_XXXX.py --noconftest` → 0 Fehler
+- [ ] Bei letzter Story eines Epics: P-17 ausgefuehrt (PO informiert)
 
-Andernfalls: `❌ PROCESS BLOCKED` + Finding-Issues anlegen.
+Andernfalls: `PROCESS BLOCKED` + Finding-Issues anlegen.
 
 ---
 

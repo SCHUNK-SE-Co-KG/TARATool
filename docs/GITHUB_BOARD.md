@@ -1,21 +1,62 @@
-# GitHub Project Board – TARATool Überarbeitung
+# GitHub Project Boards – TARATool
+
+> **⚠️ WICHTIG:** Dieses Dokument behandelt die Projektboards für beide Repositories:
+> - **Bheowulf/TARATool** (Projekt #1) – Primär, Source of Truth
+> - **SCHUNK-SE-Co-KG/TARATool** (Projekt #4) – Mirror
+>
+> Siehe auch: [MIRROR_SYNC_GUIDE.md](./MIRROR_SYNC_GUIDE.md) für Synchronisations-Details
 
 Alle IDs für programmatischen Zugriff via `gh api graphql`.
 
 ---
 
-## Projekt-Metadaten
+## Projekt-Übersicht
+
+### Bheowulf/TARATool (Projekt #1)
 
 | Eigenschaft      | Wert                                   |
 | ---------------- | -------------------------------------- |
 | **Project Name** | TARATool Überarbeitung                 |
 | **Project ID**   | `PVT_kwHOBLN4284BfLtb`                 |
-| **Owner**        | `Bheowulf`                             |
+| **Owner**        | `Bheowulf` (Personal)                  |
 | **Repo**         | `https://github.com/Bheowulf/TARATool` |
+| **Status**       | Primary / Source of Truth              |
+
+### SCHUNK-SE-Co-KG/TARATool (Projekt #4)
+
+| Eigenschaft      | Wert                                         |
+| ---------------- | -------------------------------------------- |
+| **Project Name** | TARATool                                     |
+| **Project ID**   | `PVT_kwDOBu4dv84BfbaR`                       |
+| **Owner**        | `SCHUNK-SE-Co-KG` (Organization)             |
+| **Repo**         | `https://github.com/SCHUNK-SE-Co-KG/TARATool` |
+| **Status**       | Mirror / Secondary (should sync with #1)   |
+
+#### SCHUNK Status-Feld
+
+| Eigenschaft   | Wert                                |
+| ------------- | ----------------------------------- |
+| **Feld-Name** | Status                              |
+| **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME`   |
+
+| Status          | Option-ID  |
+| --------------- | ---------- |
+| **Todo**        | `f75ad846` |
+| **In Progress** | `47fc9ee4` |
+| **inReview**    | `2338665f` |
+| **Freigabe**    | `d98e05b2` |
+| **Blocking**    | `a21de5e9` |
+| **Done**        | `98236657` |
+
+#### SCHUNK Project ID ermitteln:
+
+```bash
+gh api repos/SCHUNK-SE-Co-KG/TARATool/projects --jq '.[] | {id, name}'
+```
 
 ---
 
-## Status-Feld
+## Status-Feld (Bheowulf #1)
 
 | Eigenschaft   | Wert                             |
 | ------------- | -------------------------------- |
@@ -160,3 +201,42 @@ Todo → In Progress → inReview → Freigabe → Done
 | Dev-Agent         | In Progress | inReview    | Prettier ✅ ESLint ✅ Tests ✅ PR offen |
 | Dev-Agent         | inReview    | Freigabe    | PR gemergt, P-01–P-15 OK                |
 | **Product Owner** | Freigabe    | **Done**    | **Explizites PO-OK**                    |
+
+---
+
+## Mirror Synchronization (Bheowulf ↔ SCHUNK)
+
+### Überblick
+
+Bheowulf Project #1 ist das primäre Projektboard. SCHUNK Project #4 sollte eine identische Kopie aller Arbeitselemente (TARA-IDs) enthalten.
+
+### Automatische Überwachung
+
+Datei: `.github/workflows/mirror-sync.yml`
+
+- ✅ Läuft täglich um 02:00 UTC
+- ✅ Kann manuell getriggert werden
+- ✅ Reportet Unterschiede im Actions-Log
+
+### Manuelle Synchronisation
+
+```bash
+# Status prüfen
+python scripts/sync_project_boards.py
+
+# Detailliert
+python scripts/sync_project_boards.py --verbose
+```
+
+Weitere Infos: [MIRROR_SYNC_GUIDE.md](./MIRROR_SYNC_GUIDE.md)
+
+---
+
+### Hinweise
+
+- **Bheowulf-Only Items:** `[PROCESS-GUARD]` violations, CVE Monthly Reports
+- **Sync Scope:** Alle TARA-XXXX work items sollten identisch sein
+- **Mapping:** Items werden via TARA-ID gematcht
+- **SCHUNK Prefix:** Items haben `[MIRROR]` Präfix zur Klarheit
+
+Siehe: [MIRROR_SYNC_GUIDE.md](./MIRROR_SYNC_GUIDE.md) für vollständige Dokumentation und Troubleshooting.

@@ -1,0 +1,95 @@
+name: Process Guard – P-07 / P-03 / P-08 Compliance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - development
+      - main
+
+jobs:
+  process-guard:
+    name: Prozess-Guard Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: P-07 – Branch-Name Schema
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          echo "Branch: $BRANCH"
+          if echo "$BRANCH" | grep -qE '^(feature/TARA-[0-9]{4}-|hotfix/TARA-[0-9]{4}-|chore/)'; then
+            echo "✅ P-07: Branch-Name korrekt"
+          else
+            echo "❌ P-07: Branch-Name '$BRANCH' entspricht nicht 'feature/TARA-XXXX-*'"
+            exit 1
+          fi
+
+      - name: P-08 – TARA-ID in Commit-Messages
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          HEAD="${{ github.event.pull_request.head.sha }}"
+          MISSING=0
+          while IFS= read -r line; do
+            if ! echo "$line" | grep -qE 'TARA-[0-9]{4}|chore:|docs:|fix:|hotfix:'; then
+              echo "❌ P-08: Commit ohne TARA-ID: $line"
+              MISSING=1
+            fi
+          done < <(git log --oneline "$BASE..$HEAD")
+          if [ "$MISSING" -eq 0 ]; then
+            echo "✅ P-08: Alle Commits referenzieren TARA-ID"
+          else
+            exit 1
+          fi
+
+      - name: P-03 – TDD-Testdatei vorhanden
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
+          if [ -z "$TARA_ID" ]; then
+            echo "ℹ️  Kein TARA-ID im Branch – P-03 übersprungen"
+            exit 0
+          fi
+          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
+          TESTFILE="tests/test_TARA_${NUM}.py"
+          if [ -f "$TESTFILE" ]; then
+            echo "✅ P-03: Testdatei $TESTFILE vorhanden"
+          else
+            echo "❌ P-03: Testdatei $TESTFILE fehlt – TDD nicht eingehalten"
+            exit 1
+          fi
+
+      - name: P-06 – Story-Tests grün
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
+          if [ -z "$TARA_ID" ]; then
+            echo "ℹ️  Kein TARA-ID – P-06 übersprungen"
+            exit 0
+          fi
+          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
+          TESTFILE="tests/test_TARA_${NUM}.py"
+          if [ ! -f "$TESTFILE" ]; then
+            echo "ℹ️  Testdatei nicht gefunden – P-06 übersprungen"
+            exit 0
+          fi
+          pip install pytest --quiet
+          # Install project deps if present
+          [ -f requirements.txt ] && pip install -r requirements.txt --quiet
+          pytest "$TESTFILE" --noconftest -q
+          if [ $? -eq 0 ]; then
+            echo "✅ P-06: Story-Tests grün"
+          else
+            echo "❌ P-06: Story-Tests fehlgeschlagen"
+            exit 1
+          fi
+
+      - name: P-15 – Kein direktes Done (nur Freigabe nach Merge erlaubt)
+        run: |
+          # P-15 wird durch den Workflow selbst nicht erzwungen (kein Board-Zugriff),
+          # aber der Check dokumentiert die Pflicht und gibt eine Warnung aus.
+          echo "ℹ️  P-15: Done darf NUR nach explizitem PO-OK gesetzt werden."
+          echo "    Board-Status wird durch Dev-Agent gesetzt – PO-Freigabe im Board erforderlich."
+          echo "✅ P-15: Erinnerung ausgegeben"

@@ -17,7 +17,7 @@ Entwicklung starten mÃ¶chten.
 4. [Der vollstÃ¤ndige Story-Workflow](#4-der-vollstÃ¤ndige-story-workflow)
 5. [Board-StatusÃ¼bergÃ¤nge](#5-board-statusÃ¼bergÃ¤nge)
 6. [Technische QualitÃ¤tssicherung](#6-technische-qualitÃ¤tssicherung)
-7. [Prozessregeln (P-01 bis P-15)](#7-prozessregeln-p-01-bis-p-15)
+7. [Prozessregeln (P-01 bis P-17)](#7-prozessregeln-p-01-bis-p-16)
 8. [Ausnahmen und SonderfÃ¤lle](#8-ausnahmen-und-sonderfÃ¤lle)
 9. [Dokumente auf einen Blick](#9-dokumente-auf-einen-blick)
 
@@ -38,7 +38,27 @@ Entwicklung starten mÃ¶chten.
 - Dev-Agent **beginnt keine Arbeit** ohne explizite PO-Freigabe
 - Review-Agent und Prozess-Guard kommunizieren **ausschlieÃŸlich Ã¼ber GitHub Issues**
   (Label: `review-finding`) â€” kein direkter Dialog mit dem Dev-Agent
-- PO-Freigabe erfolgt per **Chat-Nachricht** (z. B. â€žOK" oder â€žfreigegeben")
+- **PO-Freigabe (Done)** erfolgt ausschliesslich per **Issue-Kommentar** mit dem Schluesselwort
+  `PO-OK` oder `Freigabe erteilt` - **nicht** per Chat-Nachricht.
+- Die GitHub-Automation (`po-approve.yml`) erkennt diese Kommentare und setzt den Status automatisch.
+
+### Merge-Berechtigung des Dev-Agents
+
+Der Dev-Agent darf **eigenstaendig mergen** wenn:
+1. Review abgeschlossen (keine offenen Critical/High Findings)
+2. Prozess-Guard: PROCESS OK
+3. Alle Story-Tests gruen
+
+Nach dem Merge: Status -> **Freigabe** setzen und auf PO-Abnahme warten.
+
+### Epic-Batch-Testing (Regel P-17)
+
+Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
+1. Dev-Agent zieht `development` lokal (git pull)
+2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Freigabe - bitte testen"
+3. PO testet den aktuellen Stand auf dem development-Branch
+4. PO kommentiert im Epic-Issue: `PO-OK` oder `Freigabe erteilt`
+5. GitHub-Automation (po-approve.yml) setzt alle betroffenen Stories automatisch auf **Done** (z. B. â€žOK" oder â€žfreigegeben")
 
 ---
 
@@ -115,6 +135,29 @@ print(f'NÃ¤chste ID: TARA-{max(ids)+1:04d}')
 "
 ```
 
+### Definition of Ready (DoR)
+
+Eine Story darf erst bearbeitet werden, wenn alle folgenden Punkte erfüllt sind:
+
+| Kriterium | Prüfung |
+| --------- | ------- |
+| TARA-ID vergeben | TARA-XXXX im Titel |
+| Akzeptanzkriterien vorhanden | Mindestens 2 Kriterien im Issue-Body |
+| Story Points geschätzt | Label sp:N gesetzt |
+| Kein offenes Blocking-Finding | Kein Issue mit Label blocked + dieser TARA-ID |
+| Epic aktiv (In Progress) | Übergeordnetes Epic nicht Done/geschlossen |
+| PO-Freigabe | Explizites OK per Chat |
+
+### Epic-Completion-Regel
+
+Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
+
+1. Dev-Agent prüft nach jeder Story-Fertigstellung, ob alle Child-Stories Done sind.
+2. Wenn ja: Epic-Status auf **Freigabe** setzen, PO bestätigt -> **Done**.
+3. Ein Epic geht **nicht** direkt auf Done (P-15 gilt auch für Epics).
+
+
+
 ---
 
 ## 4. Der vollstÃ¤ndige Story-Workflow
@@ -172,7 +215,7 @@ print(f'NÃ¤chste ID: TARA-{max(ids)+1:04d}')
 â”‚  SCHRITT 6 â€“ Prozess-Guard                                      â”‚
 â”‚  â€¢ Dev-Agent aktiviert Prozess-Guard als Sub-Agent              â”‚
 â”‚  â€¢ Guard prÃ¼ft P-01 bis P-15                                    â”‚
-â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf Development Ã¶ffnen                   â”‚
+â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf development MERGEN (Dev-Agent, nach Review-OK) Ã¶ffnen                   â”‚
 â”‚  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurÃ¼ck zu Schritt 4   â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
@@ -187,7 +230,7 @@ print(f'NÃ¤chste ID: TARA-{max(ids)+1:04d}')
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 8 â€“ PO-Freigabe (Pflicht)                              â”‚
 â”‚  â€¢ PO prÃ¼ft das Ergebnis im Browser / Repository                â”‚
-â”‚  â€¢ PO gibt per Chat frei: "OK", "freigegeben", o.Ã¤.             â”‚
+â”‚  â€¢ PO kommentiert im Issue: `PO-OK` oder `Freigabe erteilt`Ã¤.             â”‚
 â”‚  â€¢ Dev-Agent setzt Status â†’ "Done"                              â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
@@ -207,7 +250,7 @@ Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â�
 | **In Progress** | Aktiv in Bearbeitung         | Dev-Agent (vor Arbeitsbeginn) |
 | **inReview**    | Review lÃ¤uft, PR offen       | Dev-Agent                     |
 | **Freigabe**    | Gemergt, wartet auf PO-OK    | Dev-Agent                     |
-| **Done**        | Abgeschlossen âœ…             | **Product Owner**             |
+| **Done**        | Abgeschlossen (PO-OK im Issue) âœ…             | **Product Owner**             |
 
 ---
 
@@ -250,7 +293,7 @@ cd tests
 
 ---
 
-## 7. Prozessregeln (P-01 bis P-15)
+## 7. Prozessregeln (P-01 bis P-17)
 
 Der **Prozess-Guard** prÃ¼ft am Ende jeder Story die Einhaltung aller Regeln.
 Verletzungen werden als GitHub Issues mit Label `review-finding` gemeldet.
@@ -271,7 +314,9 @@ Verletzungen werden als GitHub Issues mit Label `review-finding` gemeldet.
 | **P-12** | Prettier grÃ¼n vor Tests                           | Vor Commit    |
 | **P-13** | ESLint grÃ¼n vor Tests                             | Vor Commit    |
 | **P-14** | TARA-IDs unverÃ¤nderlich (atomar)                  | Jederzeit     |
-| **P-15** | Done nur nach explizitem PO-OK                    | Nach Merge    |
+| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml)                    | Nach Merge    |
+| **P-16** | Feature-Branch nach Merge löschen                 | Nach Merge    |
+| **P-17** | Alle Epic-Stories Freigabe -> development lokal pullen + PO per Issue informieren | Nach letztem Merge |
 
 VollstÃ¤ndige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 
@@ -301,6 +346,27 @@ Wenn Stories technisch voneinander abhÃ¤ngen (z. B. TARA-0034 bis TARA-0037):
 - Branch-Name enthÃ¤lt erste und letzte ID: `feature/TARA-0034-0037-beschreibung`
 - Alle Stories werden in einem PR zusammengefasst
 
+### Hotfix-Prozess
+
+Wenn nach einem Merge auf `development` ein **kritischer Bug** gefunden wird:
+
+```
+1. PO gibt Hotfix per Chat frei: "Hotfix für TARA-XXXX"
+2. Branch anlegen von development:
+   git checkout development && git pull
+   git checkout -b hotfix/TARA-XXXX-kurzbeschreibung
+3. Fix implementieren (TDD Green-Phase – Red-Phase entfällt bei Kritisch)
+4. pytest + Prettier + ESLint grün
+5. Review-Agent: entfällt (PO-Entscheid)
+6. Prozess-Guard: Nur P-05, P-06, P-07, P-08, P-12, P-13
+7. PR direkt auf development – kein separater Review-Zyklus
+8. PO merged und setzt Status → Done
+```
+
+> ⚠️ Hotfixes sind Ausnahmen. Wenn möglich, den normalen Prozess verwenden.
+> Ein Hotfix-Finding (mit Begründung) wird vom Prozess-Guard im Issue dokumentiert.
+
+
 ---
 
 ## 9. Dokumente auf einen Blick
@@ -311,7 +377,7 @@ Wenn Stories technisch voneinander abhÃ¤ngen (z. B. TARA-0034 bis TARA-0037):
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md`     | Neuer Agent        | Setup, Smoke-Test, Kurzreferenz                |
 | **TDD-Workflow (Detail)** | `CONTRIBUTING.md`                  | Dev-Agent          | Branch-Strategie, alle Schritte, Commit-Format |
 | **Prozess-Guard Regeln**  | `agents/process_guard/PROCESS_GUARD_AGENT.md`   | Dev-Agent + Guard  | P-01â€“P-15, Finding-Format                      |
-| **Review-Agent**          | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Dev-Agent + Review | R-01â€“R-12, Finding-Format                      |
+| **Review-Agent**          | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Dev-Agent + Review | R-01–R-30, Finding-Format                      |
 | **Board-IDs**             | `docs/GITHUB_BOARD.md`             | Dev-Agent          | GraphQL-IDs, StatusÃ¼bergÃ¤nge, Beispiele        |
 | **Test-Framework**        | `tests/README.md`                  | Dev-Agent          | --noconftest, Marker, venv-Setup               |
 | **PR-Checkliste**         | `.github/pull_request_template.md` | Dev-Agent          | TDD, Prettier, ESLint, Review, Freigabe        |
