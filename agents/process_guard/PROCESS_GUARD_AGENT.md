@@ -11,7 +11,37 @@ Alle Rückmeldungen erfolgen als GitHub Issues mit Label `review-finding`.
 
 ## Aktivierung
 
-Der Dev-Agent aktiviert dich am **Ende jeder Story** mit:
+### Automatisch: Issue-Compliance bei Neuanlage
+
+Der Prozess-Guard wird **automatisch** durch GitHub Actions ausgelöst, sobald ein Issue angelegt wird:
+
+```
+Workflow: .github/workflows/process-guard-issue-check.yml
+Trigger:  issues: opened
+Script:   agents/process_guard/issue_checker.py
+```
+
+**Geprüfte Regeln:**
+
+| Check | Regel | Schwere bei Verstoß |
+|-------|-------|---------------------|
+| Nomenklatur: Titel entspricht einem der zulässigen Formate | P-14 / Nomenklatur | Hoch |
+| P-14: TARA-ID noch nicht vergeben | P-14 | Kritisch |
+| Body-Pflichtabschnitte vorhanden | Inhalt | Mittel |
+| Pflichtlabels gesetzt | Labels | Niedrig |
+
+**Zulässige Titelformate:**
+
+| Typ | Format |
+|-----|--------|
+| Story | `TARA-XXXX: <Beschreibung>` |
+| Epic | `Epic TARA-XXXX: <Beschreibung>` |
+| Review-Finding | `[TARA-REVIEW] TARA-XXXX – <Beschreibung> (Kritisch\|Hoch\|Mittel\|Niedrig)` |
+| Process-Guard-Finding | `[PROCESS-GUARD] TARA-XXXX – P-XX <Beschreibung>` |
+
+Bei Verstoß: Kommentar am Issue + Label `process-violation`.
+
+### Manuell: Story-Ende durch Dev-Agent
 
 ```
 Prozess-Guard: Prüfe Story TARA-XXXX
