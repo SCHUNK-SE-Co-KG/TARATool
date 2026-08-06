@@ -17,7 +17,7 @@ jobs:
 
       - name: P-06 Root-Verzeichnis auf fremde Dateien pruefen
         run: |
-          ALLOWED="index.html README.md LICENSE CONTRIBUTING.md CHANGELOG.md .gitignore .prettierrc .prettierignore eslint.config.js package.json package-lock.json pytest.ini"
+          ALLOWED="index.html README.md LICENSE CONTRIBUTING.md CHANGELOG.md .gitignore .gitattributes .prettierrc .prettierignore eslint.config.js package.json package-lock.json pytest.ini"
           VIOLATIONS=""
           for f in $(ls -1 --file-type | grep -v '/$'); do
             OK=0

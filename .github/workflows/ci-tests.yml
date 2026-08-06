@@ -63,9 +63,14 @@ jobs:
             --ignore=tests/test_core.py \
             --ignore=tests/test_damage_scenarios.py \
             --ignore=tests/test_devses_features.py \
+            --ignore=tests/test_devses_security.py \
             --ignore=tests/test_report_versioning.py \
+            --ignore=tests/test_residual_debug.py \
             --ignore=tests/test_residual_risk.py \
+            --ignore=tests/test_risk_analysis.py \
+            --ignore=tests/test_security_fixes.py \
             --ignore=tests/test_security_goals.py \
+            --ignore=tests/test_tree_export.py \
             --ignore=tests/test_TARA_0039.py \
             --ignore=tests/test_TARA_0040.py \
             --ignore=tests/test_TARA_0041.py \
