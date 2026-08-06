@@ -95,14 +95,19 @@ python agents/review_agent/runtime_scanner.py \
 
 ## Finding-Format
 
-**Titel:** `[TARA-REVIEW] TARA-XXXX â€“ <Kurzbeschreibung>`  
+**Titel:** `[TARA-REVIEW] TARA-XXXX – <Kurzbeschreibung>`  
 **Labels:** `review-finding` + `sp:1` (Aufwand zur Behebung)
+
+> ⚠️ **Wichtig:** `TARA-XXXX` im Titel ist eine **neue, eindeutige ID** für das Finding selbst —
+> **nicht** die Source-Story-ID. Jedes Finding erhält eine eigene ID via `get_next_tara_id()`.
+> Die Source-Story wird im Body als `**Source-Story:**` referenziert.
 
 ```markdown
 ## Review Finding
 
-**Story:** TARA-XXXX  
-**Typ:** Bug | Architektur | Sicherheit | Test | Code-QualitÃ¤t  
+**Finding-ID:** TARA-XXXX  
+**Source-Story:** TARA-YYYY  
+**Typ:** Bug | Architektur | Sicherheit | Test | Code-Qualität  
 **Schwere:** Kritisch | Hoch | Mittel | Niedrig  
 **Regel:** R-XX  
 **Datei:** `path/to/file.js` (Zeile X)
@@ -117,7 +122,7 @@ python agents/review_agent/runtime_scanner.py \
 
 ### Vorschlag
 
-<Konkreter LÃ¶sungsvorschlag>
+<Konkreter Lösungsvorschlag>
 ```
 
 ---
