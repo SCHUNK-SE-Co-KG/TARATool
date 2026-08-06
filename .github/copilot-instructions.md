@@ -5,6 +5,39 @@
 
 ---
 
+## Projekt-Kontext
+
+### Arbeitsverzeichnis
+
+Das lokale Verzeichnis ist ein **Clone des Development-Branches** von:
+- **Primaeres Repo (Entwicklung):** https://github.com/Bheowulf/TARATool
+- **Mirror-Repo (SCHUNK):** https://github.com/SCHUNK-SE-Co-KG/TARATool
+
+Beide Repos sind per Mirror synchronisiert. Der aktive Entwicklungszweig ist `development`.
+Commits erfolgen auf `Bheowulf/TARATool`, das Mirror-Repo wird automatisch synchronisiert.
+
+### Projektboards
+
+| Board | URL | Rolle |
+|-------|-----|-------|
+| **Bheowulf #1** (Primary) | https://github.com/users/Bheowulf/projects/1 | Source of Truth |
+| **SCHUNK #4** (Mirror) | https://github.com/orgs/SCHUNK-SE-Co-KG/projects/4 | Mirror, inhaltlich identisch |
+
+Der Dev-Agent liest und schreibt Boardstatus **ausschliesslich** ueber das
+**Bheowulf-Board (Projekt #1, ID: `PVT_kwHOBLN4284BfLtb`)**.
+
+### Entwicklungsprozess & Agenten-Dokumentation
+
+| Dokument | Pfad | Inhalt |
+|----------|------|--------|
+| Entwicklungsprozess | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Regeln |
+| Board-IDs & GraphQL | `docs/GITHUB_BOARD.md` | API-IDs, Status-Optionen, Beispiele |
+| Dev-Agent Einrichtung | `docs/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
+| Review-Agent | `docs/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Finding-Format |
+| Prozess-Guard | `.github/PROCESS_GUARD_AGENT.md` | P-01-P-17 Regeln |
+
+---
+
 ## WICHTIGSTE REGEL: Keine Arbeit ohne PO-Freigabe
 
 **Der Dev-Agent darf mit der Implementierung einer Story oder eines Epics NIEMALS
@@ -34,14 +67,14 @@ Beim Start einer neuen Session fuehrt der Dev-Agent **immer** folgende Schritte 
 
 ### Schritt 1 - Board-Check: "In Progress"
 
-Alle Items mit Status **In Progress** pruefen:
+Alle Items mit Status **In Progress** aus Bheowulf-Board #1 laden und pruefen:
 - Hat jedes In-Progress-Item eine nachweisbare PO-Freigabe (Chat oder Issue-Kommentar)?
-- Gibt es offene Review-Findings oder Blocking-Issues?
+- Gibt es offene Review-Findings (Label `review-finding`) oder `blocked`-Issues?
 - Zusammenfassung ausgeben.
 
 ### Schritt 2 - Board-Check: "Todo" - Epics
 
-Alle **Epics** mit Status **Todo** pruefen:
+Alle **Epics** (Label `epic`) mit Status **Todo** pruefen:
 - Hat das Epic einen Issue-Kommentar mit `PO-OK`, `Freigabe erteilt`, `freigegeben` o.ae.?
 - Wenn **ja**: Epic gilt als freigegeben -> weiter mit Schritt 3.
 - Wenn **nein**: Epic ist noch nicht freigegeben -> nicht bearbeiten.
@@ -120,13 +153,3 @@ Schritt 8: PO kommentiert "PO-OK" im Issue -> Status -> Done automatisch (P-15)
 
 Waehrend der Arbeit an einer Story nennt der Dev-Agent in **jeder Chat-Antwort** die
 aktive TARA-ID. Beispiel: `[TARA-0026]`
-
----
-
-## Dokumentation
-
-- Entwicklungsprozess vollstaendig: `docs/ENTWICKLUNGSPROZESS.md`
-- Board-IDs und GraphQL-Snippets: `docs/GITHUB_BOARD.md`
-- Technische Einrichtung: `docs/DEV_AGENT_ONBOARDING.md`
-- Prozess-Guard-Regeln: `.github/PROCESS_GUARD_AGENT.md`
-- Review-Agent: `docs/REVIEW_AGENT_WORKFLOW.md`
