@@ -19,8 +19,12 @@ jobs:
       - name: P-07 – Branch-Name Schema
         run: |
           BRANCH="${{ github.head_ref }}"
-          echo "Branch: $BRANCH"
-          if echo "$BRANCH" | grep -qE '^(feature/TARA-[0-9]{4}-|hotfix/TARA-[0-9]{4}-|chore/)'; then
+          BASE="${{ github.base_ref }}"
+          echo "Branch: $BRANCH -> $BASE"
+          # Release-PRs: development -> main sind erlaubt (kein Feature-Branch noetig)
+          if [ "$BRANCH" = "development" ] && [ "$BASE" = "main" ]; then
+            echo "OK P-07: Release-PR development -> main ist erlaubt"
+          elif echo "$BRANCH" | grep -qE '^(feature/TARA-[0-9]{4}-|hotfix/TARA-[0-9]{4}-|chore/)'; then
             echo "OK P-07: Branch-Name korrekt"
           else
             echo "FAIL P-07: Branch-Name '$BRANCH' entspricht nicht 'feature/TARA-XXXX-*'"
@@ -29,6 +33,13 @@ jobs:
 
       - name: P-08 – TARA-ID in Commit-Messages
         run: |
+          BRANCH="${{ github.head_ref }}"
+          BASE_REF="${{ github.base_ref }}"
+          # Release-PRs muessen nicht jeden Commit mit TARA-ID kennzeichnen
+          if [ "$BRANCH" = "development" ] && [ "$BASE_REF" = "main" ]; then
+            echo "OK P-08: Release-PR development -> main – Commit-Check uebersprungen"
+            exit 0
+          fi
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           MISSING=0

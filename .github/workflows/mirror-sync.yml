@@ -7,8 +7,6 @@ on:
   workflow_dispatch:  # Manual trigger
   issues:
     types: [opened, edited, deleted, closed, reopened]
-  pull_request:
-    types: [opened, closed]
 
 permissions:
   contents: read
