@@ -19,11 +19,11 @@ def test_pr_template_exists():
 
 @pytest.mark.TARA_0004
 def test_review_agent_workflow_exists():
-    assert os.path.isfile(os.path.join(REPO_ROOT, "docs", "REVIEW_AGENT_WORKFLOW.md"))
+    assert os.path.isfile(os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md"))
 
 @pytest.mark.TARA_0004
 def test_process_guard_agent_exists():
-    assert os.path.isfile(os.path.join(REPO_ROOT, ".github", "PROCESS_GUARD_AGENT.md"))
+    assert os.path.isfile(os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md"))
 
 # ── CONTRIBUTING.md Inhalte ───────────────────────────────────────
 
@@ -75,7 +75,7 @@ def test_pr_template_contains_process_guard():
 
 @pytest.mark.TARA_0004
 def test_process_guard_contains_all_rules():
-    path = os.path.join(REPO_ROOT, ".github", "PROCESS_GUARD_AGENT.md")
+    path = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
     content = open(path, encoding='utf-8').read()
     for rule in ["P-01", "P-02", "P-03", "P-04", "P-05",
                  "P-06", "P-07", "P-08", "P-09", "P-10", "P-11", "P-12", "P-13", "P-14"]:
@@ -83,7 +83,7 @@ def test_process_guard_contains_all_rules():
 
 @pytest.mark.TARA_0004
 def test_review_agent_workflow_contains_all_rules():
-    path = os.path.join(REPO_ROOT, "docs", "REVIEW_AGENT_WORKFLOW.md")
+    path = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
     content = open(path, encoding='utf-8').read()
     for rule in ["R-01", "R-02", "R-03", "R-04", "R-05",
                  "R-06", "R-07", "R-08", "R-09", "R-10", "R-11", "R-12"]:
@@ -91,7 +91,7 @@ def test_review_agent_workflow_contains_all_rules():
 
 @pytest.mark.TARA_0004
 def test_process_guard_contains_tdd_rules():
-    path = os.path.join(REPO_ROOT, ".github", "PROCESS_GUARD_AGENT.md")
+    path = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
     content = open(path, encoding='utf-8').read()
     assert "TDD" in content or "Tests vor" in content, "TDD-Regel fehlt im Process Guard"
     assert "fehlgeschlagen" in content or "Red" in content, "Red-Phase Regel fehlt"

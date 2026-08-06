@@ -35,7 +35,7 @@ def start_review_session(
 
     report = {
         "story_id": "",
-        "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z"),
         "app_url": app_url,
         "findings": [],
         "raw": {},

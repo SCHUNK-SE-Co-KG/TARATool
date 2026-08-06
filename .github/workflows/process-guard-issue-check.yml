@@ -1,0 +1,43 @@
+name: Process Guard – Issue Compliance Check
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  issue-compliance:
+    name: Nomenklatur & Inhalt prüfen (P-14 + Prozessregeln)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Issue-Compliance prüfen
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+        run: |
+          python agents/process_guard/issue_checker.py
+          EXIT=$?
+          if [ $EXIT -eq 1 ]; then
+            echo "⚠️  Prozess-Guard hat Verstöße gefunden – Kommentar wurde am Issue hinterlegt."
+            # Non-fatal: workflow succeeds, violation is documented via comment + label
+            exit 0
+          elif [ $EXIT -eq 2 ]; then
+            echo "❌ Konfigurationsfehler im issue_checker"
+            exit 1
+          fi
+          echo "✅ Issue ist prozesskonform."

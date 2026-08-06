@@ -1,4 +1,4 @@
-name: Process Guard – P-07 / P-03 / P-08 Compliance
+name: Process Guard – TDD & Compliance Check (P-03/P-04/P-06/P-07/P-08/P-12/P-13)
 
 on:
   pull_request:
@@ -19,27 +19,38 @@ jobs:
       - name: P-07 – Branch-Name Schema
         run: |
           BRANCH="${{ github.head_ref }}"
-          echo "Branch: $BRANCH"
-          if echo "$BRANCH" | grep -qE '^(feature/TARA-[0-9]{4}-|hotfix/TARA-[0-9]{4}-|chore/)'; then
-            echo "✅ P-07: Branch-Name korrekt"
+          BASE="${{ github.base_ref }}"
+          echo "Branch: $BRANCH -> $BASE"
+          # Release-PRs: development -> main sind erlaubt (kein Feature-Branch noetig)
+          if [ "$BRANCH" = "development" ] && [ "$BASE" = "main" ]; then
+            echo "OK P-07: Release-PR development -> main ist erlaubt"
+          elif echo "$BRANCH" | grep -qE '^(feature/TARA-[0-9]{4}-|hotfix/TARA-[0-9]{4}-|chore/)'; then
+            echo "OK P-07: Branch-Name korrekt"
           else
-            echo "❌ P-07: Branch-Name '$BRANCH' entspricht nicht 'feature/TARA-XXXX-*'"
+            echo "FAIL P-07: Branch-Name '$BRANCH' entspricht nicht 'feature/TARA-XXXX-*'"
             exit 1
           fi
 
       - name: P-08 – TARA-ID in Commit-Messages
         run: |
+          BRANCH="${{ github.head_ref }}"
+          BASE_REF="${{ github.base_ref }}"
+          # Release-PRs muessen nicht jeden Commit mit TARA-ID kennzeichnen
+          if [ "$BRANCH" = "development" ] && [ "$BASE_REF" = "main" ]; then
+            echo "OK P-08: Release-PR development -> main – Commit-Check uebersprungen"
+            exit 0
+          fi
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           MISSING=0
           while IFS= read -r line; do
             if ! echo "$line" | grep -qE 'TARA-[0-9]{4}|chore:|docs:|fix:|hotfix:'; then
-              echo "❌ P-08: Commit ohne TARA-ID: $line"
+              echo "FAIL P-08: Commit ohne TARA-ID: $line"
               MISSING=1
             fi
           done < <(git log --oneline "$BASE..$HEAD")
           if [ "$MISSING" -eq 0 ]; then
-            echo "✅ P-08: Alle Commits referenzieren TARA-ID"
+            echo "OK P-08: Alle Commits referenzieren TARA-ID"
           else
             exit 1
           fi
@@ -49,47 +60,154 @@ jobs:
           BRANCH="${{ github.head_ref }}"
           TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
           if [ -z "$TARA_ID" ]; then
-            echo "ℹ️  Kein TARA-ID im Branch – P-03 übersprungen"
+            echo "INFO P-03: Kein TARA-ID im Branch – P-03 uebersprungen"
             exit 0
           fi
           NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
           TESTFILE="tests/test_TARA_${NUM}.py"
           if [ -f "$TESTFILE" ]; then
-            echo "✅ P-03: Testdatei $TESTFILE vorhanden"
+            echo "OK P-03: Testdatei $TESTFILE vorhanden"
           else
-            echo "❌ P-03: Testdatei $TESTFILE fehlt – TDD nicht eingehalten"
+            echo "FAIL P-03: Testdatei $TESTFILE fehlt – TDD nicht eingehalten"
             exit 1
           fi
 
-      - name: P-06 – Story-Tests grün
+      - name: P-04 – TDD Red-Phase bewiesen (Test-Commit vor Implementierung)
         run: |
           BRANCH="${{ github.head_ref }}"
           TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
           if [ -z "$TARA_ID" ]; then
-            echo "ℹ️  Kein TARA-ID – P-06 übersprungen"
+            echo "INFO P-04: Kein TARA-ID im Branch – P-04 uebersprungen"
             exit 0
           fi
           NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
           TESTFILE="tests/test_TARA_${NUM}.py"
           if [ ! -f "$TESTFILE" ]; then
-            echo "ℹ️  Testdatei nicht gefunden – P-06 übersprungen"
+            echo "INFO P-04: Testdatei nicht gefunden – P-04 uebersprungen"
             exit 0
           fi
-          pip install pytest --quiet
-          # Install project deps if present
-          [ -f requirements.txt ] && pip install -r requirements.txt --quiet
-          pytest "$TESTFILE" --noconftest -q
-          if [ $? -eq 0 ]; then
-            echo "✅ P-06: Story-Tests grün"
-          else
-            echo "❌ P-06: Story-Tests fehlgeschlagen"
+
+          BASE="${{ github.event.pull_request.base.sha }}"
+
+          # Find the FIRST commit on this branch that added the test file
+          FIRST_TEST_COMMIT=$(git log --diff-filter=A --format="%H" "$BASE..HEAD" -- "$TESTFILE" | tail -1)
+
+          if [ -z "$FIRST_TEST_COMMIT" ]; then
+            # Test file not added on this branch -> exists from base, not a new story test
+            echo "INFO P-04: Testdatei nicht auf diesem Branch hinzugefuegt – P-04 uebersprungen"
+            exit 0
+          fi
+
+          echo "Pruefe Red-Phase am Commit: $FIRST_TEST_COMMIT"
+
+          # Check if at FIRST_TEST_COMMIT the test file is the ONLY story-related change
+          # (i.e., implementation files were added later)
+          IMPL_IN_FIRST=$(git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
+            | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG" \
+            | wc -l)
+
+          if [ "$IMPL_IN_FIRST" -gt 0 ]; then
+            echo "FAIL P-04: Im Red-Commit sind bereits Implementierungsdateien enthalten."
+            echo "  P-04 erfordert: Test-Commit (nur tests/) VOR Implementierungs-Commit."
+            echo "  Gefundene Nicht-Test-Dateien im ersten Test-Commit:"
+            git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
+              | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG"
             exit 1
           fi
 
-      - name: P-15 – Kein direktes Done (nur Freigabe nach Merge erlaubt)
+          # Now verify the test actually FAILED at that commit via git worktree
+          git worktree add /tmp/red-phase "$FIRST_TEST_COMMIT" 2>/dev/null
+          cd /tmp/red-phase
+          pip install pytest --quiet 2>/dev/null
+          [ -f requirements.txt ] && pip install -r requirements.txt --quiet 2>/dev/null
+          pytest "$TESTFILE" --noconftest -q 2>&1; RED_EXIT=$?
+          cd -
+          git worktree remove /tmp/red-phase --force 2>/dev/null
+
+          if [ "$RED_EXIT" -ne 0 ]; then
+            echo "OK P-04: Red-Phase bestaetigt – Tests haben beim Red-Commit gefehlt"
+          else
+            echo "FAIL P-04: Tests waren GRUEN beim Red-Commit $FIRST_TEST_COMMIT"
+            echo "  Tests muessen beim Red-Commit FEHLSCHLAGEN (Regel P-04)."
+            echo "  Pruefe ob Implementierung im gleichen Commit wie Tests ist."
+            exit 1
+          fi
+
+      - name: Python-Umgebung einrichten (fuer P-06)
         run: |
-          # P-15 wird durch den Workflow selbst nicht erzwungen (kein Board-Zugriff),
-          # aber der Check dokumentiert die Pflicht und gibt eine Warnung aus.
-          echo "ℹ️  P-15: Done darf NUR nach explizitem PO-OK gesetzt werden."
-          echo "    Board-Status wird durch Dev-Agent gesetzt – PO-Freigabe im Board erforderlich."
-          echo "✅ P-15: Erinnerung ausgegeben"
+          pip install pytest --quiet
+          [ -f requirements.txt ] && pip install -r requirements.txt --quiet || true
+
+      - name: P-06 – Story-Tests gruen
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
+          if [ -z "$TARA_ID" ]; then
+            echo "INFO P-06: Kein TARA-ID – P-06 uebersprungen"
+            exit 0
+          fi
+          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
+          TESTFILE="tests/test_TARA_${NUM}.py"
+          if [ ! -f "$TESTFILE" ]; then
+            echo "INFO P-06: Testdatei nicht gefunden – P-06 uebersprungen"
+            exit 0
+          fi
+          pytest "$TESTFILE" --noconftest -q
+          if [ $? -eq 0 ]; then
+            echo "OK P-06: Story-Tests gruen"
+          else
+            echo "FAIL P-06: Story-Tests fehlgeschlagen"
+            exit 1
+          fi
+
+      - name: Node.js einrichten (fuer P-12/P-13)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: P-12 – Prettier (nur bei JS/HTML-Aenderungen)
+        run: |
+          # Check if any JS or HTML files were changed in this PR
+          BASE="${{ github.event.pull_request.base.sha }}"
+          JS_CHANGES=$(git diff --name-only "$BASE..HEAD" | grep -cE '\.(js|html|css)$' || true)
+          if [ "$JS_CHANGES" -eq 0 ]; then
+            echo "INFO P-12: Keine JS/HTML-Aenderungen – Prettier-Check entfaellt (N/A fuer Python-Stories)"
+            exit 0
+          fi
+          if [ ! -f "package.json" ]; then
+            echo "INFO P-12: Kein package.json – P-12 uebersprungen"
+            exit 0
+          fi
+          npm install --silent
+          npm run format:check
+          if [ $? -eq 0 ]; then
+            echo "OK P-12: Prettier – alle Dateien korrekt formatiert"
+          else
+            echo "FAIL P-12: Prettier-Fehler gefunden. 'npm run format:write' ausfuehren und committen."
+            exit 1
+          fi
+
+      - name: P-13 – ESLint (nur bei JS-Aenderungen)
+        run: |
+          BASE="${{ github.event.pull_request.base.sha }}"
+          JS_CHANGES=$(git diff --name-only "$BASE..HEAD" | grep -cE '\.js$' || true)
+          if [ "$JS_CHANGES" -eq 0 ]; then
+            echo "INFO P-13: Keine JS-Aenderungen – ESLint-Check entfaellt (N/A fuer Python-Stories)"
+            exit 0
+          fi
+          if [ ! -f "package.json" ]; then
+            echo "INFO P-13: Kein package.json – P-13 uebersprungen"
+            exit 0
+          fi
+          npm run lint
+          if [ $? -eq 0 ]; then
+            echo "OK P-13: ESLint – keine Fehler"
+          else
+            echo "FAIL P-13: ESLint-Fehler gefunden. Bitte beheben."
+            exit 1
+          fi
+
+      - name: P-15 – Erinnerung (Done nur nach PO-OK)
+        run: |
+          echo "INFO P-15: Done darf NUR nach explizitem PO-OK gesetzt werden."
+          echo "  Board-Automatisierung: po-approve.yml setzt Status automatisch nach PO-Kommentar."

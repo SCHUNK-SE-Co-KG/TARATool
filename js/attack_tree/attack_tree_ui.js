@@ -11,195 +11,241 @@
  */
 
 function populateAttackTreeDropdowns() {
-    const selects = document.querySelectorAll('.kstu-select');
-    selects.forEach(select => {
-        const name = select.getAttribute('name');
-        if (!name) return;
-        
-        let type = null;
-        if (name.endsWith('_k')) type = 'K';
-        else if (name.endsWith('_s')) type = 'S';
-        else if (name.endsWith('_t')) type = 'T';
-        else if (name.endsWith('_u')) type = 'U';
-        
-        if (type && PROBABILITY_CRITERIA[type]) {
-            const currentVal = select.value;
-            select.innerHTML = ''; 
+  const selects = document.querySelectorAll('.kstu-select');
+  selects.forEach((select) => {
+    const name = select.getAttribute('name');
+    if (!name) return;
 
-            const emptyOpt = document.createElement('option');
-            emptyOpt.value = '';
-            emptyOpt.textContent = type; // Display letter
-            emptyOpt.style.fontWeight = 'bold';
-            emptyOpt.style.color = '#888';
-            select.appendChild(emptyOpt);
-            
-            PROBABILITY_CRITERIA[type].options.forEach(opt => {
-                const el = document.createElement('option');
-                el.value = opt.value;
-                el.textContent = (typeof getLocalizedOptionText === 'function')
-                    ? getLocalizedOptionText(opt, 'text')
-                    : (opt.text || opt.value);
-                select.appendChild(el);
-            });
-            
-            if (currentVal) select.value = currentVal;
-        }
-    });
+    let type = null;
+    if (name.endsWith('_k')) type = 'K';
+    else if (name.endsWith('_s')) type = 'S';
+    else if (name.endsWith('_t')) type = 'T';
+    else if (name.endsWith('_u')) type = 'U';
+
+    if (type && PROBABILITY_CRITERIA[type]) {
+      const currentVal = select.value;
+      select.innerHTML = '';
+
+      const emptyOpt = document.createElement('option');
+      emptyOpt.value = '';
+      emptyOpt.textContent = type; // Display letter
+      emptyOpt.style.fontWeight = 'bold';
+      emptyOpt.style.color = '#888';
+      select.appendChild(emptyOpt);
+
+      PROBABILITY_CRITERIA[type].options.forEach((opt) => {
+        const el = document.createElement('option');
+        el.value = opt.value;
+        el.textContent =
+          typeof getLocalizedOptionText === 'function'
+            ? getLocalizedOptionText(opt, 'text')
+            : opt.text || opt.value;
+        select.appendChild(el);
+      });
+
+      if (currentVal) select.value = currentVal;
+    }
+  });
 }
 
-
 function openAttackTreeModal(existingEntry = null) {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    // Reset form via explicit DOM lookup (ES-module-safe)
-    const attackTreeFormEl = document.getElementById('attackTreeForm');
-    if (attackTreeFormEl) attackTreeFormEl.reset();
+  // Reset form via explicit DOM lookup (ES-module-safe)
+  const attackTreeFormEl = document.getElementById('attackTreeForm');
+  if (attackTreeFormEl) attackTreeFormEl.reset();
 
-    try { if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns(); } catch (e) { console.warn('[AT UI] populateAttackTreeDropdowns:', e.message || e); }
+  try {
+    if (typeof populateAttackTreeDropdowns === 'function') populateAttackTreeDropdowns();
+  } catch (e) {
+    console.warn('[AT UI] populateAttackTreeDropdowns:', e.message || e);
+  }
 
-    const previewContainer = document.getElementById('graph-preview-container');
-    if (previewContainer) previewContainer.innerHTML = '';
+  const previewContainer = document.getElementById('graph-preview-container');
+  if (previewContainer) previewContainer.innerHTML = '';
 
-    // Delete button (entire tree)
-    const delBtn = document.getElementById('btnDeleteAttackTree');
-    if (delBtn) {
-        if (existingEntry && existingEntry.id) {
-            delBtn.style.display = 'inline-flex';
-            delBtn.onclick = () => window.deleteAttackTree(existingEntry.id);
-        } else {
-            delBtn.style.display = 'none';
-            delBtn.onclick = null;
-        }
+  // Delete button (entire tree)
+  const delBtn = document.getElementById('btnDeleteAttackTree');
+  if (delBtn) {
+    if (existingEntry && existingEntry.id) {
+      delBtn.style.display = 'inline-flex';
+      delBtn.onclick = () => window.deleteAttackTree(existingEntry.id);
+    } else {
+      delBtn.style.display = 'none';
+      delBtn.onclick = null;
     }
+  }
 
-    // Open editor
-    if (window.atV2 && typeof window.atV2.open === 'function') {
-        window.atV2.open(existingEntry);
-    }
+  // Open editor
+  if (window.atV2 && typeof window.atV2.open === 'function') {
+    window.atV2.open(existingEntry);
+  }
 
-    // Root live sync
-    const rootInput = document.querySelector('input[name="at_root"]');
-    if (rootInput) {
-        rootInput.oninput = () => {
-            try { if (window.atV2) window.atV2.rerender(); } catch (e) { console.warn('[AT UI] atV2.rerender:', e.message || e); }
-        };
-    }
+  // Root live sync
+  const rootInput = document.querySelector('input[name="at_root"]');
+  if (rootInput) {
+    rootInput.oninput = () => {
+      try {
+        if (window.atV2) window.atV2.rerender();
+      } catch (e) {
+        console.warn('[AT UI] atV2.rerender:', e.message || e);
+      }
+    };
+  }
 
-    const modal = document.getElementById('attackTreeModal');
-    if (modal) modal.style.display = 'block';
+  const modal = document.getElementById('attackTreeModal');
+  if (modal) modal.style.display = 'block';
 }
 
 function saveAttackTree(e) {
-    if (e) e.preventDefault();
+  if (e) e.preventDefault();
 
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    if (!analysis.riskEntries) analysis.riskEntries = [];
+  if (!analysis.riskEntries) analysis.riskEntries = [];
 
-    const entry = (window.atV2 && typeof window.atV2.getEntryData === 'function')
-        ? window.atV2.getEntryData({ computeOnly: false })
-        : null;
+  const entry =
+    window.atV2 && typeof window.atV2.getEntryData === 'function'
+      ? window.atV2.getEntryData({ computeOnly: false })
+      : null;
 
-    if (!entry) return;
+  if (!entry) return;
 
-    const existingIdx = analysis.riskEntries.findIndex(r => r.id === entry.id);
-    if (existingIdx >= 0) {
-        // Preserve fields managed outside the tree editor (e.g. tree-level notes)
-        const prev = analysis.riskEntries[existingIdx];
-        if (prev.notes !== undefined) entry.notes = prev.notes;
-        analysis.riskEntries[existingIdx] = entry;
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeUpdated') : 'Angriffsbaum aktualisiert.'), 'success');
-    } else {
-        analysis.riskEntries.push(entry);
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeAdded') : 'Angriffsbaum hinzugefügt.'), 'success');
+  const existingIdx = analysis.riskEntries.findIndex((r) => r.id === entry.id);
+  if (existingIdx >= 0) {
+    // Preserve fields managed outside the tree editor (e.g. tree-level notes)
+    const prev = analysis.riskEntries[existingIdx];
+    if (prev.notes !== undefined) entry.notes = prev.notes;
+    analysis.riskEntries[existingIdx] = entry;
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function' ? t('toast.treeUpdated') : 'Angriffsbaum aktualisiert.',
+        'success'
+      );
+  } else {
+    analysis.riskEntries.push(entry);
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function' ? t('toast.treeAdded') : 'Angriffsbaum hinzugefügt.',
+        'success'
+      );
+  }
+
+  try {
+    if (typeof reindexRiskIDs === 'function') reindexRiskIDs(analysis);
+  } catch (e) {
+    console.warn('[AT UI] reindexRiskIDs:', e.message || e);
+  }
+
+  try {
+    if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+      syncResidualRiskFromRiskAnalysis(analysis, false);
     }
+  } catch (e) {
+    console.warn('[AT UI] syncResidualRisk:', e.message || e);
+  }
 
-    try { if (typeof reindexRiskIDs === 'function') reindexRiskIDs(analysis); } catch (e) { console.warn('[AT UI] reindexRiskIDs:', e.message || e); }
+  try {
+    if (typeof saveAnalyses === 'function') saveAnalyses();
+  } catch (e) {
+    console.warn('[AT UI] saveAnalyses:', e.message || e);
+  }
 
-    try {
-        if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
-            syncResidualRiskFromRiskAnalysis(analysis, false);
-        }
-    } catch (e) { console.warn('[AT UI] syncResidualRisk:', e.message || e); }
+  const modal = document.getElementById('attackTreeModal');
+  if (modal) modal.style.display = 'none';
 
-    try { if (typeof saveAnalyses === 'function') saveAnalyses(); } catch (e) { console.warn('[AT UI] saveAnalyses:', e.message || e); }
-
-    const modal = document.getElementById('attackTreeModal');
-    if (modal) modal.style.display = 'none';
-
-    try { if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis(); } catch (e) { console.warn('[AT UI] renderRiskAnalysis:', e.message || e); }
+  try {
+    if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+  } catch (e) {
+    console.warn('[AT UI] renderRiskAnalysis:', e.message || e);
+  }
 }
 
 function readLeafDsFromDOM(leafIndex) {
-    const ds = [];
-    const boxes = document.querySelectorAll(`input[type="checkbox"][name^="at_leaf_${leafIndex}_ds"]`);
-    boxes.forEach(chk => {
-        if (!chk || !chk.checked) return;
-        const nm = chk.getAttribute('name') || '';
-        const m = nm.match(/_ds(\d+)$/i);
-        if (m) ds.push(`DS${m[1]}`);
-    });
-    return [...new Set(ds)].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  const ds = [];
+  const boxes = document.querySelectorAll(
+    `input[type="checkbox"][name^="at_leaf_${leafIndex}_ds"]`
+  );
+  boxes.forEach((chk) => {
+    if (!chk || !chk.checked) return;
+    const nm = chk.getAttribute('name') || '';
+    const m = nm.match(/_ds(\d+)$/i);
+    if (m) ds.push(`DS${m[1]}`);
+  });
+  return [...new Set(ds)].sort((a, b) =>
+    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+  );
 }
 
 function extractLeafData(formData, index) {
-    let checkedDS = [];
-    try {
-        checkedDS = readLeafDsFromDOM(index);
-    } catch (e) { checkedDS = []; }
+  let checkedDS = [];
+  try {
+    checkedDS = readLeafDsFromDOM(index);
+  } catch (e) {
+    checkedDS = [];
+  }
 
-    if (checkedDS.length === 0) {
-         for (const [key, val] of formData.entries()) {
-            if (!key) continue;
-            if (!key.startsWith(`at_leaf_${index}_ds`)) continue;
-            const m = key.match(/_ds(\d+)$/i);
-            if (m) checkedDS.push(`DS${m[1]}`);
-        }
+  if (checkedDS.length === 0) {
+    for (const [key, val] of formData.entries()) {
+      if (!key) continue;
+      if (!key.startsWith(`at_leaf_${index}_ds`)) continue;
+      const m = key.match(/_ds(\d+)$/i);
+      if (m) checkedDS.push(`DS${m[1]}`);
     }
+  }
 
-    return {
-        text: formData.get(`at_leaf_${index}_text`),
-        ds: checkedDS,
-        k: formData.get(`at_leaf_${index}_k`),
-        s: formData.get(`at_leaf_${index}_s`),
-        t: formData.get(`at_leaf_${index}_t`),
-        u: formData.get(`at_leaf_${index}_u`),
-        i_norm: formData.get(`at_leaf_${index}_i`) || ''
-    };
+  return {
+    text: formData.get(`at_leaf_${index}_text`),
+    ds: checkedDS,
+    k: formData.get(`at_leaf_${index}_k`),
+    s: formData.get(`at_leaf_${index}_s`),
+    t: formData.get(`at_leaf_${index}_t`),
+    u: formData.get(`at_leaf_${index}_u`),
+    i_norm: formData.get(`at_leaf_${index}_i`) || '',
+  };
 }
-
 
 // --- CALCULATION LOGIC ---
 
 // Initialize "Add impact" buttons
 document.addEventListener('DOMContentLoaded', () => {
-    try { initAttackTreeImpactAdders(); } catch (e) { console.warn('[AT UI] initAttackTreeImpactAdders:', e.message || e); }
-    try { initAttackTreeImpactRemovers(); } catch (e) { console.warn('[AT UI] initAttackTreeImpactRemovers:', e.message || e); }
-    try { initAttackTreeLeafRemovers(); } catch (e) { console.warn('[AT UI] initAttackTreeLeafRemovers:', e.message || e); }
+  try {
+    initAttackTreeImpactAdders();
+  } catch (e) {
+    console.warn('[AT UI] initAttackTreeImpactAdders:', e.message || e);
+  }
+  try {
+    initAttackTreeImpactRemovers();
+  } catch (e) {
+    console.warn('[AT UI] initAttackTreeImpactRemovers:', e.message || e);
+  }
+  try {
+    initAttackTreeLeafRemovers();
+  } catch (e) {
+    console.warn('[AT UI] initAttackTreeLeafRemovers:', e.message || e);
+  }
 });
-
-
 
 // =============================================================
 // --- NODE SUMMARY HTML (moved from attack_tree_calc.js) ---
 // =============================================================
 
 function _renderNodeSummaryHTML(kstu, iNorm) {
-    const riskScore = _computeRiskScore(kstu, iNorm);
-    const riskR = riskScore.toFixed(2);
-    
-    const _disp = (v) => (v === null || v === undefined || v === '') ? '-' : v;
-    const dispI = _disp(iNorm);
-    const dispK = _disp(kstu?.k);
-    const dispS = _disp(kstu?.s);
-    const dispT = _disp(kstu?.t);
-    const dispU = _disp(kstu?.u);
+  const riskScore = _computeRiskScore(kstu, iNorm);
+  const riskR = riskScore.toFixed(2);
 
-    const riskClass = _getRiskCssClass(riskScore); 
+  const _disp = (v) => (v === null || v === undefined || v === '' ? '-' : v);
+  const dispI = _disp(iNorm);
+  const dispK = _disp(kstu?.k);
+  const dispS = _disp(kstu?.s);
+  const dispT = _disp(kstu?.t);
+  const dispU = _disp(kstu?.u);
 
-    return `
+  const riskClass = _getRiskCssClass(riskScore);
+
+  return `
         <div class="ns-row ns-row-head">
             <div style="display:flex; align-items:center;">
                 <span class="ns-label">R=</span>
@@ -226,148 +272,163 @@ function _renderNodeSummaryHTML(kstu, iNorm) {
 // =============================================================
 
 function updateAttackTreeKSTUSummariesFromForm() {
-    if (window.atV2 && typeof window.atV2.updateSummaries === "function") { window.atV2.updateSummaries(); return; }
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+  if (window.atV2 && typeof window.atV2.updateSummaries === 'function') {
+    window.atV2.updateSummaries();
+    return;
+  }
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
-    const treeDepth = (depthRaw === 3) ? 3 : ((depthRaw === 2) ? 2 : 1);
-    const useDeepTree = treeDepth >= 2;
+  const depthRaw = parseInt(document.getElementById('tree_depth')?.value || '1', 10);
+  const treeDepth = depthRaw === 3 ? 3 : depthRaw === 2 ? 2 : 1;
+  const useDeepTree = treeDepth >= 2;
 
-    const secondOn = (treeDepth === 2) && ((document.getElementById('use_second_intermediate')?.value || 'false').toString().toLowerCase() === 'true');
-    const thirdOn = (treeDepth === 3);
+  const secondOn =
+    treeDepth === 2 &&
+    (document.getElementById('use_second_intermediate')?.value || 'false')
+      .toString()
+      .toLowerCase() === 'true';
+  const thirdOn = treeDepth === 3;
 
-    const getLeafDs = (idx) => readLeafDsFromDOM(idx);
-    const getLeafKSTU = (idx) => ({
-        k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
-        s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
-        t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
-        u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || ''
-    });
+  const getLeafDs = (idx) => readLeafDsFromDOM(idx);
+  const getLeafKSTU = (idx) => ({
+    k: document.querySelector(`select[name="at_leaf_${idx}_k"]`)?.value || '',
+    s: document.querySelector(`select[name="at_leaf_${idx}_s"]`)?.value || '',
+    t: document.querySelector(`select[name="at_leaf_${idx}_t"]`)?.value || '',
+    u: document.querySelector(`select[name="at_leaf_${idx}_u"]`)?.value || '',
+  });
 
-    const max = 5;
+  const max = 5;
 
-    // Indizes: 1..5 (B1A), 6..10 (B2A), 11..15 (B1B), 16..20 (B2B)
-    const bases = {
-        '1a': 1,
-        '2a': 6,
-        '1b': 11,
-        '2b': 16
-    };
+  // Indizes: 1..5 (B1A), 6..10 (B2A), 11..15 (B1B), 16..20 (B2B)
+  const bases = {
+    '1a': 1,
+    '2a': 6,
+    '1b': 11,
+    '2b': 16,
+  };
 
-    const mkLeaves = (base) => {
-        const arr = [];
-        for (let i = 0; i < max; i++) {
-            const idx = base + i;
-            arr.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
-        }
-        return arr;
-    };
+  const mkLeaves = (base) => {
+    const arr = [];
+    for (let i = 0; i < max; i++) {
+      const idx = base + i;
+      arr.push({ ds: getLeafDs(idx), kstu: getLeafKSTU(idx) });
+    }
+    return arr;
+  };
 
-    const formValues = {
-        treeDepth: treeDepth,
-        useDeepTree: useDeepTree,
-        useSecondIntermediate: secondOn,
-        useThirdIntermediate: thirdOn,
-        branches: [
-            {},
-            {}
-        ]
-    };
+  const formValues = {
+    treeDepth: treeDepth,
+    useDeepTree: useDeepTree,
+    useSecondIntermediate: secondOn,
+    useThirdIntermediate: thirdOn,
+    branches: [{}, {}],
+  };
 
-    // Branch 1
-    if (treeDepth === 1) {
-        formValues.branches[0].leaves = mkLeaves(bases['1a']);
-    } else if (treeDepth === 3) {
-        formValues.branches[0].l2_node = {};
-        formValues.branches[0].l3_node = {};
-        formValues.branches[0].leaves = mkLeaves(bases['1a']);
-    } else {
-        formValues.branches[0].l2_nodes = [
-            { leaves: mkLeaves(bases['1a']) }
-        ];
-        if (secondOn) {
-            formValues.branches[0].l2_nodes.push({ leaves: mkLeaves(bases['1b']) });
-        }
+  // Branch 1
+  if (treeDepth === 1) {
+    formValues.branches[0].leaves = mkLeaves(bases['1a']);
+  } else if (treeDepth === 3) {
+    formValues.branches[0].l2_node = {};
+    formValues.branches[0].l3_node = {};
+    formValues.branches[0].leaves = mkLeaves(bases['1a']);
+  } else {
+    formValues.branches[0].l2_nodes = [{ leaves: mkLeaves(bases['1a']) }];
+    if (secondOn) {
+      formValues.branches[0].l2_nodes.push({ leaves: mkLeaves(bases['1b']) });
+    }
+  }
+
+  // Branch 2
+  if (treeDepth === 1) {
+    formValues.branches[1].leaves = mkLeaves(bases['2a']);
+  } else if (treeDepth === 3) {
+    formValues.branches[1].l2_node = {};
+    formValues.branches[1].l3_node = {};
+    formValues.branches[1].leaves = mkLeaves(bases['2a']);
+  } else {
+    formValues.branches[1].l2_nodes = [{ leaves: mkLeaves(bases['2a']) }];
+    if (secondOn) {
+      formValues.branches[1].l2_nodes.push({ leaves: mkLeaves(bases['2b']) });
+    }
+  }
+
+  applyImpactInheritance(formValues, analysis);
+  applyWorstCaseInheritance(formValues);
+
+  const elRoot = document.getElementById('at_root_kstu_summary');
+  if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
+
+  [0, 1].forEach((bIdx) => {
+    const branchNum = bIdx + 1;
+    const branchData = formValues.branches[bIdx];
+
+    const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
+    if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
+
+    if (treeDepth === 2) {
+      const nodeA = branchData.l2_nodes && branchData.l2_nodes[0] ? branchData.l2_nodes[0] : null;
+      const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+      if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
+
+      const nodeB = branchData.l2_nodes && branchData.l2_nodes[1] ? branchData.l2_nodes[1] : null;
+      const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+      if (elL2B)
+        elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
+
+      const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+      if (elL3) elL3.innerHTML = '';
     }
 
-    // Branch 2
-    if (treeDepth === 1) {
-        formValues.branches[1].leaves = mkLeaves(bases['2a']);
-    } else if (treeDepth === 3) {
-        formValues.branches[1].l2_node = {};
-        formValues.branches[1].l3_node = {};
-        formValues.branches[1].leaves = mkLeaves(bases['2a']);
-    } else {
-        formValues.branches[1].l2_nodes = [
-            { leaves: mkLeaves(bases['2a']) }
-        ];
-        if (secondOn) {
-            formValues.branches[1].l2_nodes.push({ leaves: mkLeaves(bases['2b']) });
-        }
+    if (treeDepth === 3) {
+      const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
+      if (elL2)
+        elL2.innerHTML = _renderNodeSummaryHTML(
+          branchData?.l2_node?.kstu,
+          branchData?.l2_node?.i_norm
+        );
+
+      const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
+      if (elL3)
+        elL3.innerHTML = _renderNodeSummaryHTML(
+          branchData?.l3_node?.kstu,
+          branchData?.l3_node?.i_norm
+        );
+
+      const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
+      if (elL2B) elL2B.innerHTML = '';
     }
+  });
 
-    applyImpactInheritance(formValues, analysis);
-    applyWorstCaseInheritance(formValues);
+  // Leaf summaries for all slots (1..20). Hidden rows are OK.
+  for (let idx = 1; idx <= 20; idx++) {
+    const leafObj = (() => {
+      // Determine: which branch/group does idx belong to?
+      if (idx >= 1 && idx <= 5)
+        return treeDepth === 2
+          ? formValues.branches[0]?.l2_nodes?.[0]?.leaves?.[idx - 1]
+          : formValues.branches[0]?.leaves?.[idx - 1];
+      if (idx >= 6 && idx <= 10)
+        return treeDepth === 2
+          ? formValues.branches[1]?.l2_nodes?.[0]?.leaves?.[idx - 6]
+          : formValues.branches[1]?.leaves?.[idx - 6];
+      if (idx >= 11 && idx <= 15) {
+        if (treeDepth !== 2 || !secondOn) return null;
+        return formValues.branches[0]?.l2_nodes?.[1]?.leaves?.[idx - 11];
+      }
+      if (idx >= 16 && idx <= 20) {
+        if (treeDepth !== 2 || !secondOn) return null;
+        return formValues.branches[1]?.l2_nodes?.[1]?.leaves?.[idx - 16];
+      }
+      return null;
+    })();
 
-    const elRoot = document.getElementById('at_root_kstu_summary');
-    if (elRoot) elRoot.innerHTML = _renderNodeSummaryHTML(formValues.kstu, formValues.i_norm);
+    const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
+    if (inp) inp.value = leafObj ? leafObj.i_norm || '' : '';
 
-    [0, 1].forEach((bIdx) => {
-        const branchNum = bIdx + 1;
-        const branchData = formValues.branches[bIdx];
-
-        const elB = document.getElementById(`at_branch_${branchNum}_kstu_summary`);
-        if (elB) elB.innerHTML = _renderNodeSummaryHTML(branchData.kstu, branchData.i_norm);
-
-        if (treeDepth === 2) {
-            const nodeA = (branchData.l2_nodes && branchData.l2_nodes[0]) ? branchData.l2_nodes[0] : null;
-            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
-            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(nodeA?.kstu, nodeA?.i_norm);
-
-            const nodeB = (branchData.l2_nodes && branchData.l2_nodes[1]) ? branchData.l2_nodes[1] : null;
-            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
-            if (elL2B) elL2B.innerHTML = secondOn ? _renderNodeSummaryHTML(nodeB?.kstu, nodeB?.i_norm) : '';
-
-            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
-            if (elL3) elL3.innerHTML = '';
-        }
-
-        if (treeDepth === 3) {
-            const elL2 = document.getElementById(`at_branch_${branchNum}_l2_kstu_summary`);
-            if (elL2) elL2.innerHTML = _renderNodeSummaryHTML(branchData?.l2_node?.kstu, branchData?.l2_node?.i_norm);
-
-            const elL3 = document.getElementById(`at_branch_${branchNum}_l3_kstu_summary`);
-            if (elL3) elL3.innerHTML = _renderNodeSummaryHTML(branchData?.l3_node?.kstu, branchData?.l3_node?.i_norm);
-
-            const elL2B = document.getElementById(`at_branch_${branchNum}_l2b_kstu_summary`);
-            if (elL2B) elL2B.innerHTML = '';
-        }
-    });
-
-    // Leaf summaries for all slots (1..20). Hidden rows are OK.
-    for (let idx = 1; idx <= 20; idx++) {
-        const leafObj = (() => {
-            // Determine: which branch/group does idx belong to?
-            if (idx >= 1 && idx <= 5) return (treeDepth === 2 ? formValues.branches[0]?.l2_nodes?.[0]?.leaves?.[idx-1] : formValues.branches[0]?.leaves?.[idx-1]);
-            if (idx >= 6 && idx <= 10) return (treeDepth === 2 ? formValues.branches[1]?.l2_nodes?.[0]?.leaves?.[idx-6] : formValues.branches[1]?.leaves?.[idx-6]);
-            if (idx >= 11 && idx <= 15) {
-                if (treeDepth !== 2 || !secondOn) return null;
-                return formValues.branches[0]?.l2_nodes?.[1]?.leaves?.[idx-11];
-            }
-            if (idx >= 16 && idx <= 20) {
-                if (treeDepth !== 2 || !secondOn) return null;
-                return formValues.branches[1]?.l2_nodes?.[1]?.leaves?.[idx-16];
-            }
-            return null;
-        })();
-
-        const inp = document.querySelector(`input[name="at_leaf_${idx}_i"]`);
-        if (inp) inp.value = leafObj ? (leafObj.i_norm || '') : '';
-
-        const elL = document.getElementById(`at_leaf_${idx}_summary`);
-        if (elL) elL.innerHTML = leafObj ? _renderNodeSummaryHTML(leafObj.kstu, leafObj.i_norm) : '';
-    }
+    const elL = document.getElementById(`at_leaf_${idx}_summary`);
+    if (elL) elL.innerHTML = leafObj ? _renderNodeSummaryHTML(leafObj.kstu, leafObj.i_norm) : '';
+  }
 }
 
 // =============================================================
@@ -375,26 +436,26 @@ function updateAttackTreeKSTUSummariesFromForm() {
 // =============================================================
 
 {
-    const attackTreeForm = document.getElementById('attackTreeForm');
-    if (attackTreeForm) {
-        attackTreeForm.onsubmit = saveAttackTree;
+  const attackTreeForm = document.getElementById('attackTreeForm');
+  if (attackTreeForm) {
+    attackTreeForm.onsubmit = saveAttackTree;
 
-        const _atShouldUpdate = (t) => {
-            if (!t) return false;
-            if (t.classList && t.classList.contains('kstu-select')) return true;
-            if (t.type === 'checkbox') return true;
-            if (t.closest && t.closest('.ds-checks')) return true; 
-            return false;
-        };
+    const _atShouldUpdate = (t) => {
+      if (!t) return false;
+      if (t.classList && t.classList.contains('kstu-select')) return true;
+      if (t.type === 'checkbox') return true;
+      if (t.closest && t.closest('.ds-checks')) return true;
+      return false;
+    };
 
-        ['change','input','click'].forEach(evtName => {
-            attackTreeForm.addEventListener(evtName, (ev) => {
-                const t = ev && ev.target ? ev.target : null;
-                if (!_atShouldUpdate(t)) return;
-                updateAttackTreeKSTUSummariesFromForm();
-            });
-        });
-    }
+    ['change', 'input', 'click'].forEach((evtName) => {
+      attackTreeForm.addEventListener(evtName, (ev) => {
+        const t = ev && ev.target ? ev.target : null;
+        if (!_atShouldUpdate(t)) return;
+        updateAttackTreeKSTUSummariesFromForm();
+      });
+    });
+  }
 }
 
 // =============================================================
@@ -402,186 +463,262 @@ function updateAttackTreeKSTUSummariesFromForm() {
 // =============================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-    const closeBtn = document.getElementById('closeAttackTreeModal');
-    const modal = document.getElementById('attackTreeModal');
-    if (closeBtn && modal) {
-        closeBtn.onclick = () => {
-            modal.style.display = 'none';
-        };
-    }
+  const closeBtn = document.getElementById('closeAttackTreeModal');
+  const modal = document.getElementById('attackTreeModal');
+  if (closeBtn && modal) {
+    closeBtn.onclick = () => {
+      modal.style.display = 'none';
+    };
+  }
 });
 
 // =============================================================
 // --- DOT PREVIEW from current editor ---
 // =============================================================
 
-window.renderCurrentTreePreview = function() {
-    const analysis = getActiveAnalysis();
-    const previewContainer = document.getElementById('graph-preview-container');
-    if (!analysis || !previewContainer) return;
+window.renderCurrentTreePreview = function () {
+  const analysis = getActiveAnalysis();
+  const previewContainer = document.getElementById('graph-preview-container');
+  if (!analysis || !previewContainer) return;
 
-    if (!(window.atV2 && typeof window.atV2.getEntryData === 'function')) return;
+  if (!(window.atV2 && typeof window.atV2.getEntryData === 'function')) return;
 
-    const tmpEntry = window.atV2.getEntryData({ computeOnly: true });
-    const tmpAnalysis = Object.assign({}, analysis, { riskEntries: [tmpEntry] });
+  const tmpEntry = window.atV2.getEntryData({ computeOnly: true });
+  const tmpAnalysis = Object.assign({}, analysis, { riskEntries: [tmpEntry] });
 
-    const dot = (typeof generateDotString === 'function') ? generateDotString(tmpAnalysis, tmpEntry.id) : null;
+  const dot =
+    typeof generateDotString === 'function' ? generateDotString(tmpAnalysis, tmpEntry.id) : null;
 
-    previewContainer.innerHTML = '';
-    const pre = document.createElement('pre');
-    pre.style.whiteSpace = 'pre-wrap';
-    pre.textContent = dot || (typeof t === 'function' ? t('toast.dotFail') : '(DOT konnte nicht erzeugt werden)');
-    previewContainer.appendChild(pre);
+  previewContainer.innerHTML = '';
+  const pre = document.createElement('pre');
+  pre.style.whiteSpace = 'pre-wrap';
+  pre.textContent =
+    dot || (typeof t === 'function' ? t('toast.dotFail') : '(DOT konnte nicht erzeugt werden)');
+  previewContainer.appendChild(pre);
 };
 
 // =============================================================
 // --- DOT/ZIP FILE DOWNLOAD (moved from dot_export.js) ---
 // =============================================================
 
-window.downloadTreeDataZip = async function() {
-    const analysis = getActiveAnalysis();
-    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.noTreeData') : 'Keine Baumdaten vorhanden.'), 'warning');
-        return;
-    }
+window.downloadTreeDataZip = async function () {
+  const analysis = getActiveAnalysis();
+  if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function' ? t('toast.noTreeData') : 'Keine Baumdaten vorhanden.',
+        'warning'
+      );
+    return;
+  }
 
-    if (typeof JSZip === 'undefined') {
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.jszipMissing') : 'JSZip-Bibliothek nicht geladen.'), 'error');
-        return;
-    }
+  if (typeof JSZip === 'undefined') {
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function' ? t('toast.jszipMissing') : 'JSZip-Bibliothek nicht geladen.',
+        'error'
+      );
+    return;
+  }
 
-    const zip = new JSZip();
-    const h = window.ReportHelpers || {};
-    const analysisName = (analysis.name || analysis.id || 'Analysis').replace(/[^a-zA-Z0-9_\-]/g, '_');
-    const entries = analysis.riskEntries;
-    let fileCount = 0;
+  const zip = new JSZip();
+  const h = window.ReportHelpers || {};
+  const analysisName = (analysis.name || analysis.id || 'Analysis').replace(
+    /[^a-zA-Z0-9_\-]/g,
+    '_'
+  );
+  const entries = analysis.riskEntries;
+  let fileCount = 0;
 
-    if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.treeExportStart') : 'Erzeuge Baumdaten-Export…'), 'info');
+  if (typeof showToast === 'function')
+    showToast(
+      typeof t === 'function' ? t('toast.treeExportStart') : 'Erzeuge Baumdaten-Export…',
+      'info'
+    );
 
-    // --- Risk Analysis Trees ---
-    for (const entry of entries) {
-        if (!entry || !entry.id) continue;
-        const treeId = entry.id;
-        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
-        const prefix = `risk/${treeId}_${treeName}`;
+  // --- Risk Analysis Trees ---
+  for (const entry of entries) {
+    if (!entry || !entry.id) continue;
+    const treeId = entry.id;
+    const treeName = (entry.rootName || treeId)
+      .replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_')
+      .substring(0, 60);
+    const prefix = `risk/${treeId}_${treeName}`;
 
-        try {
-            const dot = typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
-            if (dot) {
-                zip.file(`${prefix}.dot`, dot);
-                fileCount++;
+    try {
+      const dot =
+        typeof generateDotString === 'function' ? generateDotString(analysis, treeId) : null;
+      if (dot) {
+        zip.file(`${prefix}.dot`, dot);
+        fileCount++;
 
-                if (h.renderDotToSvg) {
-                    try {
-                        const svg = await h.renderDotToSvg(dot);
-                        if (svg && svg.includes('<svg')) {
-                            zip.file(`${prefix}.svg`, svg);
-                            fileCount++;
-                        }
-                    } catch (e) { console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e); }
-                }
+        if (h.renderDotToSvg) {
+          try {
+            const svg = await h.renderDotToSvg(dot);
+            if (svg && svg.includes('<svg')) {
+              zip.file(`${prefix}.svg`, svg);
+              fileCount++;
             }
-        } catch (e) { console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e); }
+          } catch (e) {
+            console.warn(`[TreeExport] SVG render failed for ${treeId}:`, e.message || e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`[TreeExport] DOT generation failed for ${treeId}:`, e.message || e);
     }
+  }
 
-    // --- Residual Risk Trees ---
-    for (const entry of entries) {
-        if (!entry || !entry.id) continue;
-        const treeId = entry.id;
-        const treeName = (entry.rootName || treeId).replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_').substring(0, 60);
-        const prefix = `residual_risk/${treeId}_${treeName}_RR`;
+  // --- Residual Risk Trees ---
+  for (const entry of entries) {
+    if (!entry || !entry.id) continue;
+    const treeId = entry.id;
+    const treeName = (entry.rootName || treeId)
+      .replace(/[^a-zA-Z0-9_\-äöüÄÖÜß ]/g, '_')
+      .substring(0, 60);
+    const prefix = `residual_risk/${treeId}_${treeName}_RR`;
 
-        try {
-            const rrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis, treeId) : null;
-            if (rrDot) {
-                zip.file(`${prefix}.dot`, rrDot);
-                fileCount++;
+    try {
+      const rrDot =
+        typeof generateResidualRiskDotString === 'function'
+          ? generateResidualRiskDotString(analysis, treeId)
+          : null;
+      if (rrDot) {
+        zip.file(`${prefix}.dot`, rrDot);
+        fileCount++;
 
-                if (h.renderDotToSvg) {
-                    try {
-                        const svg = await h.renderDotToSvg(rrDot);
-                        if (svg && svg.includes('<svg')) {
-                            zip.file(`${prefix}.svg`, svg);
-                            fileCount++;
-                        }
-                    } catch (e) { console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e); }
-                }
+        if (h.renderDotToSvg) {
+          try {
+            const svg = await h.renderDotToSvg(rrDot);
+            if (svg && svg.includes('<svg')) {
+              zip.file(`${prefix}.svg`, svg);
+              fileCount++;
             }
-        } catch (e) { console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e); }
+          } catch (e) {
+            console.warn(`[TreeExport] RR SVG render failed for ${treeId}:`, e.message || e);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn(`[TreeExport] RR DOT generation failed for ${treeId}:`, e.message || e);
     }
+  }
 
-    // --- Combined DOT (all trees in one file) ---
-    try {
-        const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
-        if (allDot) { zip.file(`${analysisName}_alle_Baeume.dot`, allDot); fileCount++; }
-    } catch (_) {}
-
-    try {
-        const allRrDot = typeof generateResidualRiskDotString === 'function' ? generateResidualRiskDotString(analysis) : null;
-        if (allRrDot) { zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot); fileCount++; }
-    } catch (_) {}
-
-    if (fileCount === 0) {
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.noTreeExport') : 'Keine Baumdaten zum Exportieren gefunden.'), 'warning');
-        return;
+  // --- Combined DOT (all trees in one file) ---
+  try {
+    const allDot = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+    if (allDot) {
+      zip.file(`${analysisName}_alle_Baeume.dot`, allDot);
+      fileCount++;
     }
+  } catch (_) {}
 
-    // Generate and download ZIP
-    try {
-        const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
-
-        if (typeof showToast === 'function') showToast((typeof tf === 'function' ? tf('toast.treeExportOk', { n: fileCount }) : `Baumdaten-Export erstellt (${fileCount} Dateien).`), 'success');
-    } catch (err) {
-        console.error('[TreeExport] ZIP generation failed:', err);
-        if (typeof showToast === 'function') showToast((typeof t === 'function' ? t('toast.zipFail') : 'ZIP-Export fehlgeschlagen.'), 'error');
+  try {
+    const allRrDot =
+      typeof generateResidualRiskDotString === 'function'
+        ? generateResidualRiskDotString(analysis)
+        : null;
+    if (allRrDot) {
+      zip.file(`${analysisName}_alle_Restrisiko_Baeume.dot`, allRrDot);
+      fileCount++;
     }
+  } catch (_) {}
+
+  if (fileCount === 0) {
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function'
+          ? t('toast.noTreeExport')
+          : 'Keine Baumdaten zum Exportieren gefunden.',
+        'warning'
+      );
+    return;
+  }
+
+  // Generate and download ZIP
+  try {
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: { level: 6 },
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TARA_Baumdaten_${analysisName}_${new Date().toISOString().substring(0, 10)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+
+    if (typeof showToast === 'function')
+      showToast(
+        typeof tf === 'function'
+          ? tf('toast.treeExportOk', { n: fileCount })
+          : `Baumdaten-Export erstellt (${fileCount} Dateien).`,
+        'success'
+      );
+  } catch (err) {
+    console.error('[TreeExport] ZIP generation failed:', err);
+    if (typeof showToast === 'function')
+      showToast(
+        typeof t === 'function' ? t('toast.zipFail') : 'ZIP-Export fehlgeschlagen.',
+        'error'
+      );
+  }
 };
 
-window.downloadDotFile = function() {
-    const analysis = getActiveAnalysis();
-    const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
+window.downloadDotFile = function () {
+  const analysis = getActiveAnalysis();
+  const dotContent = typeof generateDotString === 'function' ? generateDotString(analysis) : null;
 
-    if (!dotContent) {
-        if (typeof showToast === 'function') {
-            showToast((typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.'), 'warning');
-        } else {
-            alert((typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.'));
-        }
-        return;
+  if (!dotContent) {
+    if (typeof showToast === 'function') {
+      showToast(
+        typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.',
+        'warning'
+      );
+    } else {
+      alert(
+        typeof t === 'function' ? t('toast.noExportData') : 'Keine Daten für den Export vorhanden.'
+      );
     }
+    return;
+  }
 
-    try {
-        const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
+  try {
+    const blob = new Blob([dotContent], { type: 'text/vnd.graphviz' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
 
-        const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
+    const fileName = `TARA_Export_${activeAnalysisId || 'Analysis'}.dot`;
 
-        a.href = url;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
 
-        // Cleanup
-        setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }, 0);
+    // Cleanup
+    setTimeout(() => {
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    }, 0);
 
-        if (typeof showToast === 'function') {
-            showToast((typeof t === 'function' ? t('toast.dotOk') : '.dot Datei wurde erfolgreich erstellt.'), 'success');
-        }
-    } catch (err) {
-        console.error('Error during DOT export:', err);
-        if (typeof showToast === 'function') {
-            showToast((typeof t === 'function' ? t('toast.exportFail') : 'Export fehlgeschlagen.'), 'error');
-        }
+    if (typeof showToast === 'function') {
+      showToast(
+        typeof t === 'function' ? t('toast.dotOk') : '.dot Datei wurde erfolgreich erstellt.',
+        'success'
+      );
     }
+  } catch (err) {
+    console.error('Error during DOT export:', err);
+    if (typeof showToast === 'function') {
+      showToast(
+        typeof t === 'function' ? t('toast.exportFail') : 'Export fehlgeschlagen.',
+        'error'
+      );
+    }
+  }
 };

@@ -12,3 +12,7 @@ node_modules/
 **/__pycache__/
 **/*.pyc
 tests/.venv/
+
+# Playwright test artifacts (screenshots, traces, videos)
+tests/test-results/
+test-results/

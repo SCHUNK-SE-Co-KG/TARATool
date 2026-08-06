@@ -420,11 +420,11 @@ feature/TARA-XXXX-kurzbeschreibung ───────────────
 
 ### 3. Agenten
 
-| Agent | Aufgabe | Prozessdatei |
-|-------|---------|-------------|
-| Dev Agent | TDD-Implementierung, Branch-Management | [`agents/dev_agent/DEV_AGENT_ONBOARDING.md`](agents/dev_agent/DEV_AGENT_ONBOARDING.md) |
-| Review Agent | Diff-Review R-01–R-30, Browser Runtime Scan | [`agents/review_agent/REVIEW_AGENT_WORKFLOW.md`](agents/review_agent/REVIEW_AGENT_WORKFLOW.md) |
-| Prozess-Guard | P-01–P-15 Compliance-Check vor PR | [`agents/process_guard/PROCESS_GUARD_AGENT.md`](agents/process_guard/PROCESS_GUARD_AGENT.md) |
+| Agent         | Aufgabe                                     | Prozessdatei                                                                                   |
+| ------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Dev Agent     | TDD-Implementierung, Branch-Management      | [`agents/dev_agent/DEV_AGENT_ONBOARDING.md`](agents/dev_agent/DEV_AGENT_ONBOARDING.md)         |
+| Review Agent  | Diff-Review R-01–R-30, Browser Runtime Scan | [`agents/review_agent/REVIEW_AGENT_WORKFLOW.md`](agents/review_agent/REVIEW_AGENT_WORKFLOW.md) |
+| Prozess-Guard | P-01–P-15 Compliance-Check vor PR           | [`agents/process_guard/PROCESS_GUARD_AGENT.md`](agents/process_guard/PROCESS_GUARD_AGENT.md)   |
 
 ---
 

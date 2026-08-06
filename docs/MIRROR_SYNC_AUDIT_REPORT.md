@@ -1,4 +1,5 @@
 # 🔍 Mirror Sync Audit Report
+
 **Datum:** 2026-08-05 10:01 UTC+2
 **Repositories:** Bheowulf/TARATool vs. SCHUNK-SE-Co-KG/TARATool
 
@@ -7,9 +8,11 @@
 ## ❌ KRITISCHE PROBLEME GEFUNDEN
 
 ### 1️⃣ PROJECT BOARD CONTENT MISMATCH
+
 **Severity:** 🔴 CRITICAL
 
 #### Bheowulf Project Board #1
+
 - **Items:** 30
 - **Range:** TARA-0001 to TARA-0031
 - **Special Items:** 3x [PROCESS-GUARD] violations
@@ -19,6 +22,7 @@
 - **Also has:** 3x CVE Monthly Report items (📋 April, May, July 2026)
 
 #### SCHUNK Project Board #4
+
 - **Items:** 30
 - **Range:** TARA-0026 to TARA-0055 (!)
 - **Issue:** All items have [MIRROR] prefix
@@ -27,12 +31,13 @@
 - **No CVE items:** Missing CVE Monthly Report entries
 
 #### Overlap Analysis
+
 ```
 Bheowulf: [0001 ......... 0026 ..................... 0031]
 SCHUNK:           [0026 ..................... 0031 ........... 0055]
          └──────────────────────────────────────────┘
               DUPLICATE RANGE: TARA-0026 to TARA-0031
-              
+
 CRITICAL: TARA-0001 to TARA-0025 ONLY in Bheowulf
 CRITICAL: TARA-0032 to TARA-0055 ONLY in SCHUNK
 ```
@@ -44,27 +49,31 @@ CRITICAL: TARA-0032 to TARA-0055 ONLY in SCHUNK
 ---
 
 ### 2️⃣ PROJECT IDS ARE NOT UNIQUE
+
 **Severity:** 🔴 CRITICAL
 
-| Property | Bheowulf | SCHUNK | Status |
-|----------|----------|--------|--------|
-| Project ID Base | `lAHOBLN428...` | `lADOBu4dv84...` | ✗ Different |
-| Item ID Prefix | `PVTI_lAHOBLN...` | `PVTI_lADOBu...` | ✗ Different |
-| Mapping | NO unique mapping possible | NO unique mapping possible | ✗ BROKEN |
+| Property        | Bheowulf                   | SCHUNK                     | Status      |
+| --------------- | -------------------------- | -------------------------- | ----------- |
+| Project ID Base | `lAHOBLN428...`            | `lADOBu4dv84...`           | ✗ Different |
+| Item ID Prefix  | `PVTI_lAHOBLN...`          | `PVTI_lADOBu...`           | ✗ Different |
+| Mapping         | NO unique mapping possible | NO unique mapping possible | ✗ BROKEN    |
 
 **Issue:** Item IDs are repository-specific and cannot be mapped one-to-one between projects.
 
 ---
 
 ### 3️⃣ MIRROR FUNCTION NOT IMPLEMENTED
+
 **Severity:** 🔴 CRITICAL
 
-**What was expected:** 
+**What was expected:**
+
 - Automated sync between Bheowulf (original) → SCHUNK (mirror)
 - Same content in both project boards
 - Unique project IDs for mapping
 
 **What actually exists:**
+
 - ❌ NO GitHub Workflow for project sync
 - ❌ NO Python/JavaScript sync script
 - ❌ NO documented sync procedure
@@ -72,6 +81,7 @@ CRITICAL: TARA-0032 to TARA-0055 ONLY in SCHUNK
 - ⚠️ Items ordered differently (reverse in SCHUNK)
 
 **Git Remote Setup:** ✅ Present (configured for both repos)
+
 ```
 origin  → https://github.com/Bheowulf/TARATool.git
 schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
@@ -80,15 +90,18 @@ schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 ---
 
 ### 4️⃣ DOCUMENTATION SYNC
+
 **Severity:** 🟡 MEDIUM
 
 **File:** `docs/GITHUB_BOARD.md`
+
 - ❌ Only documents Bheowulf Project #1
 - ❌ No mention of SCHUNK Project #4
 - ❌ No mirror sync instructions
 - ❌ No project ID mapping table
 
 **Files mentioning SCHUNK:**
+
 - ✓ README.md (clone URL only)
 - ✓ CHANGELOG.md (DevSES branch reference)
 - ✗ No mirror-specific documentation
@@ -96,14 +109,15 @@ schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 ---
 
 ## 📊 Repository Sync Status
+
 **Good News:** Code repositories ARE synchronized
 
-| Metric | Status | Last Update |
-|--------|--------|------------|
-| Bheowulf Code | ✅ Sync | 2026-08-05 07:46:43Z |
-| SCHUNK Code | ✅ Sync | 2026-08-05 07:49:55Z |
-| Time Diff | 3 seconds | SCHUNK slightly behind |
-| Default Branch | main (both) | ✅ Match |
+| Metric         | Status      | Last Update            |
+| -------------- | ----------- | ---------------------- |
+| Bheowulf Code  | ✅ Sync     | 2026-08-05 07:46:43Z   |
+| SCHUNK Code    | ✅ Sync     | 2026-08-05 07:49:55Z   |
+| Time Diff      | 3 seconds   | SCHUNK slightly behind |
+| Default Branch | main (both) | ✅ Match               |
 
 ---
 
@@ -136,6 +150,7 @@ schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 ## 🔧 RECOMMENDATIONS
 
 ### Immediate Actions (Priority 1)
+
 1. **Define Mirror Strategy**
    - Decide: Should SCHUNK be 100% mirror or independent?
    - Document expected behavior
@@ -149,6 +164,7 @@ schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
    - Option B: Create Python sync script (e.g., `scripts/sync_project_boards.py`)
 
 ### Medium-term Actions (Priority 2)
+
 1. **Audit & Reconcile Content**
    - Decide which TARA-IDs (0001-0025, 0032-0055) are authoritative
    - Resolve duplicate range (0026-0031) in both boards
@@ -180,6 +196,7 @@ schunk  → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 ## 📎 TECHNICAL DETAILS
 
 ### Bheowulf Project #1
+
 ```
 Project ID: PVT_kwHOBLN4284BfLtb
 Items: 30
@@ -189,6 +206,7 @@ Item ID Examples:
 ```
 
 ### SCHUNK Project #4
+
 ```
 Project ID: ??? (Need to query)
 Items: 30
@@ -198,6 +216,7 @@ Item ID Examples:
 ```
 
 ### Git Remotes
+
 ```bash
 origin  fetch/push → https://github.com/Bheowulf/TARATool.git
 schunk  fetch/push → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
@@ -210,6 +229,7 @@ schunk  fetch/push → https://github.com/SCHUNK-SE-Co-KG/TARATool.git
 **Mirror Function Status:** ❌ NOT WORKING
 
 The project boards are **NOT synchronized**:
+
 - ❌ Content differs (TARA ID ranges don't match)
 - ❌ Project IDs are not mapped
 - ❌ No automated sync mechanism exists
@@ -217,6 +237,7 @@ The project boards are **NOT synchronized**:
 - ⚠️ Documentation doesn't address SCHUNK
 
 **Impact:**
+
 - Impossible to treat SCHUNK as true mirror of Bheowulf
 - Team cannot rely on single source of truth
 - Project tracking is fragmented across two boards
@@ -225,5 +246,5 @@ The project boards are **NOT synchronized**:
 
 ---
 
-*Report generated by Mirror Sync Audit Tool*
-*All data current as of 2026-08-05 10:01 UTC+2*
+_Report generated by Mirror Sync Audit Tool_
+_All data current as of 2026-08-05 10:01 UTC+2_

@@ -17,8 +17,8 @@
  * @returns {object|null}
  */
 function getActiveAnalysis() {
-    if (!activeAnalysisId) return null;
-    return analysisData.find(a => a.id === activeAnalysisId) || null;
+  if (!activeAnalysisId) return null;
+  return analysisData.find((a) => a.id === activeAnalysisId) || null;
 }
 
 // =============================================================
@@ -34,12 +34,13 @@ function getActiveAnalysis() {
  * @returns {number} The raw risk score (not rounded)
  */
 function computeRiskScore(iNorm, kstu) {
-    const valI = parseFloat(iNorm) || 0;
-    const sumP = (parseFloat(kstu?.k) || 0)
-               + (parseFloat(kstu?.s) || 0)
-               + (parseFloat(kstu?.t) || 0)
-               + (parseFloat(kstu?.u) || 0);
-    return valI * sumP;
+  const valI = parseFloat(iNorm) || 0;
+  const sumP =
+    (parseFloat(kstu?.k) || 0) +
+    (parseFloat(kstu?.s) || 0) +
+    (parseFloat(kstu?.t) || 0) +
+    (parseFloat(kstu?.u) || 0);
+  return valI * sumP;
 }
 
 // =============================================================
@@ -47,14 +48,19 @@ function computeRiskScore(iNorm, kstu) {
 // =============================================================
 
 function saveAnalyses() {
-    try {
-        localStorage.setItem('taraAnalyses', JSON.stringify(analysisData));
-    } catch (e) {
-        console.error('Speicherfehler:', e);
-        if (typeof showToast === 'function') {
-            showToast((typeof t === 'function' ? t('toast.storageFail') : 'FEHLER: Speichern im Browser-Speicher fehlgeschlagen.'), 'error');
-        }
+  try {
+    localStorage.setItem('taraAnalyses', JSON.stringify(analysisData));
+  } catch (e) {
+    console.error('Speicherfehler:', e);
+    if (typeof showToast === 'function') {
+      showToast(
+        typeof t === 'function'
+          ? t('toast.storageFail')
+          : 'FEHLER: Speichern im Browser-Speicher fehlgeschlagen.',
+        'error'
+      );
     }
+  }
 }
 
 // =============================================================
@@ -68,109 +74,113 @@ function saveAnalyses() {
  * @param {object} analysis - The analysis object to migrate/validate
  */
 function migrateAnalysis(analysis) {
-    if (!analysis) return;
+  if (!analysis) return;
 
-    // Ensure required array/object fields
-    if (!analysis.damageScenarios) {
-        analysis.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
-    }
-    if (!analysis.impactMatrix) {
-        analysis.impactMatrix = {};
-    }
-    if (!analysis.securityGoals) {
-        analysis.securityGoals = [];
-    }
-    if (!analysis.residualRisk) {
-        analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
-    }
-    if (!analysis.residualRisk.leaves) {
-        analysis.residualRisk.leaves = {};
-    }
-    if (!Array.isArray(analysis.residualRisk.entries)) {
-        analysis.residualRisk.entries = [];
-    }
-    if (!analysis.residualRisk.treeNotes) {
-        analysis.residualRisk.treeNotes = {};
-    }
+  // Ensure required array/object fields
+  if (!analysis.damageScenarios) {
+    analysis.damageScenarios = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
+  }
+  if (!analysis.impactMatrix) {
+    analysis.impactMatrix = {};
+  }
+  if (!analysis.securityGoals) {
+    analysis.securityGoals = [];
+  }
+  if (!analysis.residualRisk) {
+    analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
+  }
+  if (!analysis.residualRisk.leaves) {
+    analysis.residualRisk.leaves = {};
+  }
+  if (!Array.isArray(analysis.residualRisk.entries)) {
+    analysis.residualRisk.entries = [];
+  }
+  if (!analysis.residualRisk.treeNotes) {
+    analysis.residualRisk.treeNotes = {};
+  }
 
-    // Migration: stable Risk-UIDs (so residual risk data is not lost through reindexing)
-    if (!analysis.riskEntries) analysis.riskEntries = [];
-    analysis.riskEntries.forEach(entry => {
-        if (entry && !entry.uid) entry.uid = generateUID('risk');
-    });
+  // Migration: stable Risk-UIDs (so residual risk data is not lost through reindexing)
+  if (!analysis.riskEntries) analysis.riskEntries = [];
+  analysis.riskEntries.forEach((entry) => {
+    if (entry && !entry.uid) entry.uid = generateUID('risk');
+  });
 
-    // Migration: remap old residual risk keys (Prefix = Risk-ID) to UID where possible
-    try {
-        const leaves = analysis.residualRisk.leaves || {};
-        const converted = {};
-        Object.keys(leaves).forEach(k => {
-            const parts = String(k).split('|');
-            if (parts.length >= 2) {
-                const prefix = parts[0];
-                const entry = (analysis.riskEntries || []).find(r => r.id === prefix);
-                if (entry && entry.uid) {
-                    const rest = k.substring(prefix.length);
-                    converted[`${entry.uid}${rest}`] = leaves[k];
-                    return;
-                }
-            }
-            converted[k] = leaves[k];
-        });
-        analysis.residualRisk.leaves = converted;
-    } catch (e) {
-        console.warn('[Migration] Residual risk key remapping failed:', e);
-    }
-
-    // Sync: Risk analysis -> Residual risk structure (entries)
-    try {
-        if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
-            syncResidualRiskFromRiskAnalysis(analysis, false);
+  // Migration: remap old residual risk keys (Prefix = Risk-ID) to UID where possible
+  try {
+    const leaves = analysis.residualRisk.leaves || {};
+    const converted = {};
+    Object.keys(leaves).forEach((k) => {
+      const parts = String(k).split('|');
+      if (parts.length >= 2) {
+        const prefix = parts[0];
+        const entry = (analysis.riskEntries || []).find((r) => r.id === prefix);
+        if (entry && entry.uid) {
+          const rest = k.substring(prefix.length);
+          converted[`${entry.uid}${rest}`] = leaves[k];
+          return;
         }
-    } catch (e) {
-        console.warn('[Migration] Residual risk sync failed:', e);
+      }
+      converted[k] = leaves[k];
+    });
+    analysis.residualRisk.leaves = converted;
+  } catch (e) {
+    console.warn('[Migration] Residual risk key remapping failed:', e);
+  }
+
+  // Sync: Risk analysis -> Residual risk structure (entries)
+  try {
+    if (typeof syncResidualRiskFromRiskAnalysis === 'function') {
+      syncResidualRiskFromRiskAnalysis(analysis, false);
     }
+  } catch (e) {
+    console.warn('[Migration] Residual risk sync failed:', e);
+  }
 }
 
 function loadAnalyses() {
-    const data = localStorage.getItem('taraAnalyses');
-    if (data) {
-        try {
-            analysisData = JSON.parse(data);
-        } catch (e) {
-            console.error('[loadAnalyses] Corrupt localStorage data:', e);
-            showToast((typeof t === 'function' ? t('toast.dataCorrupt') : 'FEHLER: Gespeicherte Daten sind beschädigt. Neue Analyse wird erstellt.'), 'error');
-            analysisData = [createDefaultAnalysis()];
-            return;
-        }
-
-        // Validate basic structure
-        if (!Array.isArray(analysisData)) {
-            console.warn('[loadAnalyses] analysisData is not an array, resetting.');
-            analysisData = [createDefaultAnalysis()];
-            return;
-        }
-
-        // Migrate each analysis
-        analysisData.forEach(analysis => migrateAnalysis(analysis));
-
-    } else {
-        analysisData = [createDefaultAnalysis()];
+  const data = localStorage.getItem('taraAnalyses');
+  if (data) {
+    try {
+      analysisData = JSON.parse(data);
+    } catch (e) {
+      console.error('[loadAnalyses] Corrupt localStorage data:', e);
+      showToast(
+        typeof t === 'function'
+          ? t('toast.dataCorrupt')
+          : 'FEHLER: Gespeicherte Daten sind beschädigt. Neue Analyse wird erstellt.',
+        'error'
+      );
+      analysisData = [createDefaultAnalysis()];
+      return;
     }
+
+    // Validate basic structure
+    if (!Array.isArray(analysisData)) {
+      console.warn('[loadAnalyses] analysisData is not an array, resetting.');
+      analysisData = [createDefaultAnalysis()];
+      return;
+    }
+
+    // Migrate each analysis
+    analysisData.forEach((analysis) => migrateAnalysis(analysis));
+  } else {
+    analysisData = [createDefaultAnalysis()];
+  }
 }
 
 function saveCurrentAnalysisState() {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    const elName = document.getElementById('inputAnalysisName');
-    const elDesc = document.getElementById('inputDescription');
-    const elUse  = document.getElementById('inputIntendedUse');
-    const elAuth = document.getElementById('inputAuthorName');
+  const elName = document.getElementById('inputAnalysisName');
+  const elDesc = document.getElementById('inputDescription');
+  const elUse = document.getElementById('inputIntendedUse');
+  const elAuth = document.getElementById('inputAuthorName');
 
-    if (elName) analysis.name = elName.value.trim();
-    if (elDesc) analysis.description = elDesc.value.trim();
-    if (elUse)  analysis.intendedUse = elUse.value.trim();
-    if (elAuth) analysis.metadata.author = elAuth.value.trim();
+  if (elName) analysis.name = elName.value.trim();
+  if (elDesc) analysis.description = elDesc.value.trim();
+  if (elUse) analysis.intendedUse = elUse.value.trim();
+  if (elAuth) analysis.metadata.author = elAuth.value.trim();
 }
 
 // =============================================================
@@ -185,15 +195,19 @@ function saveCurrentAnalysisState() {
  * @returns {string[]} e.g. ["DS1","DS2","DS3","DS4","DS5","DS6"]
  */
 function getAllDamageScenarioIds(analysis) {
-    if (!analysis) analysis = getActiveAnalysis();
-    const defaults = (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS))
-        ? DEFAULT_DAMAGE_SCENARIOS : [];
-    const custom = (analysis && Array.isArray(analysis.damageScenarios))
-        ? analysis.damageScenarios : [];
-    const defaultIds = new Set(defaults.map(d => d.id));
-    const ids = defaults.map(d => d.id);
-    custom.forEach(d => { if (d && d.id && !defaultIds.has(d.id)) ids.push(d.id); });
-    return ids.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+  if (!analysis) analysis = getActiveAnalysis();
+  const defaults =
+    typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS)
+      ? DEFAULT_DAMAGE_SCENARIOS
+      : [];
+  const custom =
+    analysis && Array.isArray(analysis.damageScenarios) ? analysis.damageScenarios : [];
+  const defaultIds = new Set(defaults.map((d) => d.id));
+  const ids = defaults.map((d) => d.id);
+  custom.forEach((d) => {
+    if (d && d.id && !defaultIds.has(d.id)) ids.push(d.id);
+  });
+  return ids.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
 }
 
 /**
@@ -203,19 +217,24 @@ function getAllDamageScenarioIds(analysis) {
  * @returns {object[]} e.g. [{ id, name, short, description }, ...]
  */
 function getDisplayDamageScenarios(analysis) {
-    if (!analysis) analysis = getActiveAnalysis();
-    let displayDS = JSON.parse(JSON.stringify(
-        (typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS))
-            ? DEFAULT_DAMAGE_SCENARIOS : []
-    ));
-    const defaultIds = new Set(displayDS.map(d => d.id));
-    if (analysis && Array.isArray(analysis.damageScenarios)) {
-        analysis.damageScenarios.forEach(ds => {
-            if (ds && ds.id && !defaultIds.has(ds.id)) displayDS.push(ds);
-        });
-    }
-    displayDS.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
-    return displayDS;
+  if (!analysis) analysis = getActiveAnalysis();
+  let displayDS = JSON.parse(
+    JSON.stringify(
+      typeof DEFAULT_DAMAGE_SCENARIOS !== 'undefined' && Array.isArray(DEFAULT_DAMAGE_SCENARIOS)
+        ? DEFAULT_DAMAGE_SCENARIOS
+        : []
+    )
+  );
+  const defaultIds = new Set(displayDS.map((d) => d.id));
+  if (analysis && Array.isArray(analysis.damageScenarios)) {
+    analysis.damageScenarios.forEach((ds) => {
+      if (ds && ds.id && !defaultIds.has(ds.id)) displayDS.push(ds);
+    });
+  }
+  displayDS.sort((a, b) =>
+    a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' })
+  );
+  return displayDS;
 }
 
 /**
@@ -225,33 +244,33 @@ function getDisplayDamageScenarios(analysis) {
  * @param {string} dsId     - The DS id to purge (e.g. "DS6")
  */
 function purgeDamageScenarioFromRiskEntries(analysis, dsId) {
-    if (!analysis || !dsId) return;
-    (analysis.riskEntries || []).forEach(entry => {
-        // V2 tree
-        if (entry.treeV2) {
-            const walkV2 = (node) => {
-                (node.impacts || []).forEach(leaf => {
-                    if (Array.isArray(leaf.ds)) {
-                        leaf.ds = leaf.ds.filter(id => id !== dsId);
-                    }
-                });
-                (node.children || []).forEach(walkV2);
-            };
-            walkV2(entry.treeV2);
-        }
-        // Legacy branches
-        (entry.branches || []).forEach(branch => {
-            const walkLegacy = (leaves) => {
-                (leaves || []).forEach(leaf => {
-                    if (Array.isArray(leaf.ds)) {
-                        leaf.ds = leaf.ds.filter(id => id !== dsId);
-                    }
-                });
-            };
-            walkLegacy(branch.leaves);
-            (branch.l2_nodes || []).forEach(n => walkLegacy(n.leaves));
+  if (!analysis || !dsId) return;
+  (analysis.riskEntries || []).forEach((entry) => {
+    // V2 tree
+    if (entry.treeV2) {
+      const walkV2 = (node) => {
+        (node.impacts || []).forEach((leaf) => {
+          if (Array.isArray(leaf.ds)) {
+            leaf.ds = leaf.ds.filter((id) => id !== dsId);
+          }
         });
+        (node.children || []).forEach(walkV2);
+      };
+      walkV2(entry.treeV2);
+    }
+    // Legacy branches
+    (entry.branches || []).forEach((branch) => {
+      const walkLegacy = (leaves) => {
+        (leaves || []).forEach((leaf) => {
+          if (Array.isArray(leaf.ds)) {
+            leaf.ds = leaf.ds.filter((id) => id !== dsId);
+          }
+        });
+      };
+      walkLegacy(branch.leaves);
+      (branch.l2_nodes || []).forEach((n) => walkLegacy(n.leaves));
     });
+  });
 }
 
 /**
@@ -261,29 +280,29 @@ function purgeDamageScenarioFromRiskEntries(analysis, dsId) {
  * @param {Set<string>} validIds - Set of currently valid DS IDs
  */
 function sanitizeEntryDsReferences(entry, validIds) {
-    if (!entry || !validIds) return;
-    if (entry.treeV2) {
-        const walkV2 = (node) => {
-            (node.impacts || []).forEach(leaf => {
-                if (Array.isArray(leaf.ds)) {
-                    leaf.ds = leaf.ds.filter(id => validIds.has(id));
-                }
-            });
-            (node.children || []).forEach(walkV2);
-        };
-        walkV2(entry.treeV2);
-    }
-    (entry.branches || []).forEach(branch => {
-        const walkLegacy = (leaves) => {
-            (leaves || []).forEach(leaf => {
-                if (Array.isArray(leaf.ds)) {
-                    leaf.ds = leaf.ds.filter(id => validIds.has(id));
-                }
-            });
-        };
-        walkLegacy(branch.leaves);
-        (branch.l2_nodes || []).forEach(n => walkLegacy(n.leaves));
-    });
+  if (!entry || !validIds) return;
+  if (entry.treeV2) {
+    const walkV2 = (node) => {
+      (node.impacts || []).forEach((leaf) => {
+        if (Array.isArray(leaf.ds)) {
+          leaf.ds = leaf.ds.filter((id) => validIds.has(id));
+        }
+      });
+      (node.children || []).forEach(walkV2);
+    };
+    walkV2(entry.treeV2);
+  }
+  (entry.branches || []).forEach((branch) => {
+    const walkLegacy = (leaves) => {
+      (leaves || []).forEach((leaf) => {
+        if (Array.isArray(leaf.ds)) {
+          leaf.ds = leaf.ds.filter((id) => validIds.has(id));
+        }
+      });
+    };
+    walkLegacy(branch.leaves);
+    (branch.l2_nodes || []).forEach((n) => walkLegacy(n.leaves));
+  });
 }
 
 // =============================================================
@@ -293,16 +312,16 @@ function sanitizeEntryDsReferences(entry, validIds) {
 // Stable UID generator for internal assignments (e.g., residual risk keys).
 // Uses crypto.randomUUID() if available, otherwise falls back.
 function generateUID(prefix = 'uid') {
-    try {
-        if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-            return `${prefix}_${crypto.randomUUID()}`;
-        }
-    } catch (e) {
-        console.warn('[generateUID] crypto.randomUUID() failed, using fallback:', e);
+  try {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `${prefix}_${crypto.randomUUID()}`;
     }
-    const rand = Math.random().toString(36).slice(2, 10);
-    const ts = Date.now().toString(36);
-    return `${prefix}_${ts}_${rand}`;
+  } catch (e) {
+    console.warn('[generateUID] crypto.randomUUID() failed, using fallback:', e);
+  }
+  const rand = Math.random().toString(36).slice(2, 10);
+  const ts = Date.now().toString(36);
+  return `${prefix}_${ts}_${rand}`;
 }
 
 // =============================================================
@@ -320,12 +339,12 @@ function generateUID(prefix = 'uid') {
  * @returns {string}
  */
 function escapeHtml(str) {
-    return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 // =============================================================
@@ -339,29 +358,34 @@ function escapeHtml(str) {
  * @returns {{ color: string, label: string, display: string, colorRGB: number[] }}
  */
 function getRiskMeta(rootRiskValue) {
-    const rVal = parseFloat(rootRiskValue);
-    let match = RISK_UNKNOWN;
+  const rVal = parseFloat(rootRiskValue);
+  let match = RISK_UNKNOWN;
 
-    if (!isNaN(rVal)) {
-        for (const t of RISK_THRESHOLDS) {
-            if (rVal >= t.min) { match = t; break; }
-        }
+  if (!isNaN(rVal)) {
+    for (const t of RISK_THRESHOLDS) {
+      if (rVal >= t.min) {
+        match = t;
+        break;
+      }
     }
+  }
 
-    const display = (rootRiskValue === undefined || rootRiskValue === null || String(rootRiskValue).trim() === '')
-        ? '-' : String(rootRiskValue);
+  const display =
+    rootRiskValue === undefined || rootRiskValue === null || String(rootRiskValue).trim() === ''
+      ? '-'
+      : String(rootRiskValue);
 
-    return { color: match.color, label: match.label, display, colorRGB: match.colorRGB };
+  return { color: match.color, label: match.label, display, colorRGB: match.colorRGB };
 }
 
 /** CSS-Klasse für Root-Übersicht-Karten (vermeidet Darkmode-Bug mit #ffffcc ⊆ #fff). */
 function getRiskBgClass(score) {
-    const r = parseFloat(score);
-    if (isNaN(r)) return 'risk-bg-unknown';
-    if (r >= 2.0) return 'risk-bg-critical';
-    if (r >= 1.6) return 'risk-bg-high';
-    if (r >= 0.8) return 'risk-bg-medium';
-    return 'risk-bg-low';
+  const r = parseFloat(score);
+  if (isNaN(r)) return 'risk-bg-unknown';
+  if (r >= 2.0) return 'risk-bg-critical';
+  if (r >= 1.6) return 'risk-bg-high';
+  if (r >= 0.8) return 'risk-bg-medium';
+  return 'risk-bg-low';
 }
 
 // =============================================================
@@ -378,42 +402,49 @@ function getRiskBgClass(score) {
  * @param {string} [opts.confirmClass='primary-button dangerous'] - CSS class(es)
  * @param {function} opts.onConfirm - Callback executed on confirmation
  */
-function showConfirmation({ title, messageHtml, confirmText, confirmClass = 'primary-button dangerous', onConfirm }) {
-    if (confirmText == null || confirmText === '') {
-        confirmText = (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
-    }
-    const modal     = document.getElementById('confirmationModal');
-    const titleEl   = document.getElementById('confirmationTitle');
-    const msgEl     = document.getElementById('confirmationMessage');
-    const btnOk     = document.getElementById('btnConfirmAction');
-    const btnCancel = document.getElementById('btnCancelConfirmation');
-    const btnClose  = document.getElementById('closeConfirmationModal');
+function showConfirmation({
+  title,
+  messageHtml,
+  confirmText,
+  confirmClass = 'primary-button dangerous',
+  onConfirm,
+}) {
+  if (confirmText == null || confirmText === '') {
+    confirmText = typeof t === 'function' ? t('confirm.delete') : 'Löschen';
+  }
+  const modal = document.getElementById('confirmationModal');
+  const titleEl = document.getElementById('confirmationTitle');
+  const msgEl = document.getElementById('confirmationMessage');
+  const btnOk = document.getElementById('btnConfirmAction');
+  const btnCancel = document.getElementById('btnCancelConfirmation');
+  const btnClose = document.getElementById('closeConfirmationModal');
 
-    if (!modal || !msgEl || !btnOk) return;
+  if (!modal || !msgEl || !btnOk) return;
 
-    if (titleEl) titleEl.textContent = title || (typeof t === 'function' ? t('confirm.title') : 'Bestätigung');
-    msgEl.innerHTML = messageHtml || '';
-    btnOk.textContent = confirmText || (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
-    btnOk.className = confirmClass;
+  if (titleEl)
+    titleEl.textContent = title || (typeof t === 'function' ? t('confirm.title') : 'Bestätigung');
+  msgEl.innerHTML = messageHtml || '';
+  btnOk.textContent = confirmText || (typeof t === 'function' ? t('confirm.delete') : 'Löschen');
+  btnOk.className = confirmClass;
 
-    modal.style.display = 'block';
+  modal.style.display = 'block';
 
-    // Clear previous handlers
-    btnOk.onclick = null;
-    if (btnCancel) btnCancel.onclick = null;
-    if (btnClose) btnClose.onclick = null;
+  // Clear previous handlers
+  btnOk.onclick = null;
+  if (btnCancel) btnCancel.onclick = null;
+  if (btnClose) btnClose.onclick = null;
 
-    const closeFn = () => {
-        modal.style.display = 'none';
-        btnOk.className = 'primary-button'; // reset class
-    };
+  const closeFn = () => {
+    modal.style.display = 'none';
+    btnOk.className = 'primary-button'; // reset class
+  };
 
-    btnOk.onclick = () => {
-        if (typeof onConfirm === 'function') onConfirm();
-        closeFn();
-    };
-    if (btnCancel) btnCancel.onclick = closeFn;
-    if (btnClose) btnClose.onclick = closeFn;
+  btnOk.onclick = () => {
+    if (typeof onConfirm === 'function') onConfirm();
+    closeFn();
+  };
+  if (btnCancel) btnCancel.onclick = closeFn;
+  if (btnClose) btnClose.onclick = closeFn;
 }
 
 // =============================================================
@@ -421,34 +452,42 @@ function showConfirmation({ title, messageHtml, confirmText, confirmClass = 'pri
 // =============================================================
 
 function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
 
-    const toast = document.createElement('div');
-    toast.className = `custom-toast ${type}`;
-    toast.textContent = message;
+  const toast = document.createElement('div');
+  toast.className = `custom-toast ${type}`;
+  toast.textContent = message;
 
-    container.appendChild(toast);
+  container.appendChild(toast);
 
-    // Trigger show transition
-    requestAnimationFrame(() => {
-        toast.classList.add('show');
-    });
+  // Trigger show transition
+  requestAnimationFrame(() => {
+    toast.classList.add('show');
+  });
 
-    // Auto-dismiss after 4 seconds
+  // Auto-dismiss after 4 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    // Wait for CSS transition to finish before removing from DOM
+    toast.addEventListener(
+      'transitionend',
+      () => {
+        try {
+          if (toast.parentElement) toast.parentElement.removeChild(toast);
+        } catch (e) {
+          /* already removed */
+        }
+      },
+      { once: true }
+    );
+    // Fallback removal if transitionend doesn't fire
     setTimeout(() => {
-        toast.classList.remove('show');
-        // Wait for CSS transition to finish before removing from DOM
-        toast.addEventListener('transitionend', () => {
-            try {
-                if (toast.parentElement) toast.parentElement.removeChild(toast);
-            } catch (e) { /* already removed */ }
-        }, { once: true });
-        // Fallback removal if transitionend doesn't fire
-        setTimeout(() => {
-            try {
-                if (toast.parentElement) toast.parentElement.removeChild(toast);
-            } catch (e) { /* already removed */ }
-        }, 600);
-    }, 4000);
+      try {
+        if (toast.parentElement) toast.parentElement.removeChild(toast);
+      } catch (e) {
+        /* already removed */
+      }
+    }, 600);
+  }, 4000);
 }

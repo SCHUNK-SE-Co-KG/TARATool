@@ -6,7 +6,7 @@ import os
 import pytest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-PROTO = os.path.join(REPO_ROOT, 'canvas_prototype.html')
+PROTO = os.path.join(REPO_ROOT, 'docs', 'prototypes', 'canvas_prototype.html')
 
 
 @pytest.mark.TARA_0024
@@ -18,21 +18,21 @@ def test_prototype_file_exists():
 @pytest.mark.TARA_0024
 def test_prototype_loads_vis_network():
     """vis-network CDN muss eingebunden sein."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert 'vis-network' in content, 'vis-network CDN fehlt'
 
 
 @pytest.mark.TARA_0024
 def test_prototype_loads_vue():
     """Vue 3 CDN muss eingebunden sein."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert 'vue' in content.lower(), 'Vue 3 CDN fehlt'
 
 
 @pytest.mark.TARA_0024
 def test_prototype_has_canvas_container():
     """Ein Container-Element für den Graph muss vorhanden sein."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert 'id="canvas"' in content or 'id="network"' in content or 'id="graph"' in content, \
         'Kein Canvas-Container gefunden'
 
@@ -40,7 +40,7 @@ def test_prototype_has_canvas_container():
 @pytest.mark.TARA_0024
 def test_prototype_has_add_node_button():
     """Button zum Hinzufügen von Knoten muss vorhanden sein."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert 'knoten' in content.lower() or 'add' in content.lower() or 'node' in content.lower(), \
         'Kein Knoten-hinzufügen Button gefunden'
 
@@ -48,7 +48,7 @@ def test_prototype_has_add_node_button():
 @pytest.mark.TARA_0024
 def test_prototype_has_label_input():
     """Ein Textfeld zum Beschriften von Knoten muss vorhanden sein."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert '<input' in content or '<textarea' in content, \
         'Kein Eingabefeld für Knotenbeschriftung gefunden'
 
@@ -56,6 +56,6 @@ def test_prototype_has_label_input():
 @pytest.mark.TARA_0024
 def test_prototype_is_standalone():
     """Prototyp darf keine lokalen Abhängigkeiten außer CDN haben."""
-    content = open(PROTO).read()
+    content = open(PROTO, encoding='utf-8').read()
     assert '../js/' not in content, 'Lokale JS-Abhängigkeiten gefunden – muss standalone sein'
     assert 'node_modules' not in content, 'node_modules Referenz gefunden'

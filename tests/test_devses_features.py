@@ -256,7 +256,7 @@ class TestDotExportV2:
             const a = analysisData.find(x => x.id === activeAnalysisId);
             return generateDotString(a);
         }""")
-        assert "AT-TEST_Root" in dot
+        assert "AT_TEST_Root" in dot
         assert "TestRoot" in dot
 
     def test_dot_contains_path_nodes(self, app: Page):

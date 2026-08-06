@@ -1,0 +1,16 @@
+# Force LF line endings for all text files
+# This ensures consistent line endings across Windows/Linux/macOS
+# and is required for Prettier's endOfLine: "lf" setting to work correctly.
+* text=auto eol=lf
+
+# Binary files — no line ending conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.docx binary
+*.zip binary
+*.min.js binary
+*.min.css binary

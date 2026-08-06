@@ -1,6 +1,7 @@
 # GitHub Project Boards – TARATool
 
 > **⚠️ WICHTIG:** Dieses Dokument behandelt die Projektboards für beide Repositories:
+>
 > - **Bheowulf/TARATool** (Projekt #1) – Primär, Source of Truth
 > - **SCHUNK-SE-Co-KG/TARATool** (Projekt #4) – Mirror
 >
@@ -24,20 +25,20 @@ Alle IDs für programmatischen Zugriff via `gh api graphql`.
 
 ### SCHUNK-SE-Co-KG/TARATool (Projekt #4)
 
-| Eigenschaft      | Wert                                         |
-| ---------------- | -------------------------------------------- |
-| **Project Name** | TARATool                                     |
-| **Project ID**   | `PVT_kwDOBu4dv84BfbaR`                       |
-| **Owner**        | `SCHUNK-SE-Co-KG` (Organization)             |
+| Eigenschaft      | Wert                                          |
+| ---------------- | --------------------------------------------- |
+| **Project Name** | TARATool                                      |
+| **Project ID**   | `PVT_kwDOBu4dv84BfbaR`                        |
+| **Owner**        | `SCHUNK-SE-Co-KG` (Organization)              |
 | **Repo**         | `https://github.com/SCHUNK-SE-Co-KG/TARATool` |
-| **Status**       | Mirror / Secondary (should sync with #1)   |
+| **Status**       | Mirror / Secondary (should sync with #1)      |
 
 #### SCHUNK Status-Feld
 
-| Eigenschaft   | Wert                                |
-| ------------- | ----------------------------------- |
-| **Feld-Name** | Status                              |
-| **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME`   |
+| Eigenschaft   | Wert                             |
+| ------------- | -------------------------------- |
+| **Feld-Name** | Status                           |
+| **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME` |
 
 | Status          | Option-ID  |
 | --------------- | ---------- |
@@ -65,13 +66,14 @@ gh api repos/SCHUNK-SE-Co-KG/TARATool/projects --jq '.[] | {id, name}'
 
 ### Status-Optionen
 
-| Status          | Option-ID  | Bedeutung                         |
-| --------------- | ---------- | --------------------------------- |
-| **Todo**        | `f75ad846` | Noch nicht begonnen               |
-| **In Progress** | `47fc9ee4` | Dev-Agent arbeitet daran          |
-| **inReview**    | `bbeb708d` | Review-Agent aktiv / PR offen     |
-| **Freigabe**    | `d2e53e50` | Wartet auf PO-Freigabe nach Merge |
-| **Done**        | `98236657` | PO hat freigegeben, abgeschlossen |
+| Status          | Option-ID  | Bedeutung                                          |
+| --------------- | ---------- | -------------------------------------------------- |
+| **Todo**        | `f75ad846` | Noch nicht begonnen                                |
+| **In Progress** | `47fc9ee4` | Dev-Agent arbeitet daran                           |
+| **inReview**    | `bbeb708d` | Review-Agent aktiv / PR offen                      |
+| **Freigabe**    | `d2e53e50` | Wartet auf PO-Freigabe nach Merge                  |
+| **Blocking**    | `f4b42fea` | Blockiert – offene Findings oder Prozessverletzung |
+| **Done**        | `98236657` | PO hat freigegeben, abgeschlossen                  |
 
 ---
 
@@ -191,16 +193,19 @@ gh api graphql -f query='{
 
 ```
 Todo → In Progress → inReview → Freigabe → Done
-                         ↑
-                   (PR offen, Review-Agent aktiv)
+              ↕                      ↑
+           Blocking  ←───────────────┘
+     (P-18 Vorbedingung verletzt)
 ```
 
-| Wer setzt         | Von         | Nach        | Bedingung                               |
-| ----------------- | ----------- | ----------- | --------------------------------------- |
-| Dev-Agent         | Todo        | In Progress | Story freigegeben (PO-OK)               |
-| Dev-Agent         | In Progress | inReview    | Prettier ✅ ESLint ✅ Tests ✅ PR offen |
-| Dev-Agent         | inReview    | Freigabe    | PR gemergt, P-01–P-15 OK                |
-| **Product Owner** | Freigabe    | **Done**    | **Explizites PO-OK**                    |
+| Wer setzt              | Von         | Nach         | Bedingung (P-18)                                                |
+| ---------------------- | ----------- | ------------ | --------------------------------------------------------------- |
+| Dev-Agent              | Todo        | In Progress  | PO-Freigabe nachgewiesen (Chat/Issue)                           |
+| Dev-Agent              | In Progress | inReview     | Prettier ✅ ESLint ✅ Tests ✅ Commit gepusht                   |
+| Dev-Agent              | inReview    | Freigabe     | Kein offenes Critical/High Finding, PR gemergt, Branch gelöscht |
+| **GitHub Automation**  | Freigabe    | **Done**     | **PO-OK im Issue-Kommentar**                                    |
+| Prozess-Guard          | any         | **Blocking** | P-18-Vorbedingung verletzt, Finding-Issue angelegt              |
+| Dev-Agent (nach PO-OK) | Blocking    | In Progress  | Alle Blocking-Gründe behoben                                    |
 
 ---
 

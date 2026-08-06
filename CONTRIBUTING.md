@@ -10,8 +10,8 @@ main          â† Stable Release (nur via PR aus Development)
 
 | Branch                | Zweck                        | Merge-Ziel           |
 | --------------------- | ---------------------------- | -------------------- |
-| `main`                | Stable, tagged Releases      | â€“                    |
-| `Development`         | Integration, immer lauffÃ¤hig | `main` per PR        |
+| `main`                | Stable, tagged Releases      | â€“                  |
+| `Development`         | Integration, immer lauffähig | `main` per PR        |
 | `feature/TARA-XXXX-*` | Eine Story = ein Branch      | `Development` per PR |
 
 **Naming-Convention:** `feature/TARA-0003-review-agent-workflow`  
@@ -21,69 +21,76 @@ main          â† Stable Release (nur via PR aus Development)
 
 ## Story-Workflow (Test-Driven Development)
 
-### Voraussetzung: Story muss vom Product Owner freigegeben sein (Status: Ready â†’ In Progress)
+### Voraussetzung: Story muss vom Product Owner freigegeben sein (PO-OK im Chat oder Issue)
+
+> **TDD-Pflicht: 2-Commit-Sequenz** — Schritt 2 (Test) und Schritt 3 (Implementierung)
+> **muessen als separate Commits** eingecheckt werden. Nur so kann der Prozess-Guard (P-04)
+> die Red-Phase automatisch verifizieren. Ein einzelner Commit mit Test + Implementierung
+> gilt als **P-04-Verletzung** und blockiert den PR.
 
 ```
 [Product Owner gibt Story frei]
-        â†“
-Schritt 1 â€“ Setup
-  â€¢ Status â†’ "In Progress"
-  â€¢ Branch anlegen: git checkout -b feature/TARA-XXXX-kurzbeschreibung
+        |
+Schritt 1 - Setup
+  * Status -> "In Progress"  (Board-Status via scripts/set_story_status.py)
+  * Branch anlegen: git checkout -b feature/TARA-XXXX-kurzbeschreibung
 
-        â†“
-Schritt 2 â€“ Tests ZUERST schreiben âš ï¸  (TDD Red-Phase)
-  â€¢ Testdatei anlegen: tests/test_TARA_XXXX.py
-  â€¢ Alle Akzeptanzkriterien als TestfÃ¤lle abbilden
-  â€¢ Bei Bug-Issue: Test schreiben, der den Bug reproduziert
-  â€¢ Tests ausfÃ¼hren â†’ mÃ¼ssen FEHLSCHLAGEN (beweist TestvaliditÃ¤t)
-    pytest tests/test_TARA_XXXX.py -v   â†’ Expected: FAILED
+        |
+Schritt 2 - Tests ZUERST schreiben  (TDD Red-Phase)
+  * Testdatei anlegen: tests/test_TARA_XXXX.py
+  * Alle Akzeptanzkriterien als Testfaelle abbilden
+  * Tests ausfuehren -> muessen FEHLSCHLAGEN (beweist Testvaliditaet)
+    pytest tests/test_TARA_XXXX.py --noconftest -v  -> Expected: FAILED
 
-        â†“
-Schritt 3 â€“ Implementierung  (TDD Green-Phase)
-  â€¢ Feature / Fix implementieren
-  â€¢ Iterieren bis Story-Tests grÃ¼n
+  *** RED-COMMIT (Pflicht fuer P-04) ***
+    git add tests/test_TARA_XXXX.py
+    git commit -m "TARA-XXXX: TDD Red - Tests schreiben (noch fehlgeschlagen)"
+    git push origin feature/TARA-XXXX-...
+    -> Dieser Commit beweist die Red-Phase. P-04 prueft ihn automatisch im PR.
 
-        â†“
-Schritt 4 â€“ Vor dem Commit (Pflicht-Checks)
-  â€¢ Schritt 4a â€“ Prettier: npm run format:check â†’ 0 Fehler âœ…
-    (Bei Formatierungsfehlern: npm run format:write, Ã„nderungen commiten)
-  â€¢ Schritt 4b â€“ ESLint: npm run lint â†’ Exit-Code 0 âœ…
-  â€¢ Schritt 4c â€“ Story-Tests: pytest tests/test_TARA_XXXX.py -v  â†’ PASSED âœ…
-  â€¢ Schritt 4d â€“ VollstÃ¤ndige Suite: pytest tests/test_TARA_XXXX.py --noconftest -q â†’ 0 Fehler âœ…
-    (VollstÃ¤ndige Playwright-Suite: pytest -x -q â€“ nur wenn Playwright installiert)
-  â€¢ Commit: "TARA-XXXX: Beschreibung"
+        |
+Schritt 3 - Implementierung  (TDD Green-Phase)
+  * Feature / Fix implementieren
+  * Iterieren bis Story-Tests gruen:
+    pytest tests/test_TARA_XXXX.py --noconftest -v  -> Expected: PASSED
 
-        â†“
-Schritt 5 â€“ Review
-  â€¢ Status â†’ "inReview"
-  â€¢ Review-Agent aktivieren (siehe agents/review_agent/REVIEW_AGENT_WORKFLOW.md)
-  â€¢ Findings beheben oder als Backlog-Items anlegen
+        |
+Schritt 4 - Vor dem Green-Commit (Pflicht-Checks)
+  * Schritt 4a - Prettier: npm run format:check -> 0 Fehler
+    (N/A fuer reine Python-Stories ohne JS/HTML-Aenderungen)
+  * Schritt 4b - ESLint:   npm run lint -> Exit-Code 0
+    (N/A fuer reine Python-Stories ohne JS-Aenderungen)
+  * Schritt 4c - Story-Tests: pytest tests/test_TARA_XXXX.py --noconftest -v -> PASSED
+  * Schritt 4d - Gesamtsuite: pytest tests/ --noconftest -q -> 0 neue Fehler
 
-        â†“
-Schritt 6 â€“ Prozess-Guard PrÃ¼fung
-  â€¢ Prozess-Guard prÃ¼ft alle Regeln (siehe agents/process_guard/PROCESS_GUARD_AGENT.md)
-  â€¢ âœ… PROCESS OK  â†’ PR auf Development Ã¶ffnen
-  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurÃ¼ck zu Schritt 4
+  *** GREEN-COMMIT (Pflicht) ***
+    git add <geaenderte Dateien>
+    git commit -m "TARA-XXXX: Implementierung - Tests gruen"
+    git push origin feature/TARA-XXXX-...
 
-        â†“
-Schritt 7 â€“ Merge
-  â€¢ PR gemergt â†’ Status â†’ "Freigabe"
-  â€¢ Dev-Agent wartet auf explizites PO-OK (Chat-Nachricht oder Issue-Kommentar)
+        |
+Schritt 5 - Review
+  * Status -> "inReview"
+  * PR auf Development oeffnen
+  * Review-Agent aktivieren (siehe agents/review_agent/REVIEW_AGENT_WORKFLOW.md)
+  * Findings beheben oder als Backlog-Items anlegen
 
-        â†“
-Schritt 7b - Lokalen Dev-Stand aktualisieren (Pflicht)
-  * Dev-Agent pullt nach jedem Merge aktuellen Development-Stand:
-    git checkout Development
-    git pull
-  * Lokales Verzeichnis: <lokales-repo-verzeichnis>
-  * PO kann anschliessend lokal testen bevor er die Freigabe erteilt
+        |
+Schritt 6 - Prozess-Guard Pruefung (automatisch via GitHub Actions bei PR)
+  * GitHub Actions prueft P-04, P-06, P-07, P-08, P-12, P-13 automatisch
+  * PROCESS OK  -> PR mergen
+  * PROCESS BLOCKED -> Findings beheben, zurueck zu Schritt 4
 
-        u{2193}
+        |
+Schritt 7 - Merge
+  * PR gemergt -> Status -> "Freigabe"
+  * Dev-Agent wartet auf explizites PO-OK
 
-Schritt 8 â€“ PO-Freigabe (Pflicht)
-  â€¢ Product Owner prÃ¼ft das Ergebnis
-  â€¢ PO gibt explizites OK â†’ Status â†’ "Done"
-  â€¢ âŒ Ohne PO-Freigabe: Status bleibt auf "Freigabe" â€“ Dev-Agent setzt NICHT auf Done
+        |
+Schritt 8 - PO-Freigabe (Pflicht)
+  * Product Owner prueft das Ergebnis lokal
+  * PO gibt explizites OK -> Status -> "Done"
+  * Ohne PO-Freigabe: Status bleibt auf "Freigabe"
 ```
 
 ---
@@ -98,12 +105,12 @@ def test_feature_name():
     ...
 ```
 
-AusfÃ¼hrung:
+Ausführung:
 
 ```bash
 pytest tests/test_TARA_XXXX.py -v    # Story-Tests
 pytest -m "TARA_XXXX" -v             # per Marker
-pytest -x -q                          # vollstÃ¤ndige Suite (vor PR Pflicht)
+pytest -x -q                          # vollständige Suite (vor PR Pflicht)
 ```
 
 ---
@@ -113,14 +120,14 @@ pytest -x -q                          # vollstÃ¤ndige Suite (vor PR Pflicht)
 ```
 TARA-XXXX: Kurzbeschreibung im Imperativ
 
-Optionaler lÃ¤ngerer ErklÃ¤rungstext.
+Optionaler längerer Erklärungstext.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
 
 ---
 
-## Chat-Regeln fÃ¼r den Dev-Agent
+## Chat-Regeln für den Dev-Agent
 
 - **Jede Chat-Antwort nennt die aktive TARA-ID** der bearbeiteten Items
 - **Keine Arbeit ohne Freigabe** durch den Product Owner
@@ -130,28 +137,28 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 ## TARA-ID Nummernschema
 
-IDs sind **atomar und unverÃ¤nderlich** (P-14). So ermittelst du die nÃ¤chste freie ID:
+IDs sind **atomar und unveränderlich** (P-14). So ermittelst du die nächste freie ID:
 
 ```bash
-# HÃ¶chste vorhandene TARA-ID aus allen Issues ermitteln
+# Höchste vorhandene TARA-ID aus allen Issues ermitteln
 gh issue list --state all --limit 200 --json title \
   | python3 -c "
 import sys, json, re
 issues = json.load(sys.stdin)
 ids = [int(m.group(1)) for t in issues for m in [re.search(r'TARA-(\d+)', t['title'])] if m]
-print(f'HÃ¶chste ID: TARA-{max(ids):04d}  â†’  NÃ¤chste: TARA-{max(ids)+1:04d}')
+print(f'Höchste ID: TARA-{max(ids):04d}  â†’  Nächste: TARA-{max(ids)+1:04d}')
 "
 ```
 
-Oder manuell: hÃ¶chste Nummer in GitHub Issues suchen + 1.
+Oder manuell: höchste Nummer in GitHub Issues suchen + 1.
 
 ---
 
 ## Ausnahmen vom Standard-Workflow
 
-| Ausnahme      | Bedingung                                                                          | Was entfÃ¤llt                          |
-| ------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
-| **Prototyp**  | Issue-Titel enthÃ¤lt â€žPrototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nÃ¶tig) |
-| **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                | P-07 (Branch-Naming)                  |
+| Ausnahme      | Bedingung                                                                            | Was entfällt                          |
+| ------------- | ------------------------------------------------------------------------------------ | ------------------------------------- |
+| **Prototyp**  | Issue-Titel enthält â€žPrototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nötig) |
+| **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                  | P-07 (Branch-Naming)                  |
 
-Ausnahmen mÃ¼ssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.
+Ausnahmen müssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.

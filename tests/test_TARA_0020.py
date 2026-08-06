@@ -3,9 +3,13 @@
 TDD Red-Phase: Diese Tests müssen FEHLSCHLAGEN bevor Prettier eingerichtet ist.
 """
 import os
+import sys
 import json
 import subprocess
 import pytest
+
+# On Windows, subprocess cannot resolve .cmd/.bat without shell=True
+_NPX = "npx.cmd" if sys.platform == "win32" else "npx"
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -73,10 +77,11 @@ def test_package_json_format_scripts():
 def test_prettier_check_passes():
     """prettier --check muss auf dem aktuellen Codestand fehlerfrei laufen."""
     result = subprocess.run(
-        ["npx", "prettier", "--check", "."],
+        [_NPX, "prettier", "--check", "."],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
+        shell=(sys.platform == "win32"),
     )
     assert result.returncode == 0, (
         f"prettier --check hat Fehler gefunden:\n{result.stdout}\n{result.stderr}"
