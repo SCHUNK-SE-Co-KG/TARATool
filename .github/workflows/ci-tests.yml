@@ -31,6 +31,14 @@ jobs:
           pip install pytest pytest-timeout --quiet
           [ -f requirements.txt ] && pip install -r requirements.txt --quiet || true
 
+      - name: Node.js einrichten (fuer ESLint/Prettier Tests)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm install (fuer ESLint/Prettier Tests)
+        run: npm install --silent
+
       - name: Story-Tests für diesen PR ausführen
         id: story_tests
         if: github.event_name == 'pull_request'
