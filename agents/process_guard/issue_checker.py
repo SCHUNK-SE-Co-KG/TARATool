@@ -28,30 +28,26 @@ from dataclasses import dataclass, field
 # ---------------------------------------------------------------------------
 
 PATTERNS = {
-    "story":  re.compile(r"^TARA-(\d{4}):\s+\S"),
-    "epic":   re.compile(r"^(Epic\s+)?TARA-(\d{4}):\s+\S", re.IGNORECASE),
-    "review_finding": re.compile(
-        r"^\[TARA-REVIEW\]\s+TARA-(\d{4})\s+[–-]\s+.+\s+\((Kritisch|Hoch|Mittel|Niedrig)\)$"
-    ),
-    "process_guard": re.compile(
-        r"^\[PROCESS-GUARD\]\s+TARA-(\d{4})\s+[–-]\s+P-\d{2}"
-    ),
+    "story":             re.compile(r"^\[TARA-(\d{4})\] STORY: \S"),
+    "epic":              re.compile(r"^\[TARA-(\d{4})\] EPIC: \S"),
+    "review_finding":    re.compile(r"^\[TARA-(\d{4})\] REVIEW-FINDING: \S"),
+    "process_violation": re.compile(r"^\[TARA-(\d{4})\] PROCESS-VIOLATION: \S"),
 }
 
 # Required body sections per type (markdown headings or bold labels)
 REQUIRED_BODY = {
-    "review_finding": ["**Finding-ID:**", "**Source-Story:**", "**Schwere:**", "### Problem"],
-    "process_guard":  ["**Regel:**", "**Schwere:**", "### Problem"],
-    "story":          [],   # stories: no mandatory sections (PO writes freely)
-    "epic":           [],
+    "review_finding":    ["**Finding-ID:**", "**Source-Story:**", "**Schwere:**"],
+    "process_violation": ["**Branch:**",     "**Commit:**",       "### Verstösse"],
+    "story":             [],
+    "epic":              [],
 }
 
 # Expected labels per type (at least one must be present)
 EXPECTED_LABELS = {
-    "review_finding": ["review-finding"],
-    "process_guard":  ["review-finding"],
-    "story":          [],
-    "epic":           [],
+    "review_finding":    ["review-finding"],
+    "process_violation": ["process-violation"],
+    "story":             ["story"],
+    "epic":              ["epic"],
 }
 
 
@@ -102,12 +98,11 @@ def get_all_issue_titles(repo: str, exclude_number: int) -> dict[str, int]:
 
 def detect_type(title: str) -> str | None:
     """Return issue type string or None if unrecognised."""
-    if PATTERNS["process_guard"].match(title):
-        return "process_guard"
+    if PATTERNS["process_violation"].match(title):
+        return "process_violation"
     if PATTERNS["review_finding"].match(title):
         return "review_finding"
-    # Epic before story (epic pattern is a superset)
-    if re.match(r"^Epic\s+TARA-\d{4}:", title, re.IGNORECASE):
+    if PATTERNS["epic"].match(title):
         return "epic"
     if PATTERNS["story"].match(title):
         return "story"
@@ -131,26 +126,16 @@ def check_nomenclature(title: str, issue_type: str | None) -> list[Finding]:
             severity="Hoch",
             message=(
                 f'Titel `{title}` entspricht keinem der erwarteten Formate:\n'
-                '- Story:          `TARA-XXXX: <Beschreibung>`\n'
-                '- Epic:           `Epic TARA-XXXX: <Beschreibung>`\n'
-                '- Review-Finding: `[TARA-REVIEW] TARA-XXXX – <Beschreibung> (Schwere)`\n'
-                '- Process-Guard:  `[PROCESS-GUARD] TARA-XXXX – P-XX <Beschreibung>`'
+                '- Story:              `[TARA-XXXX] STORY: <Beschreibung>`\n'
+                '- Epic:               `[TARA-XXXX] EPIC: <Beschreibung>`\n'
+                '- Review-Finding:     `[TARA-XXXX] REVIEW-FINDING: <Beschreibung>`\n'
+                '- Process-Violation:  `[TARA-XXXX] PROCESS-VIOLATION: <Beschreibung>`'
             ),
             action=(
                 'Bitte Titel entsprechend dem Nomenklatur-Schema anpassen.\n'
-                'Referenz: `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` → Finding-Format'
+                'Referenz: `agents/process_guard/PROCESS_GUARD_AGENT.md`'
             ),
         ))
-
-    # Review-Finding: Schwere muss am Ende stehen
-    if issue_type == "review_finding":
-        if not re.search(r'\((Kritisch|Hoch|Mittel|Niedrig)\)$', title):
-            findings.append(Finding(
-                rule="Nomenklatur",
-                severity="Mittel",
-                message='Review-Finding-Titel muss mit `(Kritisch|Hoch|Mittel|Niedrig)` enden.',
-                action='Schwere-Angabe ans Titelende anfügen.',
-            ))
 
     return findings
 

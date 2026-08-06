@@ -129,7 +129,7 @@ def create_github_issues_for_findings(
 ) -> list:
     """Create review-finding issues via gh CLI for findings >= Mittel.
 
-    Title format:  [TARA-REVIEW] TARA-XXXX – <type> (<severity>)
+    Title format:  [TARA-XXXX] REVIEW-FINDING: <type> (<severity>)
                    TARA-XXXX is a NEW unique ID — the source story is in the body.
     Labels:        review-finding, sp:1
     Body:          Formatted markdown per REVIEW_AGENT_WORKFLOW.md
@@ -161,7 +161,7 @@ def create_github_issues_for_findings(
 
         # Each finding gets its own unique TARA ID (never reuse story ID)
         finding_id = get_next_tara_id(repo)
-        title = f"[TARA-REVIEW] {finding_id} – {ftype} ({severity})"
+        title = f"[{finding_id}] REVIEW-FINDING: {ftype} ({severity})"
 
         body = (
             f"## Review Finding\n\n"

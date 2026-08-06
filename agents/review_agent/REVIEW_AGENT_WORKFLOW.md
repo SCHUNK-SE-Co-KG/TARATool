@@ -95,7 +95,7 @@ python agents/review_agent/runtime_scanner.py \
 
 ## Finding-Format
 
-**Titel:** `[TARA-REVIEW] TARA-XXXX – <Kurzbeschreibung>`  
+**Titel:** `[TARA-XXXX] REVIEW-FINDING: <Kurzbeschreibung>`  
 **Labels:** `review-finding` + `sp:1` (Aufwand zur Behebung)
 
 > ⚠️ **Wichtig:** `TARA-XXXX` im Titel ist eine **neue, eindeutige ID** für das Finding selbst —

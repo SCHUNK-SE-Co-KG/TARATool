@@ -34,10 +34,10 @@ Script:   agents/process_guard/issue_checker.py
 
 | Typ | Format |
 |-----|--------|
-| Story | `TARA-XXXX: <Beschreibung>` |
-| Epic | `Epic TARA-XXXX: <Beschreibung>` |
-| Review-Finding | `[TARA-REVIEW] TARA-XXXX – <Beschreibung> (Kritisch\|Hoch\|Mittel\|Niedrig)` |
-| Process-Guard-Finding | `[PROCESS-GUARD] TARA-XXXX – P-XX <Beschreibung>` |
+| Story | `[TARA-XXXX] STORY: <Beschreibung>` |
+| Epic | `[TARA-XXXX] EPIC: <Beschreibung>` |
+| Review-Finding | `[TARA-XXXX] REVIEW-FINDING: <Beschreibung>` |
+| Process-Violation | `[TARA-XXXX] PROCESS-VIOLATION: <Beschreibung>` |
 
 Bei Verstoß: Kommentar am Issue + Label `process-violation`.
 
@@ -121,7 +121,7 @@ Ja                Nein
 Status setzen    Status bleibt
                  Item -> Blocking
                  Finding-Issue anlegen:
-                 "[PROCESS-GUARD] TARA-XXXX – P-18: Vorbedingung fuer <nach> nicht erfuellt"
+                 "[TARA-XXXX] PROCESS-VIOLATION: P-18 Vorbedingung fuer <nach> nicht erfuellt"
 ```
 
 ---
@@ -155,8 +155,8 @@ Andernfalls: `PROCESS BLOCKED` + Finding-Issues anlegen.
 
 ## Finding-Format
 
-**Titel:** `[PROCESS-GUARD] TARA-XXXX – Regel P-XX verletzt`  
-**Labels:** `review-finding` (+ `blocked` bei Kritisch)
+**Titel:** `[TARA-XXXX] PROCESS-VIOLATION: Regel P-XX verletzt`  
+**Labels:** `process-violation` (+ `blocked` bei Kritisch)
 
 ```markdown
 ## Prozess-Finding
