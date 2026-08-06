@@ -55,26 +55,38 @@ Test-Ergebnis:    PASSED / FAILED
 
 ## Pflichtregeln (Verletzung → Finding als Issue)
 
-| Regel | Beschreibung                                                                                                                                                                  |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort                                                                                                                                 |
-| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                                                                                                        |
-| P-03  | **Tests vor Implementierung** geschrieben (TDD Red-Phase)                                                                                                                     |
-| P-04  | Tests haben initial **fehlgeschlagen** (Red bewiesen)                                                                                                                         |
-| P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen                                                                                                               |
-| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`                                                                                               |
-| P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                                                                               |
-| P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                         |
-| P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung                                                                                                                             |
-| P-10  | Review-Agent aufgerufen, kein offenes Critical/High Finding – dann **darf Dev-Agent mergen**                                                                                  |
-| P-11  | Nach Merge: Item auf „Freigabe" setzen – **nicht** direkt auf „Done"                                                                                                          |
-| P-12  | **Prettier** (`npm run format:check`) Exit-Code 0 vor Testausfuehrung (N/A fuer reine Python-Module)                                                                          |
-| P-13  | **ESLint** (`npm run lint`) Exit-Code 0 vor Testausfuehrung (N/A fuer reine Python-Module)                                                                                    |
-| P-14  | **TARA-IDs sind atomar und unveraenderlich** – keine ID darf umbenannt, ersetzt oder gemappt werden. Jede ID bleibt lebenslang an genau einem Issue gebunden.                 |
-| P-15  | **Done NUR nach PO-OK als Issue-Kommentar** – `PO-OK` oder `Freigabe erteilt` im Issue-Kommentar. `po-approve.yml` setzt Status automatisch. Dev-Agent darf Done NICHT setzen.|
-| P-16  | **Feature-Branch nach Merge loeschen** (`git push origin --delete feature/TARA-XXXX-*`)                                                                                      |
-| P-17  | **Epic-Batch-Testing**: Wenn alle Epic-Stories auf Freigabe → `git pull development`, PO im Epic-Issue informieren: „Alle Stories auf Freigabe – bitte testen"                |
-| P-18  | **Pre-Transition Check**: Vor **jedem** Status-Wechsel prueft der Prozess-Guard die Vorbedingungen. Sind sie nicht erfuellt → Status bleibt, Finding-Issue wird angelegt, Item geht auf **Blocking**. |
+| Regel | Beschreibung | Automatisiert |
+| ----- | ------------ | ------------- |
+| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort | Manuell |
+| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann | Manuell |
+| P-03  | **Tests vor Implementierung** geschrieben – Testdatei existiert | **GitHub Actions (PR)** |
+| P-04  | Tests haben initial **fehlgeschlagen** – Red-Commit vor Green-Commit, Tests rot am Red-Commit | **GitHub Actions (PR)** |
+| P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen | Manuell (Dev-Agent-Pflicht) |
+| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v` | **GitHub Actions (PR)** |
+| P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema | **GitHub Actions (PR)** |
+| P-08  | Commit-Messages referenzieren TARA-ID | **GitHub Actions (PR)** |
+| P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung | Manuell |
+| P-10  | Review-Agent aufgerufen, kein offenes Critical/High Finding | Manuell |
+| P-11  | Nach Merge: Item auf „Freigabe" setzen – **nicht** direkt auf „Done" | Manuell |
+| P-12  | **Prettier** (`npm run format:check`) bei JS/HTML-Aenderungen | **GitHub Actions (PR)** |
+| P-13  | **ESLint** (`npm run lint`) bei JS-Aenderungen | **GitHub Actions (PR)** |
+| P-14  | **TARA-IDs sind atomar und unveraenderlich** – keine ID mehrfach vergeben | **GitHub Actions (Issue-Erstellung)** |
+| P-15  | **Done NUR nach PO-OK** – `po-approve.yml` setzt Status automatisch | **GitHub Actions (Issue-Kommentar)** |
+| P-16  | **Feature-Branch nach Merge loeschen** | Manuell |
+| P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe | Manuell |
+| P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel | Manuell (Dev-Agent-Pflicht) |
+
+### Automatisierungsmatrix
+
+| Trigger | Workflow | Geprueft Regeln |
+|---------|----------|-----------------|
+| PR geoeffnet/aktualisiert | `process-guard.yml` | P-03, P-04, P-06, P-07, P-08, P-12, P-13 |
+| Issue erstellt | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels |
+| Issue-Kommentar mit PO-OK | `po-approve.yml` | P-15 (Done nur nach PO-OK) |
+
+> **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18
+> werden durch den Dev-Agent eigenverantwortlich eingehalten und am Session-Ende
+> im Compliance-Bericht dokumentiert.
 
 ---
 
