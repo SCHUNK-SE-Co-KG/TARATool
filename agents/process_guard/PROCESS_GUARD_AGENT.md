@@ -44,19 +44,57 @@ Test-Ergebnis:    PASSED / FAILED
 | P-15  | **Done NUR nach PO-OK als Issue-Kommentar** – `PO-OK` oder `Freigabe erteilt` im Issue-Kommentar. `po-approve.yml` setzt Status automatisch. Dev-Agent darf Done NICHT setzen.|
 | P-16  | **Feature-Branch nach Merge loeschen** (`git push origin --delete feature/TARA-XXXX-*`)                                                                                      |
 | P-17  | **Epic-Batch-Testing**: Wenn alle Epic-Stories auf Freigabe → `git pull development`, PO im Epic-Issue informieren: „Alle Stories auf Freigabe – bitte testen"                |
+| P-18  | **Pre-Transition Check**: Vor **jedem** Status-Wechsel prueft der Prozess-Guard die Vorbedingungen. Sind sie nicht erfuellt → Status bleibt, Finding-Issue wird angelegt, Item geht auf **Blocking**. |
+
+---
+
+## P-18: Pre-Transition Checks (Vorbedingungen je Status-Uebergang)
+
+> **Warum P-18?** Ohne diesen Check koennen Items den Status wechseln, obwohl Vorbedingungen
+> fehlen – z.B. Done trotz offener Critical/High Findings (wie bei TARA-0063 geschehen).
+> Der Prozess-Guard wird deshalb **vor jedem Statuswechsel** aufgerufen.
+
+| Gewuenschter Uebergang | Vorbedingungen (alle muessen erfuellt sein) |
+|------------------------|---------------------------------------------|
+| **Todo → In Progress** | PO-Freigabe nachgewiesen (Chat oder Issue-Kommentar: `PO-OK`, `freigegeben`, `akzeptiert`) |
+| **In Progress → inReview** | `npm run format:check` = 0 Errors (P-12) · `npm run lint` = 0 Errors (P-13) · Story-Tests PASSED (P-05) · Commit gepusht (P-08) |
+| **inReview → Freigabe** | Kein offenes Critical/High `review-finding`-Issue fuer diese TARA-ID · PR gemergt · Branch geloescht (P-16) |
+| **Freigabe → Done** | PO-OK-Kommentar im Issue (`PO-OK`, `Freigabe erteilt`) – wird von `po-approve.yml` automatisch gesetzt |
+| **any → Blocking** | Offenes Critical/High Finding ODER P-01–P-17 Verletzung – wird vom Prozess-Guard gesetzt |
+| **Blocking → In Progress** | Alle Blocking-Gruende behoben, PO hat explizit freigegeben |
+
+### Ablauf Pre-Transition Check
+
+```
+Dev-Agent will Status aendern
+        |
+        v
+Prozess-Guard.check_transition(von, nach, tara_id)
+        |
+   Vorbedingungen erfuellt?
+   /              \
+Ja                Nein
+ |                  |
+ v                  v
+Status setzen    Status bleibt
+                 Item -> Blocking
+                 Finding-Issue anlegen:
+                 "[PROCESS-GUARD] TARA-XXXX – P-18: Vorbedingung fuer <nach> nicht erfuellt"
+```
 
 ---
 
 ## Wer darf was setzen?
 
-| Status-Uebergang        | Wer                        | Voraussetzung                                  |
-| ----------------------- | -------------------------- | ---------------------------------------------- |
-| Todo → In Progress      | Dev-Agent                  | PO hat Story freigegeben (Chat/Issue)          |
-| In Progress → inReview  | Dev-Agent                  | Tests gruen, Commit gepusht                    |
-| inReview → In Progress  | Dev-Agent                  | Critical/High Finding gefunden, Fix noetig     |
-| inReview → Freigabe     | Dev-Agent                  | Review OK, Merge durchgefuehrt (P-10/P-11)    |
-| **Freigabe → Done**     | **GitHub Automation**      | PO-OK oder Freigabe erteilt im Issue-Kommentar |
-| Freigabe → Done         | Dev-Agent (Notfall)        | Nur nach expliziter Chat-Anweisung vom PO      |
+| Status-Uebergang        | Wer                        | Voraussetzung (P-18)                            |
+| ----------------------- | -------------------------- | ----------------------------------------------- |
+| Todo → In Progress      | Dev-Agent (nach P-18-OK)   | PO-Freigabe nachgewiesen                        |
+| In Progress → inReview  | Dev-Agent (nach P-18-OK)   | Tests gruen, Prettier, ESLint, Commit gepusht   |
+| inReview → In Progress  | Dev-Agent                  | Critical/High Finding gefunden, Fix noetig      |
+| inReview → Freigabe     | Dev-Agent (nach P-18-OK)   | Review OK, Merge durchgefuehrt, Branch geloescht|
+| **Freigabe → Done**     | **GitHub Automation**      | PO-OK oder Freigabe erteilt im Issue-Kommentar  |
+| any → Blocking          | Prozess-Guard              | P-18-Verletzung erkannt                         |
+| Blocking → In Progress  | Dev-Agent (nach PO-OK)     | Alle Blocking-Gruende behoben                   |
 
 ---
 

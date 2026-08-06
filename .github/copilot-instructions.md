@@ -26,10 +26,10 @@ Board-Status wird ausschliesslich ueber das **Bheowulf-Board #1** gelesen und ge
 
 | Dokument | Pfad | Inhalt |
 |----------|------|--------|
-| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-17 |
+| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-18 |
 | **Board-IDs & GraphQL** | `docs/GITHUB_BOARD.md` | API-IDs, Status-Optionen, gh-Befehle |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
-| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-17 vollstaendig, Finding-Format |
+| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18 vollstaendig, Pre-Transition-Checks |
 | **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Severity, Finding-Framework |
 | **Mirror-Sync** | `docs/MIRROR_SYNC_GUIDE.md` | Board-Sync Bheowulf <-> SCHUNK |
 
@@ -49,31 +49,68 @@ und `SCHUNK-SE-Co-KG/TARATool`). Der aktive Chat-Gespraechspartner ist der PO.
 **Keine Implementierung, kein Branch, keine Tests - ohne nachgewiesene Freigabe.**
 
 Freigabe ist gegeben wenn eine der folgenden Bedingungen erfuellt ist:
-1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben`, `Freigabe fuer TARA-XXXX`, `PO-OK`
-2. GitHub Issue-Kommentar am Epic oder Story enthaelt: `PO-OK`, `Freigabe erteilt`, `freigegeben`
+1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben`, `Freigabe fuer TARA-XXXX`, `PO-OK`, `akzeptiert`
+2. GitHub Issue-Kommentar am Epic oder Story enthaelt: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`
+
+---
+
+## Schluesselwoerter in Issue-Kommentaren
+
+| Schluesselwort | Bedeutung | Wirkung |
+|----------------|-----------|---------|
+| `PO-OK` | PO-Freigabe | Story/Epic freigegeben ODER Done-Setzen erlaubt |
+| `Freigabe erteilt` | PO-Freigabe | Story/Epic freigegeben |
+| `freigegeben` | PO-Freigabe | Story/Epic freigegeben |
+| `akzeptiert` | PO-Freigabe | Story/Epic freigegeben |
+| `Pause` | Arbeit pausiert | Issue wird im aktuellen Status belassen, nicht weiterbearbeitet |
+
+> **Pause**: Ein Issue mit Kommentar `Pause` wird vom Dev-Agent in dieser Session **uebersprungen**.
+> Es bleibt im aktuellen Status. Weiterarbeit nur nach erneutem expliziten PO-OK.
 
 ---
 
 ## Session-Start: Pflichtablauf (vor jeder Implementierung)
 
-### 1 - Board laden: In Progress
-- Alle **In-Progress**-Items aus Board #1 laden
+### 1 - Board laden: Blocking
+- Alle **Blocking**-Items aus Board #1 pruefen
+- Blocking = offene Critical/High Findings oder Prozessverletzung
+- PO ueber blockierte Items informieren; **nicht** selbst aufloesen ohne Anweisung
+
+### 2 - Board laden: In Progress
+- Alle **In-Progress**-Items laden
+- Hat ein Item einen `Pause`-Kommentar? -> ueberspringen
 - Offene `review-finding`- oder `blocked`-Issues pruefen
 - Zusammenfassung ausgeben
 
-### 2 - Board laden: Todo - Epics
+### 3 - Board laden: Todo - Epics
 - Alle **Epic**-Issues (Label `epic`) mit Status **Todo** laden
-- Issue-Kommentare auf Freigabe-Muster pruefen
+- Issue-Kommentare auf Freigabe-Muster pruefen (`PO-OK`, `freigegeben`, `akzeptiert`)
 - Freigegebene Epics identifizieren
 
-### 3 - Stories des freigegebenen Epics pruefen
+### 4 - Stories des freigegebenen Epics pruefen
 - Alle zugehoerigen Stories laden und Freigabe pruefen
-- **Alle Stories freigegeben** -> autonom mit naechster Story (Abhaengigkeitsreihenfolge) beginnen
+- `Pause`-Kommentar vorhanden? -> ueberspringen, PO informieren
+- **Alle Stories freigegeben** -> autonom beginnen (Abhaengigkeitsreihenfolge)
 - **Teilweise freigegeben** -> freigegebene bearbeiten, PO auf fehlende Freigaben hinweisen
 - **Keine Story freigegeben** -> PO informieren und warten
 
-### 4 - Zusammenfassung ausgeben
-- Was wird bearbeitet? Was fehlt? Was ist blockiert?
+### 5 - Zusammenfassung ausgeben
+- Blocking-Items (mit Hinweis), In-Progress-Items, was wird bearbeitet, was fehlt
+
+---
+
+## Pre-Transition Check (Regel P-18)
+
+**Vor jedem Status-Wechsel** muss der Prozess-Guard die Vorbedingungen pruefen.
+Vollstaendige Tabelle: `agents/process_guard/PROCESS_GUARD_AGENT.md`
+
+| Uebergang | Minimale Vorbedingung |
+|-----------|-----------------------|
+| Todo -> In Progress | PO-Freigabe nachgewiesen |
+| In Progress -> inReview | Prettier + ESLint + Tests gruen |
+| inReview -> Freigabe | Kein offenes Critical/High Finding, PR gemergt |
+| Freigabe -> Done | PO-OK im Issue-Kommentar |
+| any -> Blocking | Offenes Critical/High Finding ODER Prozessverletzung |
 
 ---
 
@@ -84,5 +121,5 @@ Beispiel: `[TARA-0026]`
 
 ---
 
-> Vollstaendige Prozessregeln (P-01-P-17): `agents/process_guard/PROCESS_GUARD_AGENT.md`
+> Vollstaendige Prozessregeln (P-01-P-18): `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > Vollstaendiger Story-Workflow: `docs/ENTWICKLUNGSPROZESS.md` (Abschnitt 4)

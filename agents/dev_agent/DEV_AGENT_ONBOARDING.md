@@ -25,8 +25,8 @@ Folgende Tools mÃ¼ssen auf dem System installiert sein:
 ```bash
 git clone git@github.com:Bheowulf/TARATool.git
 cd TARATool
-git checkout Development
-git pull origin Development
+git checkout development
+git pull origin development
 ```
 
 > **macOS/Linux:** SSH-Key muss in GitHub hinterlegt sein, oder alternativ HTTPS nutzen:

@@ -293,30 +293,32 @@ cd tests
 
 ---
 
-## 7. Prozessregeln (P-01 bis P-17)
+## 7. Prozessregeln (P-01 bis P-18)
 
-Der **Prozess-Guard** prÃ¼ft am Ende jeder Story die Einhaltung aller Regeln.
-Verletzungen werden als GitHub Issues mit Label `review-finding` gemeldet.
+Der **Prozess-Guard** prueft **vor jedem Statuswechsel** (P-18) und am Ende jeder Story
+die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `review-finding`
+gemeldet und das Item auf **Blocking** gesetzt.
 
-| Regel    | Beschreibung                                      | Wann geprÃ¼ft  |
+| Regel    | Beschreibung                                      | Wann geprüft  |
 | -------- | ------------------------------------------------- | ------------- |
 | **P-01** | TARA-ID in jeder Chat-Antwort                     | Laufend       |
-| **P-02** | Status â†’ In Progress VOR Arbeitsbeginn            | Story-Start   |
+| **P-02** | Status → In Progress VOR Arbeitsbeginn            | Story-Start   |
 | **P-03** | Tests VOR Implementierung geschrieben             | Red-Phase     |
 | **P-04** | Tests haben initial FEHLGESCHLAGEN                | Red-Phase     |
-| **P-05** | Story-Tests vor Commit grÃ¼n                       | Vor Commit    |
-| **P-06** | Alle Story-Tests grÃ¼n vor PR                      | Vor PR        |
+| **P-05** | Story-Tests vor Commit grün                       | Vor Commit    |
+| **P-06** | Alle Story-Tests grün vor PR                      | Vor PR        |
 | **P-07** | Branch: `feature/TARA-XXXX-*`                     | Branch-Anlage |
 | **P-08** | Commits referenzieren TARA-ID                     | Jeder Commit  |
-| **P-09** | Status â†’ inReview vor PR-Ã–ffnung                  | Vor PR        |
+| **P-09** | Status → inReview vor PR-Öffnung                  | Vor PR        |
 | **P-10** | Review-Agent aufgerufen, kein Critical/High offen | Vor PR        |
-| **P-11** | Nach Merge â†’ Freigabe (nicht direkt Done)         | Nach Merge    |
-| **P-12** | Prettier grÃ¼n vor Tests                           | Vor Commit    |
-| **P-13** | ESLint grÃ¼n vor Tests                             | Vor Commit    |
-| **P-14** | TARA-IDs unverÃ¤nderlich (atomar)                  | Jederzeit     |
-| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml)                    | Nach Merge    |
+| **P-11** | Nach Merge → Freigabe (nicht direkt Done)         | Nach Merge    |
+| **P-12** | Prettier grün vor Tests                           | Vor Commit    |
+| **P-13** | ESLint grün vor Tests                             | Vor Commit    |
+| **P-14** | TARA-IDs unveränderlich (atomar)                  | Jederzeit     |
+| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml) | Nach Merge |
 | **P-16** | Feature-Branch nach Merge löschen                 | Nach Merge    |
-| **P-17** | Alle Epic-Stories Freigabe -> development lokal pullen + PO per Issue informieren | Nach letztem Merge |
+| **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren | Nach letztem Merge |
+| **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
 
 VollstÃ¤ndige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 

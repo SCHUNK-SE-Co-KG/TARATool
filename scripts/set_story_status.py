@@ -33,7 +33,7 @@ def set_status(project_id, item_id, field_id, option_id, label):
 BH = {"project":"PVT_kwHOBLN4284BfLtb","field":"PVTSSF_lAHOBLN4284BfLtbzhZgYuI"}
 SK = {"project":"PVT_kwDOBu4dv84BfbaR","field":"PVTSSF_lADOBu4dv84BfbaRzhZuYME"}
 
-STATUS_BH = {"Todo":"f75ad846","In Progress":"47fc9ee4","inReview":"bbeb708d","Freigabe":"d2e53e50","Done":"98236657"}
+STATUS_BH = {"Todo":"f75ad846","In Progress":"47fc9ee4","inReview":"bbeb708d","Freigabe":"d2e53e50","Blocking":"f4b42fea","Done":"98236657"}
 STATUS_SK = {"Todo":"f75ad846","In Progress":"47fc9ee4","inReview":"2338665f","Freigabe":"d98e05b2","Done":"98236657"}
 
 tara_id = sys.argv[1]   # e.g. "0062"
