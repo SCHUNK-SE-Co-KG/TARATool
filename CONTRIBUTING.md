@@ -10,7 +10,7 @@ main          â† Stable Release (nur via PR aus Development)
 
 | Branch                | Zweck                        | Merge-Ziel           |
 | --------------------- | ---------------------------- | -------------------- |
-| `main`                | Stable, tagged Releases      | â€“                    |
+| `main`                | Stable, tagged Releases      | â€“                  |
 | `Development`         | Integration, immer lauffähig | `main` per PR        |
 | `feature/TARA-XXXX-*` | Eine Story = ein Branch      | `Development` per PR |
 
@@ -92,6 +92,7 @@ Schritt 8 - PO-Freigabe (Pflicht)
   * PO gibt explizites OK -> Status -> "Done"
   * Ohne PO-Freigabe: Status bleibt auf "Freigabe"
 ```
+
 ---
 
 ## Test-Benennung
@@ -155,9 +156,9 @@ Oder manuell: höchste Nummer in GitHub Issues suchen + 1.
 
 ## Ausnahmen vom Standard-Workflow
 
-| Ausnahme      | Bedingung                                                                          | Was entfällt                          |
-| ------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
+| Ausnahme      | Bedingung                                                                            | Was entfällt                          |
+| ------------- | ------------------------------------------------------------------------------------ | ------------------------------------- |
 | **Prototyp**  | Issue-Titel enthält â€žPrototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nötig) |
-| **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                | P-07 (Branch-Naming)                  |
+| **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                  | P-07 (Branch-Naming)                  |
 
 Ausnahmen müssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.

@@ -56,8 +56,8 @@ Neue Baum-Bedienung innerhalb und **zwischen** Ebenen.
 
 #### UI â€“ neue Buttons
 
-| Element                 | Buttons                                                                 |
-| ----------------------- | ----------------------------------------------------------------------- |
+| Element                 | Buttons                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
 | **Auswirkung (Blatt)**  | Kopieren, Ausschneiden, â–² nach oben, â–¼ nach unten                       |
 | **Pfad / Zwischenpfad** | **Einfügen**, Kopieren, Ausschneiden, â–², â–¼                              |
 | **Root (Angriffsziel)** | Neuer Button **â€žPfad einfügenâ€œ** (`btnPasteAttackPath` in `index.html`) |
@@ -82,7 +82,7 @@ _clip = {
 | `_regenNodeUids(node)`          | Frische UIDs für ganzen Teilbaum beim **Kopieren**                  |
 | `_regenImpactUid(imp)`          | Frische UID für Auswirkung beim **Kopieren**                        |
 | `_containsNode(root, target)`   | Zyklus-Schutz: Ziel darf nicht im zu verschiebenden Teilbaum liegen |
-| `_moveInArray(arr, uid, dir)`   | â–²/â–¼ â€“ Reihenfolge im gleichen Eltern-Array                          |
+| `_moveInArray(arr, uid, dir)`   | â–²/â–¼ â€“ Reihenfolge im gleichen Eltern-Array                    |
 | `_mkIconBtn(...)`               | Einheitliche Icon-Buttons mit Tooltip                               |
 | `pasteInto(editor, targetNode)` | Zentrale Einfüge-Logik                                              |
 
@@ -115,10 +115,10 @@ _clip = {
 
 #### Geänderte Dateien
 
-| Datei                                     | Ã„nderung                                                       |
+| Datei                                     | Ã„nderung                                                      |
 | ----------------------------------------- | -------------------------------------------------------------- |
 | `js/attack_tree/attack_tree_editor_v2.js` | Zwischenablage, Helfer, Buttons, `pasteInto`, Root-Verdrahtung |
-| `index.html`                              | Button `btnPasteAttackPath` neben â€žAngriffspfad anlegen"       |
+| `index.html`                              | Button `btnPasteAttackPath` neben â€žAngriffspfad anlegen"     |
 
 #### Test (Copy/Paste/Move)
 
@@ -141,9 +141,9 @@ _clip = {
 - Einbettung bevorzugt **verlustfreies PNG** (JPEG nur Fallback bei >12 MB)
 - `imageSmoothingQuality = 'high'`
 
-| Datei                             | Ã„nderung                                                     |
+| Datei                             | Ã„nderung                                                    |
 | --------------------------------- | ------------------------------------------------------------ |
-| `js/report/report_pdf_helpers.js` | `svgTextToPng` â€“ DPI-Skalierung, PNG/JPEG-Fallback           |
+| `js/report/report_pdf_helpers.js` | `svgTextToPng` â€“ DPI-Skalierung, PNG/JPEG-Fallback         |
 | `js/report/report_export.js`      | Zielbreite = `availW/25.4*300` für Angriffsbaum + Restrisiko |
 
 ---
@@ -184,7 +184,7 @@ _clip = {
 
 - Neue Funktion `getDisplayDamageScenarios()` in `utils.js` (Default + Custom-Szenarien)
 
-| Datei                                     | Ã„nderung                          |
+| Datei                                     | Ã„nderung                         |
 | ----------------------------------------- | --------------------------------- |
 | `js/attack_tree/attack_tree_editor_v2.js` | Tooltip-Binding, DS-Labels        |
 | `js/core/utils.js`                        | `getDisplayDamageScenarios()`     |
@@ -201,11 +201,11 @@ _clip = {
 
 ### Lösung (drei Wege)
 
-| Weg                                                 | Beschreibung                                                                                                     |
-| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Weg                                                   | Beschreibung                                                                                                            |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | **1. Button â€žBewertungsconfig laden"**              | Tab Ãœbersicht â†’ Datei-Dialog â†’ `assessment_config.json` wählen â†’ sofortige Aktualisierung **ohne** Seiten-Reload |
-| **2. `config/assessment_config.js`**                | Per `<script>` beim Start geladen (funktioniert mit Doppelklick/`file://`)                                       |
-| **3. Optional: `scripts/sync_assessment_config.bat`** | Regeneriert `.js` aus `.json`                                                                                    |
+| **2. `config/assessment_config.js`**                  | Per `<script>` beim Start geladen (funktioniert mit Doppelklick/`file://`)                                              |
+| **3. Optional: `scripts/sync_assessment_config.bat`** | Regeneriert `.js` aus `.json`                                                                                           |
 
 ### Technik
 
@@ -229,7 +229,7 @@ _(Hinweis: Zeile 61 enthält optional Tippfehler extra `)` bei IT-Netzwerk-Text.
 
 ### Geänderte/neue Dateien
 
-| Datei                                | Ã„nderung                              |
+| Datei                                | Ã„nderung                             |
 | ------------------------------------ | ------------------------------------- |
 | `config/assessment_config.json`      | S-Skalierung SES                      |
 | `config/assessment_config.js`        | Auto-generiert aus JSON               |
@@ -238,8 +238,8 @@ _(Hinweis: Zeile 61 enthält optional Tippfehler extra `)` bei IT-Netzwerk-Text.
 | `js/core/init.js`                    | Button + File-Input                   |
 | `js/attack_tree/attack_tree_calc.js` | `rebuildTreeRiskLevelsFromConfig`     |
 | `index.html`                         | Script-Tag, Button, hidden file input |
-| `scripts/sync_assessment_config.py`    | JSONâ†’JS Sync                          |
-| `scripts/sync_assessment_config.bat`   | Windows-Starter                       |
+| `scripts/sync_assessment_config.py`  | JSONâ†’JS Sync                        |
+| `scripts/sync_assessment_config.bat` | Windows-Starter                       |
 
 ---
 
@@ -250,7 +250,7 @@ _(Hinweis: Zeile 61 enthält optional Tippfehler extra `)` bei IT-Netzwerk-Text.
 | `js/attack_tree/attack_tree_editor_v2.js` | Limit 10, Copy/Cut/Paste/Move, DS-Labels, Tooltips          |
 | `js/attack_tree/dot_export.js`            | Blatt-Ranking, Junction-Bus                                 |
 | `js/attack_tree/attack_tree_calc.js`      | Config-Reload Risiko-Schwellen                              |
-| `js/report/report_pdf_helpers.js`         | Hochauflösende SVGâ†’PNG                                      |
+| `js/report/report_pdf_helpers.js`         | Hochauflösende SVGâ†’PNG                                    |
 | `js/report/report_export.js`              | DPI-Bildbreite PDF                                          |
 | `js/core/utils.js`                        | `getDisplayDamageScenarios()`                               |
 | `js/core/config_loader.js`                | Portable Load + Runtime-Reload                              |
@@ -260,7 +260,7 @@ _(Hinweis: Zeile 61 enthält optional Tippfehler extra `)` bei IT-Netzwerk-Text.
 | `index.html`                              | Pfad einfügen, Bewertungsconfig laden, assessment_config.js |
 | `config/assessment_config.json`           | S-Skalierung SES                                            |
 | `config/assessment_config.js`             | Portable Config                                             |
-| `scripts/sync_assessment_config.*`          | JSONâ†’JS Sync                                                |
+| `scripts/sync_assessment_config.*`        | JSONâ†’JS Sync                                              |
 | `CHANGELOG_DEVSES.md`                     | Kurz-Changelog im Repo                                      |
 
 ---
@@ -294,7 +294,6 @@ git checkout DevSES
 # Nach Config-Ã„nderung: Ãœbersicht â†’ â€žBewertungsconfig laden"
 ```
 
-
 ---
 
 <!-- CHANGELOG_DEVSES.md -->
@@ -320,8 +319,8 @@ Vollständige Ãœbersicht aller Ã„nderungen in diesem Branch (SES-Entwicklun
 
 Neue Baum-Bedienung innerhalb und zwischen Ebenen:
 
-| Element                 | Aktionen                                                               |
-| ----------------------- | ---------------------------------------------------------------------- |
+| Element                 | Aktionen                                                                   |
+| ----------------------- | -------------------------------------------------------------------------- |
 | **Auswirkung (Blatt)**  | Kopieren, Ausschneiden, â–² nach oben, â–¼ nach unten                      |
 | **Pfad / Zwischenpfad** | Einfügen, Kopieren, Ausschneiden, â–², â–¼                                 |
 | **Root (Angriffsziel)** | Button **â€žPfad einfügenâ€œ** für kopierten/ausgeschnittenen Angriffspfad |
@@ -425,12 +424,12 @@ Neue Texte in `assessment_config.json` (Beispiel):
 
 ## 6. Geänderte Dateien (Gesamtübersicht)
 
-| Datei                                     | Ã„nderung                                                    |
+| Datei                                     | Ã„nderung                                                   |
 | ----------------------------------------- | ----------------------------------------------------------- |
 | `js/attack_tree/attack_tree_editor_v2.js` | Limit 10, Copy/Cut/Paste/Move, DS-Labels, Tooltips          |
 | `js/attack_tree/dot_export.js`            | Blatt-Ranking, Junction-Bus-Routing                         |
 | `js/attack_tree/attack_tree_calc.js`      | Config-Reload für Risiko-Schwellen                          |
-| `js/report/report_pdf_helpers.js`         | Hochauflösende SVGâ†’PNG-Konvertierung                        |
+| `js/report/report_pdf_helpers.js`         | Hochauflösende SVGâ†’PNG-Konvertierung                      |
 | `js/report/report_export.js`              | DPI-basierte Bildbreite im PDF                              |
 | `js/core/utils.js`                        | `getDisplayDamageScenarios()`                               |
 | `js/core/config_loader.js`                | Portable Load + Runtime-Reload                              |
@@ -440,7 +439,7 @@ Neue Texte in `assessment_config.json` (Beispiel):
 | `index.html`                              | Pfad einfügen, Bewertungsconfig laden, assessment_config.js |
 | `config/assessment_config.json`           | S-Skalierung SES                                            |
 | `config/assessment_config.js`             | Portable Config (auto aus JSON)                             |
-| `scripts/sync_assessment_config.*`          | JSONâ†’JS Sync (optional)                                     |
+| `scripts/sync_assessment_config.*`        | JSONâ†’JS Sync (optional)                                   |
 | `docs/SCHASAM_Methodenbeschreibung.docx`  | Dokument aktualisiert                                       |
 | `CHANGELOG_DEVSES.md`                     | Diese Datei                                                 |
 
@@ -476,4 +475,3 @@ Neue Texte in `assessment_config.json` (Beispiel):
 
 **Vollständige Dokumentation (inkl. Copy/Paste/Move-Details):**  
 `AENDERUNGEN_DEVSES.md` (im Repo-Root) bzw. `Aufgaben/2026-07-20_devses-aenderungsuebersicht/AENDERUNGEN_DEVSES.md`
-

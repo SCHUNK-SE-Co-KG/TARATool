@@ -111,6 +111,18 @@ export default [
         onAssessmentConfigReloaded: 'readonly',
         promptReloadAssessmentConfig: 'readonly',
         reloadAssessmentConfigFromJsonText: 'readonly',
+        // bilingual.js / i18n helpers
+        tf: 'readonly',
+        getPrimaryField: 'readonly',
+        getLocalizedOptionText: 'readonly',
+        localizeParenHtml: 'readonly',
+        syncLocalizedInputHint: 'readonly',
+        // about.js
+        openAboutModal: 'readonly',
+        // utils.js (additional)
+        getRiskBgClass: 'readonly',
+        // damage_scenarios.js
+        DEFAULT_DS_IDS: 'readonly',
       },
     },
     rules: {

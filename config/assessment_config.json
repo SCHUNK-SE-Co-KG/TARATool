@@ -50,9 +50,21 @@
       "fullLabel": "Komplexität (Knowledge / Complexity)",
       "fullLabel_en": "Complexity (Knowledge)",
       "options": [
-        { "value": "0.7", "text": "0,7 - Bekannte Schwachstellen (z.B. CVE, Errata)", "text_en": "0.7 - Known vulnerabilities (e.g. CVE, errata)" },
-        { "value": "0.6", "text": "0,6 - Einfache Internetrecherche (z.B. einfache Foren)", "text_en": "0.6 - Simple internet research (e.g. basic forums)" },
-        { "value": "0.3", "text": "0,3 - Experten Recherche (z.B. spezifische Foren, Onionnet)", "text_en": "0.3 - Expert research (e.g. specialised forums, onion network)" },
+        {
+          "value": "0.7",
+          "text": "0,7 - Bekannte Schwachstellen (z.B. CVE, Errata)",
+          "text_en": "0.7 - Known vulnerabilities (e.g. CVE, errata)"
+        },
+        {
+          "value": "0.6",
+          "text": "0,6 - Einfache Internetrecherche (z.B. einfache Foren)",
+          "text_en": "0.6 - Simple internet research (e.g. basic forums)"
+        },
+        {
+          "value": "0.3",
+          "text": "0,3 - Experten Recherche (z.B. spezifische Foren, Onionnet)",
+          "text_en": "0.3 - Expert research (e.g. specialised forums, onion network)"
+        },
         { "value": "0.1", "text": "0,1 - Expertenwissen", "text_en": "0.1 - Expert knowledge" }
       ]
     },
@@ -64,7 +76,11 @@
       "options": [
         { "value": "0.5", "text": "0,5 - IT-Netzwerk beim Kunden", "text_en": "0.5 - Customer IT network" },
         { "value": "0.3", "text": "0,3 - OT-Netzwerk beim Kunden", "text_en": "0.3 - Customer OT network" },
-        { "value": "0.1", "text": "0,1 - Einzelprodukt/ lokale Maschine", "text_en": "0.1 - Single product / local machine" }
+        {
+          "value": "0.1",
+          "text": "0,1 - Einzelprodukt/ lokale Maschine",
+          "text_en": "0.1 - Single product / local machine"
+        }
       ]
     },
     "T": {
@@ -94,9 +110,9 @@
 
   "riskThresholds": [
     { "min": 2.0, "label": "Kritisch", "labelEn": "critical", "color": "#c0392b", "colorRGB": [192, 57, 43] },
-    { "min": 1.6, "label": "Hoch",     "labelEn": "high",     "color": "#e67e22", "colorRGB": [230, 126, 34] },
-    { "min": 0.8, "label": "Mittel",   "labelEn": "medium",   "color": "#f39c12", "colorRGB": [243, 156, 18] },
-    { "min": 0,   "label": "Niedrig",  "labelEn": "low",      "color": "#27ae60", "colorRGB": [39, 174, 96] }
+    { "min": 1.6, "label": "Hoch", "labelEn": "high", "color": "#e67e22", "colorRGB": [230, 126, 34] },
+    { "min": 0.8, "label": "Mittel", "labelEn": "medium", "color": "#f39c12", "colorRGB": [243, 156, 18] },
+    { "min": 0, "label": "Niedrig", "labelEn": "low", "color": "#27ae60", "colorRGB": [39, 174, 96] }
   ],
 
   "riskUnknown": {
@@ -106,19 +122,101 @@
   },
 
   "defaultDamageScenarios": [
-    { "id": "DS1", "name": "Gefahr für Leib und Leben", "name_en": "Danger to life and limb", "short": "Safety", "short_en": "Safety", "description": "Verletzung von Personen oder lebensbedrohliche Situationen.", "description_en": "Injury to persons or life-threatening situations." },
-    { "id": "DS2", "name": "Finanzieller Schaden", "name_en": "Financial damage", "short": "Financial", "short_en": "Financial", "description": "Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).", "description_en": "Direct or indirect financial losses (recall, damages)." },
-    { "id": "DS3", "name": "Verlust von geistigem Eigentum", "name_en": "Loss of intellectual property", "short": "IP loss", "short_en": "IP loss", "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).", "description_en": "Loss of intellectual property (patents, copyrights, etc.)." },
-    { "id": "DS4", "name": "Verlust Privatsphäre/Daten", "name_en": "Loss of privacy/data", "short": "Privacy", "short_en": "Privacy", "description": "Verlust sensibler persönlicher oder technischer Daten.", "description_en": "Loss of sensitive personal or technical data." },
-    { "id": "DS5", "name": "Rechtliche Konsequenzen", "name_en": "Legal consequences", "short": "Legal", "short_en": "Legal", "description": "Verstoß gegen Gesetze oder Vorschriften.", "description_en": "Violation of laws or regulations." }
+    {
+      "id": "DS1",
+      "name": "Gefahr für Leib und Leben",
+      "name_en": "Danger to life and limb",
+      "short": "Safety",
+      "short_en": "Safety",
+      "description": "Verletzung von Personen oder lebensbedrohliche Situationen.",
+      "description_en": "Injury to persons or life-threatening situations."
+    },
+    {
+      "id": "DS2",
+      "name": "Finanzieller Schaden",
+      "name_en": "Financial damage",
+      "short": "Financial",
+      "short_en": "Financial",
+      "description": "Direkte oder indirekte finanzielle Verluste (Rückruf, Schadensersatz).",
+      "description_en": "Direct or indirect financial losses (recall, damages)."
+    },
+    {
+      "id": "DS3",
+      "name": "Verlust von geistigem Eigentum",
+      "name_en": "Loss of intellectual property",
+      "short": "IP loss",
+      "short_en": "IP loss",
+      "description": "Verlust von geistigem Eigentum (Patente, Urheberrechte, etc.).",
+      "description_en": "Loss of intellectual property (patents, copyrights, etc.)."
+    },
+    {
+      "id": "DS4",
+      "name": "Verlust Privatsphäre/Daten",
+      "name_en": "Loss of privacy/data",
+      "short": "Privacy",
+      "short_en": "Privacy",
+      "description": "Verlust sensibler persönlicher oder technischer Daten.",
+      "description_en": "Loss of sensitive personal or technical data."
+    },
+    {
+      "id": "DS5",
+      "name": "Rechtliche Konsequenzen",
+      "name_en": "Legal consequences",
+      "short": "Legal",
+      "short_en": "Legal",
+      "description": "Verstoß gegen Gesetze oder Vorschriften.",
+      "description_en": "Violation of laws or regulations."
+    }
   ],
 
   "strideCategories": [
-    { "id": "S", "name": "Spoofing (Identitätstäuschung)", "name_en": "Spoofing (identity deception)", "short": "S", "description": "Kann sich ein Angreifer oder ein fremdes Gerät als vertrauenswürdiger Teilnehmer ausgeben, um Zugriff zu erhalten? (z.\u00a0B. ein gefälschtes Servicetool).", "description_en": "Can an attacker or foreign device impersonate a trusted participant to gain access? (e.g. a forged service tool)." },
-    { "id": "T", "name": "Tampering (Manipulation)", "name_en": "Tampering (manipulation)", "short": "T", "description": "Können Daten, Parameter, Konfigurationen oder die Firmware auf dem Gerät oder während der Übertragung unbefugt verändert werden?", "description_en": "Can data, parameters, configurations or firmware on the device or in transit be changed without authorisation?" },
-    { "id": "R", "name": "Repudiation (Abstreitbarkeit)", "name_en": "Repudiation (non-repudiation gap)", "short": "R", "description": "Können kritische Aktionen durchgeführt werden, ohne dass wir im Nachhinein nachweisen können, wer es war? (Fehlende oder manipulierbare Logs).", "description_en": "Can critical actions be performed without us later being able to prove who did them? (Missing or tamperable logs)." },
-    { "id": "I", "name": "Information Disclosure (Informationsenthüllung)", "name_en": "Information Disclosure", "short": "I", "description": "Können schützenswerte Informationen (z.\u00a0B. Passwörter, Rezepturen, Kundendaten oder Know-how) von Unbefugten ausgelesen werden?", "description_en": "Can sensitive information (e.g. passwords, recipes, customer data or know-how) be read by unauthorised parties?" },
-    { "id": "D", "name": "Denial of Service (Dienstverweigerung)", "name_en": "Denial of Service", "short": "D", "description": "Kann das System so sabotiert oder überlastet werden, dass es seine Funktion einstellt oder träge wird? (z.\u00a0B. Blockade der Steuerung).", "description_en": "Can the system be sabotaged or overloaded so that it stops working or becomes sluggish? (e.g. blocking the controller)." },
-    { "id": "E", "name": "Elevation of Privilege (Rechteausweitung)", "name_en": "Elevation of Privilege", "short": "E", "description": "Kann ein Nutzer mit geringen Rechten (z.\u00a0B. Gast/Operator) Berechtigungen erlangen, die ihm nicht zustehen (z.\u00a0B. Admin-/Service-Rechte)?", "description_en": "Can a low-privilege user (e.g. guest/operator) obtain permissions they should not have (e.g. admin/service rights)?" }
+    {
+      "id": "S",
+      "name": "Spoofing (Identitätstäuschung)",
+      "name_en": "Spoofing (identity deception)",
+      "short": "S",
+      "description": "Kann sich ein Angreifer oder ein fremdes Gerät als vertrauenswürdiger Teilnehmer ausgeben, um Zugriff zu erhalten? (z.\u00a0B. ein gefälschtes Servicetool).",
+      "description_en": "Can an attacker or foreign device impersonate a trusted participant to gain access? (e.g. a forged service tool)."
+    },
+    {
+      "id": "T",
+      "name": "Tampering (Manipulation)",
+      "name_en": "Tampering (manipulation)",
+      "short": "T",
+      "description": "Können Daten, Parameter, Konfigurationen oder die Firmware auf dem Gerät oder während der Übertragung unbefugt verändert werden?",
+      "description_en": "Can data, parameters, configurations or firmware on the device or in transit be changed without authorisation?"
+    },
+    {
+      "id": "R",
+      "name": "Repudiation (Abstreitbarkeit)",
+      "name_en": "Repudiation (non-repudiation gap)",
+      "short": "R",
+      "description": "Können kritische Aktionen durchgeführt werden, ohne dass wir im Nachhinein nachweisen können, wer es war? (Fehlende oder manipulierbare Logs).",
+      "description_en": "Can critical actions be performed without us later being able to prove who did them? (Missing or tamperable logs)."
+    },
+    {
+      "id": "I",
+      "name": "Information Disclosure (Informationsenthüllung)",
+      "name_en": "Information Disclosure",
+      "short": "I",
+      "description": "Können schützenswerte Informationen (z.\u00a0B. Passwörter, Rezepturen, Kundendaten oder Know-how) von Unbefugten ausgelesen werden?",
+      "description_en": "Can sensitive information (e.g. passwords, recipes, customer data or know-how) be read by unauthorised parties?"
+    },
+    {
+      "id": "D",
+      "name": "Denial of Service (Dienstverweigerung)",
+      "name_en": "Denial of Service",
+      "short": "D",
+      "description": "Kann das System so sabotiert oder überlastet werden, dass es seine Funktion einstellt oder träge wird? (z.\u00a0B. Blockade der Steuerung).",
+      "description_en": "Can the system be sabotaged or overloaded so that it stops working or becomes sluggish? (e.g. blocking the controller)."
+    },
+    {
+      "id": "E",
+      "name": "Elevation of Privilege (Rechteausweitung)",
+      "name_en": "Elevation of Privilege",
+      "short": "E",
+      "description": "Kann ein Nutzer mit geringen Rechten (z.\u00a0B. Gast/Operator) Berechtigungen erlangen, die ihm nicht zustehen (z.\u00a0B. Admin-/Service-Rechte)?",
+      "description_en": "Can a low-privilege user (e.g. guest/operator) obtain permissions they should not have (e.g. admin/service rights)?"
+    }
   ]
 }

@@ -12,7 +12,7 @@ const dsMatrixContainer = document.getElementById('dsMatrixContainer');
 
 /* global IMPACT_CSS_CLASSES, VALID_IMPACT_VALUES, IMPACT_LABELS */
 function getImpactColorClass(val) {
-    return (typeof IMPACT_CSS_CLASSES !== 'undefined' && IMPACT_CSS_CLASSES[val]) || '';
+  return (typeof IMPACT_CSS_CLASSES !== 'undefined' && IMPACT_CSS_CLASSES[val]) || '';
 }
 
 /**
@@ -22,223 +22,256 @@ function getImpactColorClass(val) {
  * stays in sync without requiring the user to open & save each tree.
  */
 function _recalcAllRiskEntries(analysis) {
-    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) return;
+  if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0)
+    return;
 
-    let changed = false;
-    analysis.riskEntries.forEach(entry => {
-        try {
-            if (typeof applyImpactInheritance === 'function') applyImpactInheritance(entry, analysis);
-            if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(entry);
-            const newRisk = _computeRiskScore(entry.kstu, entry.i_norm).toFixed(2);
-            if (entry.rootRiskValue !== newRisk) {
-                entry.rootRiskValue = newRisk;
-                changed = true;
-            }
-        } catch (e) {
-            console.warn('[ImpactMatrix] recalc riskEntry', entry.id, e.message || e);
-        }
-    });
+  let changed = false;
+  analysis.riskEntries.forEach((entry) => {
+    try {
+      if (typeof applyImpactInheritance === 'function') applyImpactInheritance(entry, analysis);
+      if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(entry);
+      const newRisk = _computeRiskScore(entry.kstu, entry.i_norm).toFixed(2);
+      if (entry.rootRiskValue !== newRisk) {
+        entry.rootRiskValue = newRisk;
+        changed = true;
+      }
+    } catch (e) {
+      console.warn('[ImpactMatrix] recalc riskEntry', entry.id, e.message || e);
+    }
+  });
 
-    if (changed) saveAnalyses();
+  if (changed) saveAnalyses();
 }
 
-window.updateImpactScore = function(assetId, dsId, newValue, selectElement) {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+window.updateImpactScore = function (assetId, dsId, newValue, selectElement) {
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    // Validate input
-    if (!VALID_IMPACT_VALUES.includes(newValue)) {
-        showToast((typeof tf === 'function' ? tf('toast.impactInvalid', { value: newValue }) : `Ungültiger Impact-Wert: ${newValue}`), 'warning');
-        return;
-    }
-    
-    if (!analysis.impactMatrix) analysis.impactMatrix = {};
-    if (!analysis.impactMatrix[assetId]) {
-        analysis.impactMatrix[assetId] = {};
-    }
-    
-    analysis.impactMatrix[assetId][dsId] = newValue;
-    
-    // Update color live
-    if (selectElement) {
-        selectElement.className = 'impact-select ' + getImpactColorClass(newValue);
-    }
+  // Validate input
+  if (!VALID_IMPACT_VALUES.includes(newValue)) {
+    showToast(
+      typeof tf === 'function'
+        ? tf('toast.impactInvalid', { value: newValue })
+        : `Ungültiger Impact-Wert: ${newValue}`,
+      'warning'
+    );
+    return;
+  }
 
-    saveAnalyses();
-    
-    // Recalculate all attack trees (impact depends on matrix values)
-    _recalcAllRiskEntries(analysis);
-    
-    showToast((typeof tf === 'function' ? tf('toast.impactSet', { assetId, dsId, value: newValue }) : `Impact für ${assetId}/${dsId} auf ${newValue} gesetzt.`), 'info');
-    
-    const riskTab = document.getElementById('tabRiskAnalysis');
-    if (riskTab && riskTab.classList.contains('active')) {
-         if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
-    }
+  if (!analysis.impactMatrix) analysis.impactMatrix = {};
+  if (!analysis.impactMatrix[assetId]) {
+    analysis.impactMatrix[assetId] = {};
+  }
+
+  analysis.impactMatrix[assetId][dsId] = newValue;
+
+  // Update color live
+  if (selectElement) {
+    selectElement.className = 'impact-select ' + getImpactColorClass(newValue);
+  }
+
+  saveAnalyses();
+
+  // Recalculate all attack trees (impact depends on matrix values)
+  _recalcAllRiskEntries(analysis);
+
+  showToast(
+    typeof tf === 'function'
+      ? tf('toast.impactSet', { assetId, dsId, value: newValue })
+      : `Impact für ${assetId}/${dsId} auf ${newValue} gesetzt.`,
+    'info'
+  );
+
+  const riskTab = document.getElementById('tabRiskAnalysis');
+  if (riskTab && riskTab.classList.contains('active')) {
+    if (typeof renderRiskAnalysis === 'function') renderRiskAnalysis();
+  }
 };
 
 function renderImpactMatrix() {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
-    if (!dsMatrixContainer) return;
-    const _t = (k) => (typeof t === 'function' ? t(k) : k);
-    const _isDefaultDs = (ds) => {
-        if (!ds || !ds.id) return false;
-        if (typeof DEFAULT_DS_IDS !== 'undefined' && DEFAULT_DS_IDS instanceof Set) return DEFAULT_DS_IDS.has(ds.id);
-        return Array.isArray(DEFAULT_DAMAGE_SCENARIOS) && DEFAULT_DAMAGE_SCENARIOS.some(d => d.id === ds.id);
-    };
-    const _loc = (obj, field) => {
-        if (typeof getLocalizedField !== 'function') return obj?.[field] || '';
-        // Standard-DS: plain fallback (kein „(DE)“), Custom: Paren wenn EN fehlt
-        return getLocalizedField(obj, field, undefined, _isDefaultDs(obj) ? { fallback: true } : undefined);
-    };
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
+  if (!dsMatrixContainer) return;
+  const _t = (k) => (typeof t === 'function' ? t(k) : k);
+  const _isDefaultDs = (ds) => {
+    if (!ds || !ds.id) return false;
+    if (typeof DEFAULT_DS_IDS !== 'undefined' && DEFAULT_DS_IDS instanceof Set)
+      return DEFAULT_DS_IDS.has(ds.id);
+    return (
+      Array.isArray(DEFAULT_DAMAGE_SCENARIOS) &&
+      DEFAULT_DAMAGE_SCENARIOS.some((d) => d.id === ds.id)
+    );
+  };
+  const _loc = (obj, field) => {
+    if (typeof getLocalizedField !== 'function') return obj?.[field] || '';
+    // Standard-DS: plain fallback (kein „(DE)“), Custom: Paren wenn EN fehlt
+    return getLocalizedField(
+      obj,
+      field,
+      undefined,
+      _isDefaultDs(obj) ? { fallback: true } : undefined
+    );
+  };
 
-    if (!analysis.assets || analysis.assets.length === 0) {
-        dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needAssets')}</p>`;
-        return;
-    }
+  if (!analysis.assets || analysis.assets.length === 0) {
+    dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needAssets')}</p>`;
+    return;
+  }
 
-    let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
-    const defaultIds = new Set(displayDS.map(d => d.id));
-    
-    if (analysis.damageScenarios) {
-        analysis.damageScenarios.forEach(ds => {
-            if (!defaultIds.has(ds.id)) displayDS.push(ds);
-        });
-    }
-    displayDS.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' }));
+  let displayDS = JSON.parse(JSON.stringify(DEFAULT_DAMAGE_SCENARIOS));
+  const defaultIds = new Set(displayDS.map((d) => d.id));
 
-    if (displayDS.length === 0) {
-        dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needDs')}</p>`;
-        return;
-    }
-    
-    let html = `<h4>${_t('ds.matrixSub')}</h4>`;
-    html += `<p class="muted-hint" style="font-size: 0.9em;">${_t('ds.matrixHint')}</p>`;
-    html += '<div class="impact-matrix-scroll"><table class="impact-matrix-table">';
-    
-    html += '<thead><tr>';
-    html += `<th class="asset-col">${(typeof t === 'function' ? t('ds.matrix.assetCol') : 'Asset (ID: Name)')}</th>`;
-    
-    displayDS.forEach(ds => {
-        const eDsName = escapeHtml(_loc(ds, 'name'));
-        const eDsDesc = escapeHtml(_loc(ds, 'description'));
-        const eDsId = escapeHtml(ds.id);
-        const eDsShort = escapeHtml(_loc(ds, 'short') || ds.short || '');
-        html += `<th class="ds-col" title="${eDsName}: ${eDsDesc}">
+  if (analysis.damageScenarios) {
+    analysis.damageScenarios.forEach((ds) => {
+      if (!defaultIds.has(ds.id)) displayDS.push(ds);
+    });
+  }
+  displayDS.sort((a, b) =>
+    a.id.localeCompare(b.id, undefined, { numeric: true, sensitivity: 'base' })
+  );
+
+  if (displayDS.length === 0) {
+    dsMatrixContainer.innerHTML = `<h4>${_t('ds.matrixTitle')}</h4><p class="muted-hint" style="text-align: center; padding: 20px;">${_t('ds.needDs')}</p>`;
+    return;
+  }
+
+  let html = `<h4>${_t('ds.matrixSub')}</h4>`;
+  html += `<p class="muted-hint" style="font-size: 0.9em;">${_t('ds.matrixHint')}</p>`;
+  html += '<div class="impact-matrix-scroll"><table class="impact-matrix-table">';
+
+  html += '<thead><tr>';
+  html += `<th class="asset-col">${typeof t === 'function' ? t('ds.matrix.assetCol') : 'Asset (ID: Name)'}</th>`;
+
+  displayDS.forEach((ds) => {
+    const eDsName = escapeHtml(_loc(ds, 'name'));
+    const eDsDesc = escapeHtml(_loc(ds, 'description'));
+    const eDsId = escapeHtml(ds.id);
+    const eDsShort = escapeHtml(_loc(ds, 'short') || ds.short || '');
+    html += `<th class="ds-col" title="${eDsName}: ${eDsDesc}">
             <div class="vertical-text">${eDsId} (${eDsShort})</div>
         </th>`;
-    });
-    
-    html += '</tr></thead>';
-    html += '<tbody>';
-    
-    if (!analysis.impactMatrix) analysis.impactMatrix = {};
+  });
 
-    analysis.assets.forEach(asset => {
-        if (!analysis.impactMatrix[asset.id]) {
-            analysis.impactMatrix[asset.id] = {};
-        }
+  html += '</tr></thead>';
+  html += '<tbody>';
 
-        const eAssetId = escapeHtml(asset.id);
-        const eAssetName = (typeof localizeParenHtml === 'function')
-            ? localizeParenHtml(_loc(asset, 'name'))
-            : escapeHtml(_loc(asset, 'name'));
+  if (!analysis.impactMatrix) analysis.impactMatrix = {};
 
-        html += '<tr>';
-        html += `<td class="asset-col"><strong>${eAssetId}: ${eAssetName}</strong></td>`;
-        
-        displayDS.forEach(ds => {
-            const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
-            const colorClass = getImpactColorClass(currentScore);
-            const hasComment = analysis.impactComments
-                && analysis.impactComments[asset.id]
-                && analysis.impactComments[asset.id][ds.id];
-            const commentIconClass = hasComment ? 'impact-comment-btn has-comment' : 'impact-comment-btn';
-            const commentTooltip = hasComment
-                ? (typeof t === 'function' ? t('impact.comment.edit') : 'Kommentar bearbeiten')
-                : (typeof t === 'function' ? t('impact.comment.add') : 'Kommentar hinzufügen');
-            
-            html += '<td class="score-cell">';
-            html += '<div class="impact-cell-wrap">';
-            // Build <option> tags dynamically from config
-            const optionsHtml = VALID_IMPACT_VALUES.map(v => {
-                const lbl = IMPACT_LABELS[v] || v;
-                const display = (v === lbl) ? v : `${v} (${lbl})`;
-                const sel = (currentScore === v) ? ' selected' : '';
-                return `<option value="${escapeHtml(v)}"${sel}>${escapeHtml(display)}</option>`;
-            }).join('\n                ');
-            html += `<select 
+  analysis.assets.forEach((asset) => {
+    if (!analysis.impactMatrix[asset.id]) {
+      analysis.impactMatrix[asset.id] = {};
+    }
+
+    const eAssetId = escapeHtml(asset.id);
+    const eAssetName =
+      typeof localizeParenHtml === 'function'
+        ? localizeParenHtml(_loc(asset, 'name'))
+        : escapeHtml(_loc(asset, 'name'));
+
+    html += '<tr>';
+    html += `<td class="asset-col"><strong>${eAssetId}: ${eAssetName}</strong></td>`;
+
+    displayDS.forEach((ds) => {
+      const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
+      const colorClass = getImpactColorClass(currentScore);
+      const hasComment =
+        analysis.impactComments &&
+        analysis.impactComments[asset.id] &&
+        analysis.impactComments[asset.id][ds.id];
+      const commentIconClass = hasComment ? 'impact-comment-btn has-comment' : 'impact-comment-btn';
+      const commentTooltip = hasComment
+        ? typeof t === 'function'
+          ? t('impact.comment.edit')
+          : 'Kommentar bearbeiten'
+        : typeof t === 'function'
+          ? t('impact.comment.add')
+          : 'Kommentar hinzufügen';
+
+      html += '<td class="score-cell">';
+      html += '<div class="impact-cell-wrap">';
+      // Build <option> tags dynamically from config
+      const optionsHtml = VALID_IMPACT_VALUES.map((v) => {
+        const lbl = IMPACT_LABELS[v] || v;
+        const display = v === lbl ? v : `${v} (${lbl})`;
+        const sel = currentScore === v ? ' selected' : '';
+        return `<option value="${escapeHtml(v)}"${sel}>${escapeHtml(display)}</option>`;
+      }).join('\n                ');
+      html += `<select 
                 data-asset-id="${eAssetId}" 
                 data-ds-id="${escapeHtml(ds.id)}" 
                 onchange="updateImpactScore('${eAssetId}', '${escapeHtml(ds.id)}', this.value, this)"
                 class="impact-select ${colorClass}">
                 ${optionsHtml}
             </select>`;
-            html += `<button type="button" class="${commentIconClass}" title="${commentTooltip}" onclick="openImpactComment('${eAssetId}', '${escapeHtml(ds.id)}')"><i class="fas fa-sticky-note"></i></button>`;
-            html += '</div>';
-            html += '</td>';
-        });
-        html += '</tr>';
+      html += `<button type="button" class="${commentIconClass}" title="${commentTooltip}" onclick="openImpactComment('${eAssetId}', '${escapeHtml(ds.id)}')"><i class="fas fa-sticky-note"></i></button>`;
+      html += '</div>';
+      html += '</td>';
     });
-    
-    html += '</tbody></table></div>';
-    dsMatrixContainer.innerHTML = html;
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  dsMatrixContainer.innerHTML = html;
 }
 
-window.openImpactComment = function(assetId, dsId) {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+window.openImpactComment = function (assetId, dsId) {
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    const modal = document.getElementById('impactCommentModal');
-    const titleEl = document.getElementById('impactCommentTitle');
-    const textEl = document.getElementById('impactCommentText');
-    const assetField = document.getElementById('impactCommentAssetId');
-    const dsField = document.getElementById('impactCommentDsId');
-    if (!modal || !textEl) return;
+  const modal = document.getElementById('impactCommentModal');
+  const titleEl = document.getElementById('impactCommentTitle');
+  const textEl = document.getElementById('impactCommentText');
+  const assetField = document.getElementById('impactCommentAssetId');
+  const dsField = document.getElementById('impactCommentDsId');
+  if (!modal || !textEl) return;
 
-    const existing = (analysis.impactComments && analysis.impactComments[assetId])
-        ? (analysis.impactComments[assetId][dsId] || '')
-        : '';
+  const existing =
+    analysis.impactComments && analysis.impactComments[assetId]
+      ? analysis.impactComments[assetId][dsId] || ''
+      : '';
 
-    if (titleEl) {
-        titleEl.textContent = (typeof tf === 'function')
-            ? tf('impact.comment.title', { assetId, dsId })
-            : `Kommentar – ${assetId} / ${dsId}`;
-    }
-    textEl.value = existing;
-    if (assetField) assetField.value = assetId;
-    if (dsField) dsField.value = dsId;
+  if (titleEl) {
+    titleEl.textContent =
+      typeof tf === 'function'
+        ? tf('impact.comment.title', { assetId, dsId })
+        : `Kommentar – ${assetId} / ${dsId}`;
+  }
+  textEl.value = existing;
+  if (assetField) assetField.value = assetId;
+  if (dsField) dsField.value = dsId;
 
-    modal.style.display = 'block';
-    textEl.focus();
+  modal.style.display = 'block';
+  textEl.focus();
 };
 
-window.saveImpactComment = function() {
-    const analysis = getActiveAnalysis();
-    if (!analysis) return;
+window.saveImpactComment = function () {
+  const analysis = getActiveAnalysis();
+  if (!analysis) return;
 
-    const modal = document.getElementById('impactCommentModal');
-    const textEl = document.getElementById('impactCommentText');
-    const assetId = document.getElementById('impactCommentAssetId')?.value;
-    const dsId = document.getElementById('impactCommentDsId')?.value;
-    if (!assetId || !dsId) return;
+  const modal = document.getElementById('impactCommentModal');
+  const textEl = document.getElementById('impactCommentText');
+  const assetId = document.getElementById('impactCommentAssetId')?.value;
+  const dsId = document.getElementById('impactCommentDsId')?.value;
+  if (!assetId || !dsId) return;
 
-    if (!analysis.impactComments) analysis.impactComments = {};
-    if (!analysis.impactComments[assetId]) analysis.impactComments[assetId] = {};
+  if (!analysis.impactComments) analysis.impactComments = {};
+  if (!analysis.impactComments[assetId]) analysis.impactComments[assetId] = {};
 
-    const comment = (textEl ? textEl.value : '').trim();
-    if (comment) {
-        analysis.impactComments[assetId][dsId] = comment;
-    } else {
-        delete analysis.impactComments[assetId][dsId];
-        if (Object.keys(analysis.impactComments[assetId]).length === 0) {
-            delete analysis.impactComments[assetId];
-        }
+  const comment = (textEl ? textEl.value : '').trim();
+  if (comment) {
+    analysis.impactComments[assetId][dsId] = comment;
+  } else {
+    delete analysis.impactComments[assetId][dsId];
+    if (Object.keys(analysis.impactComments[assetId]).length === 0) {
+      delete analysis.impactComments[assetId];
     }
+  }
 
-    saveAnalyses();
-    if (modal) modal.style.display = 'none';
-    renderImpactMatrix();
-    showToast((typeof t === 'function' ? t('impact.comment.saved') : 'Kommentar gespeichert.'), 'success');
+  saveAnalyses();
+  if (modal) modal.style.display = 'none';
+  renderImpactMatrix();
+  showToast(
+    typeof t === 'function' ? t('impact.comment.saved') : 'Kommentar gespeichert.',
+    'success'
+  );
 };

@@ -30,7 +30,7 @@ Entwicklung starten möchten.
 | **Product Owner (PO)** | @Bheowulf          | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen |
 | **Dev-Agent**          | GitHub Copilot CLI | Implementierung, TDD, Commits, PRs                         |
 | **Review-Agent**       | Copilot Sub-Agent  | Code-Review, Finding-Issues erstellen                      |
-| **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prüfen (P-01â€“P-15)                     |
+| **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prüfen (P-01â€“P-15)                   |
 
 ### Kommunikationsregeln
 
@@ -45,6 +45,7 @@ Entwicklung starten möchten.
 ### Merge-Berechtigung des Dev-Agents
 
 Der Dev-Agent darf **eigenstaendig mergen** wenn:
+
 1. Review abgeschlossen (keine offenen Critical/High Findings)
 2. Prozess-Guard: PROCESS OK
 3. Alle Story-Tests gruen
@@ -54,6 +55,7 @@ Nach dem Merge: Status -> **Freigabe** setzen und auf PO-Abnahme warten.
 ### Epic-Batch-Testing (Regel P-17)
 
 Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
+
 1. Dev-Agent zieht `development` lokal (git pull)
 2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Freigabe - bitte testen"
 3. PO testet den aktuellen Stand auf dem development-Branch
@@ -112,13 +114,13 @@ Akzeptanzkriterien.
 
 ### Story Points (Fibonacci)
 
-| SP  | Bedeutung                  |
-| --- | -------------------------- |
-| 1   | Trivial (< 30 min)         |
-| 2   | Klein (< 2h)               |
-| 3   | Mittel (halber Tag)        |
-| 5   | GroÃŸ (1 Tag)               |
-| 8   | Sehr groÃŸ (2 Tage)         |
+| SP  | Bedeutung                    |
+| --- | ---------------------------- |
+| 1   | Trivial (< 30 min)           |
+| 2   | Klein (< 2h)                 |
+| 3   | Mittel (halber Tag)          |
+| 5   | GroÃŸ (1 Tag)                |
+| 8   | Sehr groÃŸ (2 Tage)          |
 | 13  | XL (> 2 Tage â†’ aufteilen!) |
 
 ### TARA-ID vergeben
@@ -139,14 +141,14 @@ print(f'Nächste ID: TARA-{max(ids)+1:04d}')
 
 Eine Story darf erst bearbeitet werden, wenn alle folgenden Punkte erfüllt sind:
 
-| Kriterium | Prüfung |
-| --------- | ------- |
-| TARA-ID vergeben | TARA-XXXX im Titel |
-| Akzeptanzkriterien vorhanden | Mindestens 2 Kriterien im Issue-Body |
-| Story Points geschätzt | Label sp:N gesetzt |
+| Kriterium                     | Prüfung                                       |
+| ----------------------------- | --------------------------------------------- |
+| TARA-ID vergeben              | TARA-XXXX im Titel                            |
+| Akzeptanzkriterien vorhanden  | Mindestens 2 Kriterien im Issue-Body          |
+| Story Points geschätzt        | Label sp:N gesetzt                            |
 | Kein offenes Blocking-Finding | Kein Issue mit Label blocked + dieser TARA-ID |
-| Epic aktiv (In Progress) | Übergeordnetes Epic nicht Done/geschlossen |
-| PO-Freigabe | Explizites OK per Chat |
+| Epic aktiv (In Progress)      | Übergeordnetes Epic nicht Done/geschlossen    |
+| PO-Freigabe                   | Explizites OK per Chat                        |
 
 ### Epic-Completion-Regel
 
@@ -155,8 +157,6 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 1. Dev-Agent prüft nach jeder Story-Fertigstellung, ob alle Child-Stories Done sind.
 2. Wenn ja: Epic-Status auf **Freigabe** setzen, PO bestätigt -> **Done**.
 3. Ein Epic geht **nicht** direkt auf Done (P-15 gilt auch für Epics).
-
-
 
 ---
 
@@ -244,13 +244,13 @@ Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â�
           (Dev-Agent)    (Dev-Agent)   (Dev-Agent)   (PO)
 ```
 
-| Status          | Bedeutung                    | Wer setzt                     |
-| --------------- | ---------------------------- | ----------------------------- |
-| **Todo**        | Geplant, noch nicht begonnen | Dev-Agent nach PO-Freigabe    |
-| **In Progress** | Aktiv in Bearbeitung         | Dev-Agent (vor Arbeitsbeginn) |
-| **inReview**    | Review läuft, PR offen       | Dev-Agent                     |
-| **Freigabe**    | Gemergt, wartet auf PO-OK    | Dev-Agent                     |
-| **Done**        | Abgeschlossen (PO-OK im Issue) âœ…             | **Product Owner**             |
+| Status          | Bedeutung                          | Wer setzt                     |
+| --------------- | ---------------------------------- | ----------------------------- |
+| **Todo**        | Geplant, noch nicht begonnen       | Dev-Agent nach PO-Freigabe    |
+| **In Progress** | Aktiv in Bearbeitung               | Dev-Agent (vor Arbeitsbeginn) |
+| **inReview**    | Review läuft, PR offen             | Dev-Agent                     |
+| **Freigabe**    | Gemergt, wartet auf PO-OK          | Dev-Agent                     |
+| **Done**        | Abgeschlossen (PO-OK im Issue) âœ… | **Product Owner**             |
 
 ---
 
@@ -299,25 +299,25 @@ Der **Prozess-Guard** prueft **vor jedem Statuswechsel** (P-18) und am Ende jede
 die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `review-finding`
 gemeldet und das Item auf **Blocking** gesetzt.
 
-| Regel    | Beschreibung                                      | Wann geprüft  |
-| -------- | ------------------------------------------------- | ------------- |
-| **P-01** | TARA-ID in jeder Chat-Antwort                     | Laufend       |
-| **P-02** | Status → In Progress VOR Arbeitsbeginn            | Story-Start   |
-| **P-03** | Tests VOR Implementierung geschrieben             | Red-Phase     |
-| **P-04** | Tests haben initial FEHLGESCHLAGEN                | Red-Phase     |
-| **P-05** | Story-Tests vor Commit grün                       | Vor Commit    |
-| **P-06** | Alle Story-Tests grün vor PR                      | Vor PR        |
-| **P-07** | Branch: `feature/TARA-XXXX-*`                     | Branch-Anlage |
-| **P-08** | Commits referenzieren TARA-ID                     | Jeder Commit  |
-| **P-09** | Status → inReview vor PR-Öffnung                  | Vor PR        |
-| **P-10** | Review-Agent aufgerufen, kein Critical/High offen | Vor PR        |
-| **P-11** | Nach Merge → Freigabe (nicht direkt Done)         | Nach Merge    |
-| **P-12** | Prettier grün vor Tests                           | Vor Commit    |
-| **P-13** | ESLint grün vor Tests                             | Vor Commit    |
-| **P-14** | TARA-IDs unveränderlich (atomar)                  | Jederzeit     |
-| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml) | Nach Merge |
-| **P-16** | Feature-Branch nach Merge löschen                 | Nach Merge    |
-| **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren | Nach letztem Merge |
+| Regel    | Beschreibung                                                                                                                                       | Wann geprüft             |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **P-01** | TARA-ID in jeder Chat-Antwort                                                                                                                      | Laufend                  |
+| **P-02** | Status → In Progress VOR Arbeitsbeginn                                                                                                             | Story-Start              |
+| **P-03** | Tests VOR Implementierung geschrieben                                                                                                              | Red-Phase                |
+| **P-04** | Tests haben initial FEHLGESCHLAGEN                                                                                                                 | Red-Phase                |
+| **P-05** | Story-Tests vor Commit grün                                                                                                                        | Vor Commit               |
+| **P-06** | Alle Story-Tests grün vor PR                                                                                                                       | Vor PR                   |
+| **P-07** | Branch: `feature/TARA-XXXX-*`                                                                                                                      | Branch-Anlage            |
+| **P-08** | Commits referenzieren TARA-ID                                                                                                                      | Jeder Commit             |
+| **P-09** | Status → inReview vor PR-Öffnung                                                                                                                   | Vor PR                   |
+| **P-10** | Review-Agent aufgerufen, kein Critical/High offen                                                                                                  | Vor PR                   |
+| **P-11** | Nach Merge → Freigabe (nicht direkt Done)                                                                                                          | Nach Merge               |
+| **P-12** | Prettier grün vor Tests                                                                                                                            | Vor Commit               |
+| **P-13** | ESLint grün vor Tests                                                                                                                              | Vor Commit               |
+| **P-14** | TARA-IDs unveränderlich (atomar)                                                                                                                   | Jederzeit                |
+| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml)                                                                           | Nach Merge               |
+| **P-16** | Feature-Branch nach Merge löschen                                                                                                                  | Nach Merge               |
+| **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                   | Nach letztem Merge       |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
@@ -368,18 +368,17 @@ Wenn nach einem Merge auf `development` ein **kritischer Bug** gefunden wird:
 > ⚠️ Hotfixes sind Ausnahmen. Wenn möglich, den normalen Prozess verwenden.
 > Ein Hotfix-Finding (mit Begründung) wird vom Prozess-Guard im Issue dokumentiert.
 
-
 ---
 
 ## 9. Dokumente auf einen Blick
 
-| Dokument                  | Pfad                               | Für wen            | Inhalt                                         |
-| ------------------------- | ---------------------------------- | ------------------ | ---------------------------------------------- |
-| **Dieser Prozess**        | `docs/ENTWICKLUNGSPROZESS.md`      | PO + Agent         | Gesamtüberblick                                |
+| Dokument                  | Pfad                                           | Für wen            | Inhalt                                         |
+| ------------------------- | ---------------------------------------------- | ------------------ | ---------------------------------------------- |
+| **Dieser Prozess**        | `docs/ENTWICKLUNGSPROZESS.md`                  | PO + Agent         | Gesamtüberblick                                |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md`     | Neuer Agent        | Setup, Smoke-Test, Kurzreferenz                |
-| **TDD-Workflow (Detail)** | `CONTRIBUTING.md`                  | Dev-Agent          | Branch-Strategie, alle Schritte, Commit-Format |
-| **Prozess-Guard Regeln**  | `agents/process_guard/PROCESS_GUARD_AGENT.md`   | Dev-Agent + Guard  | P-01â€“P-15, Finding-Format                      |
-| **Review-Agent**          | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Dev-Agent + Review | R-01–R-30, Finding-Format                      |
-| **Board-IDs**             | `docs/GITHUB_BOARD.md`             | Dev-Agent          | GraphQL-IDs, Statusübergänge, Beispiele        |
-| **Test-Framework**        | `tests/README.md`                  | Dev-Agent          | --noconftest, Marker, venv-Setup               |
-| **PR-Checkliste**         | `.github/pull_request_template.md` | Dev-Agent          | TDD, Prettier, ESLint, Review, Freigabe        |
+| **TDD-Workflow (Detail)** | `CONTRIBUTING.md`                              | Dev-Agent          | Branch-Strategie, alle Schritte, Commit-Format |
+| **Prozess-Guard Regeln**  | `agents/process_guard/PROCESS_GUARD_AGENT.md`  | Dev-Agent + Guard  | P-01â€“P-15, Finding-Format                    |
+| **Review-Agent**          | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | Dev-Agent + Review | R-01–R-30, Finding-Format                      |
+| **Board-IDs**             | `docs/GITHUB_BOARD.md`                         | Dev-Agent          | GraphQL-IDs, Statusübergänge, Beispiele        |
+| **Test-Framework**        | `tests/README.md`                              | Dev-Agent          | --noconftest, Marker, venv-Setup               |
+| **PR-Checkliste**         | `.github/pull_request_template.md`             | Dev-Agent          | TDD, Prettier, ESLint, Review, Freigabe        |

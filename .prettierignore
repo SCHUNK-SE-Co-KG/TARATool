@@ -3,6 +3,11 @@ node_modules/
 tests/.venv/
 tests/*.py
 
+# GitHub Actions YAML: enthält komplexe Multi-Line-Bash-Strings und
+# GitHub-Expression-Syntax (${{ }}) die Prettiers YAML-Parser nicht korrekt
+# parsen kann. CI/CD-Konfiguration wird nicht von Prettier formatiert.
+.github/
+
 # index.html: Script-Ladereihenfolge ist architekturkritisch,
 # Prettier-HTML-Parser kann die Datei nicht korrekt parsen
 index.html

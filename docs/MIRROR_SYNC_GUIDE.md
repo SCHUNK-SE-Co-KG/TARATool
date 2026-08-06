@@ -1,4 +1,5 @@
 # GitHub Project Board Mirror Sync
+
 ## Bheowulf/Project#1 ⟷ SCHUNK-SE-Co-KG/Project#4
 
 ---
@@ -6,6 +7,7 @@
 ## Overview
 
 The TARATool project maintains two GitHub repositories:
+
 - **Bheowulf/TARATool** — Primary repository and source of truth
 - **SCHUNK-SE-Co-KG/TARATool** — Mirror/secondary repository
 
@@ -15,11 +17,11 @@ Both repositories should have synchronized project board content to maintain con
 
 ## Project IDs
 
-| Component | Bheowulf | SCHUNK-SE-Co-KG | Notes |
-|-----------|----------|-----------------|-------|
-| **Repository** | Bheowulf/TARATool | SCHUNK-SE-Co-KG/TARATool | Both contain same code |
-| **Project** | Project #1 | Project #4 | Different project numbers |
-| **Project ID** | `PVT_kwHOBLN4284BfLtb` | (See query below) | Different base IDs |
+| Component      | Bheowulf               | SCHUNK-SE-Co-KG          | Notes                     |
+| -------------- | ---------------------- | ------------------------ | ------------------------- |
+| **Repository** | Bheowulf/TARATool      | SCHUNK-SE-Co-KG/TARATool | Both contain same code    |
+| **Project**    | Project #1             | Project #4               | Different project numbers |
+| **Project ID** | `PVT_kwHOBLN4284BfLtb` | (See query below)        | Different base IDs        |
 
 ### Querying Project IDs
 
@@ -38,12 +40,14 @@ gh api repos/SCHUNK-SE-Co-KG/TARATool/projects --jq '.[] | .id, .name'
 ### Content Scope
 
 **Items that sync (identical in both boards):**
+
 - All TARA-XXXX work items (epics, stories, bugs)
 - Status fields and progress
 - Story points
 - Labels
 
 **Items that DON'T sync:**
+
 - `[PROCESS-GUARD]` violation markers (Bheowulf only)
 - CVE Monthly Report items (Bheowulf only)
 - SCHUNK-specific administrative tasks (if any)
@@ -51,10 +55,12 @@ gh api repos/SCHUNK-SE-Co-KG/TARATool/projects --jq '.[] | .id, .name'
 ### Mapping Strategy
 
 Items are matched by **TARA-ID** extracted from titles:
+
 - Bheowulf: `[TARA-0042] STORY: Example`
-- SCHUNK:   `[MIRROR] [TARA-0042] STORY: Example`
+- SCHUNK: `[MIRROR] [TARA-0042] STORY: Example`
 
 The `[MIRROR]` prefix is:
+
 - ✅ Added automatically on SCHUNK items for clarity
 - ⚠️ Not part of the sync matching logic
 - 📋 Can be removed if sync is automated
@@ -68,17 +74,20 @@ The `[MIRROR]` prefix is:
 File: `.github/workflows/mirror-sync.yml`
 
 **Runs:**
+
 - Daily at 02:00 UTC (03:00 CET)
 - On manual trigger (workflow_dispatch)
 - On certain issue/PR events (optional)
 
 **What it does:**
+
 1. Fetches items from both project boards
 2. Compares TARA-ID mappings
 3. Reports differences
 4. Creates summary in Actions logs
 
 **What it doesn't do:**
+
 - ❌ Auto-modify project boards (requires GraphQL mutations)
 - ❌ Auto-close issues (requires explicit code)
 
@@ -96,6 +105,7 @@ python scripts/sync_project_boards.py --dry-run
 ```
 
 **Output:**
+
 - Lists items to ADD to SCHUNK
 - Lists items to REMOVE from SCHUNK
 - Shows non-TARA items (CVE reports, etc)
@@ -126,7 +136,7 @@ ISSUE_NODE_ID=$(gh issue view 42 --repo Bheowulf/TARATool --json id --jq .id)
 gh api graphql -f query='
   mutation {
     addProjectV2ItemById(input: {
-      projectId: "PVT_..." 
+      projectId: "PVT_..."
       contentId: "'$ISSUE_NODE_ID'"
     }) {
       item { id }
@@ -167,6 +177,7 @@ gh api repos/SCHUNK-SE-Co-KG/TARATool/projects \
 Last checked: **2026-08-05 10:05 UTC+2**
 
 **Discrepancies Found:**
+
 - ❌ **18 items missing in SCHUNK** (TARA-0001 to TARA-0025)
 - ❌ **24 items extra in SCHUNK** (TARA-0032 to TARA-0055)
 - ⚠️ **[MIRROR] prefix inconsistency** (not all have it)
@@ -201,6 +212,7 @@ Option C: Recent items only (TARA-XXXX from cutoff date forward)
 ```
 
 **Recommendation:** Option B
+
 - SCHUNK should contain all work items (TARA-IDs)
 - Process violations are Bheowulf internal process tracking
 - CVE reports are advisory, not development items
@@ -228,6 +240,7 @@ python scripts/sync_project_boards.py
 ```
 
 Expected output:
+
 ```
 [OK] BOARDS ARE IN SYNC!
 ```
@@ -241,12 +254,14 @@ Expected output:
 **Issue:** `UnicodeDecodeError` on Windows when running sync script
 
 **Solution:**
+
 ```bash
 set PYTHONIOENCODING=utf-8
 python scripts/sync_project_boards.py
 ```
 
 Or use wrapper batch file:
+
 ```bash
 scripts/sync_project_boards.bat
 ```
@@ -256,6 +271,7 @@ scripts/sync_project_boards.bat
 **Issue:** `gh` CLI is not installed or not in PATH
 
 **Solution:**
+
 ```bash
 # Install GitHub CLI
 winget install GitHub.cli  # Windows
@@ -268,6 +284,7 @@ sudo apt install gh        # Linux
 **Issue:** Cannot access SCHUNK project boards
 
 **Solution:**
+
 1. Ensure GitHub token has `projects:write` scope
 2. Add token: `gh auth login`
 3. Verify: `gh auth status`
@@ -277,6 +294,7 @@ sudo apt install gh        # Linux
 **Issue:** Script says items are missing but GitHub UI shows them
 
 **Solution:**
+
 - Force refresh: `F5` in browser
 - Clear gh CLI cache: `rm -rf ~/.cache/gh`
 - Re-run script: `python scripts/sync_project_boards.py`
@@ -286,17 +304,20 @@ sudo apt install gh        # Linux
 ## Automation Roadmap
 
 ### Current (Manual + Monitoring)
+
 - ✅ Script analyzes differences
 - ✅ GitHub Workflow reports status daily
 - ⚠️ Manual sync required
 
 ### Planned (Full Automation)
+
 - 📋 GraphQL mutation for auto-add items
 - 📋 GraphQL mutation for auto-remove items
 - 📋 Scheduled sync running daily
 - 📋 Auto-comment on issues when sync'd to SCHUNK
 
 ### Not Planned (By Design)
+
 - 🚫 Auto-close issues
 - 🚫 Auto-update status without manual review
 - 🚫 Mirror deletions back to Bheowulf

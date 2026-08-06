@@ -36,18 +36,18 @@ Alternativ im Tool: Reiter Übersicht → **Bewertungsconfig laden** (JSON ausw�
 
 ## Hinweise
 
-| Thema | Linux |
-|--------|--------|
-| Analyse Import/Export | JSON, OS-unabhängig |
-| PDF-Report | Browser-seitig (jsPDF); Graphviz lokal per WASM |
-| CDN | Font Awesome, jsPDF, `@hpcc-js/wasm` – Internetzugang oder Proxy |
-| Tests | `tests/run_tests.bat` ist Windows-only; pytest manuell mit Python/venv |
+| Thema                 | Linux                                                                  |
+| --------------------- | ---------------------------------------------------------------------- |
+| Analyse Import/Export | JSON, OS-unabhängig                                                    |
+| PDF-Report            | Browser-seitig (jsPDF); Graphviz lokal per WASM                        |
+| CDN                   | Font Awesome, jsPDF, `@hpcc-js/wasm` – Internetzugang oder Proxy       |
+| Tests                 | `tests/run_tests.bat` ist Windows-only; pytest manuell mit Python/venv |
 
 ## Schnellcheck
 
-1. `index.html` öffnen  
-2. Analyse anlegen oder JSON importieren  
-3. Sprache DE/EN und Darkmode prüfen  
-4. Optional: PDF-Report erzeugen  
+1. `index.html` öffnen
+2. Analyse anlegen oder JSON importieren
+3. Sprache DE/EN und Darkmode prüfen
+4. Optional: PDF-Report erzeugen
 
 Bei Problemen mit Baum-Visualisierung im PDF: Hard-Reload, CDN-Zugriff prüfen, Browser-Konsole auf Graphviz/WASM-Fehler.

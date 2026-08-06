@@ -3,8 +3,12 @@
 TDD Red-Phase: Diese Tests müssen FEHLSCHLAGEN bevor ESLint konfiguriert ist.
 """
 import os
+import sys
 import subprocess
 import pytest
+
+# On Windows, subprocess cannot resolve .cmd/.bat without shell=True
+_NPX = "npx.cmd" if sys.platform == "win32" else "npx"
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -57,10 +61,11 @@ def test_package_json_lint_script():
 def test_eslint_passes_on_js_folder():
     """eslint js/ muss mit Exit-Code 0 durchlaufen (keine Errors)."""
     result = subprocess.run(
-        ["npx", "eslint", "js/"],
+        [_NPX, "eslint", "js/"],
         cwd=REPO_ROOT,
         capture_output=True,
         text=True,
+        shell=(sys.platform == "win32"),
     )
     assert result.returncode == 0, (
         f"ESLint-Fehler in js/:\n{result.stdout}\n{result.stderr}"

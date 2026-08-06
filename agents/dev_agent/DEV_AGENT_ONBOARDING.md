@@ -115,13 +115,13 @@ Wenn dieser Schritt erfolgreich ist, ist die Umgebung korrekt eingerichtet.
 
 Bevor mit einer Story begonnen wird, diese Dokumente kennen:
 
-| Dokument                           | Inhalt                                                      |
-| ---------------------------------- | ----------------------------------------------------------- |
-| `CONTRIBUTING.md`                  | Vollständiger TDD-Workflow, Branch-Strategie, Commit-Format |
-| `agents/process_guard/PROCESS_GUARD_AGENT.md`   | Regeln P-01â€“P-15, Compliance-Bericht-Format                 |
-| `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Review-Agent-Checkliste R-01â€“R-12                           |
-| `docs/GITHUB_BOARD.md`             | Board-IDs, Status-IDs, GraphQL-Beispiele                    |
-| `.github/pull_request_template.md` | PR-Checkliste (TDD, Prettier, ESLint, Review, Freigabe)     |
+| Dokument                                       | Inhalt                                                      |
+| ---------------------------------------------- | ----------------------------------------------------------- |
+| `CONTRIBUTING.md`                              | Vollständiger TDD-Workflow, Branch-Strategie, Commit-Format |
+| `agents/process_guard/PROCESS_GUARD_AGENT.md`  | Regeln P-01â€“P-15, Compliance-Bericht-Format               |
+| `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | Review-Agent-Checkliste R-01â€“R-12                         |
+| `docs/GITHUB_BOARD.md`                         | Board-IDs, Status-IDs, GraphQL-Beispiele                    |
+| `.github/pull_request_template.md`             | PR-Checkliste (TDD, Prettier, ESLint, Review, Freigabe)     |
 
 ---
 
@@ -179,16 +179,16 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 | Regel | Kurzform                                          |
 | ----- | ------------------------------------------------- |
 | P-01  | TARA-ID in jeder Chat-Antwort nennen              |
-| P-02  | Status â†’ In Progress VOR Arbeitsbeginn            |
+| P-02  | Status â†’ In Progress VOR Arbeitsbeginn          |
 | P-03  | Tests VOR Implementierung schreiben               |
 | P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)  |
 | P-05  | Story-Tests vor Commit grün                       |
 | P-06  | Vollständige Suite vor PR grün                    |
 | P-07  | Branch: `feature/TARA-XXXX-*`                     |
 | P-08  | Commits referenzieren TARA-ID                     |
-| P-09  | Status â†’ inReview vor PR                          |
+| P-09  | Status â†’ inReview vor PR                        |
 | P-10  | Review-Agent aufgerufen, kein Critical/High offen |
-| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)         |
+| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)       |
 | P-12  | Prettier grün vor Tests                           |
 | P-13  | ESLint grün vor Tests                             |
 | P-14  | TARA-IDs sind atomar und unveränderlich           |

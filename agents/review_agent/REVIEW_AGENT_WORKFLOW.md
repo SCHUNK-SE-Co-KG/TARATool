@@ -47,6 +47,7 @@ Scanner-Module:    [console, network, dom, storage, performance, accessibility,
 ```
 
 Der Scanner wird aufgerufen mit:
+
 ```bash
 python agents/review_agent/runtime_scanner.py \
   --url <APP_URL> \
@@ -58,38 +59,38 @@ python agents/review_agent/runtime_scanner.py \
 
 ## Prüfkatalog
 
-| #    | Bereich     | Prüfung                                                  |
-| ---- | ----------- | -------------------------------------------------------- |
-| R-01 | Korrektheit | Alle Akzeptanzkriterien der Story erfüllt                |
-| R-02 | Korrektheit | Keine offensichtlichen Logikfehler, Edge Cases behandelt |
-| R-03 | Architektur | IIFE-Pattern korrekt (nur Dateien mit internem State)    |
-| R-04 | Architektur | `_`-Prefix für intern konzipierte Funktionen             |
-| R-05 | Architektur | Nur `document.getElementById()`, kein `window.elementId` |
-| R-06 | Architektur | Script-Ladereihenfolge in `index.html` eingehalten       |
-| R-07 | Sicherheit  | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash             |
-| R-08 | Sicherheit  | Kein `eval()`, keine unsichere DOM-Manipulation          |
-| R-09 | Tests       | Alle bestehenden Tests weiterhin grün                    |
-| R-10 | Tests       | Neue Funktionalität durch Story-Tests abgedeckt (TDD)    |
-| R-11 | Qualität    | Kein duplizierter Code (DRY)                             |
-| R-12 | Qualität    | Keine auskommentierten Code-Blöcke                       |
-| R-13 | Runtime     | Konsolen-Fehler und -Warnungen erfasst (TARA-0040)       |
-| R-14 | Runtime     | Fehlgeschlagene Netzwerkaufrufe erkannt (TARA-0041)      |
-| R-15 | Runtime     | DOM-Zustand und Event-Listener-Leaks geprüft (TARA-0042) |
-| R-16 | Runtime     | localStorage, sessionStorage, Cookies analysiert (TARA-0043) |
-| R-17 | Runtime     | Performance-Timing und Speicherentwicklung gemessen (TARA-0044) |
-| R-18 | Runtime     | Accessibility-Tree auf ARIA-Verletzungen geprüft (TARA-0045) |
-| R-19 | Runtime     | CSP-Verletzungen und unbehandelte Promise-Rejections erfasst (TARA-0046) |
-| R-20 | Runtime     | Service-Worker-Verhalten und Cross-Origin-Kommunikation überwacht (TARA-0047) |
-| R-21 | Runtime     | Browser-Berechtigungen inventarisiert (TARA-0048)        |
-| R-22 | Sicherheit  | DOM-XSS-Sinks erkannt â€“ innerHTML, document.write etc. (TARA-0050) |
-| R-23 | Sicherheit  | HTML-Injection in dynamisch gerenderte Inhalte geprüft (TARA-0051) |
-| R-24 | Sicherheit  | Ressourcen-Manipulation via script/link src geprüft (TARA-0051) |
-| R-25 | Sicherheit  | eval()/Function()-Aufrufe zur Laufzeit erkannt (TARA-0052) |
-| R-26 | Sicherheit  | CORS-Header auf Wildcard + Credentials geprüft (TARA-0053) |
-| R-27 | Sicherheit  | Clickjacking-Schutz (X-Frame-Options / CSP frame-ancestors) geprüft (TARA-0054) |
-| R-28 | Sicherheit  | Reverse-Tabnabbing â€“ target=_blank ohne noopener erkannt (TARA-0054) |
+| #    | Bereich     | Prüfung                                                                          |
+| ---- | ----------- | -------------------------------------------------------------------------------- |
+| R-01 | Korrektheit | Alle Akzeptanzkriterien der Story erfüllt                                        |
+| R-02 | Korrektheit | Keine offensichtlichen Logikfehler, Edge Cases behandelt                         |
+| R-03 | Architektur | IIFE-Pattern korrekt (nur Dateien mit internem State)                            |
+| R-04 | Architektur | `_`-Prefix für intern konzipierte Funktionen                                     |
+| R-05 | Architektur | Nur `document.getElementById()`, kein `window.elementId`                         |
+| R-06 | Architektur | Script-Ladereihenfolge in `index.html` eingehalten                               |
+| R-07 | Sicherheit  | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash                                     |
+| R-08 | Sicherheit  | Kein `eval()`, keine unsichere DOM-Manipulation                                  |
+| R-09 | Tests       | Alle bestehenden Tests weiterhin grün                                            |
+| R-10 | Tests       | Neue Funktionalität durch Story-Tests abgedeckt (TDD)                            |
+| R-11 | Qualität    | Kein duplizierter Code (DRY)                                                     |
+| R-12 | Qualität    | Keine auskommentierten Code-Blöcke                                               |
+| R-13 | Runtime     | Konsolen-Fehler und -Warnungen erfasst (TARA-0040)                               |
+| R-14 | Runtime     | Fehlgeschlagene Netzwerkaufrufe erkannt (TARA-0041)                              |
+| R-15 | Runtime     | DOM-Zustand und Event-Listener-Leaks geprüft (TARA-0042)                         |
+| R-16 | Runtime     | localStorage, sessionStorage, Cookies analysiert (TARA-0043)                     |
+| R-17 | Runtime     | Performance-Timing und Speicherentwicklung gemessen (TARA-0044)                  |
+| R-18 | Runtime     | Accessibility-Tree auf ARIA-Verletzungen geprüft (TARA-0045)                     |
+| R-19 | Runtime     | CSP-Verletzungen und unbehandelte Promise-Rejections erfasst (TARA-0046)         |
+| R-20 | Runtime     | Service-Worker-Verhalten und Cross-Origin-Kommunikation überwacht (TARA-0047)    |
+| R-21 | Runtime     | Browser-Berechtigungen inventarisiert (TARA-0048)                                |
+| R-22 | Sicherheit  | DOM-XSS-Sinks erkannt â€“ innerHTML, document.write etc. (TARA-0050)             |
+| R-23 | Sicherheit  | HTML-Injection in dynamisch gerenderte Inhalte geprüft (TARA-0051)               |
+| R-24 | Sicherheit  | Ressourcen-Manipulation via script/link src geprüft (TARA-0051)                  |
+| R-25 | Sicherheit  | eval()/Function()-Aufrufe zur Laufzeit erkannt (TARA-0052)                       |
+| R-26 | Sicherheit  | CORS-Header auf Wildcard + Credentials geprüft (TARA-0053)                       |
+| R-27 | Sicherheit  | Clickjacking-Schutz (X-Frame-Options / CSP frame-ancestors) geprüft (TARA-0054)  |
+| R-28 | Sicherheit  | Reverse-Tabnabbing â€“ target=_blank ohne noopener erkannt (TARA-0054)           |
 | R-29 | Sicherheit  | Storage-Deep-Scan: sensible Schlüssel in localStorage/sessionStorage (TARA-0055) |
-| R-30 | Sicherheit  | XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055) |
+| R-30 | Sicherheit  | XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055)                  |
 
 ---
 
@@ -129,26 +130,23 @@ python agents/review_agent/runtime_scanner.py \
 
 ## Merge-Freigabe
 
-| Ergebnis           | Vorgehen                                                           |
-| ------------------ | ------------------------------------------------------------------ |
-| Keine Findings     | PR auf Development, Item â†’ **Freigabe** (PO-OK abwarten â†’ Done)    |
+| Ergebnis           | Vorgehen                                                             |
+| ------------------ | -------------------------------------------------------------------- |
+| Keine Findings     | PR auf Development, Item â†’ **Freigabe** (PO-OK abwarten â†’ Done)  |
 | Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
 | Hoch/Kritisch      | Item zurück auf â€žIn Progress", Findings zuerst beheben             |
 
-
 ## Scope-Entscheidung: Welche R-Checks laufen wann?
 
-| Änderungen betreffen | Pflicht-Checks | Optionale Checks |
-| --------------------- | -------------- | ---------------- |
-| `js/`, `index.html` | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
-| `agents/`, `scripts/` | R-01–R-12 | R-22–R-30 entfallen (kein Browser-Code) |
-| `tests/` | R-09, R-10 | – |
-| `docs/`, `*.md` | R-01 | – |
+| Änderungen betreffen  | Pflicht-Checks        | Optionale Checks                           |
+| --------------------- | --------------------- | ------------------------------------------ |
+| `js/`, `index.html`   | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
+| `agents/`, `scripts/` | R-01–R-12             | R-22–R-30 entfallen (kein Browser-Code)    |
+| `tests/`              | R-09, R-10            | –                                          |
+| `docs/`, `*.md`       | R-01                  | –                                          |
 
 **Runtime-Checks (R-13–R-30) sind Pflicht** für alle Commits, die `index.html`, `js/` oder
 `agents/review_agent/` verändern. Sie erfordern eine lauffähige App-Instanz.
 
 Wenn keine App-URL übergeben wird, **entfallen R-13–R-30 ohne Fehler** — der Review-Agent
 vermerkt dies im Finding-Bericht als `[SKIP Runtime: kein App-URL übergeben]`.
-
-

@@ -11,36 +11,40 @@
 
 /** Shared DOT graph header: orthogonal splines for trunk + branch routing. */
 function _dotGraphHeader(opts = {}) {
-    const fontSize = opts.fontSize || 10;
-    const edgeSize = opts.edgeSize || 9;
-    let h = 'digraph {\n\n';
-    h += `    node [shape=record, fontname="Arial", fontsize=${fontSize}];\n`;
-    h += `    edge [fontname="Arial", fontsize=${edgeSize}];\n`;
-    h += '    rankdir=TB;\n';
-    h += '    overlap=false;\n';
-    h += '    splines=polyline;\n';
-    h += '    nodesep=1.0;\n';
-    h += '    ranksep=1.0;\n';
-    h += '    concentrate=false;\n';
-    h += '    ordering=out;\n\n';
-    return h;
+  const fontSize = opts.fontSize || 10;
+  const edgeSize = opts.edgeSize || 9;
+  let h = 'digraph {\n\n';
+  h += `    node [shape=record, fontname="Arial", fontsize=${fontSize}];\n`;
+  h += `    edge [fontname="Arial", fontsize=${edgeSize}];\n`;
+  h += '    rankdir=TB;\n';
+  h += '    overlap=false;\n';
+  h += '    splines=polyline;\n';
+  h += '    nodesep=1.0;\n';
+  h += '    ranksep=1.0;\n';
+  h += '    concentrate=false;\n';
+  h += '    ordering=out;\n\n';
+  return h;
 }
 
 /** UI/export text: EN if set, else plain DE (no parentheses). Abwärtskompatibel. */
 function _dotLoc(obj, field, fallbackStr) {
-    if (typeof getLocalizedField === 'function' && obj && field) {
-        const v = getLocalizedField(obj, field, undefined, { fallback: true });
-        if (v) return v;
-    }
-    if (fallbackStr != null && fallbackStr !== '') return String(fallbackStr);
-    return (obj && field && obj[field] != null) ? String(obj[field]) : '';
+  if (typeof getLocalizedField === 'function' && obj && field) {
+    const v = getLocalizedField(obj, field, undefined, { fallback: true });
+    if (v) return v;
+  }
+  if (fallbackStr != null && fallbackStr !== '') return String(fallbackStr);
+  return obj && field && obj[field] != null ? String(obj[field]) : '';
 }
 
 function _dotRootName(entry) {
-    return _dotLoc({
-        title: entry?.rootName || entry?.treeV2?.title || '',
-        title_en: entry?.rootName_en || entry?.treeV2?.title_en || ''
-    }, 'title', entry?.rootName || '');
+  return _dotLoc(
+    {
+      title: entry?.rootName || entry?.treeV2?.title || '',
+      title_en: entry?.rootName_en || entry?.treeV2?.title_en || '',
+    },
+    'title',
+    entry?.rootName || ''
+  );
 }
 
 /**
@@ -48,387 +52,402 @@ function _dotRootName(entry) {
  * branches with arrowheads to each child. Single child = direct edge.
  */
 function _dotConnectFanout(parentId, childIds, nodes, edges, hubCounter) {
-    if (!childIds || childIds.length === 0) return;
-    if (childIds.length === 1) {
-        edges.push(`    ${parentId} -> ${childIds[0]}\n`);
-        return;
-    }
-    const hubId = `${parentId}_J${hubCounter.value++}`;
-    nodes.push(`    ${hubId} [shape=point, width=0.01, height=0.01, label="", style=invis]\n`);
-    edges.push(`    ${parentId} -> ${hubId} [arrowhead=none]\n`);
-    childIds.forEach((cid) => edges.push(`    ${hubId} -> ${cid}\n`));
+  if (!childIds || childIds.length === 0) return;
+  if (childIds.length === 1) {
+    edges.push(`    ${parentId} -> ${childIds[0]}\n`);
+    return;
+  }
+  const hubId = `${parentId}_J${hubCounter.value++}`;
+  nodes.push(`    ${hubId} [shape=point, width=0.01, height=0.01, label="", style=invis]\n`);
+  edges.push(`    ${parentId} -> ${hubId} [arrowhead=none]\n`);
+  childIds.forEach((cid) => edges.push(`    ${hubId} -> ${cid}\n`));
 }
 
 function generateDotString(analysis, specificTreeId = null) {
-    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
-        return null;
+  if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+    return null;
+  }
+
+  let dot = _dotGraphHeader({ fontSize: 10, edgeSize: 9 });
+
+  const _fmt = (val) => {
+    if (val === null || val === undefined || val === '') return '0,0';
+    return String(val).replace('.', ',');
+  };
+
+  const _pStr = (kstu) => {
+    if (!kstu) return '- / - / - / -';
+    const k = _fmt(kstu.k);
+    const s = _fmt(kstu.s);
+    const t = _fmt(kstu.t);
+    const u = _fmt(kstu.u);
+    return `${k} / ${s} / ${t} / ${u}`;
+  };
+
+  // Delegates to global computeRiskScore() (utils.js) — formatted for DOT labels
+  const _calcR = (iNorm, kstu) => {
+    return _fmt(computeRiskScore(iNorm, kstu).toFixed(2));
+  };
+
+  const _lbl = (text, kstu, iNorm, stride) => {
+    const p = _pStr(kstu);
+    const i = _fmt(iNorm);
+    const r = _calcR(iNorm, kstu);
+    const cleanText = (text || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/\n/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/[\{\}<>|\"]/g, "'");
+    let label = `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}`;
+    if (Array.isArray(stride) && stride.length > 0) {
+      label += ` | STRIDE: ${stride.join(', ')}`;
+    }
+    label += '}';
+    return label;
+  };
+
+  // DOT-specific pastel fill colors based on risk score
+  const _getColor = (iNorm, kstu) => {
+    const r = computeRiskScore(iNorm, kstu);
+    if (r >= 2.0) return '#ffcccc';
+    if (r >= 1.6) return '#ffe0b3';
+    if (r >= 0.8) return '#ffffcc';
+    return '#ccffcc';
+  };
+
+  const _safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
+
+  const _emitDotTreeV2 = (entry) => {
+    // DOT IDs must be alphanumeric/_ — hyphens (e.g. NW-R03) parse as minus and break Graphviz
+    const riskId = _safeId(entry.id);
+    const rootId = `${riskId}_Root`;
+
+    const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+    const leafIds = []; // ALL impacts, aligned on one common bottom rank
+    const nodes = [];
+    const edges = [];
+    const hubCounter = { value: 0 };
+
+    const pushRank = (depth, id) => {
+      if (!levelMap[depth]) levelMap[depth] = [];
+      levelMap[depth].push(id);
+    };
+
+    const rootFill = _getColor(entry.i_norm, entry.kstu);
+    nodes.push(
+      `    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`
+    );
+    pushRank(0, rootId);
+
+    const walk = (node, depth) => {
+      const nid = `${riskId}_N${_safeId(node.uid || node.title || 'd' + depth)}`;
+      const fill = _getColor(node.i_norm, node.kstu);
+      nodes.push(
+        `    ${nid} [label="${_lbl(_dotLoc(node, 'title', node.title), node.kstu, node.i_norm)}", style=filled, fillcolor="${fill}"]\n`
+      );
+      pushRank(depth, nid);
+
+      const impactIds = [];
+      (node.impacts || []).forEach((leaf, idx) => {
+        const lid = `${riskId}_L${_safeId(leaf.uid || node.uid + '_' + idx)}`;
+        const lkstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
+        const lfFill = _getColor(leaf.i_norm, lkstu);
+        nodes.push(
+          `    ${lid} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`
+        );
+        impactIds.push(lid);
+        leafIds.push(lid);
+      });
+      _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
+
+      const childIds = (node.children || []).map((ch) => walk(ch, depth + 1));
+      _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
+
+      return nid;
+    };
+
+    const pathIds = (entry.treeV2.children || []).map((pathNode) => walk(pathNode, 1));
+    _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
+
+    let out = `    // Tree ${riskId} (treeV2)\n`;
+    out += nodes.join('');
+    out += edges.join('');
+
+    // Ranking: Root at top; each path/intermediate-path level in rank=same;
+    // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
+    out += `    { rank=source; ${rootId}; }\n`;
+    Object.keys(levelMap)
+      .map((k) => parseInt(k, 10))
+      .filter((k) => k > 0)
+      .sort((a, b) => a - b)
+      .forEach((lvl) => {
+        const ids = (levelMap[lvl] || []).join('; ');
+        if (ids.trim()) out += `    { rank=same; ${ids}; }\n`;
+      });
+    if (leafIds.length) out += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
+
+    out += '\n';
+    return out;
+  };
+
+  const _effectiveDepth = (entry) => {
+    const d = parseInt(entry?.treeDepth, 10);
+    if (d === 1) return 1;
+    if (d === 2) return 2;
+    if (d === 3) return entry?.useThirdIntermediate === true ? 3 : 2; // legacy depth=3 => parallel
+    return entry?.useDeepTree ? 2 : 1;
+  };
+
+  // Normalizes intermediate paths for depth=2 (parallel) including legacy cases.
+  const _normDepth2Nodes = (entry, branch) => {
+    if (!branch) return [];
+
+    if (Array.isArray(branch.l2_nodes) && branch.l2_nodes.length > 0) {
+      return branch.l2_nodes.map((n, idx) => ({
+        name: n?.name || '',
+        leaves: Array.isArray(n?.leaves) ? n.leaves : [],
+        kstu: n?.kstu,
+        i_norm: n?.i_norm,
+        idSuffix: `L2_${idx + 1}`,
+      }));
     }
 
-    let dot = _dotGraphHeader({ fontSize: 10, edgeSize: 9 });
-
-    const _fmt = (val) => {
-        if (val === null || val === undefined || val === '') return '0,0';
-        return String(val).replace('.', ',');
-    };
-
-    const _pStr = (kstu) => {
-        if (!kstu) return '- / - / - / -';
-        const k = _fmt(kstu.k);
-        const s = _fmt(kstu.s);
-        const t = _fmt(kstu.t);
-        const u = _fmt(kstu.u);
-        return `${k} / ${s} / ${t} / ${u}`;
-    };
-
-    // Delegates to global computeRiskScore() (utils.js) — formatted for DOT labels
-    const _calcR = (iNorm, kstu) => {
-        return _fmt(computeRiskScore(iNorm, kstu).toFixed(2));
-    };
-
-    const _lbl = (text, kstu, iNorm, stride) => {
-        const p = _pStr(kstu);
-        const i = _fmt(iNorm);
-        const r = _calcR(iNorm, kstu);
-        const cleanText = (text || '').replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
-        let label = `{${cleanText} | P = ${p} | I[norm] = ${i} | R = ${r}`;
-        if (Array.isArray(stride) && stride.length > 0) {
-            label += ` | STRIDE: ${stride.join(', ')}`;
-        }
-        label += '}';
-        return label;
-    };
-
-    // DOT-specific pastel fill colors based on risk score
-    const _getColor = (iNorm, kstu) => {
-        const r = computeRiskScore(iNorm, kstu);
-        if (r >= 2.0) return '#ffcccc';
-        if (r >= 1.6) return '#ffe0b3';
-        if (r >= 0.8) return '#ffffcc';
-        return '#ccffcc';
-    };
-
-    const _safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
-
-    const _emitDotTreeV2 = (entry) => {
-        // DOT IDs must be alphanumeric/_ — hyphens (e.g. NW-R03) parse as minus and break Graphviz
-        const riskId = _safeId(entry.id);
-        const rootId = `${riskId}_Root`;
-
-        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
-        const leafIds = []; // ALL impacts, aligned on one common bottom rank
-        const nodes = [];
-        const edges = [];
-        const hubCounter = { value: 0 };
-
-        const pushRank = (depth, id) => {
-            if (!levelMap[depth]) levelMap[depth] = [];
-            levelMap[depth].push(id);
-        };
-
-        const rootFill = _getColor(entry.i_norm, entry.kstu);
-        nodes.push(`    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`);
-        pushRank(0, rootId);
-
-        const walk = (node, depth) => {
-            const nid = `${riskId}_N${_safeId(node.uid || node.title || ('d' + depth))}`;
-            const fill = _getColor(node.i_norm, node.kstu);
-            nodes.push(`    ${nid} [label="${_lbl(_dotLoc(node, 'title', node.title), node.kstu, node.i_norm)}", style=filled, fillcolor="${fill}"]\n`);
-            pushRank(depth, nid);
-
-            const impactIds = [];
-            (node.impacts || []).forEach((leaf, idx) => {
-                const lid = `${riskId}_L${_safeId(leaf.uid || (node.uid + '_' + idx))}`;
-                const lkstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
-                const lfFill = _getColor(leaf.i_norm, lkstu);
-                nodes.push(`    ${lid} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), lkstu, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lfFill}"]\n`);
-                impactIds.push(lid);
-                leafIds.push(lid);
-            });
-            _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
-
-            const childIds = (node.children || []).map((ch) => walk(ch, depth + 1));
-            _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
-
-            return nid;
-        };
-
-        const pathIds = (entry.treeV2.children || []).map((pathNode) => walk(pathNode, 1));
-        _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
-
-        let out = `    // Tree ${riskId} (treeV2)\n`;
-        out += nodes.join('');
-        out += edges.join('');
-
-        // Ranking: Root at top; each path/intermediate-path level in rank=same;
-        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
-        out += `    { rank=source; ${rootId}; }\n`;
-        Object.keys(levelMap).map(k => parseInt(k,10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
-            const ids = (levelMap[lvl] || []).join('; ');
-            if (ids.trim()) out += `    { rank=same; ${ids}; }\n`;
-        });
-        if (leafIds.length) out += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
-
-        out += "\n";
-        return out;
-    };
-
-
-    const _effectiveDepth = (entry) => {
-        const d = parseInt(entry?.treeDepth, 10);
-        if (d === 1) return 1;
-        if (d === 2) return 2;
-        if (d === 3) return (entry?.useThirdIntermediate === true) ? 3 : 2; // legacy depth=3 => parallel
-        return entry?.useDeepTree ? 2 : 1;
-    };
-
-    // Normalizes intermediate paths for depth=2 (parallel) including legacy cases.
-    const _normDepth2Nodes = (entry, branch) => {
-        if (!branch) return [];
-
-        if (Array.isArray(branch.l2_nodes) && branch.l2_nodes.length > 0) {
-            return branch.l2_nodes.map((n, idx) => ({
-                name: n?.name || '',
-                leaves: Array.isArray(n?.leaves) ? n.leaves : [],
-                kstu: n?.kstu,
-                i_norm: n?.i_norm,
-                idSuffix: `L2_${idx + 1}`
-            }));
-        }
-
-        // Legacy: depth=3 old (l2_node + l3_node, leaves attached to branch.leaves under "2nd intermediate path")
-        const rawDepth = parseInt(entry?.treeDepth, 10);
-        const isLegacyThird = (rawDepth === 3) && (entry?.useThirdIntermediate !== true) && branch.l2_node && branch.l3_node;
-        if (isLegacyThird) {
-            return [
-                {
-                    name: branch?.l2_node?.name || '',
-                    leaves: [],
-                    kstu: branch?.l2_node?.kstu,
-                    i_norm: branch?.l2_node?.i_norm,
-                    idSuffix: 'L2_1'
-                },
-                {
-                    name: branch?.l3_node?.name || '',
-                    leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
-                    kstu: branch?.l3_node?.kstu,
-                    i_norm: branch?.l3_node?.i_norm,
-                    idSuffix: 'L2_2'
-                }
-            ];
-        }
-
-        // Legacy: single intermediate (l2_node + leaves)
-        if (branch.l2_node) {
-            return [
-                {
-                    name: branch?.l2_node?.name || '',
-                    leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
-                    kstu: branch?.l2_node?.kstu,
-                    i_norm: branch?.l2_node?.i_norm,
-                    idSuffix: 'L2_1'
-                }
-            ];
-        }
-
-        // Fallback: no intermediate structure present
-        return [
-            {
-                name: '',
-                leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
-                kstu: branch?.kstu,
-                i_norm: branch?.i_norm,
-                idSuffix: 'L2_1'
-            }
-        ];
-    };
-
-    const _leavesDepth3 = (branch) => {
-        if (!branch) return [];
-        if (Array.isArray(branch.leaves)) return branch.leaves;
-        if (Array.isArray(branch?.l3_node?.leaves)) return branch.l3_node.leaves;
-        return [];
-    };
-
-    let entriesToProcess = analysis.riskEntries;
-    if (specificTreeId) {
-        entriesToProcess = analysis.riskEntries.filter(e => e && e.id === specificTreeId);
+    // Legacy: depth=3 old (l2_node + l3_node, leaves attached to branch.leaves under "2nd intermediate path")
+    const rawDepth = parseInt(entry?.treeDepth, 10);
+    const isLegacyThird =
+      rawDepth === 3 && entry?.useThirdIntermediate !== true && branch.l2_node && branch.l3_node;
+    if (isLegacyThird) {
+      return [
+        {
+          name: branch?.l2_node?.name || '',
+          leaves: [],
+          kstu: branch?.l2_node?.kstu,
+          i_norm: branch?.l2_node?.i_norm,
+          idSuffix: 'L2_1',
+        },
+        {
+          name: branch?.l3_node?.name || '',
+          leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
+          kstu: branch?.l3_node?.kstu,
+          i_norm: branch?.l3_node?.i_norm,
+          idSuffix: 'L2_2',
+        },
+      ];
     }
 
-    // --- NODES ---
-    entriesToProcess.forEach(entry => {
-        if (!entry) return;
-        if (entry.treeV2) { dot += _emitDotTreeV2(entry); return; }
-        const riskId = _safeId(entry.id);
-        const depth = _effectiveDepth(entry);
+    // Legacy: single intermediate (l2_node + leaves)
+    if (branch.l2_node) {
+      return [
+        {
+          name: branch?.l2_node?.name || '',
+          leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
+          kstu: branch?.l2_node?.kstu,
+          i_norm: branch?.l2_node?.i_norm,
+          idSuffix: 'L2_1',
+        },
+      ];
+    }
 
-        const rootId = `${riskId}_Root`;
-        const rootFill = _getColor(entry.i_norm, entry.kstu);
+    // Fallback: no intermediate structure present
+    return [
+      {
+        name: '',
+        leaves: Array.isArray(branch.leaves) ? branch.leaves : [],
+        kstu: branch?.kstu,
+        i_norm: branch?.i_norm,
+        idSuffix: 'L2_1',
+      },
+    ];
+  };
 
-        dot += `    // Tree ${riskId}\n`;
-        dot += `    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
+  const _leavesDepth3 = (branch) => {
+    if (!branch) return [];
+    if (Array.isArray(branch.leaves)) return branch.leaves;
+    if (Array.isArray(branch?.l3_node?.leaves)) return branch.l3_node.leaves;
+    return [];
+  };
 
-        (entry.branches || []).forEach((branch, bIdx) => {
-            if (!branch || !branch.name) return;
+  let entriesToProcess = analysis.riskEntries;
+  if (specificTreeId) {
+    entriesToProcess = analysis.riskEntries.filter((e) => e && e.id === specificTreeId);
+  }
 
-            const bId = `${riskId}_B${bIdx + 1}`;
-            const bFill = _getColor(branch.i_norm, branch.kstu);
-            dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}", style=filled, fillcolor="${bFill}"]\n`;
+  // --- NODES ---
+  entriesToProcess.forEach((entry) => {
+    if (!entry) return;
+    if (entry.treeV2) {
+      dot += _emitDotTreeV2(entry);
+      return;
+    }
+    const riskId = _safeId(entry.id);
+    const depth = _effectiveDepth(entry);
 
-            if (depth === 1) {
-                (branch.leaves || []).forEach((leaf, lIdx) => {
-                    if (!leaf || !leaf.text) return;
-                    const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
-                    const lFill = _getColor(leaf.i_norm, leaf);
-                    dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
-                });
-                return;
-            }
+    const rootId = `${riskId}_Root`;
+    const rootFill = _getColor(entry.i_norm, entry.kstu);
 
-            if (depth === 2) {
-                const nodes = _normDepth2Nodes(entry, branch);
-                nodes.forEach((node, nIdx) => {
-                    const nId = `${riskId}_B${bIdx + 1}_${node.idSuffix}`;
-                    const hasNode = !!(node && node.name);
-                    if (hasNode) {
-                        const nFill = _getColor(node.i_norm, node.kstu);
-                        dot += `    ${nId} [label="${_lbl(node.name, node.kstu, node.i_norm)}", style=filled, fillcolor="${nFill}"]\n`;
-                    }
+    dot += `    // Tree ${riskId}\n`;
+    dot += `    ${rootId} [label="${_lbl(_dotRootName(entry), entry.kstu, entry.i_norm)}", style=filled, fillcolor="${rootFill}"]\n`;
 
-                    (node.leaves || []).forEach((leaf, lIdx) => {
-                        if (!leaf || !leaf.text) return;
-                        const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
-                        const lFill = _getColor(leaf.i_norm, leaf);
-                        dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
-                    });
-                });
-                return;
-            }
+    (entry.branches || []).forEach((branch, bIdx) => {
+      if (!branch || !branch.name) return;
 
-            // depth === 3 (linear)
-            const l2Name = branch?.l2_node?.name || '';
-            const l3Name = branch?.l3_node?.name || '';
-            const l2Id = `${riskId}_B${bIdx + 1}_L2`;
-            const l3Id = `${riskId}_B${bIdx + 1}_L3`;
+      const bId = `${riskId}_B${bIdx + 1}`;
+      const bFill = _getColor(branch.i_norm, branch.kstu);
+      dot += `    ${bId} [label="${_lbl(branch.name, branch.kstu, branch.i_norm)}", style=filled, fillcolor="${bFill}"]\n`;
 
-            if (l2Name) {
-                const l2Fill = _getColor(branch?.l2_node?.i_norm, branch?.l2_node?.kstu);
-                dot += `    ${l2Id} [label="${_lbl(l2Name, branch?.l2_node?.kstu, branch?.l2_node?.i_norm)}", style=filled, fillcolor="${l2Fill}"]\n`;
-            }
-            if (l3Name) {
-                const l3Fill = _getColor(branch?.l3_node?.i_norm, branch?.l3_node?.kstu);
-                dot += `    ${l3Id} [label="${_lbl(l3Name, branch?.l3_node?.kstu, branch?.l3_node?.i_norm)}", style=filled, fillcolor="${l3Fill}"]\n`;
-            }
-
-            _leavesDepth3(branch).forEach((leaf, lIdx) => {
-                if (!leaf || !leaf.text) return;
-                const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
-                const lFill = _getColor(leaf.i_norm, leaf);
-                dot += `    ${leafId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
-            });
+      if (depth === 1) {
+        (branch.leaves || []).forEach((leaf, lIdx) => {
+          if (!leaf || !leaf.text) return;
+          const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
+          const lFill = _getColor(leaf.i_norm, leaf);
+          dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
         });
+        return;
+      }
 
-        dot += '\n';
+      if (depth === 2) {
+        const nodes = _normDepth2Nodes(entry, branch);
+        nodes.forEach((node, nIdx) => {
+          const nId = `${riskId}_B${bIdx + 1}_${node.idSuffix}`;
+          const hasNode = !!(node && node.name);
+          if (hasNode) {
+            const nFill = _getColor(node.i_norm, node.kstu);
+            dot += `    ${nId} [label="${_lbl(node.name, node.kstu, node.i_norm)}", style=filled, fillcolor="${nFill}"]\n`;
+          }
+
+          (node.leaves || []).forEach((leaf, lIdx) => {
+            if (!leaf || !leaf.text) return;
+            const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
+            const lFill = _getColor(leaf.i_norm, leaf);
+            dot += `    ${lId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
+          });
+        });
+        return;
+      }
+
+      // depth === 3 (linear)
+      const l2Name = branch?.l2_node?.name || '';
+      const l3Name = branch?.l3_node?.name || '';
+      const l2Id = `${riskId}_B${bIdx + 1}_L2`;
+      const l3Id = `${riskId}_B${bIdx + 1}_L3`;
+
+      if (l2Name) {
+        const l2Fill = _getColor(branch?.l2_node?.i_norm, branch?.l2_node?.kstu);
+        dot += `    ${l2Id} [label="${_lbl(l2Name, branch?.l2_node?.kstu, branch?.l2_node?.i_norm)}", style=filled, fillcolor="${l2Fill}"]\n`;
+      }
+      if (l3Name) {
+        const l3Fill = _getColor(branch?.l3_node?.i_norm, branch?.l3_node?.kstu);
+        dot += `    ${l3Id} [label="${_lbl(l3Name, branch?.l3_node?.kstu, branch?.l3_node?.i_norm)}", style=filled, fillcolor="${l3Fill}"]\n`;
+      }
+
+      _leavesDepth3(branch).forEach((leaf, lIdx) => {
+        if (!leaf || !leaf.text) return;
+        const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
+        const lFill = _getColor(leaf.i_norm, leaf);
+        dot += `    ${leafId} [label="${_lbl(_dotLoc(leaf, 'text', leaf.text), leaf, leaf.i_norm, leaf.stride)}", style=filled, fillcolor="${lFill}"]\n`;
+      });
     });
 
-    // --- EDGES ---
-    entriesToProcess.forEach(entry => {
-        if (!entry) return;
-        const riskId = _safeId(entry.id);
-        const depth = _effectiveDepth(entry);
+    dot += '\n';
+  });
 
-        const rootId = `${riskId}_Root`;
+  // --- EDGES ---
+  entriesToProcess.forEach((entry) => {
+    if (!entry) return;
+    const riskId = _safeId(entry.id);
+    const depth = _effectiveDepth(entry);
 
-        // --- RANKING: enforce strict top->bottom levels for this tree ---
-        const __rank_branchIds = [];
-        const __rank_l2Ids = [];
-        const __rank_l3Ids = [];
-        const __rank_leafIds = [];
+    const rootId = `${riskId}_Root`;
 
-        (entry.branches || []).forEach((branch, bIdx) => {
-            if (!branch || !branch.name) return;
-            const bId = `${riskId}_B${bIdx + 1}`;
-            __rank_branchIds.push(bId);
-            dot += `    ${rootId} -> ${bId}\n`;
+    // --- RANKING: enforce strict top->bottom levels for this tree ---
+    const __rank_branchIds = [];
+    const __rank_l2Ids = [];
+    const __rank_l3Ids = [];
+    const __rank_leafIds = [];
 
-            if (depth === 1) {
-                (branch.leaves || []).forEach((leaf, lIdx) => {
-                    if (!leaf || !leaf.text) return;
-                    const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
-                    __rank_leafIds.push(lId);
-                    dot += `    ${bId} -> ${lId}\n`;
-                });
-                return;
-            }
+    (entry.branches || []).forEach((branch, bIdx) => {
+      if (!branch || !branch.name) return;
+      const bId = `${riskId}_B${bIdx + 1}`;
+      __rank_branchIds.push(bId);
+      dot += `    ${rootId} -> ${bId}\n`;
 
-            if (depth === 2) {
-                const nodes = _normDepth2Nodes(entry, branch);
-                nodes.forEach((node) => {
-                    const nId = `${riskId}_B${bIdx + 1}_${node.idSuffix}`;
-                    const hasNode = !!(node && node.name);
-                    if (hasNode) {
-                        __rank_l2Ids.push(nId);
-                        dot += `    ${bId} -> ${nId}\n`;
-                    }
-
-                    (node.leaves || []).forEach((leaf, lIdx) => {
-                        if (!leaf || !leaf.text) return;
-                        const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
-                        __rank_leafIds.push(lId);
-                        dot += `    ${(hasNode ? nId : bId)} -> ${lId}\n`;
-                    });
-                });
-                return;
-            }
-
-            // depth === 3
-            const l2Name = branch?.l2_node?.name || '';
-            const l3Name = branch?.l3_node?.name || '';
-            const l2Id = `${riskId}_B${bIdx + 1}_L2`;
-            const l3Id = `${riskId}_B${bIdx + 1}_L3`;
-
-            let parent = bId;
-            if (l2Name) {
-                __rank_l2Ids.push(l2Id);
-                dot += `    ${bId} -> ${l2Id}\n`;
-                parent = l2Id;
-            }
-            if (l3Name) {
-                __rank_l3Ids.push(l3Id);
-                dot += `    ${parent} -> ${l3Id}\n`;
-                parent = l3Id;
-            }
-
-            _leavesDepth3(branch).forEach((leaf, lIdx) => {
-                if (!leaf || !leaf.text) return;
-                const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
-                __rank_leafIds.push(leafId);
-                dot += `    ${parent} -> ${leafId}\n`;
-            });
+      if (depth === 1) {
+        (branch.leaves || []).forEach((leaf, lIdx) => {
+          if (!leaf || !leaf.text) return;
+          const lId = `${riskId}_B${bIdx + 1}_Leaf${lIdx + 1}`;
+          __rank_leafIds.push(lId);
+          dot += `    ${bId} -> ${lId}\n`;
         });
+        return;
+      }
 
-        // --- APPLY RANK GROUPS (keeps all arrows flowing downward) ---
-        dot += `    { rank=source; ${rootId}; }\n`;
-        if (__rank_branchIds.length) {
-            dot += `    { rank=same; ${__rank_branchIds.join('; ')}; }\n`;
-        }
-        if (__rank_l2Ids.length) {
-            dot += `    { rank=same; ${__rank_l2Ids.join('; ')}; }\n`;
-        }
-        if (__rank_l3Ids.length) {
-            dot += `    { rank=same; ${__rank_l3Ids.join('; ')}; }\n`;
-        }
-        if (__rank_leafIds.length) {
-            dot += `    { rank=sink; ${__rank_leafIds.join('; ')}; }\n`;
-        }
+      if (depth === 2) {
+        const nodes = _normDepth2Nodes(entry, branch);
+        nodes.forEach((node) => {
+          const nId = `${riskId}_B${bIdx + 1}_${node.idSuffix}`;
+          const hasNode = !!(node && node.name);
+          if (hasNode) {
+            __rank_l2Ids.push(nId);
+            dot += `    ${bId} -> ${nId}\n`;
+          }
 
-        dot += '\n';
+          (node.leaves || []).forEach((leaf, lIdx) => {
+            if (!leaf || !leaf.text) return;
+            const lId = `${riskId}_B${bIdx + 1}_${node.idSuffix}_Leaf${lIdx + 1}`;
+            __rank_leafIds.push(lId);
+            dot += `    ${hasNode ? nId : bId} -> ${lId}\n`;
+          });
+        });
+        return;
+      }
+
+      // depth === 3
+      const l2Name = branch?.l2_node?.name || '';
+      const l3Name = branch?.l3_node?.name || '';
+      const l2Id = `${riskId}_B${bIdx + 1}_L2`;
+      const l3Id = `${riskId}_B${bIdx + 1}_L3`;
+
+      let parent = bId;
+      if (l2Name) {
+        __rank_l2Ids.push(l2Id);
+        dot += `    ${bId} -> ${l2Id}\n`;
+        parent = l2Id;
+      }
+      if (l3Name) {
+        __rank_l3Ids.push(l3Id);
+        dot += `    ${parent} -> ${l3Id}\n`;
+        parent = l3Id;
+      }
+
+      _leavesDepth3(branch).forEach((leaf, lIdx) => {
+        if (!leaf || !leaf.text) return;
+        const leafId = `${riskId}_B${bIdx + 1}_L3_Leaf${lIdx + 1}`;
+        __rank_leafIds.push(leafId);
+        dot += `    ${parent} -> ${leafId}\n`;
+      });
     });
 
-    dot += '}\n';
-    return dot;
+    // --- APPLY RANK GROUPS (keeps all arrows flowing downward) ---
+    dot += `    { rank=source; ${rootId}; }\n`;
+    if (__rank_branchIds.length) {
+      dot += `    { rank=same; ${__rank_branchIds.join('; ')}; }\n`;
+    }
+    if (__rank_l2Ids.length) {
+      dot += `    { rank=same; ${__rank_l2Ids.join('; ')}; }\n`;
+    }
+    if (__rank_l3Ids.length) {
+      dot += `    { rank=same; ${__rank_l3Ids.join('; ')}; }\n`;
+    }
+    if (__rank_leafIds.length) {
+      dot += `    { rank=sink; ${__rank_leafIds.join('; ')}; }\n`;
+    }
+
+    dot += '\n';
+  });
+
+  dot += '}\n';
+  return dot;
 }
-
-
 
 // =============================================================
 // --- RESIDUAL RISK DOT EXPORT ---
@@ -440,303 +459,353 @@ function generateDotString(analysis, specificTreeId = null) {
 // - additional line: Treatment (Accepted, Delegated, Mitigated, Gemischt, ...)
 // The color is based on RR.
 function generateResidualRiskDotString(analysis, specificTreeId = null) {
-    if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
-        return null;
-    }
+  if (!analysis || !Array.isArray(analysis.riskEntries) || analysis.riskEntries.length === 0) {
+    return null;
+  }
 
-    try {
-        if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
-        else if (typeof syncResidualRiskFromRiskAnalysis === 'function') syncResidualRiskFromRiskAnalysis(analysis, false);
-    } catch (e) { console.warn('[DOT RR] sync error:', e.message || e); }
+  try {
+    if (typeof ensureResidualRiskSynced === 'function') ensureResidualRiskSynced(analysis);
+    else if (typeof syncResidualRiskFromRiskAnalysis === 'function')
+      syncResidualRiskFromRiskAnalysis(analysis, false);
+  } catch (e) {
+    console.warn('[DOT RR] sync error:', e.message || e);
+  }
 
-    const rrEntries = (analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)) ? analysis.residualRisk.entries : [];
+  const rrEntries =
+    analysis.residualRisk && Array.isArray(analysis.residualRisk.entries)
+      ? analysis.residualRisk.entries
+      : [];
 
-    const _cleanText = (s) => (s || '').toString().replace(/\\/g, '\\\\').replace(/\n/g, ' ').replace(/\r/g, '').replace(/[\{\}<>|\"]/g, "'");
+  const _cleanText = (s) =>
+    (s || '')
+      .toString()
+      .replace(/\\/g, '\\\\')
+      .replace(/\n/g, ' ')
+      .replace(/\r/g, '')
+      .replace(/[\{\}<>|\"]/g, "'");
 
-        // JS-Helper: robust float parse (dot/comma)
-    const _toNum = (v) => {
-        const n = parseFloat(String(v ?? '').replace(',', '.'));
-        return isNaN(n) ? 0 : n;
+  // JS-Helper: robust float parse (dot/comma)
+  const _toNum = (v) => {
+    const n = parseFloat(String(v ?? '').replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+  };
+
+  const _fmtNum = (v, digits = 2) => {
+    if (v === null || v === undefined || String(v).trim() === '') return '-';
+    const n = _toNum(v);
+    return n.toFixed(digits).replace('.', ',');
+  };
+
+  const _pStr = (kstu) => {
+    if (!kstu) return '- / - / - / -';
+    const f = (x) => {
+      if (x === null || x === undefined) return '-';
+      const s = String(x).trim();
+      if (!s) return '-';
+      return s.replace('.', ',');
     };
+    return `${f(kstu.k)} / ${f(kstu.s)} / ${f(kstu.t)} / ${f(kstu.u)}`;
+  };
 
-    const _fmtNum = (v, digits=2) => {
-        if (v === null || v === undefined || String(v).trim() === '') return '-';
-        const n = _toNum(v);
-        return n.toFixed(digits).replace('.', ',');
-    };
+  // Delegates to global computeRiskScore() — formatted with comma decimal for DOT labels
+  const _score = (iNorm, kstu) => {
+    return computeRiskScore(iNorm, kstu).toFixed(2).replace('.', ',');
+  };
 
-    const _pStr = (kstu) => {
-        if (!kstu) return '- / - / - / -';
-        const f = (x) => {
-            if (x === null || x === undefined) return '-';
-            const s = String(x).trim();
-            if (!s) return '-';
-            return s.replace('.', ',');
-        };
-        return `${f(kstu.k)} / ${f(kstu.s)} / ${f(kstu.t)} / ${f(kstu.u)}`;
-    };
+  const _colorFromScore = (scoreStr) => {
+    const v = parseFloat(String(scoreStr ?? '').replace(',', '.'));
+    if (isNaN(v)) return '#d6dbdf';
+    if (v >= 2.0) return '#ffcccc';
+    if (v >= 1.6) return '#ffe0b3';
+    if (v >= 0.8) return '#ffffcc';
+    return '#ccffcc';
+  };
 
-    // Delegates to global computeRiskScore() — formatted with comma decimal for DOT labels
-    const _score = (iNorm, kstu) => {
-        return computeRiskScore(iNorm, kstu).toFixed(2).replace('.', ',');
-    };
+  const _safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
 
-    const _colorFromScore = (scoreStr) => {
-        const v = parseFloat(String(scoreStr ?? '').replace(',', '.'));
-        if (isNaN(v)) return '#d6dbdf';
-        if (v >= 2.0) return '#ffcccc';
-        if (v >= 1.6) return '#ffe0b3';
-        if (v >= 0.8) return '#ffffcc';
-        return '#ccffcc';
-    };
+  const _treatmentLeaf = (leaf) => {
+    const tr = String(leaf?.rr?.treatment || '').trim();
+    return tr || '-';
+  };
 
-    const _safeId = (s) => String(s || '').replace(/[^A-Za-z0-9_]/g, '_');
+  const _collectTreatments = (node, set) => {
+    if (!node) return;
+    (node.impacts || []).forEach((l) => set.add(_treatmentLeaf(l)));
+    (node.children || []).forEach((ch) => _collectTreatments(ch, set));
+  };
 
-    const _treatmentLeaf = (leaf) => {
-        const tr = String(leaf?.rr?.treatment || '').trim();
-        return tr || '-';
-    };
+  const _treatmentNode = (node) => {
+    const set = new Set();
+    _collectTreatments(node, set);
+    if (set.size > 1 && set.has('-')) set.delete('-');
+    if (set.size === 0) return '-';
+    if (set.size === 1) return Array.from(set)[0] || '-';
+    return 'Gemischt';
+  };
 
-    const _collectTreatments = (node, set) => {
-        if (!node) return;
-        (node.impacts || []).forEach(l => set.add(_treatmentLeaf(l)));
-        (node.children || []).forEach(ch => _collectTreatments(ch, set));
-    };
-
-    const _treatmentNode = (node) => {
-        const set = new Set();
-        _collectTreatments(node, set);
-        if (set.size > 1 && set.has('-')) set.delete('-');
-        if (set.size === 0) return '-';
-        if (set.size === 1) return Array.from(set)[0] || '-';
-        return 'Gemischt';
-    };
-
-    
-const _buildResidualClone = (baseEntry) => {
+  const _buildResidualClone = (baseEntry) => {
     // IMPORTANT: always clone from the risk analysis (baseEntry) so original KSTU/I/R are preserved.
     // Residual risk entry (rrEntry) only provides treatment + optionally mitigated KSTU overrides.
     const clone = structuredClone(baseEntry || {});
 
-    const rrEntry = rrEntries.find(e => e && e.uid && baseEntry && e.uid === baseEntry.uid) || null;
+    const rrEntry =
+      rrEntries.find((e) => e && e.uid && baseEntry && e.uid === baseEntry.uid) || null;
 
     // Map leaf.uid -> rr object
     const rrLeafMap = {};
     const collectRR = (node) => {
-        if (!node) return;
-        (node.impacts || []).forEach(l => {
-            if (l && l.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
-        });
-        (node.children || []).forEach(collectRR);
+      if (!node) return;
+      (node.impacts || []).forEach((l) => {
+        if (l && l.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
+      });
+      (node.children || []).forEach(collectRR);
     };
     if (rrEntry && rrEntry.treeV2) {
-        (rrEntry.treeV2.children || []).forEach(collectRR);
+      (rrEntry.treeV2.children || []).forEach(collectRR);
     } else if (rrEntry && Array.isArray(rrEntry.branches)) {
-        // Legacy fallback
-        (rrEntry.branches || []).forEach(b => {
-            (b?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
-            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); }));
-            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(l => { if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {}); });
+      // Legacy fallback
+      (rrEntry.branches || []).forEach((b) => {
+        (b?.leaves || []).forEach((l) => {
+          if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
         });
+        (b?.l2_nodes || []).forEach((n) =>
+          (n?.leaves || []).forEach((l) => {
+            if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
+          })
+        );
+        if (b?.l3_node && Array.isArray(b.l3_node.leaves))
+          b.l3_node.leaves.forEach((l) => {
+            if (l?.uid) rrLeafMap[l.uid] = structuredClone(l.rr || {});
+          });
+      });
     }
 
     const _isMitigatedLocal = (t) => {
-        const s = String(t || '').trim().toLowerCase();
-        return (s === 'mitigiert' || s === 'mitigated');
+      const s = String(t || '')
+        .trim()
+        .toLowerCase();
+      return s === 'mitigiert' || s === 'mitigated';
     };
 
     const applyRRAndMitigation = (leaf) => {
-        if (!leaf) return;
+      if (!leaf) return;
 
-        // rr state: apply if present, otherwise leave empty
-        if (leaf.uid && Object.prototype.hasOwnProperty.call(rrLeafMap, leaf.uid)) {
-            leaf.rr = rrLeafMap[leaf.uid] || {};
-        } else {
-            leaf.rr = leaf.rr || {};
-        }
+      // rr state: apply if present, otherwise leave empty
+      if (leaf.uid && Object.prototype.hasOwnProperty.call(rrLeafMap, leaf.uid)) {
+        leaf.rr = rrLeafMap[leaf.uid] || {};
+      } else {
+        leaf.rr = leaf.rr || {};
+      }
 
-        // Only for "Mitigated" are KSTU overridden (missing dimensions fall back to original)
-        const rr = leaf.rr || {};
-        if (!_isMitigatedLocal(rr.treatment)) return;
+      // Only for "Mitigated" are KSTU overridden (missing dimensions fall back to original)
+      const rr = leaf.rr || {};
+      if (!_isMitigatedLocal(rr.treatment)) return;
 
-        const pick = (orig, rrVal) => {
-            const rrStr = (rrVal === undefined || rrVal === null) ? '' : String(rrVal).trim();
-            if (rrStr) return rrStr;
-            return (orig === undefined || orig === null) ? '' : String(orig);
-        };
-        leaf.k = pick(leaf.k, rr.k);
-        leaf.s = pick(leaf.s, rr.s);
-        leaf.t = pick(leaf.t, rr.t);
-        leaf.u = pick(leaf.u, rr.u);
+      const pick = (orig, rrVal) => {
+        const rrStr = rrVal === undefined || rrVal === null ? '' : String(rrVal).trim();
+        if (rrStr) return rrStr;
+        return orig === undefined || orig === null ? '' : String(orig);
+      };
+      leaf.k = pick(leaf.k, rr.k);
+      leaf.s = pick(leaf.s, rr.s);
+      leaf.t = pick(leaf.t, rr.t);
+      leaf.u = pick(leaf.u, rr.u);
     };
 
     const walkV2 = (node) => {
-        if (!node) return;
-        (node.impacts || []).forEach(applyRRAndMitigation);
-        (node.children || []).forEach(walkV2);
+      if (!node) return;
+      (node.impacts || []).forEach(applyRRAndMitigation);
+      (node.children || []).forEach(walkV2);
     };
 
     if (clone && clone.treeV2) {
-        (clone.treeV2.children || []).forEach(walkV2);
+      (clone.treeV2.children || []).forEach(walkV2);
     } else if (clone && Array.isArray(clone.branches)) {
-        // Legacy fallback: only adjust leaves
-        (clone.branches || []).forEach(b => {
-            (b?.leaves || []).forEach(applyRRAndMitigation);
-            (b?.l2_nodes || []).forEach(n => (n?.leaves || []).forEach(applyRRAndMitigation));
-            if (b?.l3_node && Array.isArray(b.l3_node.leaves)) b.l3_node.leaves.forEach(applyRRAndMitigation);
-        });
+      // Legacy fallback: only adjust leaves
+      (clone.branches || []).forEach((b) => {
+        (b?.leaves || []).forEach(applyRRAndMitigation);
+        (b?.l2_nodes || []).forEach((n) => (n?.leaves || []).forEach(applyRRAndMitigation));
+        if (b?.l3_node && Array.isArray(b.l3_node.leaves))
+          b.l3_node.leaves.forEach(applyRRAndMitigation);
+      });
     }
 
-    try { if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis); } catch (e) { console.warn('[DOT RR] applyImpactInheritance:', e.message || e); }
-    try { if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone); } catch (e) { console.warn('[DOT RR] applyWorstCaseInheritance:', e.message || e); }
+    try {
+      if (typeof applyImpactInheritance === 'function') applyImpactInheritance(clone, analysis);
+    } catch (e) {
+      console.warn('[DOT RR] applyImpactInheritance:', e.message || e);
+    }
+    try {
+      if (typeof applyWorstCaseInheritance === 'function') applyWorstCaseInheritance(clone);
+    } catch (e) {
+      console.warn('[DOT RR] applyWorstCaseInheritance:', e.message || e);
+    }
 
     return clone;
-};
+  };
 
-    const _buildUidNodeMapV2 = (treeV2) => {
-        const map = {};
-        const walk = (n) => {
-            if (!n) return;
-            if (n.uid) map[n.uid] = n;
-            (n.children || []).forEach(walk);
-        };
-        (treeV2?.children || []).forEach(walk);
-        return map;
+  const _buildUidNodeMapV2 = (treeV2) => {
+    const map = {};
+    const walk = (n) => {
+      if (!n) return;
+      if (n.uid) map[n.uid] = n;
+      (n.children || []).forEach(walk);
+    };
+    (treeV2?.children || []).forEach(walk);
+    return map;
+  };
+
+  let entriesToProcess = analysis.riskEntries;
+  if (specificTreeId)
+    entriesToProcess = analysis.riskEntries.filter((e) => e && e.id === specificTreeId);
+
+  let dot = _dotGraphHeader({ fontSize: 9, edgeSize: 8 });
+
+  entriesToProcess.forEach((entry) => {
+    if (!entry) return;
+    if (!entry.treeV2) {
+      dot += `    // Tree ${entry.id} (legacy without treeV2)\n\n`;
+      return;
+    }
+
+    const riskId = _safeId(entry.id);
+    const rootId = `${riskId}_Root_RR`;
+
+    const rrClone = _buildResidualClone(entry);
+    const rrRootKstu = rrClone?.kstu || rrClone?.treeV2?.kstu || { k: '', s: '', t: '', u: '' };
+    const rrNodeMap = _buildUidNodeMapV2(rrClone.treeV2);
+
+    const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
+    const leafIds = []; // ALL impacts, aligned on one common bottom rank
+    const nodes = [];
+    const edges = [];
+    const hubCounter = { value: 0 };
+    const pushRank = (depth, id) => {
+      if (!levelMap[depth]) levelMap[depth] = [];
+      levelMap[depth].push(id);
     };
 
-    let entriesToProcess = analysis.riskEntries;
-    if (specificTreeId) entriesToProcess = analysis.riskEntries.filter(e => e && e.id === specificTreeId);
+    const _normTreatment = (t) =>
+      String(t || '')
+        .trim()
+        .toLowerCase();
 
-    let dot = _dotGraphHeader({ fontSize: 9, edgeSize: 8 });
+    const _isNoMitigation = (t) => {
+      const s = _normTreatment(t);
+      // also no entry / '-' = no residual risk specified => RR=R
+      if (!s || s === '-') return true;
+      return s === 'akzeptiert' || s === 'accepted' || s === 'delegiert' || s === 'delegated';
+    };
 
-    entriesToProcess.forEach(entry => {
-        if (!entry) return;
-        if (!entry.treeV2) {
-            dot += `    // Tree ${entry.id} (legacy without treeV2)\n\n`;
-            return;
-        }
+    const _isMitigated = (t) => {
+      const s = _normTreatment(t);
+      return s === 'mitigiert' || s === 'mitigated';
+    };
 
-        const riskId = _safeId(entry.id);
-        const rootId = `${riskId}_Root_RR`;
+    const rootTreatment = _treatmentNode(rrClone.treeV2);
+    const rootNoMit = _isNoMitigation(rootTreatment);
+    const rrRootKstuEff = rootNoMit ? entry.kstu || rrRootKstu : rrRootKstu;
+    const showPRR = _pStr(rrRootKstuEff);
+    const _lang = window.ReportI18n && ReportI18n.getReportLang ? ReportI18n.getReportLang() : 'de';
+    const _treatKey =
+      window.ReportI18n && ReportI18n.reportStrings
+        ? ReportI18n.reportStrings(_lang).treatment
+        : 'Behandlung';
+    const _treatVal = (v) =>
+      window.ReportI18n && ReportI18n.mapTreatment ? ReportI18n.mapTreatment(v, _lang) : v;
+    const rootLabel = `{${_cleanText(_dotRootName(entry))} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(rootTreatment))}}`;
+    const rootFill = _colorFromScore(_score(entry.i_norm, rrRootKstuEff));
 
-        const rrClone = _buildResidualClone(entry);
-        const rrRootKstu = rrClone?.kstu || rrClone?.treeV2?.kstu || { k:'', s:'', t:'', u:'' };
-        const rrNodeMap = _buildUidNodeMapV2(rrClone.treeV2);
+    nodes.push(`    ${rootId} [label="${rootLabel}", style=filled, fillcolor="${rootFill}"]\n`);
+    pushRank(0, rootId);
 
-        const levelMap = {}; // depth -> [node ids] (paths/intermediate paths only)
-        const leafIds = []; // ALL impacts, aligned on one common bottom rank
-        const nodes = [];
-        const edges = [];
-        const hubCounter = { value: 0 };
-        const pushRank = (depth, id) => {
-            if (!levelMap[depth]) levelMap[depth] = [];
-            levelMap[depth].push(id);
-        };
+    const walk = (baseNode, depth) => {
+      if (!baseNode) return null;
+      const nid = `${riskId}_N_RR${_safeId(baseNode.uid || baseNode.title || 'd' + depth)}`;
+      const rrNode = rrNodeMap[baseNode.uid] || null;
 
-        
-const _normTreatment = (t) => String(t || '').trim().toLowerCase();
+      const rrKstu = rrNode?.kstu || baseNode.kstu;
+      const tNode = rrNode ? _treatmentNode(rrNode) : '-';
+      const nodeNoMit = _isNoMitigation(tNode);
+      const rrKstuEff = nodeNoMit ? baseNode.kstu : rrKstu;
+      const showPRRNode = _pStr(rrKstuEff);
 
-const _isNoMitigation = (t) => {
-    const s = _normTreatment(t);
-    // also no entry / '-' = no residual risk specified => RR=R
-    if (!s || s === '-') return true;
-    return (s === 'akzeptiert' || s === 'accepted' || s === 'delegiert' || s === 'delegated');
-};
+      const label = `{${_cleanText(_dotLoc(baseNode, 'title', baseNode.title))} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(tNode))}}`;
+      const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
 
-const _isMitigated = (t) => {
-    const s = _normTreatment(t);
-    return (s === 'mitigiert' || s === 'mitigated');
-};
+      nodes.push(`    ${nid} [label="${label}", style=filled, fillcolor="${fill}"]\n`);
+      pushRank(depth, nid);
 
-        const rootTreatment = _treatmentNode(rrClone.treeV2);
-        const rootNoMit = _isNoMitigation(rootTreatment);
-        const rrRootKstuEff = rootNoMit ? (entry.kstu || rrRootKstu) : rrRootKstu;
-        const showPRR = _pStr(rrRootKstuEff);
-        const _lang = (window.ReportI18n && ReportI18n.getReportLang) ? ReportI18n.getReportLang() : 'de';
-        const _treatKey = (window.ReportI18n && ReportI18n.reportStrings) ? ReportI18n.reportStrings(_lang).treatment : 'Behandlung';
-        const _treatVal = (v) => (window.ReportI18n && ReportI18n.mapTreatment) ? ReportI18n.mapTreatment(v, _lang) : v;
-        const rootLabel = `{${_cleanText(_dotRootName(entry))} | P = ${_pStr(entry.kstu)} | I[norm] = ${_fmtNum(entry.i_norm, 2)} | R = ${_score(entry.i_norm, entry.kstu)} | P(RR) = ${showPRR} | RR = ${_score(entry.i_norm, rrRootKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(rootTreatment))}}`;
-        const rootFill = _colorFromScore(_score(entry.i_norm, rrRootKstuEff));
+      const impactIds = [];
+      (baseNode.impacts || []).forEach((leaf, idx) => {
+        const rrLeaf =
+          rrNode && Array.isArray(rrNode.impacts)
+            ? rrNode.impacts.find((l) => l && l.uid && leaf && l.uid === leaf.uid) ||
+              rrNode.impacts[idx]
+            : null;
 
-        nodes.push(`    ${rootId} [label="${rootLabel}", style=filled, fillcolor="${rootFill}"]\n`);
-        pushRank(0, rootId);
+        const lid = `${riskId}_L_RR${_safeId(leaf.uid || baseNode.uid + '_' + idx)}`;
 
-        const walk = (baseNode, depth) => {
-            if (!baseNode) return null;
-            const nid = `${riskId}_N_RR${_safeId(baseNode.uid || baseNode.title || ('d' + depth))}`;
-            const rrNode = rrNodeMap[baseNode.uid] || null;
+        const okstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
+        const rkstu = rrLeaf ? { k: rrLeaf.k, s: rrLeaf.s, t: rrLeaf.t, u: rrLeaf.u } : okstu;
 
-            const rrKstu = rrNode?.kstu || baseNode.kstu;
-            const tNode = rrNode ? _treatmentNode(rrNode) : '-';
-            const nodeNoMit = _isNoMitigation(tNode);
-            const rrKstuEff = nodeNoMit ? baseNode.kstu : rrKstu;
-            const showPRRNode = _pStr(rrKstuEff);
+        const trLeaf = rrLeaf ? _treatmentLeaf(rrLeaf) : _treatmentLeaf(leaf);
+        const leafNoMit = _isNoMitigation(trLeaf);
+        const rkstuEff = leafNoMit ? okstu : rkstu;
+        const showPRRLeaf = _pStr(rkstuEff);
 
-            const label = `{${_cleanText(_dotLoc(baseNode, 'title', baseNode.title))} | P = ${_pStr(baseNode.kstu)} | I[norm] = ${_fmtNum(baseNode.i_norm, 2)} | R = ${_score(baseNode.i_norm, baseNode.kstu)} | P(RR) = ${showPRRNode} | RR = ${_score(baseNode.i_norm, rrKstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(tNode))}}`;
-            const fill = _colorFromScore(_score(baseNode.i_norm, rrKstuEff));
+        const leafText = _cleanText(
+          _dotLoc(leaf, 'text', leaf?.text ?? leaf?.name ?? leaf?.label ?? '')
+        );
+        const strideStr =
+          Array.isArray(leaf.stride) && leaf.stride.length > 0
+            ? ` | STRIDE: ${leaf.stride.join(', ')}`
+            : '';
+        const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(trLeaf))}${strideStr}}`;
+        const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));
 
-            nodes.push(`    ${nid} [label="${label}", style=filled, fillcolor="${fill}"]\n`);
-            pushRank(depth, nid);
+        nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);
+        impactIds.push(lid);
+        leafIds.push(lid);
+      });
+      _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
 
-            const impactIds = [];
-            (baseNode.impacts || []).forEach((leaf, idx) => {
-                const rrLeaf = (rrNode && Array.isArray(rrNode.impacts))
-                    ? (rrNode.impacts.find(l => l && l.uid && leaf && l.uid === leaf.uid) || rrNode.impacts[idx])
-                    : null;
+      const childIds = (baseNode.children || []).map((ch) => walk(ch, depth + 1)).filter(Boolean);
+      _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
 
-                const lid = `${riskId}_L_RR${_safeId(leaf.uid || (baseNode.uid + '_' + idx))}`;
+      return nid;
+    };
 
-                const okstu = { k: leaf.k, s: leaf.s, t: leaf.t, u: leaf.u };
-                const rkstu = rrLeaf ? { k: rrLeaf.k, s: rrLeaf.s, t: rrLeaf.t, u: rrLeaf.u } : okstu;
+    const pathIds = (entry.treeV2.children || [])
+      .map((pathNode) => walk(pathNode, 1))
+      .filter(Boolean);
+    _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
 
-                const trLeaf = rrLeaf ? _treatmentLeaf(rrLeaf) : _treatmentLeaf(leaf);
-                const leafNoMit = _isNoMitigation(trLeaf);
-                const rkstuEff = leafNoMit ? okstu : rkstu;
-                const showPRRLeaf = _pStr(rkstuEff);
+    dot += `    // Tree ${riskId} (Residual Risk)\n`;
+    dot += nodes.join('');
+    dot += edges.join('');
 
-                const leafText = _cleanText(_dotLoc(leaf, 'text', leaf?.text ?? leaf?.name ?? leaf?.label ?? ''));
-                const strideStr = (Array.isArray(leaf.stride) && leaf.stride.length > 0) ? ` | STRIDE: ${leaf.stride.join(', ')}` : '';
-                const leafLabel = `{${leafText} | P = ${_pStr(okstu)} | I[norm] = ${_fmtNum(leaf.i_norm, 2)} | R = ${_score(leaf.i_norm, okstu)} | P(RR) = ${showPRRLeaf} | RR = ${_score(leaf.i_norm, rkstuEff)} | ${_treatKey}: ${_cleanText(_treatVal(trLeaf))}${strideStr}}`;
-                const leafFill = _colorFromScore(_score(leaf.i_norm, rkstuEff));
+    // Ranking: Root at top; each path/intermediate-path level in rank=same;
+    // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
+    dot += `    { rank=source; ${rootId}; }\n`;
+    Object.keys(levelMap)
+      .map((k) => parseInt(k, 10))
+      .filter((k) => k > 0)
+      .sort((a, b) => a - b)
+      .forEach((lvl) => {
+        const ids = (levelMap[lvl] || []).join('; ');
+        if (ids.trim()) dot += `    { rank=same; ${ids}; }\n`;
+      });
+    if (leafIds.length) dot += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
 
-                nodes.push(`    ${lid} [label="${leafLabel}", style=filled, fillcolor="${leafFill}"]\n`);
-                impactIds.push(lid);
-                leafIds.push(lid);
-            });
-            _dotConnectFanout(nid, impactIds, nodes, edges, hubCounter);
+    dot += '\n';
+  });
 
-            const childIds = (baseNode.children || []).map((ch) => walk(ch, depth + 1)).filter(Boolean);
-            _dotConnectFanout(nid, childIds, nodes, edges, hubCounter);
-
-            return nid;
-        };
-
-        const pathIds = (entry.treeV2.children || []).map((pathNode) => walk(pathNode, 1)).filter(Boolean);
-        _dotConnectFanout(rootId, pathIds, nodes, edges, hubCounter);
-
-        dot += `    // Tree ${riskId} (Residual Risk)\n`;
-        dot += nodes.join('');
-        dot += edges.join('');
-
-        // Ranking: Root at top; each path/intermediate-path level in rank=same;
-        // ALL impacts (leaves) forced onto one common bottom rank (family-tree look).
-        dot += `    { rank=source; ${rootId}; }\n`;
-        Object.keys(levelMap).map(k => parseInt(k, 10)).filter(k => k > 0).sort((a,b)=>a-b).forEach((lvl) => {
-            const ids = (levelMap[lvl] || []).join('; ');
-            if (ids.trim()) dot += `    { rank=same; ${ids}; }\n`;
-        });
-        if (leafIds.length) dot += `    { rank=sink; ${leafIds.join('; ')}; }\n`;
-
-        dot += '\n';
-    });
-
-    dot += '}\n';
-    return dot;
+  dot += '}\n';
+  return dot;
 }
 
 // Alias for PDF and tool
 window.exportResidualRiskToDot = generateResidualRiskDotString;
 // Define exportRiskAnalysisToDot as alias for generateDotString
 window.exportRiskAnalysisToDot = generateDotString;
-
-

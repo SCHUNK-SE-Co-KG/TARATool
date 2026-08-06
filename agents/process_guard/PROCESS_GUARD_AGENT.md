@@ -23,20 +23,20 @@ Script:   agents/process_guard/issue_checker.py
 
 **Geprüfte Regeln:**
 
-| Check | Regel | Schwere bei Verstoß |
-|-------|-------|---------------------|
-| Nomenklatur: Titel entspricht einem der zulässigen Formate | P-14 / Nomenklatur | Hoch |
-| P-14: TARA-ID noch nicht vergeben | P-14 | Kritisch |
-| Body-Pflichtabschnitte vorhanden | Inhalt | Mittel |
-| Pflichtlabels gesetzt | Labels | Niedrig |
+| Check                                                      | Regel              | Schwere bei Verstoß |
+| ---------------------------------------------------------- | ------------------ | ------------------- |
+| Nomenklatur: Titel entspricht einem der zulässigen Formate | P-14 / Nomenklatur | Hoch                |
+| P-14: TARA-ID noch nicht vergeben                          | P-14               | Kritisch            |
+| Body-Pflichtabschnitte vorhanden                           | Inhalt             | Mittel              |
+| Pflichtlabels gesetzt                                      | Labels             | Niedrig             |
 
 **Zulässige Titelformate:**
 
-| Typ | Format |
-|-----|--------|
-| Story | `[TARA-XXXX] STORY: <Beschreibung>` |
-| Epic | `[TARA-XXXX] EPIC: <Beschreibung>` |
-| Review-Finding | `[TARA-XXXX] REVIEW-FINDING: <Beschreibung>` |
+| Typ               | Format                                          |
+| ----------------- | ----------------------------------------------- |
+| Story             | `[TARA-XXXX] STORY: <Beschreibung>`             |
+| Epic              | `[TARA-XXXX] EPIC: <Beschreibung>`              |
+| Review-Finding    | `[TARA-XXXX] REVIEW-FINDING: <Beschreibung>`    |
 | Process-Violation | `[TARA-XXXX] PROCESS-VIOLATION: <Beschreibung>` |
 
 Bei Verstoß: Kommentar am Issue + Label `process-violation`.
@@ -55,34 +55,34 @@ Test-Ergebnis:    PASSED / FAILED
 
 ## Pflichtregeln (Verletzung → Finding als Issue)
 
-| Regel | Beschreibung | Automatisiert |
-| ----- | ------------ | ------------- |
-| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort | Manuell |
-| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann | Manuell |
-| P-03  | **Tests vor Implementierung** geschrieben – Testdatei existiert | **GitHub Actions (PR)** |
-| P-04  | Tests haben initial **fehlgeschlagen** – Red-Commit vor Green-Commit, Tests rot am Red-Commit | **GitHub Actions (PR)** |
-| P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen | Manuell (Dev-Agent-Pflicht) |
-| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v` | **GitHub Actions (PR)** |
-| P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema | **GitHub Actions (PR)** |
-| P-08  | Commit-Messages referenzieren TARA-ID | **GitHub Actions (PR)** |
-| P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung | Manuell |
-| P-10  | Review-Agent aufgerufen, kein offenes Critical/High Finding | Manuell |
-| P-11  | Nach Merge: Item auf „Freigabe" setzen – **nicht** direkt auf „Done" | Manuell |
-| P-12  | **Prettier** (`npm run format:check`) bei JS/HTML-Aenderungen | **GitHub Actions (PR)** |
-| P-13  | **ESLint** (`npm run lint`) bei JS-Aenderungen | **GitHub Actions (PR)** |
-| P-14  | **TARA-IDs sind atomar und unveraenderlich** – keine ID mehrfach vergeben | **GitHub Actions (Issue-Erstellung)** |
-| P-15  | **Done NUR nach PO-OK** – `po-approve.yml` setzt Status automatisch | **GitHub Actions (Issue-Kommentar)** |
-| P-16  | **Feature-Branch nach Merge loeschen** | Manuell |
-| P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe | Manuell |
-| P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel | Manuell (Dev-Agent-Pflicht) |
+| Regel | Beschreibung                                                                                  | Automatisiert                         |
+| ----- | --------------------------------------------------------------------------------------------- | ------------------------------------- |
+| P-01  | Dev-Agent nennt TARA-ID in jeder Chat-Antwort                                                 | Manuell                               |
+| P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                        | Manuell                               |
+| P-03  | **Tests vor Implementierung** geschrieben – Testdatei existiert                               | **GitHub Actions (PR)**               |
+| P-04  | Tests haben initial **fehlgeschlagen** – Red-Commit vor Green-Commit, Tests rot am Red-Commit | **GitHub Actions (PR)**               |
+| P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen                               | Manuell (Dev-Agent-Pflicht)           |
+| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`               | **GitHub Actions (PR)**               |
+| P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                | **GitHub Actions (PR)**               |
+| P-08  | Commit-Messages referenzieren TARA-ID                                                         | **GitHub Actions (PR)**               |
+| P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung                                             | Manuell                               |
+| P-10  | Review-Agent aufgerufen, kein offenes Critical/High Finding                                   | Manuell                               |
+| P-11  | Nach Merge: Item auf „Freigabe" setzen – **nicht** direkt auf „Done"                          | Manuell                               |
+| P-12  | **Prettier** (`npm run format:check`) bei JS/HTML-Aenderungen                                 | **GitHub Actions (PR)**               |
+| P-13  | **ESLint** (`npm run lint`) bei JS-Aenderungen                                                | **GitHub Actions (PR)**               |
+| P-14  | **TARA-IDs sind atomar und unveraenderlich** – keine ID mehrfach vergeben                     | **GitHub Actions (Issue-Erstellung)** |
+| P-15  | **Done NUR nach PO-OK** – `po-approve.yml` setzt Status automatisch                           | **GitHub Actions (Issue-Kommentar)**  |
+| P-16  | **Feature-Branch nach Merge loeschen**                                                        | Manuell                               |
+| P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe                         | Manuell                               |
+| P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel                             | Manuell (Dev-Agent-Pflicht)           |
 
 ### Automatisierungsmatrix
 
-| Trigger | Workflow | Geprueft Regeln |
-|---------|----------|-----------------|
-| PR geoeffnet/aktualisiert | `process-guard.yml` | P-03, P-04, P-06, P-07, P-08, P-12, P-13 |
-| Issue erstellt | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels |
-| Issue-Kommentar mit PO-OK | `po-approve.yml` | P-15 (Done nur nach PO-OK) |
+| Trigger                   | Workflow                        | Geprueft Regeln                                 |
+| ------------------------- | ------------------------------- | ----------------------------------------------- |
+| PR geoeffnet/aktualisiert | `process-guard.yml`             | P-03, P-04, P-06, P-07, P-08, P-12, P-13        |
+| Issue erstellt            | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels |
+| Issue-Kommentar mit PO-OK | `po-approve.yml`                | P-15 (Done nur nach PO-OK)                      |
 
 > **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18
 > werden durch den Dev-Agent eigenverantwortlich eingehalten und am Session-Ende
@@ -96,14 +96,14 @@ Test-Ergebnis:    PASSED / FAILED
 > fehlen – z.B. Done trotz offener Critical/High Findings (wie bei TARA-0063 geschehen).
 > Der Prozess-Guard wird deshalb **vor jedem Statuswechsel** aufgerufen.
 
-| Gewuenschter Uebergang | Vorbedingungen (alle muessen erfuellt sein) |
-|------------------------|---------------------------------------------|
-| **Todo → In Progress** | PO-Freigabe nachgewiesen (Chat oder Issue-Kommentar: `PO-OK`, `freigegeben`, `akzeptiert`) |
+| Gewuenschter Uebergang     | Vorbedingungen (alle muessen erfuellt sein)                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Todo → In Progress**     | PO-Freigabe nachgewiesen (Chat oder Issue-Kommentar: `PO-OK`, `freigegeben`, `akzeptiert`)                                      |
 | **In Progress → inReview** | `npm run format:check` = 0 Errors (P-12) · `npm run lint` = 0 Errors (P-13) · Story-Tests PASSED (P-05) · Commit gepusht (P-08) |
-| **inReview → Freigabe** | Kein offenes Critical/High `review-finding`-Issue fuer diese TARA-ID · PR gemergt · Branch geloescht (P-16) |
-| **Freigabe → Done** | PO-OK-Kommentar im Issue (`PO-OK`, `Freigabe erteilt`) – wird von `po-approve.yml` automatisch gesetzt |
-| **any → Blocking** | Offenes Critical/High Finding ODER P-01–P-17 Verletzung – wird vom Prozess-Guard gesetzt |
-| **Blocking → In Progress** | Alle Blocking-Gruende behoben, PO hat explizit freigegeben |
+| **inReview → Freigabe**    | Kein offenes Critical/High `review-finding`-Issue fuer diese TARA-ID · PR gemergt · Branch geloescht (P-16)                     |
+| **Freigabe → Done**        | PO-OK-Kommentar im Issue (`PO-OK`, `Freigabe erteilt`) – wird von `po-approve.yml` automatisch gesetzt                          |
+| **any → Blocking**         | Offenes Critical/High Finding ODER P-01–P-17 Verletzung – wird vom Prozess-Guard gesetzt                                        |
+| **Blocking → In Progress** | Alle Blocking-Gruende behoben, PO hat explizit freigegeben                                                                      |
 
 ### Ablauf Pre-Transition Check
 
@@ -128,15 +128,15 @@ Status setzen    Status bleibt
 
 ## Wer darf was setzen?
 
-| Status-Uebergang        | Wer                        | Voraussetzung (P-18)                            |
-| ----------------------- | -------------------------- | ----------------------------------------------- |
-| Todo → In Progress      | Dev-Agent (nach P-18-OK)   | PO-Freigabe nachgewiesen                        |
-| In Progress → inReview  | Dev-Agent (nach P-18-OK)   | Tests gruen, Prettier, ESLint, Commit gepusht   |
-| inReview → In Progress  | Dev-Agent                  | Critical/High Finding gefunden, Fix noetig      |
-| inReview → Freigabe     | Dev-Agent (nach P-18-OK)   | Review OK, Merge durchgefuehrt, Branch geloescht|
-| **Freigabe → Done**     | **GitHub Automation**      | PO-OK oder Freigabe erteilt im Issue-Kommentar  |
-| any → Blocking          | Prozess-Guard              | P-18-Verletzung erkannt                         |
-| Blocking → In Progress  | Dev-Agent (nach PO-OK)     | Alle Blocking-Gruende behoben                   |
+| Status-Uebergang       | Wer                      | Voraussetzung (P-18)                             |
+| ---------------------- | ------------------------ | ------------------------------------------------ |
+| Todo → In Progress     | Dev-Agent (nach P-18-OK) | PO-Freigabe nachgewiesen                         |
+| In Progress → inReview | Dev-Agent (nach P-18-OK) | Tests gruen, Prettier, ESLint, Commit gepusht    |
+| inReview → In Progress | Dev-Agent                | Critical/High Finding gefunden, Fix noetig       |
+| inReview → Freigabe    | Dev-Agent (nach P-18-OK) | Review OK, Merge durchgefuehrt, Branch geloescht |
+| **Freigabe → Done**    | **GitHub Automation**    | PO-OK oder Freigabe erteilt im Issue-Kommentar   |
+| any → Blocking         | Prozess-Guard            | P-18-Verletzung erkannt                          |
+| Blocking → In Progress | Dev-Agent (nach PO-OK)   | Alle Blocking-Gruende behoben                    |
 
 ---
 
