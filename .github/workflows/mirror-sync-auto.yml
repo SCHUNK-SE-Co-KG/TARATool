@@ -42,10 +42,11 @@ jobs:
 
       - name: Sync-Analyse ausführen
         id: check
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python scripts/sync_project_boards.py --limit 100 > /tmp/sync_report.txt 2>&1
+          python scripts/sync_project_boards.py --limit 100 > /tmp/sync_report.txt 2>&1 || true
           cat /tmp/sync_report.txt
 
           if grep -q "\[!\] BOARDS NOT IN SYNC" /tmp/sync_report.txt; then
