@@ -11,7 +11,7 @@ main          â† Stable Release (nur via PR aus Development)
 | Branch                | Zweck                        | Merge-Ziel           |
 | --------------------- | ---------------------------- | -------------------- |
 | `main`                | Stable, tagged Releases      | â€“                    |
-| `Development`         | Integration, immer lauffÃ¤hig | `main` per PR        |
+| `Development`         | Integration, immer lauffähig | `main` per PR        |
 | `feature/TARA-XXXX-*` | Eine Story = ein Branch      | `Development` per PR |
 
 **Naming-Convention:** `feature/TARA-0003-review-agent-workflow`  
@@ -78,8 +78,8 @@ Schritt 5 - Review
         |
 Schritt 6 - Prozess-Guard Pruefung (automatisch via GitHub Actions bei PR)
   * GitHub Actions prueft P-04, P-06, P-07, P-08, P-12, P-13 automatisch
-  * OK  -> PR mergen
-  * BLOCKED -> Findings beheben, zurueck zu Schritt 4
+  * PROCESS OK  -> PR mergen
+  * PROCESS BLOCKED -> Findings beheben, zurueck zu Schritt 4
 
         |
 Schritt 7 - Merge
@@ -104,12 +104,12 @@ def test_feature_name():
     ...
 ```
 
-AusfÃ¼hrung:
+Ausführung:
 
 ```bash
 pytest tests/test_TARA_XXXX.py -v    # Story-Tests
 pytest -m "TARA_XXXX" -v             # per Marker
-pytest -x -q                          # vollstÃ¤ndige Suite (vor PR Pflicht)
+pytest -x -q                          # vollständige Suite (vor PR Pflicht)
 ```
 
 ---
@@ -119,14 +119,14 @@ pytest -x -q                          # vollstÃ¤ndige Suite (vor PR Pflicht)
 ```
 TARA-XXXX: Kurzbeschreibung im Imperativ
 
-Optionaler lÃ¤ngerer ErklÃ¤rungstext.
+Optionaler längerer Erklärungstext.
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 ```
 
 ---
 
-## Chat-Regeln fÃ¼r den Dev-Agent
+## Chat-Regeln für den Dev-Agent
 
 - **Jede Chat-Antwort nennt die aktive TARA-ID** der bearbeiteten Items
 - **Keine Arbeit ohne Freigabe** durch den Product Owner
@@ -136,28 +136,28 @@ Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
 
 ## TARA-ID Nummernschema
 
-IDs sind **atomar und unverÃ¤nderlich** (P-14). So ermittelst du die nÃ¤chste freie ID:
+IDs sind **atomar und unveränderlich** (P-14). So ermittelst du die nächste freie ID:
 
 ```bash
-# HÃ¶chste vorhandene TARA-ID aus allen Issues ermitteln
+# Höchste vorhandene TARA-ID aus allen Issues ermitteln
 gh issue list --state all --limit 200 --json title \
   | python3 -c "
 import sys, json, re
 issues = json.load(sys.stdin)
 ids = [int(m.group(1)) for t in issues for m in [re.search(r'TARA-(\d+)', t['title'])] if m]
-print(f'HÃ¶chste ID: TARA-{max(ids):04d}  â†’  NÃ¤chste: TARA-{max(ids)+1:04d}')
+print(f'Höchste ID: TARA-{max(ids):04d}  â†’  Nächste: TARA-{max(ids)+1:04d}')
 "
 ```
 
-Oder manuell: hÃ¶chste Nummer in GitHub Issues suchen + 1.
+Oder manuell: höchste Nummer in GitHub Issues suchen + 1.
 
 ---
 
 ## Ausnahmen vom Standard-Workflow
 
-| Ausnahme      | Bedingung                                                                          | Was entfÃ¤llt                          |
+| Ausnahme      | Bedingung                                                                          | Was entfällt                          |
 | ------------- | ---------------------------------------------------------------------------------- | ------------------------------------- |
-| **Prototyp**  | Issue-Titel enthÃ¤lt â€žPrototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nÃ¶tig) |
+| **Prototyp**  | Issue-Titel enthält â€žPrototyp" oder ist explizit als Machbarkeitsnachweis markiert | Review-Agent (kein Code-Review nötig) |
 | **Bootstrap** | Allererste Story eines neuen Feature-Branch-Schemas                                | P-07 (Branch-Naming)                  |
 
-Ausnahmen mÃ¼ssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.
+Ausnahmen müssen vom PO explizit genehmigt werden und im Issue dokumentiert sein.

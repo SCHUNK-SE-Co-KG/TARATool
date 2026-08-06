@@ -18,21 +18,21 @@ Kein Server, kein Build, keine Installation nötig.
 Nach Änderungen an `config/assessment_config.json`:
 
 ```bash
-chmod +x tools/sync_assessment_config.sh   # einmalig
-./tools/sync_assessment_config.sh
+chmod +x scripts/sync_assessment_config.sh   # einmalig
+./scripts/sync_assessment_config.sh
 ```
 
 oder:
 
 ```bash
-python3 tools/sync_assessment_config.py
+python3 scripts/sync_assessment_config.py
 ```
 
 Voraussetzung: **Python 3**.
 
 Alternativ im Tool: Reiter Übersicht → **Bewertungsconfig laden** (JSON auswählen). Dann kein Sync-Skript nötig.
 
-> Windows-Nutzer: `tools\sync_assessment_config.bat`
+> Windows-Nutzer: `scripts\sync_assessment_config.bat`
 
 ## Hinweise
 

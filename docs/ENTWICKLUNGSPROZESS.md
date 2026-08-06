@@ -1,11 +1,11 @@
 # TARATool â€“ Entwicklungsprozess
 
-**Dieses Dokument** beschreibt den vollstÃ¤ndigen Entwicklungsprozess fÃ¼r das TARATool-Projekt.
+**Dieses Dokument** beschreibt den vollständigen Entwicklungsprozess für das TARATool-Projekt.
 Es richtet sich an den **Product Owner (PO)** und an **neue Dev-Agenten**, die mit der
-Entwicklung starten mÃ¶chten.
+Entwicklung starten möchten.
 
-> **FÃ¼r einen neuen Dev-Agenten:** Lies zuerst dieses Dokument komplett, dann
-> `agents/dev_agent/DEV_AGENT_ONBOARDING.md` fÃ¼r die technische Einrichtung.
+> **Für einen neuen Dev-Agenten:** Lies zuerst dieses Dokument komplett, dann
+> `agents/dev_agent/DEV_AGENT_ONBOARDING.md` für die technische Einrichtung.
 
 ---
 
@@ -14,11 +14,11 @@ Entwicklung starten mÃ¶chten.
 1. [Rollen und Verantwortlichkeiten](#1-rollen-und-verantwortlichkeiten)
 2. [Projekt-Infrastruktur](#2-projekt-infrastruktur)
 3. [Planungsebenen: Epic â†’ Story](#3-planungsebenen-epic--story)
-4. [Der vollstÃ¤ndige Story-Workflow](#4-der-vollstÃ¤ndige-story-workflow)
-5. [Board-StatusÃ¼bergÃ¤nge](#5-board-statusÃ¼bergÃ¤nge)
-6. [Technische QualitÃ¤tssicherung](#6-technische-qualitÃ¤tssicherung)
+4. [Der vollständige Story-Workflow](#4-der-vollständige-story-workflow)
+5. [Board-Statusübergänge](#5-board-statusübergänge)
+6. [Technische Qualitätssicherung](#6-technische-qualitätssicherung)
 7. [Prozessregeln (P-01 bis P-17)](#7-prozessregeln-p-01-bis-p-16)
-8. [Ausnahmen und SonderfÃ¤lle](#8-ausnahmen-und-sonderfÃ¤lle)
+8. [Ausnahmen und Sonderfälle](#8-ausnahmen-und-sonderfälle)
 9. [Dokumente auf einen Blick](#9-dokumente-auf-einen-blick)
 
 ---
@@ -30,13 +30,13 @@ Entwicklung starten mÃ¶chten.
 | **Product Owner (PO)** | @Bheowulf          | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen |
 | **Dev-Agent**          | GitHub Copilot CLI | Implementierung, TDD, Commits, PRs                         |
 | **Review-Agent**       | Copilot Sub-Agent  | Code-Review, Finding-Issues erstellen                      |
-| **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prÃ¼fen (P-01â€“P-15)                     |
+| **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prüfen (P-01â€“P-15)                     |
 
 ### Kommunikationsregeln
 
 - Dev-Agent **nennt in jeder Antwort** die aktive TARA-ID (z. B. `[TARA-0026]`)
 - Dev-Agent **beginnt keine Arbeit** ohne explizite PO-Freigabe
-- Review-Agent und Prozess-Guard kommunizieren **ausschlieÃŸlich Ã¼ber GitHub Issues**
+- Review-Agent und Prozess-Guard kommunizieren **ausschlieÃŸlich über GitHub Issues**
   (Label: `review-finding`) â€” kein direkter Dialog mit dem Dev-Agent
 - **PO-Freigabe (Done)** erfolgt ausschliesslich per **Issue-Kommentar** mit dem Schluesselwort
   `PO-OK` oder `Freigabe erteilt` - **nicht** per Chat-Nachricht.
@@ -76,7 +76,7 @@ Branch: main         â† Stable Releases
 
 ```
 main
-  â””â”€â”€ Development          â† Integration, immer lauffÃ¤hig
+  â””â”€â”€ Development          â† Integration, immer lauffähig
         â””â”€â”€ feature/TARA-XXXX-kurzbeschreibung
 ```
 
@@ -88,7 +88,7 @@ Jede Story bekommt einen eigenen Feature-Branch.
 Board: **TARATool Ãœberarbeitung**
 â†’ https://github.com/users/Bheowulf/projects/3
 
-Technische IDs fÃ¼r API-Zugriff: siehe `docs/GITHUB_BOARD.md`
+Technische IDs für API-Zugriff: siehe `docs/GITHUB_BOARD.md`
 
 ---
 
@@ -96,7 +96,7 @@ Technische IDs fÃ¼r API-Zugriff: siehe `docs/GITHUB_BOARD.md`
 
 ### Epic
 
-Ein Epic gruppiert mehrere zusammengehÃ¶rige Stories. Epics haben keine eigene
+Ein Epic gruppiert mehrere zusammengehörige Stories. Epics haben keine eigene
 Implementierung â€” sie dienen der Ãœbersicht und Priorisierung.
 
 **Format:** `[TARA-XXXX] EPIC: Titel`
@@ -123,7 +123,7 @@ Akzeptanzkriterien.
 
 ### TARA-ID vergeben
 
-IDs sind **fortlaufend, atomar und unverÃ¤nderlich**. NÃ¤chste freie ID ermitteln:
+IDs sind **fortlaufend, atomar und unveränderlich**. Nächste freie ID ermitteln:
 
 ```bash
 gh issue list --state all --limit 200 --json title \
@@ -131,7 +131,7 @@ gh issue list --state all --limit 200 --json title \
 import sys, json, re
 issues = json.load(sys.stdin)
 ids = [int(m.group(1)) for t in issues for m in [re.search(r'TARA-(\d+)', t['title'])] if m]
-print(f'NÃ¤chste ID: TARA-{max(ids)+1:04d}')
+print(f'Nächste ID: TARA-{max(ids)+1:04d}')
 "
 ```
 
@@ -160,7 +160,7 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 
 ---
 
-## 4. Der vollstÃ¤ndige Story-Workflow
+## 4. Der vollständige Story-Workflow
 
 ```
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
@@ -181,21 +181,21 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”‚  SCHRITT 2 â€“ Tests schreiben âš ï¸ TDD RED-PHASE                   â”‚
 â”‚  â€¢ Datei anlegen: tests/test_TARA_XXXX.py                       â”‚
 â”‚  â€¢ Alle Akzeptanzkriterien als pytest-Tests abbilden            â”‚
-â”‚  â€¢ Tests ausfÃ¼hren â†’ mÃ¼ssen FEHLSCHLAGEN                        â”‚
+â”‚  â€¢ Tests ausführen â†’ müssen FEHLSCHLAGEN                        â”‚
 â”‚    pytest tests/test_TARA_XXXX.py --noconftest -v               â”‚
-â”‚    â†’ Expected: FAILED (beweist TestvaliditÃ¤t!)                  â”‚
+â”‚    â†’ Expected: FAILED (beweist Testvalidität!)                  â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 3 â€“ Implementierung (TDD GREEN-PHASE)                  â”‚
 â”‚  â€¢ Feature implementieren                                       â”‚
-â”‚  â€¢ Iterieren bis alle Story-Tests grÃ¼n sind                     â”‚
+â”‚  â€¢ Iterieren bis alle Story-Tests grün sind                     â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  SCHRITT 4 â€“ QualitÃ¤tssicherung vor Commit (Pflicht)            â”‚
+â”‚  SCHRITT 4 â€“ Qualitätssicherung vor Commit (Pflicht)            â”‚
 â”‚  4a  npm run format:check   â†’ Prettier: 0 Fehler               â”‚
-â”‚      (Fehler? â†’ npm run format:write, dann erneut prÃ¼fen)       â”‚
+â”‚      (Fehler? â†’ npm run format:write, dann erneut prüfen)       â”‚
 â”‚  4b  npm run lint           â†’ ESLint: Exit-Code 0              â”‚
 â”‚  4c  pytest test_TARA_XXXX.py --noconftest -v  â†’ PASSED         â”‚
 â”‚  4d  Commit: "TARA-XXXX: Beschreibung"                          â”‚
@@ -214,30 +214,30 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 6 â€“ Prozess-Guard                                      â”‚
 â”‚  â€¢ Dev-Agent aktiviert Prozess-Guard als Sub-Agent              â”‚
-â”‚  â€¢ Guard prÃ¼ft P-01 bis P-15                                    â”‚
-â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf development MERGEN (Dev-Agent, nach Review-OK) Ã¶ffnen                   â”‚
-â”‚  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurÃ¼ck zu Schritt 4   â”‚
+â”‚  â€¢ Guard prüft P-01 bis P-15                                    â”‚
+â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf development MERGEN (Dev-Agent, nach Review-OK) öffnen                   â”‚
+â”‚  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurück zu Schritt 4   â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 7 â€“ Merge                                              â”‚
-â”‚  â€¢ PR auf Development Ã¶ffnen und mergen                         â”‚
-â”‚  â€¢ Feature-Branch wird gelÃ¶scht                                 â”‚
+â”‚  â€¢ PR auf Development öffnen und mergen                         â”‚
+â”‚  â€¢ Feature-Branch wird gelöscht                                 â”‚
 â”‚  â€¢ Status â†’ "Freigabe" im Board                                 â”‚
 â”‚  â€¢ Dev-Agent wartet â€” setzt NICHT selbst auf Done!              â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 8 â€“ PO-Freigabe (Pflicht)                              â”‚
-â”‚  â€¢ PO prÃ¼ft das Ergebnis im Browser / Repository                â”‚
-â”‚  â€¢ PO kommentiert im Issue: `PO-OK` oder `Freigabe erteilt`Ã¤.             â”‚
+â”‚  â€¢ PO prüft das Ergebnis im Browser / Repository                â”‚
+â”‚  â€¢ PO kommentiert im Issue: `PO-OK` oder `Freigabe erteilt`ä.             â”‚
 â”‚  â€¢ Dev-Agent setzt Status â†’ "Done"                              â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ---
 
-## 5. Board-StatusÃ¼bergÃ¤nge
+## 5. Board-Statusübergänge
 
 ```
 Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â”€â”€â†’ Freigabe â”€â”€â†’ Done
@@ -248,27 +248,27 @@ Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â�
 | --------------- | ---------------------------- | ----------------------------- |
 | **Todo**        | Geplant, noch nicht begonnen | Dev-Agent nach PO-Freigabe    |
 | **In Progress** | Aktiv in Bearbeitung         | Dev-Agent (vor Arbeitsbeginn) |
-| **inReview**    | Review lÃ¤uft, PR offen       | Dev-Agent                     |
+| **inReview**    | Review läuft, PR offen       | Dev-Agent                     |
 | **Freigabe**    | Gemergt, wartet auf PO-OK    | Dev-Agent                     |
 | **Done**        | Abgeschlossen (PO-OK im Issue) âœ…             | **Product Owner**             |
 
 ---
 
-## 6. Technische QualitÃ¤tssicherung
+## 6. Technische Qualitätssicherung
 
 ### Prettier (Formatierung)
 
 ```bash
-npm run format:check   # PrÃ¼fen
+npm run format:check   # Prüfen
 npm run format:write   # Automatisch formatieren
 ```
 
-Prettier lÃ¤uft auf: JS, CSS, MD, HTML (auÃŸer `index.html` und `tests/*.py`)
+Prettier läuft auf: JS, CSS, MD, HTML (auÃŸer `index.html` und `tests/*.py`)
 
-### ESLint (CodequalitÃ¤t)
+### ESLint (Codequalität)
 
 ```bash
-npm run lint           # PrÃ¼fen (js/-Verzeichnis)
+npm run lint           # Prüfen (js/-Verzeichnis)
 ```
 
 - 0 Errors = Pflicht
@@ -284,7 +284,7 @@ cd tests
 # Alle Story-Tests auf einmal
 .venv/bin/pytest test_TARA_*.py --noconftest -q
 
-# VollstÃ¤ndige E2E-Suite (nur mit Playwright)
+# Vollständige E2E-Suite (nur mit Playwright)
 .venv/bin/pytest -x -q
 ```
 
@@ -320,11 +320,11 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren | Nach letztem Merge |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
 
-VollstÃ¤ndige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
+Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 
 ---
 
-## 8. Ausnahmen und SonderfÃ¤lle
+## 8. Ausnahmen und Sonderfälle
 
 ### Prototyp-Ausnahme
 
@@ -335,17 +335,17 @@ Wenn eine Story explizit als **Prototyp** oder **Machbarkeitsnachweis** angelegt
 
 ### Bootstrap-Ausnahme
 
-Wenn ein neues Feature-Branch-Schema eingefÃ¼hrt wird (erste Story):
+Wenn ein neues Feature-Branch-Schema eingeführt wird (erste Story):
 
 - P-07 (Branch-Naming) kann einmalig abweichen
 - Muss als Prozess-Finding dokumentiert werden
 
 ### Mehrere Stories in einem Branch
 
-Wenn Stories technisch voneinander abhÃ¤ngen (z. B. TARA-0034 bis TARA-0037):
+Wenn Stories technisch voneinander abhängen (z. B. TARA-0034 bis TARA-0037):
 
 - Ein gemeinsamer Branch ist erlaubt
-- Branch-Name enthÃ¤lt erste und letzte ID: `feature/TARA-0034-0037-beschreibung`
+- Branch-Name enthält erste und letzte ID: `feature/TARA-0034-0037-beschreibung`
 - Alle Stories werden in einem PR zusammengefasst
 
 ### Hotfix-Prozess
@@ -373,13 +373,13 @@ Wenn nach einem Merge auf `development` ein **kritischer Bug** gefunden wird:
 
 ## 9. Dokumente auf einen Blick
 
-| Dokument                  | Pfad                               | FÃ¼r wen            | Inhalt                                         |
+| Dokument                  | Pfad                               | Für wen            | Inhalt                                         |
 | ------------------------- | ---------------------------------- | ------------------ | ---------------------------------------------- |
-| **Dieser Prozess**        | `docs/ENTWICKLUNGSPROZESS.md`      | PO + Agent         | GesamtÃ¼berblick                                |
+| **Dieser Prozess**        | `docs/ENTWICKLUNGSPROZESS.md`      | PO + Agent         | Gesamtüberblick                                |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md`     | Neuer Agent        | Setup, Smoke-Test, Kurzreferenz                |
 | **TDD-Workflow (Detail)** | `CONTRIBUTING.md`                  | Dev-Agent          | Branch-Strategie, alle Schritte, Commit-Format |
 | **Prozess-Guard Regeln**  | `agents/process_guard/PROCESS_GUARD_AGENT.md`   | Dev-Agent + Guard  | P-01â€“P-15, Finding-Format                      |
 | **Review-Agent**          | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`    | Dev-Agent + Review | R-01–R-30, Finding-Format                      |
-| **Board-IDs**             | `docs/GITHUB_BOARD.md`             | Dev-Agent          | GraphQL-IDs, StatusÃ¼bergÃ¤nge, Beispiele        |
+| **Board-IDs**             | `docs/GITHUB_BOARD.md`             | Dev-Agent          | GraphQL-IDs, Statusübergänge, Beispiele        |
 | **Test-Framework**        | `tests/README.md`                  | Dev-Agent          | --noconftest, Marker, venv-Setup               |
 | **PR-Checkliste**         | `.github/pull_request_template.md` | Dev-Agent          | TDD, Prettier, ESLint, Review, Freigabe        |

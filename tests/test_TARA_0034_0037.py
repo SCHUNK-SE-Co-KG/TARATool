@@ -20,14 +20,14 @@ def test_contributing_contains_freigabe_step():
 @pytest.mark.TARA_0034
 def test_process_guard_contains_p15():
     """PROCESS_GUARD_AGENT.md muss Regel P-15 (PO-Freigabe vor Done) enthalten."""
-    content = open(os.path.join(REPO_ROOT, '.github', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
     assert 'P-15' in content, 'Regel P-15 fehlt in PROCESS_GUARD_AGENT.md'
 
 
 @pytest.mark.TARA_0034
 def test_process_guard_p11_references_freigabe():
     """P-11 muss auf Freigabe verweisen (nicht nur auf Merge)."""
-    content = open(os.path.join(REPO_ROOT, '.github', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
     # Find P-11 line and check it mentions Freigabe
     p11_line = [l for l in content.splitlines() if 'P-11' in l and '|' in l]
     assert p11_line, 'P-11 nicht in Tabelle gefunden'
@@ -78,14 +78,14 @@ def test_github_board_doc_contains_graphql_example():
 @pytest.mark.TARA_0036
 def test_onboarding_doc_exists():
     """docs/DEV_AGENT_ONBOARDING.md muss existieren."""
-    assert os.path.exists(os.path.join(REPO_ROOT, 'docs', 'DEV_AGENT_ONBOARDING.md')), \
+    assert os.path.exists(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md')), \
         'docs/DEV_AGENT_ONBOARDING.md fehlt'
 
 
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_prerequisites():
     """Onboarding-Dok muss Voraussetzungen (git, gh, Node, Python) beschreiben."""
-    content = open(os.path.join(REPO_ROOT, 'docs', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
     for tool in ['git', 'gh', 'node', 'python']:
         assert tool.lower() in content.lower(), f'Voraussetzung "{tool}" fehlt im Onboarding'
 
@@ -93,14 +93,14 @@ def test_onboarding_doc_contains_prerequisites():
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_npm_install():
     """Onboarding-Dok muss npm install Schritt enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'docs', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
     assert 'npm install' in content, 'npm install Schritt fehlt im Onboarding'
 
 
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_gh_auth():
     """Onboarding-Dok muss gh auth Login-Schritt mit Scopes enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'docs', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
     assert 'gh auth' in content, 'gh auth Schritt fehlt im Onboarding'
     assert 'project' in content, 'project-Scope fehlt im Onboarding'
 
@@ -108,7 +108,7 @@ def test_onboarding_doc_contains_gh_auth():
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_smoke_test():
     """Onboarding-Dok muss einen Smoke-Test zur Umgebungsverifikation enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'docs', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
     assert 'smoke' in content.lower() or 'verifi' in content.lower() or 'prüf' in content.lower(), \
         'Smoke-Test fehlt im Onboarding'
 
