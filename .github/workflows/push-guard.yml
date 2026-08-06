@@ -1,0 +1,84 @@
+name: Push Guard – Direkter Push auf development/main
+
+on:
+  push:
+    branches:
+      - development
+      - main
+
+jobs:
+  push-guard:
+    name: Direkter Push Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: P-06 Root-Verzeichnis auf fremde Dateien pruefen
+        run: |
+          ALLOWED="index.html README.md LICENSE CONTRIBUTING.md CHANGELOG.md .gitignore .prettierrc .prettierignore eslint.config.js package.json package-lock.json pytest.ini"
+          VIOLATIONS=""
+          for f in $(ls -1 --file-type | grep -v '/$'); do
+            OK=0
+            for allowed in $ALLOWED; do
+              if [ "$f" = "$allowed" ]; then OK=1; break; fi
+            done
+            if [ $OK -eq 0 ]; then
+              VIOLATIONS="$VIOLATIONS $f"
+            fi
+          done
+          if [ -n "$VIOLATIONS" ]; then
+            echo "FAIL P-06: Unerlaubte Dateien im Root:$VIOLATIONS"
+            echo "Bitte nach docs/, scripts/ oder einen anderen Unterordner verschieben."
+            exit 1
+          else
+            echo "OK P-06: Root-Verzeichnis sauber"
+          fi
+
+      - name: P-08 Commit-Message auf TARA-ID pruefen
+        run: |
+          MSG=$(git log -1 --format="%s")
+          echo "Commit-Message: $MSG"
+          # Erlaubt: TARA-XXXX, Merge, fix:, feat:, chore:, docs:, refactor:
+          if echo "$MSG" | grep -qE '(TARA-[0-9]{4}|^Merge |^fix:|^feat:|^chore:|^docs:|^refactor:|^test:|^ci:|^build:)'; then
+            echo "OK P-08: Commit-Message-Format korrekt"
+          else
+            echo "FAIL P-08: Commit-Message enthaelt keine TARA-ID und folgt keiner bekannten Konvention"
+            echo "Erwartet: 'TARA-XXXX: Beschreibung' oder 'fix:/feat:/... Beschreibung'"
+            echo "Erhalten: $MSG"
+            exit 1
+          fi
+
+      - name: Process-Violation Issue anlegen (bei Fehler)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COMMIT=$(git log -1 --format="%H")
+          MSG=$(git log -1 --format="%s")
+          AUTHOR=$(git log -1 --format="%an")
+          gh issue create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "[PROCESS-VIOLATION] Direkter Push auf ${GITHUB_REF_NAME} ohne PR" \
+            --label "process-violation" \
+            --body "## Prozessverletzung: Direkter Push
+
+**Branch:** \`${GITHUB_REF_NAME}\`
+**Commit:** \`${COMMIT}\`
+**Autor:** ${AUTHOR}
+**Message:** ${MSG}
+
+### Verstoss
+
+Direkter Push auf \`${GITHUB_REF_NAME}\` ohne Pull Request. Verstosst gegen:
+- **P-06**: Root-Verzeichnis-Hygiene
+- **P-07**: Alle Aenderungen nur via Feature-Branch + PR
+
+### Massnahme
+
+1. Pruefe ob fremde Dateien im Root landen
+2. Verwende immer einen Feature-Branch + PR fuer Aenderungen an \`development\`
+3. Prozess-Guard laeuft nur auf PRs \u2014 direkter Push umgeht alle Checks
+
+**Hinweis:** Branch Protection fuer \`development\` sollte aktiviert werden (Admin-Zugriff benoetigt)." || true
