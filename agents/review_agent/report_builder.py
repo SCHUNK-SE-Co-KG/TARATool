@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -25,7 +25,7 @@ def build_full_report(
     Blocking status via P-18).
     """
     session.report["story_id"] = story_id
-    session.report["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    session.report["timestamp"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     session.report["finding_count"] = len(session.report.get("findings", []))
     session.report["merge_decision"] = determine_merge_decision(
         session.report.get("findings", [])
@@ -64,7 +64,7 @@ def save_report(report: dict, output_dir: Path) -> Path:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     story_id = report.get("story_id", "UNKNOWN")
-    timestamp = report.get("timestamp", datetime.utcnow().isoformat() + "Z").replace(":", "-")
+    timestamp = report.get("timestamp", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")).replace(":", "-")
 
     clean_report = {k: v for k, v in report.items() if not k.startswith("_")}
 
