@@ -1,4 +1,4 @@
-# Review-Agent Workflow
+﻿# Review-Agent Workflow
 
 **Version:** 1.0 | **Stand:** 2026-08-02 | **Branch:** Development
 
@@ -145,4 +145,5 @@ python agents/review_agent/runtime_scanner.py \
 
 Wenn keine App-URL übergeben wird, **entfallen R-13–R-30 ohne Fehler** — der Review-Agent
 vermerkt dies im Finding-Bericht als `[SKIP Runtime: kein App-URL übergeben]`.
+
 
