@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Security
+
+- **CVE-2026-31898** (CVSS 8.1, GHSA-7x6v-j9x4-qf24): jsPDF PDF Object Injection via FreeText color — CDN-Version von 4.2.0 auf **4.2.1** aktualisiert (TARA-0076)
+- **CVE-2026-31938** (CVSS 9.6, GHSA-wfv2-pwc8-crg5): jsPDF HTML Injection in New Window paths — CDN-Version von 4.2.0 auf **4.2.1** aktualisiert (TARA-0076)
+
+Referenzen: Bheowulf/TARATool#29, Bheowulf/TARATool#30
+
 <!-- AENDERUNGEN_DEVSES.md (neuester Inhalt) -->
 
 # TaraTool â€“ Vollständige Ã„nderungsübersicht Branch `DevSES`
