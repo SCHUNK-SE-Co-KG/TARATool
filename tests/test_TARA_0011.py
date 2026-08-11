@@ -23,6 +23,21 @@ def _i18n_content():
     return open(I18N_PATH, encoding="utf-8").read()
 
 
+def _i18n_de_block():
+    """Gibt nur den DE-Block aus i18n.js zurück."""
+    content = _i18n_content()
+    # DE-Block liegt zwischen 'de: {' und dem nächsten '\n    en: {'
+    match = re.search(r'\bde:\s*\{(.+?)\n\s{0,4}en:\s*\{', content, re.DOTALL)
+    return match.group(1) if match else ""
+
+
+def _i18n_en_block():
+    """Gibt nur den EN-Block aus i18n.js zurück."""
+    content = _i18n_content()
+    match = re.search(r'\ben:\s*\{(.+?)\n\s*\}\s*;', content, re.DOTALL)
+    return match.group(1) if match else ""
+
+
 def _html_content():
     return open(INDEX_PATH, encoding="utf-8").read()
 
@@ -44,65 +59,49 @@ def test_index_html_exists():
 @pytest.mark.TARA_0011
 def test_prefs_dark_title_key_de():
     """prefs.darkTitle muss im DE-Block stehen."""
-    content = _i18n_content()
-    de_block = content.split("en:")[0]
-    assert "'prefs.darkTitle'" in de_block, "prefs.darkTitle fehlt im DE-Block von i18n.js"
+    assert "'prefs.darkTitle'" in _i18n_de_block(), "prefs.darkTitle fehlt im DE-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_dark_title_key_en():
     """prefs.darkTitle muss im EN-Block stehen."""
-    content = _i18n_content()
-    en_block = content.split("en:")[1] if "en:" in content else ""
-    assert "'prefs.darkTitle'" in en_block, "prefs.darkTitle fehlt im EN-Block von i18n.js"
+    assert "'prefs.darkTitle'" in _i18n_en_block(), "prefs.darkTitle fehlt im EN-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_lang_title_key_de():
     """prefs.langTitle muss im DE-Block stehen."""
-    content = _i18n_content()
-    de_block = content.split("en:")[0]
-    assert "'prefs.langTitle'" in de_block, "prefs.langTitle fehlt im DE-Block von i18n.js"
+    assert "'prefs.langTitle'" in _i18n_de_block(), "prefs.langTitle fehlt im DE-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_lang_title_key_en():
     """prefs.langTitle muss im EN-Block stehen."""
-    content = _i18n_content()
-    en_block = content.split("en:")[1] if "en:" in content else ""
-    assert "'prefs.langTitle'" in en_block, "prefs.langTitle fehlt im EN-Block von i18n.js"
+    assert "'prefs.langTitle'" in _i18n_en_block(), "prefs.langTitle fehlt im EN-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_dark_aria_label_key_de():
     """prefs.darkAriaLabel muss im DE-Block stehen."""
-    content = _i18n_content()
-    de_block = content.split("en:")[0]
-    assert "'prefs.darkAriaLabel'" in de_block, "prefs.darkAriaLabel fehlt im DE-Block von i18n.js"
+    assert "'prefs.darkAriaLabel'" in _i18n_de_block(), "prefs.darkAriaLabel fehlt im DE-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_dark_aria_label_key_en():
     """prefs.darkAriaLabel muss im EN-Block stehen."""
-    content = _i18n_content()
-    en_block = content.split("en:")[1] if "en:" in content else ""
-    assert "'prefs.darkAriaLabel'" in en_block, "prefs.darkAriaLabel fehlt im EN-Block von i18n.js"
+    assert "'prefs.darkAriaLabel'" in _i18n_en_block(), "prefs.darkAriaLabel fehlt im EN-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_lang_aria_label_key_de():
     """prefs.langAriaLabel muss im DE-Block stehen."""
-    content = _i18n_content()
-    de_block = content.split("en:")[0]
-    assert "'prefs.langAriaLabel'" in de_block, "prefs.langAriaLabel fehlt im DE-Block von i18n.js"
+    assert "'prefs.langAriaLabel'" in _i18n_de_block(), "prefs.langAriaLabel fehlt im DE-Block von i18n.js"
 
 
 @pytest.mark.TARA_0011
 def test_prefs_lang_aria_label_key_en():
     """prefs.langAriaLabel muss im EN-Block stehen."""
-    content = _i18n_content()
-    en_block = content.split("en:")[1] if "en:" in content else ""
-    assert "'prefs.langAriaLabel'" in en_block, "prefs.langAriaLabel fehlt im EN-Block von i18n.js"
+    assert "'prefs.langAriaLabel'" in _i18n_en_block(), "prefs.langAriaLabel fehlt im EN-Block von i18n.js"
 
 
 # ── AC-1b: Keine hartkodierte Strings im HTML (title/aria-label der Toggles) ──
@@ -177,9 +176,8 @@ def test_apply_ui_i18n_handles_aria_label():
 @pytest.mark.TARA_0011
 def test_de_en_key_parity():
     """DE und EN müssen exakt dieselben Keys haben."""
-    content = _i18n_content()
-    de_keys = set(re.findall(r"'([a-z][a-z0-9._]+)':", content.split("en:")[0]))
-    en_keys = set(re.findall(r"'([a-z][a-z0-9._]+)':", content.split("en:")[1] if "en:" in content else ""))
+    de_keys = set(re.findall(r"'([a-z][a-z0-9._]+)':", _i18n_de_block()))
+    en_keys = set(re.findall(r"'([a-z][a-z0-9._]+)':", _i18n_en_block()))
     missing_in_en = de_keys - en_keys
     missing_in_de = en_keys - de_keys
     assert not missing_in_en, f"Keys in DE aber nicht EN: {sorted(missing_in_en)}"
