@@ -16,6 +16,10 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 I18N_PATH = os.path.join(REPO_ROOT, "js", "core", "i18n.js")
 INDEX_PATH = os.path.join(REPO_ROOT, "index.html")
 ASSETS_PATH = os.path.join(REPO_ROOT, "js", "modules", "assets.js")
+ATTACK_TREE_EDITOR_PATH = os.path.join(REPO_ROOT, "js", "attack_tree", "attack_tree_editor_v2.js")
+IMPACT_MATRIX_PATH = os.path.join(REPO_ROOT, "js", "modules", "impact_matrix.js")
+RISK_ANALYSIS_PATH = os.path.join(REPO_ROOT, "js", "modules", "risk_analysis.js")
+RESIDUAL_RISK_UI_PATH = os.path.join(REPO_ROOT, "js", "residual_risk", "residual_risk_ui.js")
 REPORT_EXPORT_PATH = os.path.join(REPO_ROOT, "js", "report", "report_export.js")
 REPORT_I18N_PATH = os.path.join(REPO_ROOT, "js", "report", "report_i18n.js")
 
@@ -45,6 +49,10 @@ def _html_content():
 
 def _assets_content():
     return open(ASSETS_PATH, encoding="utf-8").read()
+
+
+def _file_content(path):
+    return open(path, encoding="utf-8").read()
 
 
 # ── Grundvoraussetzungen ──────────────────────────────────────────────────────
@@ -215,6 +223,64 @@ def test_asset_type_edit_uses_raw_localized_value_and_hint():
     assert "getLocalizedField(asset, 'type', undefined, { raw: true })" in content
     assert "syncLocalizedInputHint(typeEl, asset, 'type'" in content
     assert "document.getElementById('assetType').value = asset.type || ''" not in content
+
+
+@pytest.mark.TARA_0011
+def test_attack_tree_node_notes_are_bilingual():
+    """Notizzettel im Angriffbaum müssen note/note_en verwenden."""
+    content = _file_content(ATTACK_TREE_EDITOR_PATH)
+    assert "getLocalizedField(dataObj, 'note', undefined, { raw: true })" in content
+    assert "setLocalizedField(dataObj, 'note'" in content
+    assert "dataObj.note = val || ''" not in content
+
+
+@pytest.mark.TARA_0011
+def test_risk_tree_notes_are_bilingual():
+    """Baumnotizen in der Risikoanalyse müssen notes/notes_en verwenden."""
+    content = _file_content(RISK_ANALYSIS_PATH)
+    assert "getLocalizedField(entry, 'notes', undefined, { raw: true })" in content
+    assert "setLocalizedField(entry, 'notes'" in content
+    assert "entry.notes = (document.getElementById('treeNotesText').value || '').trim()" not in content
+
+
+@pytest.mark.TARA_0011
+def test_impact_comments_are_bilingual():
+    """Impact-Kommentare müssen DE/EN-kompatibel gelesen und gespeichert werden."""
+    content = _file_content(IMPACT_MATRIX_PATH)
+    assert "function _getLocalizedImpactComment" in content
+    assert "function _setLocalizedImpactComment" in content
+    assert "_getLocalizedImpactComment(analysis, assetId, dsId, { raw: true })" in content
+    assert "_setLocalizedImpactComment(analysis, assetId, dsId, comment)" in content
+    assert "analysis.impactComments[assetId][dsId] = comment" not in content
+
+
+@pytest.mark.TARA_0011
+def test_residual_risk_notes_are_bilingual():
+    """Restrisiko-Notizen und Maßnahmen müssen bilingual gespeichert werden."""
+    content = _file_content(RESIDUAL_RISK_UI_PATH)
+    assert "getLocalizedField(rr, 'note'" in content
+    assert "setLocalizedField(leaf.rr, 'note'" in content
+    assert "getLocalizedField(rr, 'securityConcept'" in content
+    assert "setLocalizedField(leaf.rr, 'securityConcept'" in content
+    assert "leaf.rr.note = taNote.value" not in content
+    assert "leaf.rr.securityConcept = taSec.value" not in content
+
+
+@pytest.mark.TARA_0011
+def test_residual_tree_notes_are_bilingual():
+    """Restrisiko-Baumnotizen müssen pro Sprache gespeichert werden."""
+    content = _file_content(RESIDUAL_RISK_UI_PATH)
+    assert "_getLocalizedTreeNote" in content
+    assert "_setLocalizedTreeNote" in content
+    assert "analysis.residualRisk.treeNotes[uid] = ta.value" not in content
+
+
+@pytest.mark.TARA_0011
+def test_impact_matrix_asset_cell_has_description_hover():
+    """Asset-Zellen in der Impact-Matrix müssen die Asset-Beschreibung als Hover anzeigen."""
+    content = _file_content(IMPACT_MATRIX_PATH)
+    assert "const eAssetDescriptionTitle" in content
+    assert "title=\"${eAssetDescriptionTitle}\"" in content
 
 
 # ── AC-2: Sprachumschalter vorhanden ─────────────────────────────────────────
