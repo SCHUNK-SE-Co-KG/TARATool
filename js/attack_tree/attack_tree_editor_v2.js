@@ -30,6 +30,9 @@
       ? getLocalizedField(obj, field, undefined, { raw: true })
       : obj?.[field] || '';
 
+  const _loc = (obj, field) =>
+    typeof getLocalizedField === 'function' ? getLocalizedField(obj, field) : obj?.[field] || '';
+
   const _locSet = (obj, field, value, lang) => {
     if (typeof setLocalizedField === 'function') setLocalizedField(obj, field, value, lang);
     else if (obj) obj[field] = value == null ? '' : String(value);
@@ -63,17 +66,19 @@
       const safeLabel = label || _t('at.untitled');
       titleEl.textContent = _tf('note.title.withLabel', { label: safeLabel });
     }
-    textEl.value = dataObj.note || '';
+    textEl.value = getLocalizedField(dataObj, 'note', undefined, { raw: true });
+    _syncHint(textEl, dataObj, 'note', '');
     modal.style.display = 'block';
     textEl.focus();
     saveBtn.onclick = () => {
       const val = textEl.value.trim();
-      dataObj.note = val || '';
+      setLocalizedField(dataObj, 'note', val);
       modal.style.display = 'none';
       // Update icon state
       document.querySelectorAll(`.at-note-btn[data-note-uid="${dataObj.uid}"]`).forEach((btn) => {
-        btn.classList.toggle('has-note', !!val);
-        btn.title = val ? _t('at.note.edit') : _t('at.note.add');
+        const hasNote = !!(_loc(dataObj, 'note') || '').trim();
+        btn.classList.toggle('has-note', hasNote);
+        btn.title = hasNote ? _t('at.note.edit') : _t('at.note.add');
       });
     };
   }
@@ -82,7 +87,7 @@
   function _createNoteBtn(dataObj, label) {
     const btn = document.createElement('button');
     btn.type = 'button';
-    const hasNote = !!dataObj.note;
+    const hasNote = !!(_loc(dataObj, 'note') || '').trim();
     btn.className = `at-note-btn${hasNote ? ' has-note' : ''}`;
     btn.dataset.noteUid = dataObj.uid;
     btn.title = hasNote ? _t('at.note.edit') : _t('at.note.add');
