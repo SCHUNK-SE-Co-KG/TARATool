@@ -15,6 +15,7 @@ import pytest
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 I18N_PATH = os.path.join(REPO_ROOT, "js", "core", "i18n.js")
 INDEX_PATH = os.path.join(REPO_ROOT, "index.html")
+ASSETS_PATH = os.path.join(REPO_ROOT, "js", "modules", "assets.js")
 REPORT_EXPORT_PATH = os.path.join(REPO_ROOT, "js", "report", "report_export.js")
 REPORT_I18N_PATH = os.path.join(REPO_ROOT, "js", "report", "report_i18n.js")
 
@@ -40,6 +41,10 @@ def _i18n_en_block():
 
 def _html_content():
     return open(INDEX_PATH, encoding="utf-8").read()
+
+
+def _assets_content():
+    return open(ASSETS_PATH, encoding="utf-8").read()
 
 
 # ── Grundvoraussetzungen ──────────────────────────────────────────────────────
@@ -182,6 +187,34 @@ def test_de_en_key_parity():
     missing_in_de = en_keys - de_keys
     assert not missing_in_en, f"Keys in DE aber nicht EN: {sorted(missing_in_en)}"
     assert not missing_in_de, f"Keys in EN aber nicht DE: {sorted(missing_in_de)}"
+
+
+# ── AC-1e: Asset-Typ ist bilingualer User-Text ───────────────────────────────
+
+@pytest.mark.TARA_0011
+def test_asset_type_render_uses_localized_field():
+    """Asset-Typ darf nicht roh aus asset.type gerendert werden."""
+    content = _assets_content()
+    assert "_loc(asset, 'type')" in content, "renderAssets muss asset.type via getLocalizedField lesen"
+    assert "escapeHtml(asset.type || '-')" not in content, "renderAssets rendert asset.type noch hartkodiert"
+
+
+@pytest.mark.TARA_0011
+def test_asset_type_save_uses_set_localized_field():
+    """Asset-Typ muss sprachspezifisch gespeichert werden."""
+    content = _assets_content()
+    assert "setLocalizedField(updated, 'type'" in content, "Edit speichert type nicht bilingual"
+    assert "setLocalizedField(created, 'type'" in content, "New speichert type nicht bilingual"
+    assert "type: typeField.value" not in content, "saveAsset schreibt type noch roh"
+
+
+@pytest.mark.TARA_0011
+def test_asset_type_edit_uses_raw_localized_value_and_hint():
+    """Asset-Typ-Input muss die aktuelle Sprache editieren und DE-Hinweis zeigen können."""
+    content = _assets_content()
+    assert "getLocalizedField(asset, 'type', undefined, { raw: true })" in content
+    assert "syncLocalizedInputHint(typeEl, asset, 'type'" in content
+    assert "document.getElementById('assetType').value = asset.type || ''" not in content
 
 
 # ── AC-2: Sprachumschalter vorhanden ─────────────────────────────────────────
