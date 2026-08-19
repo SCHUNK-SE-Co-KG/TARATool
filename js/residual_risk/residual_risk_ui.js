@@ -129,8 +129,8 @@
   function rrLeafComplete(leaf) {
     const rr = leaf?.rr || {};
     const treatment = (rr.treatment || '').trim();
-    const note = (rr.note || '').trim();
-    const sec = (rr.securityConcept || '').trim();
+    const note = (rrLoc(rr, 'note') || '').trim();
+    const sec = (rrLoc(rr, 'securityConcept') || '').trim();
 
     if (!treatment) return false;
     if (treatment === 'Akzeptiert' || treatment === 'Delegiert') {
@@ -217,6 +217,47 @@
       return getLocalizedField(obj, field) || '';
     }
     return obj[field] != null ? String(obj[field]) : '';
+  }
+
+  function rrLocRaw(obj, field) {
+    if (!obj || !field) return '';
+    if (typeof getLocalizedField === 'function') {
+      return getLocalizedField(obj, field, undefined, { raw: true }) || '';
+    }
+    return obj[field] != null ? String(obj[field]) : '';
+  }
+
+  function rrSetLoc(obj, field, value) {
+    if (!obj || !field) return;
+    if (typeof setLocalizedField === 'function') setLocalizedField(obj, field, value);
+    else obj[field] = value == null ? '' : String(value);
+  }
+
+  function _treeNoteEntry(notesDict, uid) {
+    const value = notesDict && uid ? notesDict[uid] : null;
+    if (!value) return null;
+    if (typeof value === 'object') return value;
+    return { text: String(value) };
+  }
+
+  function _getLocalizedTreeNote(notesDict, uid, opts) {
+    const entry = _treeNoteEntry(notesDict, uid);
+    if (!entry) return '';
+    if (typeof getLocalizedField === 'function') {
+      return getLocalizedField(entry, 'text', undefined, opts || undefined);
+    }
+    return entry.text || '';
+  }
+
+  function _setLocalizedTreeNote(notesDict, uid, value) {
+    if (!notesDict || !uid) return;
+    const entry = _treeNoteEntry(notesDict, uid) || { text: '' };
+    if (typeof setLocalizedField === 'function') setLocalizedField(entry, 'text', value);
+    else entry.text = value == null ? '' : String(value);
+    const hasDe = !!String(entry.text || '').trim();
+    const hasEn = !!String(entry.text_en || '').trim();
+    if (hasDe || hasEn) notesDict[uid] = entry;
+    else delete notesDict[uid];
   }
 
   function rrRootLabel(entry) {
@@ -349,8 +390,12 @@
                             const lbl = rrBuildLeafLabel(meta);
                             const rr = leaf.rr || {};
                             const treatment = rrEscapeHtml(rr.treatment || '');
-                            const note = rrEscapeHtml(rr.note || '');
-                            const sec = rrEscapeHtml(rr.securityConcept || '');
+                            const note = rrEscapeHtml(
+                              getLocalizedField(rr, 'note', undefined, { raw: true })
+                            );
+                            const sec = rrEscapeHtml(
+                              getLocalizedField(rr, 'securityConcept', undefined, { raw: true })
+                            );
                             const isMit = rr.treatment === 'Mitigiert';
                             const complete = rrLeafComplete(leaf);
 
@@ -423,6 +468,11 @@
         const taSec = tr.querySelector('.rr-security');
         const kstuSelects = tr.querySelectorAll('select.rr-kstu');
 
+        if (typeof syncLocalizedInputHint === 'function') {
+          syncLocalizedInputHint(taNote, leaf.rr, 'note', '');
+          syncLocalizedInputHint(taSec, leaf.rr, 'securityConcept', '');
+        }
+
         const persist = () => {
           // Keep legacy dict in sync (needed for migration of older data formats)
           try {
@@ -450,7 +500,7 @@
 
         if (taNote) {
           taNote.addEventListener('input', () => {
-            leaf.rr.note = taNote.value;
+            setLocalizedField(leaf.rr, 'note', taNote.value);
             rrUpdateRowUI(tr, leaf);
             persist();
           });
@@ -458,7 +508,7 @@
 
         if (taSec) {
           taSec.addEventListener('input', () => {
-            leaf.rr.securityConcept = taSec.value;
+            setLocalizedField(leaf.rr, 'securityConcept', taSec.value);
             rrUpdateRowUI(tr, leaf);
             persist();
           });
@@ -627,10 +677,7 @@
 
     // Tree note (required for Critical/High in residual risk)
     const notesDict = analysis?.residualRisk?.treeNotes || {};
-    const treeNote =
-      notesDict && entry?.uid && notesDict[entry.uid] !== undefined
-        ? String(notesDict[entry.uid] || '')
-        : '';
+    const treeNote = _getLocalizedTreeNote(notesDict, entry?.uid, { raw: true });
     const noteRequired = resMeta.label === 'Kritisch' || resMeta.label === 'Hoch';
 
     // Completion check: all leaves + required note if applicable
@@ -737,13 +784,18 @@
 
     // Persist tree notes + required logic + update check
     container.querySelectorAll('textarea.rr-tree-note').forEach((ta) => {
+      const noteEntry =
+        _treeNoteEntry(analysis.residualRisk?.treeNotes || {}, ta.dataset.rrTreeUid) || {};
+      if (typeof syncLocalizedInputHint === 'function') {
+        syncLocalizedInputHint(ta, noteEntry, 'text', '');
+      }
       ta.addEventListener('input', () => {
         const uid = ta.dataset.rrTreeUid;
         if (!uid) return;
         if (!analysis.residualRisk)
           analysis.residualRisk = { leaves: {}, entries: [], treeNotes: {} };
         if (!analysis.residualRisk.treeNotes) analysis.residualRisk.treeNotes = {};
-        analysis.residualRisk.treeNotes[uid] = ta.value;
+        _setLocalizedTreeNote(analysis.residualRisk.treeNotes, uid, ta.value);
 
         // Required marker
         const required = ta.dataset.rrNoteRequired === '1';
