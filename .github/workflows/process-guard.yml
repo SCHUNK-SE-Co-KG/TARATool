@@ -69,7 +69,7 @@ jobs:
           SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
           SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
             const branch = context.payload.pull_request.head.ref;
             const match = branch.match(/TARA-(\d{4})/);

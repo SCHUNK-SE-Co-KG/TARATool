@@ -68,3 +68,14 @@ def test_process_guard_has_project_read_permissions():
     content = _read_workflow_text()
     assert re.search(r"repository-projects:\s*read", content), \
         "repository-projects: read fehlt in den Workflow-Permissions"
+
+
+@pytest.mark.TARA_0083
+def test_process_guard_board_check_uses_project_token():
+    """Der Board-Status-Check muss ein PAT mit Projects-Scope (PROJECT_TOKEN) verwenden,
+    da der Standard-GITHUB_TOKEN keinen GraphQL-Zugriff auf organisationseigene
+    Projects-V2-Boards hat ('Resource not accessible by integration')."""
+    content = _read_workflow_text()
+    board_section = content.split("P-02/P-09")[1].split("P-03")[0]
+    assert "secrets.PROJECT_TOKEN" in board_section, \
+        "Board-Status-Check muss secrets.PROJECT_TOKEN statt secrets.GITHUB_TOKEN verwenden"
