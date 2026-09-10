@@ -63,7 +63,7 @@ jobs:
           SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
           DONE_OPTION:  "98236657"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
             const issueTitle  = context.payload.issue.title;

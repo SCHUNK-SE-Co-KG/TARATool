@@ -34,6 +34,18 @@ def test_po_approve_workflow_has_no_bh_project_env():
     content = open(path, encoding='utf-8').read()
     assert 'BH_PROJECT' not in content, 'BH_PROJECT (Bheowulf-Board) darf nicht mehr referenziert werden'
     assert 'BH_FIELD' not in content, 'BH_FIELD (Bheowulf-Board) darf nicht mehr referenziert werden'
+
+
+@pytest.mark.TARA_0088
+def test_po_approve_workflow_uses_project_token_for_board_write():
+    """Der board-schreibende Schritt ('Freigabe verarbeiten') muss secrets.PROJECT_TOKEN
+    verwenden, da der Standard-GITHUB_TOKEN keinen GraphQL-Zugriff auf organisationseigene
+    Projects-V2-Boards hat ('Resource not accessible by integration')."""
+    path = os.path.join(REPO_ROOT, '.github', 'workflows', 'po-approve.yml')
+    content = open(path, encoding='utf-8').read()
+    board_write_section = content.split('Freigabe verarbeiten')[1].split('Keine Berechtigung')[0]
+    assert 'secrets.PROJECT_TOKEN' in board_write_section, \
+        "Schritt 'Freigabe verarbeiten' muss secrets.PROJECT_TOKEN statt secrets.GITHUB_TOKEN verwenden"
     assert 'SK_PROJECT' in content or 'PVT_kwDOBu4dv84BfbaR' in content, \
         'SCHUNK-Projekt muss weiterhin referenziert werden'
 
