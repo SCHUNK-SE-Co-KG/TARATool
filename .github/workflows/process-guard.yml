@@ -118,7 +118,8 @@ jobs:
           # Now verify the test actually FAILED at that commit via git worktree
           git worktree add /tmp/red-phase "$FIRST_TEST_COMMIT" 2>/dev/null
           cd /tmp/red-phase
-          pip install pytest --quiet 2>/dev/null
+          pip install pytest pytest-timeout --quiet 2>/dev/null
+          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet 2>/dev/null
           [ -f requirements.txt ] && pip install -r requirements.txt --quiet 2>/dev/null
           pytest "$TESTFILE" --noconftest -q 2>&1; RED_EXIT=$?
           cd -
@@ -135,7 +136,8 @@ jobs:
 
       - name: Python-Umgebung einrichten (fuer P-06)
         run: |
-          pip install pytest --quiet
+          pip install pytest pytest-timeout --quiet
+          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet || true
           [ -f requirements.txt ] && pip install -r requirements.txt --quiet || true
 
       - name: P-06 – Story-Tests gruen
