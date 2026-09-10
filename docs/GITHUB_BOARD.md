@@ -24,7 +24,7 @@ Alle IDs für programmatischen Zugriff via `gh api graphql`.
 | **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME` |
 
 | Status          | Option-ID  | Bedeutung                                          |
-| --------------- | ---------- | --------------------------------------------------- |
+| --------------- | ---------- | -------------------------------------------------- |
 | **Todo**        | `f75ad846` | Noch nicht begonnen                                |
 | **In Progress** | `47fc9ee4` | Dev-Agent arbeitet daran                           |
 | **inReview**    | `2338665f` | Review-Agent aktiv / PR offen                      |
