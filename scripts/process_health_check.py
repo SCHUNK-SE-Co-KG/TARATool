@@ -5,9 +5,8 @@ TARATool Process Health Check
 ==============================
 Prüft den vollständigen Prozesszustand:
   1. Dokumentenvollständigkeit (alle Pflichtdokumente vorhanden + Pflichtabschnitte)
-  2. GitHub Project Board Sync (Bheowulf <-> SCHUNK)
-  3. Board Status-Konsistenz (In Progress, Todo, Done stimmen überein)
-  4. Offene Blocking-Issues
+  2. Board Status-Uebersicht (SCHUNK Project Board)
+  3. Offene Blocking-Issues
 
 Exit-Codes:
   0 = alles OK
@@ -63,7 +62,7 @@ def fetch_board(owner: str, project: int, limit: int = 100) -> list[dict]:
 
 def fetch_issues(label: str, state: str = "open") -> list[dict]:
     result = subprocess.run(
-        ["gh", "issue", "list", "--repo", "Bheowulf/TARATool",
+        ["gh", "issue", "list", "--repo", "SCHUNK-SE-Co-KG/TARATool",
          "--label", label, "--state", state,
          "--json", "number,title,labels,state", "--limit", "50"],
         capture_output=True, check=False
@@ -87,7 +86,6 @@ REQUIRED_DOCS = {
         "P-01 bis P-16",
     ],
     "docs/GITHUB_BOARD.md": [
-        "PVT_kwHOBLN4284BfLtb",   # Bheowulf Project ID
         "PVT_kwDOBu4dv84BfbaR",   # SCHUNK Project ID
         "PVTSSF_lADOBu4dv84BfbaRzhZuYME",  # SCHUNK Status field
     ],
@@ -117,9 +115,6 @@ REQUIRED_DOCS = {
         "Epic-Completion",
         "Child Stories",
     ],
-    ".github/workflows/mirror-sync.yml": [
-        "--limit 100",
-    ],
     "CONTRIBUTING.md": [
         "TDD",
         "feature/TARA",
@@ -145,90 +140,41 @@ for rel_path, required_sections in REQUIRED_DOCS.items():
                 info(f"  missing: {s_m}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 2. BOARD SYNC (Bheowulf <-> SCHUNK)
+# 2. BOARD STATUS-UEBERSICHT (SCHUNK)
 # ═══════════════════════════════════════════════════════════════════════════════
-section("2 · Board-Sync Bheowulf <-> SCHUNK")
+section("2 · Board Status-Uebersicht (SCHUNK)")
 
 if NO_BOARD:
     print("  [SKIP] --no-board flag gesetzt")
 else:
     SKIP_TITLES = ["CVE Monthly Report"]
 
-    print("  Lade Bheowulf Project #1...")
-    bh = fetch_board("Bheowulf", 1)
     print("  Lade SCHUNK-SE-Co-KG Project #4...")
     sk = fetch_board("SCHUNK-SE-Co-KG", 4)
+    sk_active = [i for i in sk if not any(s in i.get("title","") for s in SKIP_TITLES)]
 
-    ok(f"Bheowulf: {len(bh)} Items  |  SCHUNK: {len(sk)} Items")
-
-    bh_active = [i for i in bh if not any(s in i.get("title","") for s in SKIP_TITLES)]
-    sk_norm   = {i["title"].replace("[MIRROR] ","").strip() for i in sk}
-    bh_norm   = {i["title"].strip() for i in bh_active}
-
-    # Items in BH nicht in SCHUNK
-    missing_in_sk = [i for i in bh_active if i["title"].strip() not in sk_norm]
-    if missing_in_sk:
-        fail(f"{len(missing_in_sk)} Items in Bheowulf NICHT in SCHUNK:")
-        for i in missing_in_sk[:5]:
-            info(f"  [{i.get('status','?')}] {safe(i['title'])[:70]}")
-        if len(missing_in_sk) > 5:
-            info(f"  ... und {len(missing_in_sk)-5} weitere")
-    else:
-        ok("Alle Bheowulf-Items (ohne CVE Monthly Reports) in SCHUNK vorhanden")
-
-    # ── 3. STATUS-KONSISTENZ ──────────────────────────────────────────────────
-    section("3 · Board Status-Konsistenz")
-
-    bh_by_title = {i["title"].strip(): i for i in bh_active}
-    sk_by_norm  = {i["title"].replace("[MIRROR] ","").strip(): i for i in sk}
-
-    status_mismatches = []
-    for title, bh_item in bh_by_title.items():
-        sk_item = sk_by_norm.get(title)
-        if not sk_item:
-            continue
-        bh_st = bh_item.get("status") or ""
-        sk_st = sk_item.get("status") or ""
-        if bh_st != sk_st:
-            status_mismatches.append((title, bh_st, sk_st))
-
-    if status_mismatches:
-        warn(f"{len(status_mismatches)} Status-Abweichungen BH <-> SCHUNK:")
-        for title, bh_st, sk_st in status_mismatches:
-            info(f"  BH={bh_st:12s} SCHUNK={sk_st:12s}  {safe(title)[:55]}")
-    else:
-        ok("Alle Status-Felder identisch (BH == SCHUNK)")
+    ok(f"SCHUNK: {len(sk_active)} Items")
 
     # Status-Übersicht
-    bh_counts = Counter(i.get("status","") for i in bh_active)
-    sk_counts = Counter(i.get("status","") for i in sk)
+    sk_counts = Counter(i.get("status","") for i in sk_active)
     print()
-    print(f"  {'Status':<14} {'Bheowulf':>10} {'SCHUNK':>8}")
-    print(f"  {'-'*34}")
-    all_statuses = sorted(set(list(bh_counts.keys()) + list(sk_counts.keys())))
-    for st in all_statuses:
-        b = bh_counts.get(st, 0)
-        s = sk_counts.get(st, 0)
-        marker = " <--" if b != s else ""
-        print(f"  {st:<14} {b:>10} {s:>8}{marker}")
+    print(f"  {'Status':<14} {'SCHUNK':>8}")
+    print(f"  {'-'*24}")
+    for st in sorted(sk_counts.keys()):
+        print(f"  {st:<14} {sk_counts[st]:>8}")
 
     # In Progress explizit prüfen
-    bh_ip = [i for i in bh_active if i.get("status") == "In Progress"]
-    sk_ip = [i for i in sk if i.get("status") == "In Progress"]
+    sk_ip = [i for i in sk_active if i.get("status") == "In Progress"]
     print()
-    if bh_ip:
-        ok(f"In Progress auf Bheowulf: {len(bh_ip)}")
-        for i in bh_ip:
-            info(f"  {safe(i['title'])[:72]}")
     if sk_ip:
         ok(f"In Progress auf SCHUNK: {len(sk_ip)}")
         for i in sk_ip:
             info(f"  {safe(i['title'])[:72]}")
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 4. OFFENE BLOCKING-ISSUES
+# 3. OFFENE BLOCKING-ISSUES
 # ═══════════════════════════════════════════════════════════════════════════════
-section("4 · Offene Blocking-Issues")
+section("3 · Offene Blocking-Issues")
 
 blocking = fetch_issues("blocked")
 process_findings = fetch_issues("review-finding")

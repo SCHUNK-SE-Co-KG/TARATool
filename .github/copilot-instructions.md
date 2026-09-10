@@ -11,14 +11,11 @@
 | | |
 |-|-|
 | **Lokales Verzeichnis** | Clone des `development`-Branches |
-| **Primaeres Repo** | https://github.com/Bheowulf/TARATool |
-| **Mirror-Repo (SCHUNK)** | https://github.com/SCHUNK-SE-Co-KG/TARATool |
-| **Projektboard (Primary)** | https://github.com/users/Bheowulf/projects/1 (ID: `PVT_kwHOBLN4284BfLtb`) |
-| **Projektboard (Mirror)** | https://github.com/orgs/SCHUNK-SE-Co-KG/projects/4 |
+| **Repo** | https://github.com/SCHUNK-SE-Co-KG/TARATool |
+| **Projektboard** | https://github.com/orgs/SCHUNK-SE-Co-KG/projects/4 |
 | **Aktiver Branch** | `development` |
 
-Commits erfolgen auf `Bheowulf/TARATool`. Der Mirror wird automatisch synchronisiert.
-Board-Status wird ausschliesslich ueber das **Bheowulf-Board #1** gelesen und geschrieben.
+Alle Commits, PRs und Board-Operationen erfolgen ausschliesslich auf `SCHUNK-SE-Co-KG/TARATool`.
 
 ---
 
@@ -31,7 +28,6 @@ Board-Status wird ausschliesslich ueber das **Bheowulf-Board #1** gelesen und ge
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
 | **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18 vollstaendig, Pre-Transition-Checks |
 | **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Severity, Finding-Framework |
-| **Mirror-Sync** | `docs/MIRROR_SYNC_GUIDE.md` | Board-Sync Bheowulf <-> SCHUNK |
 
 > **Beim Session-Start diese Dateien lesen**, bevor mit der Arbeit begonnen wird.
 
@@ -39,8 +35,8 @@ Board-Status wird ausschliesslich ueber das **Bheowulf-Board #1** gelesen und ge
 
 ## Wer ist der Product Owner?
 
-Der PO ist der GitHub-User mit **Schreibrechten auf beide Repos** (`Bheowulf/TARATool`
-und `SCHUNK-SE-Co-KG/TARATool`). Der aktive Chat-Gespraechspartner ist der PO.
+Der PO ist der GitHub-User mit **Schreibrechten auf** `SCHUNK-SE-Co-KG/TARATool`.
+Der aktive Chat-Gespraechspartner ist der PO.
 
 ---
 

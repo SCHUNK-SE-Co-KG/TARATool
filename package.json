@@ -15,16 +15,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Bheowulf/TARATool.git"
+    "url": "git+https://github.com/SCHUNK-SE-Co-KG/TARATool.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/Bheowulf/TARATool/issues"
+    "url": "https://github.com/SCHUNK-SE-Co-KG/TARATool/issues"
   },
-  "homepage": "https://github.com/Bheowulf/TARATool#readme",
+  "homepage": "https://github.com/SCHUNK-SE-Co-KG/TARATool#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.8.0",
