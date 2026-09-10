@@ -27,7 +27,7 @@ Entwicklung starten möchten.
 
 | Rolle                  | Wer                | Aufgaben                                                   |
 | ---------------------- | ------------------ | ---------------------------------------------------------- |
-| **Product Owner (PO)** | @Bheowulf          | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen |
+| **Product Owner (PO)** | @NicoPeperSchunk   | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen |
 | **Dev-Agent**          | GitHub Copilot CLI | Implementierung, TDD, Commits, PRs                         |
 | **Review-Agent**       | Copilot Sub-Agent  | Code-Review, Finding-Issues erstellen                      |
 | **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prüfen (P-01â€“P-15)                   |
@@ -69,26 +69,26 @@ Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
 ### Repository
 
 ```
-https://github.com/Bheowulf/TARATool
-Branch: Development  â† aktiver Entwicklungszweig
-Branch: main         â† Stable Releases
+https://github.com/SCHUNK-SE-Co-KG/TARATool
+Branch: development  ← aktiver Entwicklungszweig
+Branch: main         ← Stable Releases
 ```
 
 ### Branch-Struktur
 
 ```
 main
-  â””â”€â”€ Development          â† Integration, immer lauffähig
-        â””â”€â”€ feature/TARA-XXXX-kurzbeschreibung
+  └── development          ← Integration, immer lauffähig
+        └── feature/TARA-XXXX-kurzbeschreibung
 ```
 
-**Regel:** Kein direktes Pushen auf `main` oder `Development`.
+**Regel:** Kein direktes Pushen auf `main` oder `development`.
 Jede Story bekommt einen eigenen Feature-Branch.
 
 ### GitHub Project Board
 
-Board: **TARATool Ãœberarbeitung**
-â†’ https://github.com/users/Bheowulf/projects/3
+Board: **TARATool**
+→ https://github.com/orgs/SCHUNK-SE-Co-KG/projects/4
 
 Technische IDs für API-Zugriff: siehe `docs/GITHUB_BOARD.md`
 
