@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-03/P-04/P-06/P-07/P-08/P-12/P-13)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-06/P-07/P-08/P-09/P-12/P-13)
 
 on:
   pull_request:
@@ -6,6 +6,11 @@ on:
     branches:
       - development
       - main
+
+permissions:
+  contents: read
+  issues: read
+  repository-projects: read
 
 jobs:
   process-guard:
@@ -54,6 +59,76 @@ jobs:
           else
             exit 1
           fi
+
+      - name: P-02/P-09 – Board-Status vor PR-Oeffnung
+        id: board_status
+        if: |
+          !(github.head_ref == 'development' && github.base_ref == 'main')
+        uses: actions/github-script@v7
+        env:
+          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            const match = branch.match(/TARA-(\d{4})/);
+            if (!match) {
+              console.log('INFO P-02/P-09: Kein TARA-ID im Branch – Check uebersprungen');
+              return;
+            }
+            const taraId = `TARA-${match[1]}`;
+            const projectId = process.env.SK_PROJECT;
+
+            const query = `
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 100) {
+                      nodes {
+                        content { ... on Issue { title number } }
+                        fieldValues(first: 10) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              name
+                              field { ... on ProjectV2SingleSelectField { name } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }`;
+            const result = await github.graphql(query, { projectId });
+            const items = result.node.items.nodes;
+            const match_item = items.find(
+              item => item.content && item.content.title && item.content.title.includes(taraId)
+            );
+
+            if (!match_item) {
+              console.log(`INFO P-02/P-09: Kein Board-Item fuer ${taraId} gefunden – Check uebersprungen`);
+              return;
+            }
+
+            const statusField = match_item.fieldValues.nodes.find(
+              fv => fv.field && fv.field.name === 'Status'
+            );
+            const currentStatus = statusField ? statusField.name : 'unknown';
+            console.log(`${taraId}: aktueller Board-Status = ${currentStatus}`);
+
+            // P-02: Status muss VOR Arbeitsbeginn auf "In Progress" gesetzt worden sein.
+            // P-09: Status muss VOR PR-Oeffnung auf "inReview" gesetzt worden sein.
+            // Naeherungsweise CI-Pruefung: sobald ein PR existiert (also Commits + Review
+            // angefragt sind), darf der Status nicht mehr "Todo" sein.
+            if (currentStatus === 'Todo') {
+              core.setFailed(
+                `FAIL P-02/P-09: Issue fuer ${taraId} steht noch auf Status "Todo", obwohl bereits ein PR ` +
+                `existiert. Erwartet: mindestens "In Progress" (P-02) bzw. "inReview" (P-09) VOR PR-Oeffnung.`
+              );
+              return;
+            }
+            console.log(`OK P-02/P-09: Board-Status "${currentStatus}" ist plausibel fuer einen offenen PR`);
 
       - name: P-03 – TDD-Testdatei vorhanden
         run: |
