@@ -267,3 +267,12 @@ function openAboutModal() {
 
   modal.style.display = 'block';
 }
+
+/**
+ * Closes the About modal.
+ */
+function closeAboutModal() {
+  const modal = document.getElementById('aboutModal');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
