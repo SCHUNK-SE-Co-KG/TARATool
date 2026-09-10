@@ -5,7 +5,7 @@ Aufruf durch den Dev-Agent am Ende einer Story (nach Schritt 4 im Workflow):
 
     python agents/review_agent/run_review.py \\
         --story TARA-XXXX \\
-        --repo Bheowulf/TARATool \\
+        --repo SCHUNK-SE-Co-KG/TARATool \\
         --url file:///path/to/index.html \\
         --output security/reports/
 
@@ -44,7 +44,7 @@ def parse_args() -> argparse.Namespace:
         description="TARATool Review-Agent – fuehrt R-01-R-30 Checks durch und legt GitHub Issues an."
     )
     p.add_argument("--story", required=True, help="TARA-ID, z.B. TARA-0026")
-    p.add_argument("--repo", required=True, help="GitHub-Repo, z.B. Bheowulf/TARATool")
+    p.add_argument("--repo", required=True, help="GitHub-Repo, z.B. SCHUNK-SE-Co-KG/TARATool")
     p.add_argument("--url", default=None, help="App-URL fuer Runtime-Checks (file:// oder http://)")
     p.add_argument("--output", default="security/reports", help="Ausgabeverzeichnis fuer Reports")
     p.add_argument("--no-issues", action="store_true", help="GitHub Issues NICHT anlegen (dry-run)")

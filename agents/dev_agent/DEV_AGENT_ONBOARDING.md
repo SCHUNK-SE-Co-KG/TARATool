@@ -23,14 +23,14 @@ Folgende Tools müssen auf dem System installiert sein:
 ## Schritt 1 â€“ Repository klonen
 
 ```bash
-git clone git@github.com:Bheowulf/TARATool.git
+git clone git@github.com:SCHUNK-SE-Co-KG/TARATool.git
 cd TARATool
 git checkout development
 git pull origin development
 ```
 
 > **macOS/Linux:** SSH-Key muss in GitHub hinterlegt sein, oder alternativ HTTPS nutzen:
-> `git clone https://github.com/Bheowulf/TARATool.git`
+> `git clone https://github.com/SCHUNK-SE-Co-KG/TARATool.git`
 
 ---
 
@@ -133,7 +133,7 @@ gh issue list --label story --state open --limit 50
 
 # Nächste Story im Status "Todo" auf dem Board (via API)
 gh api graphql -f query='{
-  node(id: "PVT_kwHOBLN4284BfLtb") {
+  node(id: "PVT_kwDOBu4dv84BfbaR") {
     ... on ProjectV2 {
       items(first: 50) {
         nodes {
