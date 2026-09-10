@@ -34,7 +34,12 @@ function renderAssets(analysis) {
     const descRaw = _loc(asset, 'description');
     const eName =
       typeof localizeParenHtml === 'function' ? localizeParenHtml(name) : escapeHtml(name);
-    const eType = escapeHtml(asset.type || '-');
+    const typeRaw = _loc(asset, 'type');
+    const eType = typeRaw
+      ? typeof localizeParenHtml === 'function'
+        ? localizeParenHtml(typeRaw)
+        : escapeHtml(typeRaw)
+      : escapeHtml('-');
     const eDesc = descRaw
       ? typeof localizeParenHtml === 'function'
         ? localizeParenHtml(descRaw.substring(0, 100) + (descRaw.length > 100 ? '...' : ''))
@@ -116,7 +121,6 @@ function saveAsset(e) {
     if (index !== -1) {
       const updated = {
         ...analysis.assets[index],
-        type: typeField.value,
         confidentiality: cia.c,
         integrity: cia.i,
         authenticity: cia.a,
@@ -124,9 +128,11 @@ function saveAsset(e) {
       };
       if (typeof setLocalizedField === 'function') {
         setLocalizedField(updated, 'name', name);
+        setLocalizedField(updated, 'type', typeField.value);
         setLocalizedField(updated, 'description', descField.value);
       } else {
         updated.name = name;
+        updated.type = typeField.value;
         updated.description = descField.value;
       }
       analysis.assets[index] = updated;
@@ -146,7 +152,7 @@ function saveAsset(e) {
     const created = {
       id: newId,
       name: '',
-      type: typeField.value,
+      type: '',
       description: '',
       confidentiality: cia.c,
       integrity: cia.i,
@@ -155,9 +161,11 @@ function saveAsset(e) {
     };
     if (typeof setLocalizedField === 'function') {
       setLocalizedField(created, 'name', name);
+      setLocalizedField(created, 'type', typeField.value);
       setLocalizedField(created, 'description', descField.value);
     } else {
       created.name = name;
+      created.type = typeField.value;
       created.description = descField.value;
     }
     analysis.assets.push(created);
@@ -194,10 +202,17 @@ window.editAsset = (id) => {
     typeof getLocalizedField === 'function'
       ? getLocalizedField(asset, 'description', undefined, { raw: true })
       : asset.description || '';
+  const typeEl = document.getElementById('assetType');
+  const typeRaw =
+    typeof getLocalizedField === 'function'
+      ? getLocalizedField(asset, 'type', undefined, { raw: true })
+      : asset.type || '';
   nameEl.value = nameRaw;
+  typeEl.value = typeRaw;
   descEl.value = descRaw;
   if (typeof syncLocalizedInputHint === 'function') {
     syncLocalizedInputHint(nameEl, asset, 'name', '');
+    syncLocalizedInputHint(typeEl, asset, 'type', '');
     syncLocalizedInputHint(descEl, asset, 'description', '');
   } else {
     const lang = (window.TaraPrefs && TaraPrefs.getLang()) || 'de';
@@ -212,10 +227,10 @@ window.editAsset = (id) => {
       descEl.placeholder = deDesc ? `(${deDesc})` : '';
     } else {
       nameEl.placeholder = '';
+      typeEl.placeholder = '';
       descEl.placeholder = '';
     }
   }
-  document.getElementById('assetType').value = asset.type || '';
 
   // Set radio buttons
   const setRadio = (radioName, val) => {

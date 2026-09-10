@@ -19,6 +19,10 @@
       'nav.delete': 'Analyse löschen',
       'prefs.dark': 'Dark',
       'prefs.lang': 'EN',
+      'prefs.darkTitle': 'Dunkelmodus',
+      'prefs.langTitle': 'Sprache',
+      'prefs.darkAriaLabel': 'Dunkelmodus umschalten',
+      'prefs.langAriaLabel': 'Sprache wechseln',
       'tab.overview': 'Übersicht',
       'tab.assets': 'Assets',
       'tab.ds': 'Schadensszenarien',
@@ -379,6 +383,10 @@
       'nav.delete': 'Delete analysis',
       'prefs.dark': 'Dark',
       'prefs.lang': 'EN',
+      'prefs.darkTitle': 'Dark Mode',
+      'prefs.langTitle': 'Language',
+      'prefs.darkAriaLabel': 'Toggle dark mode',
+      'prefs.langAriaLabel': 'Switch language',
       'tab.overview': 'Overview',
       'tab.assets': 'Assets',
       'tab.ds': 'Damage scenarios',
@@ -775,6 +783,10 @@
     document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
       const key = el.getAttribute('data-i18n-placeholder');
       if (key) el.placeholder = t(key, l);
+    });
+    document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+      const key = el.getAttribute('data-i18n-aria-label');
+      if (key) el.setAttribute('aria-label', t(key, l));
     });
   }
 

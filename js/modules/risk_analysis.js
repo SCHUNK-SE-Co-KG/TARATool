@@ -138,7 +138,11 @@ function renderExistingRiskEntries(analysis) {
       typeof localizeParenHtml === 'function'
         ? localizeParenHtml(_rootLabel(entry))
         : escapeHtml(_rootLabel(entry));
-    const hasNotes = (entry.notes || '').trim().length > 0;
+    const hasNotes =
+      (typeof getLocalizedField === 'function'
+        ? getLocalizedField(entry, 'notes', undefined, { fallback: true })
+        : entry.notes || ''
+      ).trim().length > 0;
 
     html += `
             <li class="entry-list-item" style="border-left-color:${meta.color};">
@@ -181,7 +185,10 @@ window.openTreeNotes = function (riskId) {
   const notesLabel = typeof t === 'function' ? t('risk.notes') : 'Notizen';
   document.getElementById('treeNotesTitle').textContent =
     notesLabel + ': ' + (entry.id || '') + ' – ' + (entry.rootName || '');
-  document.getElementById('treeNotesText').value = entry.notes || '';
+  const textEl = document.getElementById('treeNotesText');
+  textEl.value = getLocalizedField(entry, 'notes', undefined, { raw: true });
+  if (typeof syncLocalizedInputHint === 'function')
+    syncLocalizedInputHint(textEl, entry, 'notes', '');
   modal.dataset.riskId = riskId;
   modal.style.display = 'block';
 };
@@ -196,7 +203,7 @@ window.saveTreeNotes = function () {
   const entry = analysis.riskEntries.find((r) => r.id === riskId);
   if (!entry) return;
 
-  entry.notes = (document.getElementById('treeNotesText').value || '').trim();
+  setLocalizedField(entry, 'notes', (document.getElementById('treeNotesText').value || '').trim());
   saveAnalyses();
   modal.style.display = 'none';
 

@@ -15,6 +15,47 @@ function getImpactColorClass(val) {
   return (typeof IMPACT_CSS_CLASSES !== 'undefined' && IMPACT_CSS_CLASSES[val]) || '';
 }
 
+function _impactCommentEntry(analysis, assetId, dsId) {
+  const value = analysis?.impactComments?.[assetId]?.[dsId];
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  return { text: String(value) };
+}
+
+function _getLocalizedImpactComment(analysis, assetId, dsId, opts) {
+  const entry = _impactCommentEntry(analysis, assetId, dsId);
+  if (!entry) return '';
+  if (typeof getLocalizedField === 'function') {
+    return getLocalizedField(entry, 'text', undefined, opts || undefined);
+  }
+  return entry.text || '';
+}
+
+function _setLocalizedImpactComment(analysis, assetId, dsId, value) {
+  if (!analysis.impactComments) analysis.impactComments = {};
+  if (!analysis.impactComments[assetId]) analysis.impactComments[assetId] = {};
+
+  const existing = _impactCommentEntry(analysis, assetId, dsId) || { text: '' };
+  if (typeof setLocalizedField === 'function') setLocalizedField(existing, 'text', value);
+  else existing.text = value == null ? '' : String(value);
+
+  const hasDe = !!String(existing.text || '').trim();
+  const hasEn = !!String(existing.text_en || '').trim();
+  if (hasDe || hasEn) {
+    analysis.impactComments[assetId][dsId] = existing;
+  } else {
+    delete analysis.impactComments[assetId][dsId];
+    if (Object.keys(analysis.impactComments[assetId]).length === 0) {
+      delete analysis.impactComments[assetId];
+    }
+  }
+}
+
+function _hasLocalizedImpactComment(analysis, assetId, dsId) {
+  const entry = _impactCommentEntry(analysis, assetId, dsId);
+  return !!(entry && (String(entry.text || '').trim() || String(entry.text_en || '').trim()));
+}
+
 /**
  * Recalculates impact inheritance, worst-case KSTU and risk score
  * for every riskEntry in the given analysis.
@@ -167,17 +208,15 @@ function renderImpactMatrix() {
       typeof localizeParenHtml === 'function'
         ? localizeParenHtml(_loc(asset, 'name'))
         : escapeHtml(_loc(asset, 'name'));
+    const eAssetDescriptionTitle = escapeHtml(_loc(asset, 'description') || '');
 
     html += '<tr>';
-    html += `<td class="asset-col"><strong>${eAssetId}: ${eAssetName}</strong></td>`;
+    html += `<td class="asset-col" title="${eAssetDescriptionTitle}"><strong>${eAssetId}: ${eAssetName}</strong></td>`;
 
     displayDS.forEach((ds) => {
       const currentScore = analysis.impactMatrix[asset.id][ds.id] || 'N/A';
       const colorClass = getImpactColorClass(currentScore);
-      const hasComment =
-        analysis.impactComments &&
-        analysis.impactComments[asset.id] &&
-        analysis.impactComments[asset.id][ds.id];
+      const hasComment = _hasLocalizedImpactComment(analysis, asset.id, ds.id);
       const commentIconClass = hasComment ? 'impact-comment-btn has-comment' : 'impact-comment-btn';
       const commentTooltip = hasComment
         ? typeof t === 'function'
@@ -225,10 +264,7 @@ window.openImpactComment = function (assetId, dsId) {
   const dsField = document.getElementById('impactCommentDsId');
   if (!modal || !textEl) return;
 
-  const existing =
-    analysis.impactComments && analysis.impactComments[assetId]
-      ? analysis.impactComments[assetId][dsId] || ''
-      : '';
+  const existing = _getLocalizedImpactComment(analysis, assetId, dsId, { raw: true });
 
   if (titleEl) {
     titleEl.textContent =
@@ -237,6 +273,9 @@ window.openImpactComment = function (assetId, dsId) {
         : `Kommentar – ${assetId} / ${dsId}`;
   }
   textEl.value = existing;
+  if (typeof syncLocalizedInputHint === 'function') {
+    syncLocalizedInputHint(textEl, _impactCommentEntry(analysis, assetId, dsId) || {}, 'text', '');
+  }
   if (assetField) assetField.value = assetId;
   if (dsField) dsField.value = dsId;
 
@@ -254,18 +293,8 @@ window.saveImpactComment = function () {
   const dsId = document.getElementById('impactCommentDsId')?.value;
   if (!assetId || !dsId) return;
 
-  if (!analysis.impactComments) analysis.impactComments = {};
-  if (!analysis.impactComments[assetId]) analysis.impactComments[assetId] = {};
-
   const comment = (textEl ? textEl.value : '').trim();
-  if (comment) {
-    analysis.impactComments[assetId][dsId] = comment;
-  } else {
-    delete analysis.impactComments[assetId][dsId];
-    if (Object.keys(analysis.impactComments[assetId]).length === 0) {
-      delete analysis.impactComments[assetId];
-    }
-  }
+  _setLocalizedImpactComment(analysis, assetId, dsId, comment);
 
   saveAnalyses();
   if (modal) modal.style.display = 'none';
