@@ -155,6 +155,8 @@ gh api graphql -f query='{
 ```
 1. PO gibt Story frei (Chat-Nachricht)
 2. Status â†’ "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
+   â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
+   .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
 4. tests/test_TARA_XXXX.py schreiben â†’ RED (müssen FEHLSCHLAGEN)
 5. Implementierung â†’ GREEN
@@ -164,8 +166,9 @@ gh api graphql -f query='{
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
 11. Status â†’ "inReview", PR öffnen
+    â›” GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
 12. Review-Agent aufrufen, Findings beheben
-13. Prozess-Guard aufrufen (P-01â€“P-15)
+13. Prozess-Guard aufrufen (P-01â€“P-21)
 14. PR mergen â†’ Status â†’ "Freigabe"
 15. Auf PO-OK warten â†’ Status â†’ "Done"
 ```
@@ -174,22 +177,23 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01â€“P-15)
+## Prozessregeln Kurzübersicht (P-01â€“P-21)
 
-| Regel | Kurzform                                          |
-| ----- | ------------------------------------------------- |
-| P-01  | TARA-ID in jeder Chat-Antwort nennen              |
-| P-02  | Status â†’ In Progress VOR Arbeitsbeginn          |
-| P-03  | Tests VOR Implementierung schreiben               |
-| P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)  |
-| P-05  | Story-Tests vor Commit grün                       |
-| P-06  | Vollständige Suite vor PR grün                    |
-| P-07  | Branch: `feature/TARA-XXXX-*`                     |
-| P-08  | Commits referenzieren TARA-ID                     |
-| P-09  | Status â†’ inReview vor PR                        |
-| P-10  | Review-Agent aufgerufen, kein Critical/High offen |
-| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)       |
-| P-12  | Prettier grün vor Tests                           |
-| P-13  | ESLint grün vor Tests                             |
-| P-14  | TARA-IDs sind atomar und unveränderlich           |
-| P-15  | Done nur nach explizitem PO-OK                    |
+| Regel | Kurzform                                                                          |
+| ----- | --------------------------------------------------------------------------------- |
+| P-01  | TARA-ID in jeder Chat-Antwort nennen                                              |
+| P-02  | Status â†’ In Progress VOR Arbeitsbeginn                                          |
+| P-03  | Tests VOR Implementierung schreiben                                               |
+| P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)                                  |
+| P-05  | Story-Tests vor Commit grün                                                       |
+| P-06  | Vollständige Suite vor PR grün                                                    |
+| P-07  | Branch: `feature/TARA-XXXX-*`                                                     |
+| P-08  | Commits referenzieren TARA-ID                                                     |
+| P-09  | Status â†’ inReview vor PR                                                        |
+| P-10  | Review-Agent aufgerufen, kein Critical/High offen                                 |
+| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)                                       |
+| P-12  | Prettier grün vor Tests                                                           |
+| P-13  | ESLint grün vor Tests                                                             |
+| P-14  | TARA-IDs sind atomar und unveränderlich                                           |
+| P-15  | Done nur nach explizitem PO-OK                                                    |
+| P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar) |
