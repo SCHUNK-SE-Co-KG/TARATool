@@ -293,7 +293,7 @@ cd tests
 
 ---
 
-## 7. Prozessregeln (P-01 bis P-18)
+## 7. Prozessregeln (P-01 bis P-19)
 
 Der **Prozess-Guard** prueft **vor jedem Statuswechsel** (P-18) und am Ende jeder Story
 die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `review-finding`
@@ -319,6 +319,7 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-16** | Feature-Branch nach Merge löschen                                                                                                                  | Nach Merge               |
 | **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                   | Nach letztem Merge       |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
+| **P-19** | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterläuft P-11/P-15 durch Auto-Close). Stattdessen `Bezug: #NNN` verwenden.                         | Vor PR / bei PR-Update   |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 

@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-03/P-04/P-06/P-07/P-08/P-12/P-13)
+name: Process Guard – TDD & Compliance Check (P-03/P-04/P-06/P-07/P-08/P-12/P-13/P-19)
 
 on:
   pull_request:
@@ -15,6 +15,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: P-19 – Kein automatisches Issue-Schliessen im PR-Body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$PR_BODY" > "$BODY_FILE"
+          bash scripts/process_guard/check_pr_body_no_autoclose.sh "$BODY_FILE"
 
       - name: P-07 – Branch-Name Schema
         run: |
