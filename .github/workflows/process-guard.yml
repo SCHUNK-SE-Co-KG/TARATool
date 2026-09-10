@@ -121,7 +121,10 @@ jobs:
           pip install pytest pytest-timeout --quiet 2>/dev/null
           [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet 2>/dev/null
           [ -f requirements.txt ] && pip install -r requirements.txt --quiet 2>/dev/null
-          pytest "$TESTFILE" --noconftest -q 2>&1; RED_EXIT=$?
+          set +e
+          pytest "$TESTFILE" --noconftest -q 2>&1
+          RED_EXIT=$?
+          set -e
           cd -
           git worktree remove /tmp/red-phase --force 2>/dev/null
 
