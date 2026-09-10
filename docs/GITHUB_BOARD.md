@@ -45,7 +45,7 @@ gh api repos/SCHUNK-SE-Co-KG/TARATool/projects --jq '.[] | {id, name}'
 | Eigenschaft   | Wert                           |
 | ------------- | ------------------------------ |
 | **Feld-Name** | Story Points                   |
-| **Feld-ID**   | `PVTF_lAHOBLN4284BfLtbzhZgbzQ` |
+| **Feld-ID**   | `PVTF_lADOBu4dv84BfbaRzhZ1jLA` |
 
 Story Points werden als **Zahl** gesetzt (kein Single-Select).
 
@@ -72,9 +72,9 @@ Story Points werden als **Zahl** gesetzt (kein Single-Select).
 gh api graphql -f query='
 mutation {
   updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHOBLN4284BfLtb"
+    projectId: "PVT_kwDOBu4dv84BfbaR"
     itemId: "PVTI_..."
-    fieldId: "PVTSSF_lAHOBLN4284BfLtbzhZgYuI"
+    fieldId: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
     value: { singleSelectOptionId: "47fc9ee4" }
   }) {
     projectV2Item { id }
@@ -90,7 +90,7 @@ ISSUE_NODE_ID=$(gh issue view 42 --json id --jq .id)
 gh api graphql -f query="
 mutation {
   addProjectV2ItemById(input: {
-    projectId: \"PVT_kwHOBLN4284BfLtb\"
+    projectId: \"PVT_kwDOBu4dv84BfbaR\"
     contentId: \"$ISSUE_NODE_ID\"
   }) {
     item { id }
@@ -104,9 +104,9 @@ mutation {
 gh api graphql -f query='
 mutation {
   updateProjectV2ItemFieldValue(input: {
-    projectId: "PVT_kwHOBLN4284BfLtb"
+    projectId: "PVT_kwDOBu4dv84BfbaR"
     itemId: "PVTI_..."
-    fieldId: "PVTF_lAHOBLN4284BfLtbzhZgbzQ"
+    fieldId: "PVTF_lADOBu4dv84BfbaRzhZ1jLA"
     value: { number: 3 }
   }) {
     projectV2Item { id }
@@ -118,7 +118,7 @@ mutation {
 
 ```bash
 gh api graphql -f query='{
-  node(id: "PVT_kwHOBLN4284BfLtb") {
+  node(id: "PVT_kwDOBu4dv84BfbaR") {
     ... on ProjectV2 {
       fields(first: 20) {
         nodes {
@@ -137,7 +137,7 @@ gh api graphql -f query='{
 ```bash
 # Alle Items des Boards mit Issue-Nummer
 gh api graphql -f query='{
-  node(id: "PVT_kwHOBLN4284BfLtb") {
+  node(id: "PVT_kwDOBu4dv84BfbaR") {
     ... on ProjectV2 {
       items(first: 100) {
         nodes {

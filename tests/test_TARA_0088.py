@@ -59,10 +59,10 @@ def test_github_board_doc_uses_schunk_story_points_id():
 
 @pytest.mark.TARA_0088
 def test_project_id_test_no_longer_expects_bheowulf_id():
-    """test_TARA_0034_0037.py darf nicht mehr die alte Bheowulf-Projekt-ID als Anforderung fuehren."""
+    """test_TARA_0034_0037.py darf die alte Bheowulf-Projekt-ID nicht mehr als Positiv-Erwartung fuehren."""
     path = os.path.join(REPO_ROOT, 'tests', 'test_TARA_0034_0037.py')
     content = open(path, encoding='utf-8').read()
-    assert 'PVT_kwHOBLN4284BfLtb' not in content, \
-        'test_TARA_0034_0037.py darf die veraltete Bheowulf-Projekt-ID nicht mehr referenzieren'
+    assert "'PVT_kwHOBLN4284BfLtb' in content" not in content, \
+        'test_TARA_0034_0037.py darf die veraltete Bheowulf-Projekt-ID nicht mehr als erwarteten Wert pruefen'
     assert 'PVT_kwDOBu4dv84BfbaR' in content, \
         'test_TARA_0034_0037.py muss die aktuelle SCHUNK-Projekt-ID pruefen'

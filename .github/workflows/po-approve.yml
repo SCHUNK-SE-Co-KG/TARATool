@@ -8,7 +8,7 @@ name: PO-Approve – Freigabe → Done (P-15 Enforcement)
 #   1. Prüfe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
 #   2. Prüfe ob Kommentar "PO-OK" oder "Freigabe erteilt" enthält
 #   3. Extrahiere TARA-ID(s) aus dem Issue
-#   4. Setze alle gefundenen Items auf "Done" auf beiden Boards
+#   4. Setze alle gefundenen Items auf "Done" auf dem SCHUNK-Board
 #   5. Bestätigung als Reply-Kommentar
 
 on:
@@ -59,8 +59,6 @@ jobs:
         if: steps.permission.outputs.allowed == 'true'
         uses: actions/github-script@v7
         env:
-          BH_PROJECT:   "PVT_kwHOBLN4284BfLtb"
-          BH_FIELD:     "PVTSSF_lAHOBLN4284BfLtbzhZgYuI"
           SK_PROJECT:   "PVT_kwDOBu4dv84BfbaR"
           SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
           DONE_OPTION:  "98236657"
@@ -88,16 +86,16 @@ jobs:
               return;
             }
 
-            // Für jede TARA-ID: Items auf beiden Boards auf Done setzen
-            const bhProject  = process.env.BH_PROJECT;
+            // Für jede TARA-ID: Item auf dem Board auf Done setzen
             const skProject  = process.env.SK_PROJECT;
-            const bhField    = process.env.BH_FIELD;
             const skField    = process.env.SK_FIELD;
             const doneOption = process.env.DONE_OPTION;
 
             for (const taraId of ids) {
-              // Board-Items für diese TARA-ID suchen (beide Boards)
-              for (const [projectId, fieldId] of [[bhProject, bhField], [skProject, skField]]) {
+              // Board-Items für diese TARA-ID suchen
+              const projectId = skProject;
+              const fieldId = skField;
+              {
                 try {
                   // Alle Items des Projekts abrufen und nach TARA-ID filtern
                   const query = `

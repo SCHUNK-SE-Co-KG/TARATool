@@ -54,7 +54,9 @@ def test_github_board_doc_exists():
 def test_github_board_doc_contains_project_id():
     """GITHUB_BOARD.md muss die Project-ID enthalten."""
     content = open(os.path.join(REPO_ROOT, 'docs', 'GITHUB_BOARD.md'), encoding='utf-8').read()
-    assert 'PVT_kwHOBLN4284BfLtb' in content, 'Project-ID fehlt in GITHUB_BOARD.md'
+    assert 'PVT_kwDOBu4dv84BfbaR' in content, 'Project-ID fehlt in GITHUB_BOARD.md'
+    assert 'PVT_kwHOBLN4284BfLtb' not in content, \
+        'Veraltete Bheowulf-Projekt-ID darf nicht mehr in GITHUB_BOARD.md vorkommen'
 
 
 @pytest.mark.TARA_0035
