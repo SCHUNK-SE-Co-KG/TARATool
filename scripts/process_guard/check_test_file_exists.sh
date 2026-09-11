@@ -8,13 +8,16 @@
 set -e
 
 BRANCH="$1"
-TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-if [ -z "$TARA_ID" ]; then
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle beziehen
+# statt sie hier erneut zu duplizieren.
+if ! RESOLVED=$(bash "$SCRIPT_DIR/resolve_tara_testfile.sh" "$BRANCH"); then
   echo "INFO P-03: Kein TARA-ID im Branch â€“ P-03 uebersprungen"
   exit 0
 fi
-NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-TESTFILE="tests/test_TARA_${NUM}.py"
+eval "$RESOLVED"
+
 if [ -f "$TESTFILE" ]; then
   echo "OK P-03: Testdatei $TESTFILE vorhanden"
   exit 0

@@ -46,7 +46,19 @@ export PATH="$HOME/.local/bin:$PATH"
 
 # Now verify the test actually FAILED at that commit via git worktree
 WORKTREE_DIR=$(mktemp -d)
-git worktree add "$WORKTREE_DIR" "$FIRST_TEST_COMMIT" >/dev/null 2>&1
+
+# TARA-0093: 'git worktree add' darf unter 'set -e' nicht diagnoselos abbrechen.
+# Diagnoseausgabe wird bei Fehlschlag sichtbar gemacht statt unterdrueckt zu werden,
+# und ein Fehlschlag fuehrt zu einer expliziten FAIL-P-04-Meldung statt zu einem
+# unerklaerten Skript-Abbruch.
+if ! ADD_OUTPUT=$(git worktree add "$WORKTREE_DIR" "$FIRST_TEST_COMMIT" 2>&1); then
+  echo "FAIL P-04: 'git worktree add' fuer Commit $FIRST_TEST_COMMIT fehlgeschlagen:"
+  echo "$ADD_OUTPUT"
+  rm -rf "$WORKTREE_DIR" 2>/dev/null || true
+  git worktree prune 2>/dev/null || true
+  exit 1
+fi
+
 pushd "$WORKTREE_DIR" >/dev/null
 python3 -m pip install --user pytest pytest-timeout --quiet 2>/dev/null
 [ -f tests/requirements.txt ] && python3 -m pip install --user -r tests/requirements.txt --quiet 2>/dev/null
@@ -56,10 +68,14 @@ python3 -m pytest "$TESTFILE" --noconftest -q 2>&1
 RED_EXIT=$?
 set -e
 popd >/dev/null
-git worktree remove "$WORKTREE_DIR" --force 2>/dev/null
 
+# TARA-0093: Das P-04-Verdikt (OK/FAIL) wird IMMER vor dem Worktree-Cleanup
+# ausgegeben. Ein fehlschlagendes 'git worktree remove' (z.B. gesperrtes
+# Worktree) darf die bereits ermittelte Red-Phase-Entscheidung nicht mehr
+# verschlucken - daher '|| true' und Platzierung NACH der Ergebnis-Ausgabe.
 if [ "$RED_EXIT" -ne 0 ]; then
   echo "OK P-04: Red-Phase bestaetigt Ã¢â‚¬â€œ Tests haben beim Red-Commit gefehlt"
+  git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
   exit 0
 else
   echo "FAIL P-04: Tests waren GRUEN beim Red-Commit $FIRST_TEST_COMMIT"

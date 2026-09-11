@@ -62,13 +62,13 @@ jobs:
       - name: P-04 – TDD Red-Phase bewiesen (Test-Commit vor Implementierung)
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-04: Kein TARA-ID im Branch – P-04 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
+          eval "$RESOLVED"
           BASE="${{ github.event.pull_request.base.sha }}"
           bash scripts/process_guard/check_red_phase.sh "$BASE" "$TESTFILE"
 
@@ -81,13 +81,13 @@ jobs:
       - name: P-06 – Story-Tests gruen
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-06: Kein TARA-ID – P-06 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
+          eval "$RESOLVED"
           if [ ! -f "$TESTFILE" ]; then
             echo "INFO P-06: Testdatei nicht gefunden – P-06 uebersprungen"
             exit 0
