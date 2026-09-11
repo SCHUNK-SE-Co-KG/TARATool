@@ -309,7 +309,7 @@ die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `re
 gemeldet und das Item auf **Blocking** gesetzt.
 
 | Regel    | Beschreibung                                                                                                                                                                                          | Wann geprüft             |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | **P-01** | TARA-ID in jeder Chat-Antwort                                                                                                                                                                         | Laufend                  |
 | **P-02** | Status → In Progress VOR Arbeitsbeginn                                                                                                                                                                | Story-Start              |
 | **P-03** | Tests VOR Implementierung geschrieben                                                                                                                                                                 | Red-Phase                |
