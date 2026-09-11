@@ -163,9 +163,9 @@ gh api graphql -f query='{
 8. pytest test_TARA_XXXX.py --noconftest -v
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
-11. Status â†’ "inReview", PR öffnen
+11. Status â†’ "inReview", PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
 12. Review-Agent aufrufen, Findings beheben
-13. Prozess-Guard aufrufen (P-01â€“P-15)
+13. Prozess-Guard aufrufen (P-01â€“P-19)
 14. PR mergen â†’ Status â†’ "Freigabe"
 15. Auf PO-OK warten â†’ Status â†’ "Done"
 ```
@@ -174,23 +174,24 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01â€“P-20)
+## Prozessregeln Kurzübersicht (P-01–P-20)
 
 | Regel | Kurzform                                                                                                                                        |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | P-01  | TARA-ID in jeder Chat-Antwort nennen                                                                                                            |
-| P-02  | Status â†’ In Progress VOR Arbeitsbeginn                                                                                                        |
+| P-02  | Status → In Progress VOR Arbeitsbeginn                                                                                                          |
 | P-03  | Tests VOR Implementierung schreiben                                                                                                             |
 | P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)                                                                                                |
 | P-05  | Story-Tests vor Commit grün                                                                                                                     |
 | P-06  | Vollständige Suite vor PR grün                                                                                                                  |
 | P-07  | Branch: `feature/TARA-XXXX-*`                                                                                                                   |
 | P-08  | Commits referenzieren TARA-ID                                                                                                                   |
-| P-09  | Status â†’ inReview vor PR                                                                                                                      |
+| P-09  | Status → inReview vor PR                                                                                                                        |
 | P-10  | Review-Agent aufgerufen, kein Critical/High offen                                                                                               |
-| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)                                                                                                     |
+| P-11  | Nach Merge → Freigabe (nicht direkt Done)                                                                                                       |
 | P-12  | Prettier grün vor Tests                                                                                                                         |
 | P-13  | ESLint grün vor Tests                                                                                                                           |
 | P-14  | TARA-IDs sind atomar und unveränderlich                                                                                                         |
 | P-15  | Done nur nach explizitem PO-OK                                                                                                                  |
+| P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body – stattdessen `Bezug: #NNN`                                                                        |
 | P-20  | Audit-Trail-Kommentar bei jedem Status-Wechsel; PO-OK-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` |

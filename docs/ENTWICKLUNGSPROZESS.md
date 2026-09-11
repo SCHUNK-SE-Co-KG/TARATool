@@ -309,7 +309,7 @@ die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `re
 gemeldet und das Item auf **Blocking** gesetzt.
 
 | Regel    | Beschreibung                                                                                                                                                                                          | Wann geprüft             |
-| -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
 | **P-01** | TARA-ID in jeder Chat-Antwort                                                                                                                                                                         | Laufend                  |
 | **P-02** | Status → In Progress VOR Arbeitsbeginn                                                                                                                                                                | Story-Start              |
 | **P-03** | Tests VOR Implementierung geschrieben                                                                                                                                                                 | Red-Phase                |
@@ -328,6 +328,7 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-16** | Feature-Branch nach Merge löschen                                                                                                                                                                     | Nach Merge               |
 | **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                                                                      | Nach letztem Merge       |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen.                                                    | Vor jedem Status-Wechsel |
+| **P-19** | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterläuft P-11/P-15 durch Auto-Close). Stattdessen `Bezug: #NNN` verwenden.                                                                            | Vor PR / bei PR-Update   |
 | **P-20** | Audit-Trail-Kommentar bei jedem Board-Status-Wechsel (wann/warum/durch wen). PO-Freigabe-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` (Story oder Epic). | Bei jedem Status-Wechsel |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
