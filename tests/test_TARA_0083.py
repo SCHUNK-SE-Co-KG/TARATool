@@ -79,3 +79,46 @@ def test_process_guard_board_check_uses_project_token():
     board_section = content.split("P-02/P-09")[1].split("P-03")[0]
     assert "secrets.PROJECT_TOKEN" in board_section, \
         "Board-Status-Check muss secrets.PROJECT_TOKEN statt secrets.GITHUB_TOKEN verwenden"
+
+
+def _board_section():
+    content = _read_workflow_text()
+    start = content.index("id: board_status")
+    end = content.index("- name: P-03", start)
+    return content[start:end]
+
+
+@pytest.mark.TARA_0083
+def test_process_guard_board_check_fails_on_missing_status_field():
+    """TARA-0090: Fehlt das Statusfeld (z.B. umbenannt/nicht mitgeliefert), muss der
+    Check explizit fehlschlagen statt 'unknown' stillschweigend als 'nicht Todo' zu werten."""
+    section = _board_section()
+    assert "!statusField" in section, \
+        "Check muss explizit auf fehlendes Statusfeld pruefen (!statusField)"
+    # setFailed muss vor der reinen currentStatus === 'Todo'-Pruefung erreichbar sein
+    assert section.index("!statusField") < section.index("currentStatus === 'Todo'"), \
+        "Fehlendes-Statusfeld-Check muss vor der Todo-Pruefung erfolgen"
+    assert "'unknown'" not in section, \
+        "Der stillschweigende 'unknown'-Fallback (TARA-0090) darf nicht mehr vorkommen"
+
+
+@pytest.mark.TARA_0083
+def test_process_guard_board_check_uses_exact_tara_id_match():
+    """TARA-0091: Exaktes Matching der TARA-ID im Titel statt Substring-Vergleich
+    (verhindert Fehltreffer wie TARA-0083 vs. TARA-00831)."""
+    section = _board_section()
+    assert ".includes(taraId)" not in section, \
+        "Substring-Matching per includes(taraId) darf nicht mehr verwendet werden"
+    assert "taraIdPattern" in section and "\\\\b" in section, \
+        "Exaktes Wortgrenzen-Matching (RegExp mit \\b) fuer die TARA-ID fehlt"
+
+
+@pytest.mark.TARA_0083
+def test_process_guard_board_check_handles_graphql_errors():
+    """TARA-0092: Der GraphQL-Aufruf muss gegen transiente Fehler abgesichert sein,
+    damit ein API-/Token-/Rate-Limit-Fehler nicht den gesamten Compliance-Check crasht."""
+    section = _board_section()
+    assert "try {" in section and "catch (error)" in section, \
+        "GraphQL-Aufruf muss in try/catch gekapselt sein"
+    assert "core.warning" in section, \
+        "Bei GraphQL-Fehler muss core.warning verwendet werden (soft-skip statt Crash)"
