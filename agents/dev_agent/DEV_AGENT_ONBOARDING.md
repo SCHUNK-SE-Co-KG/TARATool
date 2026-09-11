@@ -155,6 +155,8 @@ gh api graphql -f query='{
 ```
 1. PO gibt Story frei (Chat-Nachricht)
 2. Status â†’ "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
+   â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
+   .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
 4. tests/test_TARA_XXXX.py schreiben â†’ RED (müssen FEHLSCHLAGEN)
 5. Implementierung â†’ GREEN
@@ -164,8 +166,9 @@ gh api graphql -f query='{
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
 11. Status â†’ "inReview", PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
+    â›” GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
 12. Review-Agent aufrufen, Findings beheben
-13. Prozess-Guard aufrufen (P-01â€“P-19)
+13. Prozess-Guard aufrufen (P-01â€“P-21)
 14. PR mergen â†’ Status â†’ "Freigabe"
 15. Auf PO-OK warten â†’ Status â†’ "Done"
 ```
@@ -174,7 +177,7 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01–P-20)
+## Prozessregeln Kurzübersicht (P-01–P-21)
 
 | Regel | Kurzform                                                                                                                                        |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -195,3 +198,4 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 | P-15  | Done nur nach explizitem PO-OK                                                                                                                  |
 | P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body – stattdessen `Bezug: #NNN`                                                                        |
 | P-20  | Audit-Trail-Kommentar bei jedem Status-Wechsel; PO-OK-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` |
+| P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar)                                                               |
