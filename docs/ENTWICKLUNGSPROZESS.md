@@ -46,7 +46,7 @@ Entwicklung starten möchten.
 4. [Der vollständige Story-Workflow](#4-der-vollständige-story-workflow)
 5. [Board-Statusübergänge](#5-board-statusübergänge)
 6. [Technische Qualitätssicherung](#6-technische-qualitätssicherung)
-7. [Prozessregeln (P-01 bis P-22)](#7-prozessregeln-p-01-bis-p-22)
+7. [Prozessregeln (P-01 bis P-23)](#7-prozessregeln-p-01-bis-p-23)
 8. [Ausnahmen und Sonderfälle](#8-ausnahmen-und-sonderfälle)
 9. [Dokumente auf einen Blick](#9-dokumente-auf-einen-blick)
 
@@ -331,7 +331,7 @@ cd tests
 
 ---
 
-## 7. Prozessregeln (P-01 bis P-22)
+## 7. Prozessregeln (P-01 bis P-23)
 
 Der **Prozess-Guard** prueft **vor jedem Statuswechsel** (P-18) und am Ende jeder Story
 die Einhaltung aller Regeln. Verletzungen werden als GitHub Issues mit Label `review-finding`
@@ -360,6 +360,7 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-19** | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterläuft P-11/P-15 durch Auto-Close). Stattdessen `Bezug: #NNN` verwenden.                                                                                                                                                                                                                                                                                                                                                                                         | Vor PR / bei PR-Update                             |
 | **P-20** | Audit-Trail-Kommentar bei jedem Board-Status-Wechsel (wann/warum/durch wen). PO-Freigabe-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` (Story oder Epic).                                                                                                                                                                                                                                                                                                              | Bei jedem Status-Wechsel                           |
 | **P-22** | **Review-Finding-Abschluss & Priorisierung**: Ein Finding-Issue wird nach direktem Fix-Commit sofort geschlossen (entkoppelt vom Status der Source-Story); erfordert das Finding eine strukturelle Verbesserung, wird zuerst eine Folge-Story angelegt, bevor das Finding schliesst. Vom PO akzeptierte Findings (Freigabe-Schluesselwort im Kommentar) werden sofort auf "In Progress" gesetzt und vor anderen laufenden Stories priorisiert bearbeitet. Details: `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`. | Beim Finding-Abschluss / bei PO-Freigabe-Kommentar |
+| **P-23** | **Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten und Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen. Details: `.github/copilot-instructions.md`.                                                                                                                                                                                                | Bei jedem Session-/Init-Start                      |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 
