@@ -72,3 +72,35 @@ def test_entwicklungsprozess_references_p22():
     """ENTWICKLUNGSPROZESS.md muss auf die neue Regel P-22 verweisen."""
     content = _read(ENTWICKLUNGSPROZESS_PATH)
     assert "P-22" in content, "Regel P-22 fehlt in ENTWICKLUNGSPROZESS.md"
+
+
+@pytest.mark.TARA_0100
+def test_review_agent_workflow_describes_priority_for_accepted_findings():
+    """Vom PO akzeptierte Findings muessen sofort auf 'In Progress' gesetzt und vor
+    anderen laufenden Stories priorisiert bearbeitet werden."""
+    content = _read(REVIEW_AGENT_PATH)
+    closure_section = content.split("Finding-Abschluss", 1)[1]
+    assert "Priorisierung" in closure_section or "priorisiert" in closure_section.lower(), \
+        "Priorisierungs-Regel fuer akzeptierte Findings fehlt im Finding-Abschluss-Abschnitt"
+    assert "In Progress" in closure_section, \
+        "Muss verlangen, dass akzeptierte Findings auf 'In Progress' gesetzt werden"
+    assert "akzeptiert" in closure_section.lower(), \
+        "Muss den PO-Freigabe-Schluesselwortfall 'akzeptiert' referenzieren"
+
+
+@pytest.mark.TARA_0100
+def test_process_guard_p22_mentions_priorisierung():
+    """Die P-22-Zeile in PROCESS_GUARD_AGENT.md muss die Priorisierung erwaehnen."""
+    content = _read(PROCESS_GUARD_PATH)
+    p22_line = next(line for line in content.splitlines() if line.strip().startswith("| P-22"))
+    assert "priorisiert" in p22_line.lower(), \
+        "P-22-Zeile muss die Priorisierung akzeptierter Findings erwaehnen"
+
+
+@pytest.mark.TARA_0100
+def test_entwicklungsprozess_p22_mentions_priorisierung():
+    """Die P-22-Zeile in ENTWICKLUNGSPROZESS.md muss die Priorisierung erwaehnen."""
+    content = _read(ENTWICKLUNGSPROZESS_PATH)
+    p22_line = next(line for line in content.splitlines() if line.strip().startswith("| **P-22**"))
+    assert "priorisiert" in p22_line.lower(), \
+        "P-22-Zeile muss die Priorisierung akzeptierter Findings erwaehnen"

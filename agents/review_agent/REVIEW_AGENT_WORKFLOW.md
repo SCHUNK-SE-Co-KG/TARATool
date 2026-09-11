@@ -175,6 +175,25 @@ Architektur-Findings mit Schwere Mittel/Niedrig ohne konkreten Patch).
 > Siehe auch Regel **P-22** in `agents/process_guard/PROCESS_GUARD_AGENT.md` und
 > `docs/ENTWICKLUNGSPROZESS.md`.
 
+### Priorisierung akzeptierter Findings (P-22)
+
+Setzt der PO ein Review-Finding-Issue durch einen Kommentar mit einem der
+Freigabe-Schluesselwoerter (`PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`)
+auf **akzeptiert**, gilt:
+
+1. Der Dev-Agent setzt den Board-Status des Finding-Issues **unmittelbar** auf
+   **"In Progress"** (Audit-Trail-Kommentar mit Verweis auf den PO-Freigabe-Kommentar,
+   P-02/P-20).
+2. Akzeptierte Findings werden **vor** allen anderen bereits "In Progress" befindlichen
+   Stories bearbeitet – sie haben Prioritaet gegenueber laufender Story-Arbeit, die noch
+   keinen entsprechenden Freigabe-Kommentar hat. Der Dev-Agent unterbricht dazu keine
+   angefangene Story mitten in einem Commit, sondern arbeitet begonnene Einheiten
+   (Red/Green-Zyklus) zu Ende, bevor er zu den priorisierten Findings wechselt, plant aber
+   die naechste Arbeitseinheit anhand dieser Prioritaet.
+3. Diese Prioritaets-Regel gilt zusaetzlich zu und unabhaengig von Fall A/Fall B oben:
+   Sie bestimmt **wann** ein akzeptiertes Finding bearbeitet wird, Fall A/B bestimmen
+   **wie** es anschliessend geschlossen wird.
+
 ## Scope-Entscheidung: Welche R-Checks laufen wann?
 
 | Änderungen betreffen  | Pflicht-Checks        | Optionale Checks                           |

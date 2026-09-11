@@ -75,7 +75,7 @@ Test-Ergebnis:    PASSED / FAILED
 | P-16  | **Feature-Branch nach Merge loeschen**                                                        | Manuell                               |
 | P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe                         | Manuell                               |
 | P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel                             | Manuell (Dev-Agent-Pflicht)           |
-| P-22  | **Review-Finding-Abschluss**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story – siehe `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` Abschnitt "Finding-Abschluss" | Manuell (Dev-Agent-Pflicht) |
+| P-22  | **Review-Finding-Abschluss & Priorisierung**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story; vom PO akzeptierte Findings (Kommentar mit Freigabe-Schluesselwort) werden sofort auf "In Progress" gesetzt und **vor** anderen laufenden Stories priorisiert bearbeitet – siehe `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` Abschnitt "Finding-Abschluss" | Manuell (Dev-Agent-Pflicht) |
 
 ### Automatisierungsmatrix
 
