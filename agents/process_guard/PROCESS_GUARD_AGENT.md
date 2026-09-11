@@ -75,6 +75,7 @@ Test-Ergebnis:    PASSED / FAILED
 | P-16  | **Feature-Branch nach Merge loeschen**                                                        | Manuell                               |
 | P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe                         | Manuell                               |
 | P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel                             | Manuell (Dev-Agent-Pflicht)           |
+| P-23  | **Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten, Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen – siehe `.github/copilot-instructions.md` Abschnitt "`/init` und Session-Start" | Manuell (Dev-Agent-Pflicht) |
 
 ### Automatisierungsmatrix
 
@@ -84,7 +85,7 @@ Test-Ergebnis:    PASSED / FAILED
 | Issue erstellt            | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels |
 | Issue-Kommentar mit PO-OK | `po-approve.yml`                | P-15 (Done nur nach PO-OK)                      |
 
-> **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18
+> **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18, P-23
 > werden durch den Dev-Agent eigenverantwortlich eingehalten und am Session-Ende
 > im Compliance-Bericht dokumentiert.
 

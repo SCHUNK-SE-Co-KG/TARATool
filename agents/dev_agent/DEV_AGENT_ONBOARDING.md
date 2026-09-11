@@ -113,6 +113,12 @@ Wenn dieser Schritt erfolgreich ist, ist die Umgebung korrekt eingerichtet.
 
 ## Schritt 6 â€“ Workflow-Dokumente lesen (Pflicht)
 
+> âš ï¸ **Regel P-23:** Auch bei automatischem Session-Start (z.B. `/init` im
+> GitHub Copilot CLI) duerfen bis zu diesem Schritt **keine** Datei-Aenderungen,
+> Commits, Branches oder Board-Status-Wechsel vorgenommen werden. Dieser
+> Schritt ist ausschliesslich Lesen/Parsen - siehe
+> `.github/copilot-instructions.md` Abschnitt "`/init` und Session-Start".
+
 Bevor mit einer Story begonnen wird, diese Dokumente kennen:
 
 | Dokument                                       | Inhalt                                                      |

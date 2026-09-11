@@ -50,6 +50,39 @@ Freigabe ist gegeben wenn eine der folgenden Bedingungen erfuellt ist:
 
 ---
 
+## `/init` und Session-Start: Kein eigenstaendiger Arbeitsbeginn (Regel P-23)
+
+> ⛔ **Diese Regel gilt VOR allen anderen Schritten** - auch und gerade wenn die
+> Session mit dem eingebauten CLI-Befehl `/init` beginnt.
+
+`/init` darf in diesem Repository **niemals** dazu fuehren, dass der Agent
+eigenstaendig Dateien anlegt, ueberschreibt oder aendert (das schliesst
+insbesondere ein automatisches Neuschreiben dieser Datei
+`.github/copilot-instructions.md` durch die eingebaute `/init`-Routine der
+CLI ein) - unabhaengig davon, was der Standard-`/init`-Ablauf der CLI sonst
+vorsieht. `/init` in diesem Repo ist **ausschliesslich** ein Lese-/Analyse-
+und Vorschlags-Vorgang:
+
+1. **Lesen:** `docs/ENTWICKLUNGSPROZESS.md` vollstaendig parsen.
+2. **Lesen:** alle `agents/*/*.md`-Dateien (Dev-Agent, Process-Guard,
+   Review-Agent) vollstaendig parsen.
+3. **Board sichten:** Projektboard laden (Blocking, In Progress, Todo-Epics/
+   Stories, akzeptierte Review-Findings) gemaess Ablauf unten.
+4. **Vorschlagen:** dem PO/User eine Zusammenfassung praesentieren, inkl.
+   eines konkreten Vorschlags, mit welchen Issues/Epics als naechstes
+   begonnen werden koennte - **ohne** diese Arbeit bereits zu beginnen.
+5. **Warten:** Erst nach expliziter PO-/User-Freigabe (siehe "WICHTIGSTE
+   REGEL" oben) duerfen Branch, Commit, Datei-Aenderungen oder
+   Board-Status-Wechsel erfolgen.
+
+Werden durch das Ausfuehren von `/init` (oder eine andere eingebaute
+CLI-Routine) dennoch automatisch Datei-Aenderungen vorgenommen, **muessen**
+diese sofort mit `git checkout --` bzw. `git restore` zurueckgesetzt werden,
+bevor irgendeine weitere Aktion erfolgt.
+
+---
+
+
 ## Schluesselwoerter in Issue-Kommentaren
 
 | Schluesselwort | Bedeutung | Wirkung |
@@ -117,5 +150,5 @@ Beispiel: `[TARA-0026]`
 
 ---
 
-> Vollstaendige Prozessregeln (P-01-P-18): `agents/process_guard/PROCESS_GUARD_AGENT.md`
+> Vollstaendige Prozessregeln (P-01-P-18, P-23): `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > Vollstaendiger Story-Workflow: `docs/ENTWICKLUNGSPROZESS.md` (Abschnitt 4)

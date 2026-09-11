@@ -319,6 +319,7 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-16** | Feature-Branch nach Merge löschen                                                                                                                  | Nach Merge               |
 | **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                   | Nach letztem Merge       |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
+| **P-23** | **Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten und Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen. Details: `.github/copilot-instructions.md`. | Bei jedem Session-/Init-Start |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 

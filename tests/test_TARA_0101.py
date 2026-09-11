@@ -36,18 +36,16 @@ def test_copilot_instructions_forbids_autonomous_work_on_init():
 @pytest.mark.TARA_0101
 def test_copilot_instructions_describes_onboarding_steps_in_order():
     """Der Onboarding-Ablauf (Lesen -> Board sichten -> Vorschlagen -> Freigabe
-    abwarten) muss in dieser Reihenfolge beschrieben sein."""
+    abwarten) muss in dieser Reihenfolge als nummerierte Schritte beschrieben sein."""
     content = _read(INSTRUCTIONS_PATH)
     lower = content.lower()
-    idx_prozess = lower.index("entwicklungsprozess.md")
-    idx_agents = lower.index("agents/*/*.md") if "agents/*/*.md" in lower else lower.index("agenten")
-    idx_board = lower.index("board sichten")
-    idx_proposal = lower.index("vorschlag")
-    idx_wait = lower.index("warten")
-    assert idx_prozess < idx_board < idx_proposal < idx_wait, (
+    idx_lesen = lower.index("1. **lesen")
+    idx_board = lower.index("3. **board sichten")
+    idx_proposal = lower.index("4. **vorschlagen")
+    idx_wait = lower.index("5. **warten")
+    assert idx_lesen < idx_board < idx_proposal < idx_wait, (
         "Reihenfolge Lesen -> Board sichten -> Vorschlagen -> Warten muss eingehalten werden"
     )
-    assert idx_agents < idx_board
 
 
 @pytest.mark.TARA_0101
