@@ -21,6 +21,12 @@
 
 <!-- Was wurde implementiert? -->
 
+> ⚠️ **Kein `Closes #NNN` / `Fixes #NNN` / `Resolves #NNN` verwenden!**
+> Diese Schlüsselwörter lassen GitHub das Issue beim Merge automatisch
+> schließen und unterlaufen damit P-11/P-15 (Status erst "Freigabe", Status
+> "Done" erst nach explizitem PO-OK-Kommentar). Stattdessen den Issue-Bezug
+> so formulieren: `Bezug: #NNN` (siehe TARA-0085, PR #139 als Negativ-Beispiel).
+
 ## TDD – Pflicht-Nachweis
 
 - [ ] Tests **vor** Implementierung geschrieben (`tests/test_TARA_XXXX.py`)
