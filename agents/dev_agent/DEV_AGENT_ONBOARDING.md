@@ -198,4 +198,4 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 | P-15  | Done nur nach explizitem PO-OK                                                                                                                  |
 | P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body – stattdessen `Bezug: #NNN`                                                                        |
 | P-20  | Audit-Trail-Kommentar bei jedem Status-Wechsel; PO-OK-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` |
-| P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar)                                                                |
+| P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar)                                                               |
