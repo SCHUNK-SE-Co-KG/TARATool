@@ -319,6 +319,7 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-16** | Feature-Branch nach Merge löschen                                                                                                                  | Nach Merge               |
 | **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                   | Nach letztem Merge       |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen. | Vor jedem Status-Wechsel |
+| **P-22** | **Review-Finding-Abschluss**: Ein Finding-Issue wird nach direktem Fix-Commit sofort geschlossen (entkoppelt vom Status der Source-Story); erfordert das Finding eine strukturelle Verbesserung, wird zuerst eine Folge-Story angelegt, bevor das Finding schliesst. Details: `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`. | Beim Finding-Abschluss |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 

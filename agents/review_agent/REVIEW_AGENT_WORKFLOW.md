@@ -136,6 +136,45 @@ python agents/review_agent/runtime_scanner.py \
 | Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
 | Hoch/Kritisch      | Item zurück auf â€žIn Progress", Findings zuerst beheben             |
 
+---
+
+## Finding-Abschluss
+
+Ein Review-Finding-Issue (Label `review-finding`) wird **unabhaengig vom Board-Status
+der Source-Story** abgeschlossen. Es gibt genau zwei zulaessige Wege, ein Finding zu
+schliessen:
+
+### Fall A – Direkter Fix
+
+Das Finding wird durch einen Fix-Commit auf dem Branch der Source-Story behoben.
+
+1. Fix implementieren, Tests ergaenzen/anpassen, Commit erstellen. Der Commit/PR referenziert
+   das Finding-Issue ausschliesslich mit `Bezug: #<Finding-Issue>` – **niemals** mit einem
+   GitHub-Auto-Close-Keyword (`Closes`/`Fixes`/`Resolves` etc.), da Finding-Issues laut P-19
+   nicht automatisch beim Merge geschlossen werden duerfen.
+2. Sobald der Fix-Commit **gepusht** ist, darf das Finding-Issue **sofort** geschlossen werden
+   (Kommentar mit Verweis auf Commit-SHA/PR). Das ist **entkoppelt** vom aktuellen Board-Status
+   der Source-Story: Die Source-Story durchlaeuft weiterhin eigenstaendig den vollen Workflow
+   (Todo → In Progress → inReview → Freigabe → Done); das Finding muss nicht auf deren
+   Freigabe/Done warten.
+
+### Fall B – Folge-Story (keine direkte Fix)
+
+Das Finding schlaegt keine direkte Code-Aenderung vor, sondern eine groessere/strukturelle
+Verbesserung (typischerweise am Vorschlag "Folge-Story" im Finding-Body erkennbar, z.B.
+Architektur-Findings mit Schwere Mittel/Niedrig ohne konkreten Patch).
+
+1. Der Dev-Agent legt **zuerst** ein neues Story-Issue an (naechste freie TARA-ID via
+   `get_next_tara_id()`, Label `story`), das die Verbesserung beschreibt und das
+   Finding-Issue referenziert (`Bezug: #<Finding-Issue>`).
+2. **Erst danach** darf das Finding-Issue geschlossen werden. Der Schliess-Kommentar
+   referenziert die neue Story (z.B. "Ueberfuehrt in Story #<Nr>").
+3. Auch hier gilt: kein GitHub-Auto-Close-Keyword im Story-Issue oder im PR, der das Finding
+   referenziert (P-19).
+
+> Siehe auch Regel **P-22** in `agents/process_guard/PROCESS_GUARD_AGENT.md` und
+> `docs/ENTWICKLUNGSPROZESS.md`.
+
 ## Scope-Entscheidung: Welche R-Checks laufen wann?
 
 | Änderungen betreffen  | Pflicht-Checks        | Optionale Checks                           |

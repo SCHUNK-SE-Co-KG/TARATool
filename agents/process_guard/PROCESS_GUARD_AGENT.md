@@ -75,16 +75,17 @@ Test-Ergebnis:    PASSED / FAILED
 | P-16  | **Feature-Branch nach Merge loeschen**                                                        | Manuell                               |
 | P-17  | **Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe                         | Manuell                               |
 | P-18  | **Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel                             | Manuell (Dev-Agent-Pflicht)           |
+| P-22  | **Review-Finding-Abschluss**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story – siehe `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` Abschnitt "Finding-Abschluss" | Manuell (Dev-Agent-Pflicht) |
 
 ### Automatisierungsmatrix
 
 | Trigger                   | Workflow                        | Geprueft Regeln                                 |
-| ------------------------- | ------------------------------- | ----------------------------------------------- |
+| ------------------------- | -------------------------------- | ----------------------------------------------- |
 | PR geoeffnet/aktualisiert | `process-guard.yml`             | P-03, P-04, P-06, P-07, P-08, P-12, P-13        |
 | Issue erstellt            | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels |
 | Issue-Kommentar mit PO-OK | `po-approve.yml`                | P-15 (Done nur nach PO-OK)                      |
 
-> **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18
+> **Nicht automatisierbar:** P-01, P-02, P-05, P-09, P-10, P-11, P-16, P-17, P-18, P-22
 > werden durch den Dev-Agent eigenverantwortlich eingehalten und am Session-Ende
 > im Compliance-Bericht dokumentiert.
 
