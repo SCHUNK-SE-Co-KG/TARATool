@@ -29,10 +29,28 @@ Der Dev-Agent übergibt beim Aufruf:
 ```
 Story-ID:          TARA-XXXX
 Branch:            feature/TARA-XXXX-kurzbeschreibung
+PR-Nummer:         <NNN>
 Geänderte Dateien: [Liste]
 Commit:            <SHA>
 TDD-Tests:         tests/test_TARA_XXXX.py (PASSED)
 ```
+
+### Unabhaengige Diff-Verifikation (TARA-0102)
+
+Die vom Dev-Agent übergebene Dateiliste ist eine Selbstauskunft und kann
+unvollständig oder fehlerhaft sein. Der Review-Agent verifiziert die
+tatsächlich geänderten Dateien daher **unabhängig** selbst, bevor er den
+Prüfkatalog anwendet:
+
+```bash
+gh pr diff <PR-Nummer> --name-only
+# oder, falls kein PR vorhanden:
+git diff --name-only <Base-Branch>...<Branch>
+```
+
+Weicht das Ergebnis von der übergebenen Liste ab, wird dies im Review-Bericht
+vermerkt und die zusätzlich gefundenen Dateien werden in den Prüfumfang
+aufgenommen.
 
 ### Runtime-Scanner-Aktivierung (TARA-0038 Browser Runtime Introspection)
 
@@ -92,6 +110,21 @@ python agents/review_agent/runtime_scanner.py \
 | R-29 | Sicherheit  | Storage-Deep-Scan: sensible Schlüssel in localStorage/sessionStorage (TARA-0055) |
 | R-30 | Sicherheit  | XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055)                  |
 
+### Erweiterter Prüfkatalog für Nicht-Browser-Code (TARA-0102)
+
+Der Katalog R-01–R-30 ist auf Browser-/JS-Code fokussiert. Aenderungen an
+GitHub-Actions-Workflows, Bash- und Python-Automatisierungsskripten
+(`agents/`, `scripts/`, `.github/workflows/`) werden zusaetzlich gegen die
+folgenden Regeln geprueft — genau diese Kategorie war die Quelle der Findings
+TARA-0090 bis TARA-0099, die vom bisherigen Katalog nicht erfasst wurden:
+
+| #    | Bereich     | Prüfung                                                                                                                                       |
+| ---- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-31 | Sicherheit  | GitHub-Actions Script-Injection: keine `${{ github.event.*.body/title }}`-Interpolation direkt in `run:`-Blöcken, stattdessen `env:`          |
+| R-32 | Qualität    | Fehlendes Error-Handling um externe API-/GraphQL-Aufrufe in Workflows/Skripten (kein unkontrollierter Crash/Abbruch)                          |
+| R-33 | Qualität    | Regex-/Parsing-Robustheit (Wortgrenzen, Gross-/Kleinschreibung, Vergangenheitsformen, Negation) bei Text-Verarbeitung in Automatisierung      |
+| R-34 | Architektur | Stille Bypässe: fehlende Felder/Werte dürfen nicht automatisch als "OK"/bestanden gewertet werden (sicherheitshalber FAIL statt stillem PASS) |
+
 ---
 
 ## Finding-Format
@@ -110,6 +143,7 @@ python agents/review_agent/runtime_scanner.py \
 **Source-Story:** TARA-YYYY  
 **Typ:** Bug | Architektur | Sicherheit | Test | Code-Qualität  
 **Schwere:** Kritisch | Hoch | Mittel | Niedrig  
+**Konfidenz:** 1-10  
 **Regel:** R-XX  
 **Datei:** `path/to/file.js` (Zeile X)
 
@@ -125,6 +159,23 @@ python agents/review_agent/runtime_scanner.py \
 
 <Konkreter Lösungsvorschlag>
 ```
+
+### Schwere-Rubrik (TARA-0102)
+
+Damit die Schwere-Einstufung nicht rein selbstattestiert und uneinheitlich bleibt,
+gelten folgende verbindliche Kriterien pro Stufe (jeweils zusätzlich mit einem
+**Konfidenz**-Wert 1-10 zu versehen, analog zum Security-Review-Skill):
+
+| Schwere      | Kriterium                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------- |
+| **Kritisch** | Ausnutzbare Sicherheitsluecke oder Datenverlust/-korruption im Produktivbetrieb wahrscheinlich          |
+| **Hoch**     | Funktionaler Fehler mit direkter Nutzerauswirkung ODER Sicherheitsrisiko mit erschwerten Vorbedingungen |
+| **Mittel**   | Strukturelles/architektonisches Problem ohne unmittelbare Nutzerauswirkung                              |
+| **Niedrig**  | Stil-/Wartbarkeitsfrage ohne funktionale Auswirkung                                                     |
+
+Nur Findings mit **Konfidenz ≥ 6** duerfen die Schwere "Kritisch"/"Hoch" erhalten;
+bei geringerer Konfidenz wird die Schwere um eine Stufe reduziert und die
+Unsicherheit im Finding-Body explizit vermerkt.
 
 ---
 
@@ -218,15 +269,22 @@ auf **akzeptiert**, gilt:
 
 ## Scope-Entscheidung: Welche R-Checks laufen wann?
 
-| Änderungen betreffen  | Pflicht-Checks        | Optionale Checks                           |
-| --------------------- | --------------------- | ------------------------------------------ |
-| `js/`, `index.html`   | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
-| `agents/`, `scripts/` | R-01–R-12             | R-22–R-30 entfallen (kein Browser-Code)    |
-| `tests/`              | R-09, R-10            | –                                          |
-| `docs/`, `*.md`       | R-01                  | –                                          |
+| Änderungen betreffen                        | Pflicht-Checks        | Optionale Checks                           |
+| ------------------------------------------- | --------------------- | ------------------------------------------ |
+| `js/`, `index.html`                         | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
+| `agents/`, `scripts/`, `.github/workflows/` | R-01–R-12 + R-31–R-34 | R-22–R-30 entfallen (kein Browser-Code)    |
+| `tests/`                                    | R-09, R-10            | –                                          |
+| `docs/`, `*.md`                             | R-01                  | –                                          |
 
 **Runtime-Checks (R-13–R-30) sind Pflicht** für alle Commits, die `index.html`, `js/` oder
 `agents/review_agent/` verändern. Sie erfordern eine lauffähige App-Instanz.
 
-Wenn keine App-URL übergeben wird, **entfallen R-13–R-30 ohne Fehler** — der Review-Agent
-vermerkt dies im Finding-Bericht als `[SKIP Runtime: kein App-URL übergeben]`.
+### Skip-Eskalation (TARA-0102)
+
+Wird keine App-URL übergeben, **entfallen R-13–R-30 nicht mehr stillschweigend**:
+Der Review-Agent vermerkt dies weiterhin als `[SKIP Runtime: kein App-URL übergeben]`
+im Finding-Bericht, erzeugt zusätzlich aber eine **Eskalation** — einen expliziten
+Pflicht-Hinweis im PR-Kommentar (`⚠️ Eskalation: Runtime-/Security-Checks R-13–R-30
+uebersprungen, da keine App-URL uebergeben wurde. Dev-Agent muss dies begruenden
+oder eine App-URL nachreichen.`), der vom Dev-Agent im PR aktiv bestaetigt oder
+durch Nachreichen einer App-URL aufgeloest werden muss, bevor der PR gemergt wird.
