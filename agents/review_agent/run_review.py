@@ -20,6 +20,11 @@ Ablauf:
 
 Ohne --url: Runtime-Checks (R-13-R-30) werden uebersprungen, nur statische
 Checks (R-01-R-12) werden durchgefuehrt.
+
+Hinweis (P-19, TARA-0085): Wird fuer ein Finding-Issue spaeter ein PR
+eroeffnet, darf dessen Body KEIN "Closes/Fixes/Resolves #NNN" enthalten
+(GitHub wuerde das Issue sonst automatisch beim Merge schliessen und damit
+P-11/P-15 unterlaufen). Stattdessen "Bezug: #NNN" verwenden.
 """
 from __future__ import annotations
 

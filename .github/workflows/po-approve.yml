@@ -1,12 +1,15 @@
 name: PO-Approve – Freigabe → Done (P-15 Enforcement)
 
 # Dieser Workflow erzwingt P-15: Done darf NUR gesetzt werden wenn
-# der PO "PO-OK" oder "Freigabe erteilt" als Issue-Kommentar hinterlassen hat.
+# der PO eines der gueltigen Freigabe-Keywords als Issue-Kommentar hinterlassen
+# hat (siehe scripts/process_guard/check_po_approval_keyword.sh /
+# .github/copilot-instructions.md fuer die vollstaendige, deckungsgleiche Liste:
+# PO-OK, Freigabe erteilt, freigegeben, akzeptiert, Accepted, Ok).
 #
 # Trigger: Neuer Kommentar an einem Issue
 # Ablauf:
-#   1. Prüfe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
-#   2. Prüfe ob Kommentar "PO-OK" oder "Freigabe erteilt" enthält
+#   1. Pruefe ob der Kommentar ein gueltiges Freigabe-Keyword enthaelt
+#   2. Pruefe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
 #   3. Extrahiere TARA-ID(s) aus dem Issue
 #   4. Setze alle gefundenen Items auf "Done" auf beiden Boards
 #   5. Bestätigung als Reply-Kommentar
@@ -23,20 +26,27 @@ jobs:
   check-po-approval:
     name: PO-Freigabe prüfen
     runs-on: ubuntu-latest
-    # Nur bei Issues (nicht bei PR-Kommentaren) und nur bei relevanten Keywords
-    if: |
-      github.event.issue.pull_request == null &&
-      (
-        contains(github.event.comment.body, 'PO-OK') ||
-        contains(github.event.comment.body, 'Freigabe erteilt') ||
-        contains(github.event.comment.body, 'po-ok') ||
-        contains(github.event.comment.body, 'freigabe erteilt')
-      )
+    # Nur bei Issues (nicht bei PR-Kommentaren)
+    if: github.event.issue.pull_request == null
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pruefe PO-Freigabe-Keyword
+        id: keyword
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
+          if bash scripts/process_guard/check_po_approval_keyword.sh "$BODY_FILE"; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Prüfe Berechtigungen des Kommentators
         id: permission
+        if: steps.keyword.outputs.matched == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -56,7 +66,7 @@ jobs:
             return allowed;
 
       - name: Freigabe verarbeiten
-        if: steps.permission.outputs.allowed == 'true'
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
         uses: actions/github-script@v7
         env:
           BH_PROJECT:   "PVT_kwHOBLN4284BfLtb"
@@ -178,7 +188,7 @@ jobs:
             });
 
       - name: Keine Berechtigung – Warnung
-        if: steps.permission.outputs.allowed == 'false'
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

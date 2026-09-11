@@ -23,10 +23,10 @@ Alle Commits, PRs und Board-Operationen erfolgen ausschliesslich auf `SCHUNK-SE-
 
 | Dokument | Pfad | Inhalt |
 |----------|------|--------|
-| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-18 |
+| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-18, P-21 (P-19/P-20 folgen nach Merge von PR #149/#150) |
 | **Board-IDs & GraphQL** | `docs/GITHUB_BOARD.md` | API-IDs, Status-Optionen, gh-Befehle |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
-| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18 vollstaendig, Pre-Transition-Checks |
+| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18, P-21 (P-19/P-20 folgen nach Merge), Pre-Transition-Checks |
 | **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Severity, Finding-Framework |
 
 > **Beim Session-Start diese Dateien lesen**, bevor mit der Arbeit begonnen wird.
@@ -45,8 +45,8 @@ Der aktive Chat-Gespraechspartner ist der PO.
 **Keine Implementierung, kein Branch, keine Tests - ohne nachgewiesene Freigabe.**
 
 Freigabe ist gegeben wenn eine der folgenden Bedingungen erfuellt ist:
-1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben`, `Freigabe fuer TARA-XXXX`, `PO-OK`, `akzeptiert`
-2. GitHub Issue-Kommentar am Epic oder Story enthaelt: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`
+1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben`, `Freigabe fuer TARA-XXXX`, `PO-OK`, `akzeptiert`, `Accepted`, `Ok`
+2. GitHub Issue-Kommentar am Epic oder Story enthaelt: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`
 
 ---
 
@@ -85,16 +85,36 @@ bevor irgendeine weitere Aktion erfolgt.
 
 ## Schluesselwoerter in Issue-Kommentaren
 
+Diese Liste ist deckungsgleich mit der tatsaechlichen Erkennung in
+`scripts/process_guard/check_po_approval_keyword.sh` (aufgerufen von
+`.github/workflows/po-approve.yml`, TARA-0086). Freigabe gilt sowohl bei
+Kommentar im **Story-Issue** als auch im **Epic-Issue** (z.B. Sammelfreigabe
+fuer alle Stories eines Epics).
+
 | Schluesselwort | Bedeutung | Wirkung |
 |----------------|-----------|---------|
 | `PO-OK` | PO-Freigabe | Story/Epic freigegeben ODER Done-Setzen erlaubt |
 | `Freigabe erteilt` | PO-Freigabe | Story/Epic freigegeben |
 | `freigegeben` | PO-Freigabe | Story/Epic freigegeben |
 | `akzeptiert` | PO-Freigabe | Story/Epic freigegeben |
+| `Accepted` | PO-Freigabe | Story/Epic freigegeben |
+| `Ok` / `OK` | PO-Freigabe | Story/Epic freigegeben |
 | `Pause` | Arbeit pausiert | Issue wird im aktuellen Status belassen, nicht weiterbearbeitet |
 
 > **Pause**: Ein Issue mit Kommentar `Pause` wird vom Dev-Agent in dieser Session **uebersprungen**.
 > Es bleibt im aktuellen Status. Weiterarbeit nur nach erneutem expliziten PO-OK.
+
+---
+
+## Audit-Trail bei Board-Status-Wechseln (TARA-0086)
+
+Bei **jedem** Statuswechsel (Todo -> In Progress -> inReview -> Freigabe -> Done)
+hinterlaesst der Dev-Agent einen kurzen Kommentar im betroffenen Issue, z.B.:
+
+> `P-02: Status Todo -> In Progress (PO-Freigabe: "akzeptiert", Kommentar von @po-user)`
+
+Dies macht jeden Wechsel im Nachhinein nachvollziehbar (wann/warum/durch wen).
+
 
 ---
 
@@ -143,6 +163,28 @@ Vollstaendige Tabelle: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 
 ---
 
+## VERBINDLICHES GATE vor Commit/PR (TARA-0087, P-21)
+
+> ⛔ **Nicht ueberspringbar.** Diese Checkliste MUSS aktiv im Chat bestaetigt werden,
+> bevor der jeweilige naechste Schritt ausgefuehrt wird. Reines "gedanklich abgehakt"
+> reicht nicht - der Dev-Agent gibt jeden Punkt explizit im Chat aus.
+
+**Gate 1 - VOR dem ersten Commit einer Story:**
+- [ ] Board-Status auf **"In Progress"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-02)
+- [ ] Testdatei `tests/test_TARA_XXXX.py` existiert bereits (P-03)?
+
+**Gate 2 - VOR `gh pr create`:**
+- [ ] Board-Status auf **"inReview"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-09/P-20)
+- [ ] Story-Tests lokal gruen (P-06)?
+- [ ] Prettier/ESLint gruen, falls JS/HTML/CSS geaendert (P-12/P-13)?
+- [ ] PR-Body enthaelt `Bezug: #NNN`, **kein** `Closes/Fixes #NNN` (P-19)?
+
+Erst wenn **alle** Punkte eines Gates im Chat bestaetigt sind, darf der naechste
+Schritt (Commit bzw. PR-Oeffnung) ausgefuehrt werden. Fehlt eine Bestaetigung,
+gilt der Schritt als **nicht freigegeben** und muss zuerst nachgeholt werden.
+
+---
+
 ## Regel P-01 (immer aktiv)
 
 Waehrend der Arbeit an einer Story: TARA-ID in **jeder** Chat-Antwort nennen.
@@ -150,5 +192,5 @@ Beispiel: `[TARA-0026]`
 
 ---
 
-> Vollstaendige Prozessregeln (P-01-P-18, P-23): `agents/process_guard/PROCESS_GUARD_AGENT.md`
+> Vollstaendige Prozessregeln (P-01-P-23): `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > Vollstaendiger Story-Workflow: `docs/ENTWICKLUNGSPROZESS.md` (Abschnitt 4)
