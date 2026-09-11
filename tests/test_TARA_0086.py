@@ -88,6 +88,26 @@ def test_rejects_comments_without_po_approval_keyword(comment):
     assert "NO_MATCH" in result.stdout
 
 
+@pytest.mark.TARA_0096
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "Bitte NICHT ok geben",
+        "das ist NICHT OK fuer mich",
+        "Nicht ok, bitte nochmal",
+        "kein OK",
+        "keine ok",
+        "not ok",
+    ],
+)
+def test_rejects_negated_approval_phrases(comment):
+    """TARA-0096: Eine explizite Ablehnung (Negation unmittelbar vor dem
+    Freigabe-Keyword) darf NICHT als gueltige Freigabe gewertet werden."""
+    result = _run_check(comment)
+    assert result.returncode == 1, f"'{comment}' haette NICHT als Freigabe erkannt werden duerfen: {result.stdout}{result.stderr}"
+    assert "NO_MATCH" in result.stdout
+
+
 @pytest.mark.TARA_0086
 def test_po_approve_workflow_uses_keyword_script():
     with open(WORKFLOW, "r", encoding="utf-8") as f:
@@ -95,8 +115,18 @@ def test_po_approve_workflow_uses_keyword_script():
     assert "check_po_approval_keyword.sh" in content
 
 
-@pytest.mark.TARA_0086
-def test_documented_keywords_match_script_keywords():
+@pytest.mark.TARA_0097
+def test_entwicklungsprozess_no_incomplete_keyword_phrase_remaining():
+    """TARA-0097: Keine Restvorkommen der veralteten, unvollstaendigen
+    Formulierung 'PO-OK oder Freigabe erteilt' (ohne Verweis auf die
+    vollstaendige Keyword-Liste) mehr in ENTWICKLUNGSPROZESS.md."""
+    entwicklungsprozess = os.path.join(REPO_ROOT, "docs", "ENTWICKLUNGSPROZESS.md")
+    with open(entwicklungsprozess, "r", encoding="utf-8") as f:
+        content = f.read()
+    assert "`PO-OK` oder `Freigabe erteilt`" not in content, (
+        "Veraltete, unvollstaendige Keyword-Nennung noch vorhanden - "
+        "muss auf die vollstaendige Liste (P-20) verweisen"
+    )
     """copilot-instructions.md muss exakt die vom Skript erkannten Schluesselwoerter dokumentieren."""
     with open(INSTRUCTIONS, "r", encoding="utf-8") as f:
         doc_content = f.read()

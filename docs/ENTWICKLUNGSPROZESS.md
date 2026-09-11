@@ -67,8 +67,9 @@ Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
 1. Dev-Agent zieht `development` lokal (git pull)
 2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Freigabe - bitte testen"
 3. PO testet den aktuellen Stand auf dem development-Branch
-4. PO kommentiert im Epic-Issue: `PO-OK` oder `Freigabe erteilt`
-5. GitHub-Automation (po-approve.yml) setzt alle betroffenen Stories automatisch auf **Done** (z. B. â€žOK" oder â€žfreigegeben")
+4. PO kommentiert im Epic-Issue mit einem der Freigabe-Schluesselwoerter (siehe **P-20**:
+   `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK`)
+5. GitHub-Automation (po-approve.yml) setzt alle betroffenen Stories automatisch auf **Done**
 
 ---
 
@@ -238,7 +239,7 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
 â”‚  SCHRITT 8 â€“ PO-Freigabe (Pflicht)                              â”‚
 â”‚  â€¢ PO prüft das Ergebnis im Browser / Repository                â”‚
-â”‚  â€¢ PO kommentiert im Issue: `PO-OK` oder `Freigabe erteilt`ä.             â”‚
+â”‚  â€¢ PO kommentiert im Issue mit einem Freigabe-Keyword (siehe P-20 Tabelle) â”‚
 â”‚  â€¢ Dev-Agent setzt Status â†’ "Done"                              â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
