@@ -141,17 +141,10 @@ Vollstaendige Tabelle: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 - [ ] Testdatei `tests/test_TARA_XXXX.py` existiert bereits (P-03)?
 
 **Gate 2 - VOR `gh pr create`:**
-- [ ] Board-Status auf **"inReview"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-09)
+- [ ] Board-Status auf **"inReview"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-09/P-20)
 - [ ] Story-Tests lokal gruen (P-06)?
 - [ ] Prettier/ESLint gruen, falls JS/HTML/CSS geaendert (P-12/P-13)?
-- [ ] PR-Body enthaelt `Bezug: #NNN`, **kein** `Closes/Fixes #NNN`?
-
-> Hinweis (TARA-0098): Die Regeln P-19 (kein Auto-Close-Keyword im PR-Body) und
-> P-20 (Audit-Trail-Kommentar-Pflicht, vollstaendige Freigabe-Keyword-Liste)
-> werden auf separaten Branches (TARA-0085/PR #149, TARA-0086/PR #150)
-> eingefuehrt und sind hier bewusst noch nicht referenziert, solange diese
-> PRs nicht in `development` gemergt sind. Nach dem Merge sind die obigen
-> Referenzen um `(P-19)` bzw. `(P-20)` zu ergaenzen.
+- [ ] PR-Body enthaelt `Bezug: #NNN`, **kein** `Closes/Fixes #NNN` (P-19)?
 
 Erst wenn **alle** Punkte eines Gates im Chat bestaetigt sind, darf der naechste
 Schritt (Commit bzw. PR-Oeffnung) ausgefuehrt werden. Fehlt eine Bestaetigung,

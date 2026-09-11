@@ -64,30 +64,30 @@ def test_dev_agent_onboarding_references_gate_before_first_commit_and_pr():
 
 
 @pytest.mark.TARA_0098
-def test_copilot_instructions_gate_does_not_reference_unmerged_rules():
-    """TARA-0098: Solange P-19 (PR #149) und P-20 (PR #150) nicht in
-    'development' gemergt sind, darf die Gate-Checkliste keine aktiven
-    Referenzen auf 'P-02/P-20', 'P-09/P-20' oder ein abschliessendes
-    '(P-19)?' enthalten - diese Regeln existieren im Prozess-Guard-Dokument
-    dieses Branches nicht. Der erklaerende Hinweistext, der explizit auf den
-    noch ausstehenden Merge verweist, ist davon ausgenommen."""
+def test_copilot_instructions_gate_references_merged_rules_p19_p20():
+    """TARA-0098 (nach Merge von PR #149/#150 in development): Die
+    Gate-Checkliste referenziert die inzwischen gemergten Regeln P-19
+    (kein Auto-Close-Keyword im PR-Body) und P-20 (Audit-Trail-Pflicht)
+    korrekt, statt wie zuvor eine noch ausstehende Merge-Luecke zu
+    dokumentieren."""
     content = _read(INSTRUCTIONS)
     gate_start = content.index("VERBINDLICHES GATE")
-    gate_end = content.index("Hinweis (TARA-0098)")
-    gate_checklist = content[gate_start:gate_end]
-    forbidden = ["P-02/P-20", "P-09/P-20", "(P-19)?", "(P-20)?"]
-    for token in forbidden:
-        assert token not in gate_checklist, f"Verweis auf noch nicht gemergte Regel '{token}' gefunden"
+    gate_checklist = content[gate_start : gate_start + 1500]
+    assert "P-20" in gate_checklist
+    assert "P-19" in gate_checklist
+    assert "Hinweis (TARA-0098)" not in content, (
+        "Der veraltete Platzhalter-Hinweis zum ausstehenden Merge von "
+        "P-19/P-20 muss nach dem tatsaechlichen Merge entfernt sein."
+    )
 
 
 @pytest.mark.TARA_0098
 def test_copilot_instructions_does_not_overclaim_full_p_range():
-    """TARA-0098: Die Behauptung 'P-01-P-21 vollstaendig'/'P-01-P-21' (ohne
-    Einschraenkung) ist falsch, solange P-19/P-20 fehlen - muss die Luecke
-    benennen."""
+    """TARA-0098: Die Behauptung 'P-01-P-21 vollstaendig' bleibt weiterhin
+    unzulaessig, unabhaengig vom Merge-Status einzelner Regeln - der
+    Prozess-Guard selbst prueft nur einen definierten Teilbereich."""
     content = _read(INSTRUCTIONS)
     assert "P-01-P-21 vollstaendig" not in content
-    assert "P-19/P-20" in content, "Muss auf die noch ausstehenden Regeln P-19/P-20 hinweisen"
 
 
 @pytest.mark.TARA_0087
@@ -95,13 +95,3 @@ def test_process_guard_agent_documents_p21():
     content = _read(PROCESS_GUARD_AGENT)
     assert "P-21" in content
     assert "nicht ueberspringbar" in content.lower() or "nicht überspringbar" in content.lower()
-
-
-@pytest.mark.TARA_0098
-def test_copilot_instructions_does_not_overclaim_full_p_range():
-    """TARA-0098: Die Behauptung 'P-01-P-21 vollstaendig'/'P-01-P-21' (ohne
-    Einschraenkung) ist falsch, solange P-19/P-20 fehlen - muss die Luecke
-    benennen."""
-    content = _read(INSTRUCTIONS)
-    assert "P-01-P-21 vollstaendig" not in content
-    assert "P-19/P-20" in content, "Muss auf die noch ausstehenden Regeln P-19/P-20 hinweisen"
