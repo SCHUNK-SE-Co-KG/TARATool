@@ -1,15 +1,32 @@
 name: PO-Approve – Freigabe → Done (P-15 Enforcement)
 
 # Dieser Workflow erzwingt P-15: Done darf NUR gesetzt werden wenn
-# der PO "PO-OK" oder "Freigabe erteilt" als Issue-Kommentar hinterlassen hat.
+# der PO eines der gueltigen Freigabe-Keywords als Issue-Kommentar hinterlassen
+# hat (siehe scripts/process_guard/check_po_approval_keyword.sh /
+# .github/copilot-instructions.md fuer die vollstaendige, deckungsgleiche Liste:
+# PO-OK, Freigabe erteilt, freigegeben, akzeptiert, Accepted, Ok).
 #
 # Trigger: Neuer Kommentar an einem Issue
 # Ablauf:
-#   1. Prüfe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
-#   2. Prüfe ob Kommentar "PO-OK" oder "Freigabe erteilt" enthält
+#   1. Pruefe ob der Kommentar ein gueltiges Freigabe-Keyword enthaelt
+#   2. Pruefe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
 #   3. Extrahiere TARA-ID(s) aus dem Issue
-#   4. Setze alle gefundenen Items auf "Done" auf beiden Boards
+#   4. Setze alle gefundenen Items auf "Done" auf dem TARATool-Board
 #   5. Bestätigung als Reply-Kommentar
+#
+# TARA-0104: Der schreibende Projects-v2-Aufruf benoetigt secrets.PROJECT_TOKEN
+# (ein PAT mit "project"-Scope) statt des Default-GITHUB_TOKEN, da GITHUB_TOKEN
+# grundsaetzlich keine Schreibrechte auf Projects v2 besitzt (siehe auch
+# process-guard.yml, das denselben Token bereits fuer lesende Board-Zugriffe
+# verwendet). Schlaegt das Board-Update dennoch fehl (z.B. Rate-Limit,
+# fehlendes/abgelaufenes Secret), wird der Job ueber core.setFailed sichtbar
+# als fehlgeschlagen markiert statt den Fehler still zu verschlucken - der
+# Dev-Agent muss den manuellen Fallback (gh project item-edit) dann bewusst
+# ausloesen. Die zuvor zusaetzlich abgefragte "Bheowulf"-Projekt-Referenz
+# (die alten Env-Variablen fuer das Fremdboard) war ein Ueberbleibsel aus
+# einer frueheren Repo-Kopie und wurde entfernt (analog TARA-0088). Es gibt
+# seitdem nur noch einen einzigen Board-Verweis (SK_PROJECT/SK_FIELD, das
+# TARATool-Board).
 
 on:
   issue_comment:
@@ -23,20 +40,27 @@ jobs:
   check-po-approval:
     name: PO-Freigabe prüfen
     runs-on: ubuntu-latest
-    # Nur bei Issues (nicht bei PR-Kommentaren) und nur bei relevanten Keywords
-    if: |
-      github.event.issue.pull_request == null &&
-      (
-        contains(github.event.comment.body, 'PO-OK') ||
-        contains(github.event.comment.body, 'Freigabe erteilt') ||
-        contains(github.event.comment.body, 'po-ok') ||
-        contains(github.event.comment.body, 'freigabe erteilt')
-      )
+    # Nur bei Issues (nicht bei PR-Kommentaren)
+    if: github.event.issue.pull_request == null
     steps:
       - uses: actions/checkout@v4
 
+      - name: Pruefe PO-Freigabe-Keyword
+        id: keyword
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
+          if bash scripts/process_guard/check_po_approval_keyword.sh "$BODY_FILE"; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Prüfe Berechtigungen des Kommentators
         id: permission
+        if: steps.keyword.outputs.matched == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -56,16 +80,14 @@ jobs:
             return allowed;
 
       - name: Freigabe verarbeiten
-        if: steps.permission.outputs.allowed == 'true'
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
         uses: actions/github-script@v7
         env:
-          BH_PROJECT:   "PVT_kwHOBLN4284BfLtb"
-          BH_FIELD:     "PVTSSF_lAHOBLN4284BfLtbzhZgYuI"
           SK_PROJECT:   "PVT_kwDOBu4dv84BfbaR"
           SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
           DONE_OPTION:  "98236657"
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
             const issueTitle  = context.payload.issue.title;
@@ -88,97 +110,112 @@ jobs:
               return;
             }
 
-            // Für jede TARA-ID: Items auf beiden Boards auf Done setzen
-            const bhProject  = process.env.BH_PROJECT;
-            const skProject  = process.env.SK_PROJECT;
-            const bhField    = process.env.BH_FIELD;
-            const skField    = process.env.SK_FIELD;
+            const projectId  = process.env.SK_PROJECT;
+            const fieldId    = process.env.SK_FIELD;
             const doneOption = process.env.DONE_OPTION;
 
+            const doneIds = [];
+            const failures = [];
+
             for (const taraId of ids) {
-              // Board-Items für diese TARA-ID suchen (beide Boards)
-              for (const [projectId, fieldId] of [[bhProject, bhField], [skProject, skField]]) {
-                try {
-                  // Alle Items des Projekts abrufen und nach TARA-ID filtern
-                  const query = `
-                    query($projectId: ID!) {
-                      node(id: $projectId) {
-                        ... on ProjectV2 {
-                          items(first: 100) {
-                            nodes {
-                              id
-                              content {
-                                ... on Issue { title number }
-                              }
-                              fieldValues(first: 10) {
-                                nodes {
-                                  ... on ProjectV2ItemFieldSingleSelectValue {
-                                    name
-                                    field { ... on ProjectV2SingleSelectField { name } }
-                                  }
+              try {
+                // Alle Items des Projekts abrufen und nach TARA-ID filtern
+                const query = `
+                  query($projectId: ID!) {
+                    node(id: $projectId) {
+                      ... on ProjectV2 {
+                        items(first: 100) {
+                          nodes {
+                            id
+                            content {
+                              ... on Issue { title number }
+                            }
+                            fieldValues(first: 10) {
+                              nodes {
+                                ... on ProjectV2ItemFieldSingleSelectValue {
+                                  name
+                                  field { ... on ProjectV2SingleSelectField { name } }
                                 }
                               }
                             }
                           }
                         }
                       }
-                    }`;
-                  const result = await github.graphql(query, { projectId });
-                  const items = result.node.items.nodes;
-                  const matching = items.filter(item =>
-                    item.content && item.content.title && item.content.title.includes(taraId)
-                  );
-
-                  for (const item of matching) {
-                    // Aktuellen Status prüfen (nur Freigabe-Items auf Done setzen)
-                    const statusField = item.fieldValues.nodes.find(
-                      fv => fv.field && fv.field.name === 'Status'
-                    );
-                    const currentStatus = statusField ? statusField.name : 'unknown';
-                    console.log(`${taraId} [${projectId.slice(-8)}]: Status=${currentStatus}, Item=${item.id}`);
-
-                    if (currentStatus !== 'Freigabe') {
-                      console.log(`  → Übersprungen (nicht Freigabe: ${currentStatus})`);
-                      continue;
                     }
+                  }`;
+                const result = await github.graphql(query, { projectId });
+                const items = result.node.items.nodes;
+                const matching = items.filter(item =>
+                  item.content && item.content.title && item.content.title.includes(taraId)
+                );
 
-                    // Status → Done setzen
-                    const mutation = `
-                      mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                        updateProjectV2ItemFieldValue(input: {
-                          projectId: $projectId
-                          itemId: $itemId
-                          fieldId: $fieldId
-                          value: { singleSelectOptionId: $optionId }
-                        }) {
-                          projectV2Item { id }
-                        }
-                      }`;
-                    await github.graphql(mutation, {
-                      projectId,
-                      itemId: item.id,
-                      fieldId,
-                      optionId: doneOption,
-                    });
-                    console.log(`  ✅ ${taraId} → Done (Board: ${projectId.slice(-8)})`);
+                for (const item of matching) {
+                  // Aktuellen Status prüfen (nur Freigabe-Items auf Done setzen)
+                  const statusField = item.fieldValues.nodes.find(
+                    fv => fv.field && fv.field.name === 'Status'
+                  );
+                  const currentStatus = statusField ? statusField.name : 'unknown';
+                  console.log(`${taraId}: Status=${currentStatus}, Item=${item.id}`);
+
+                  if (currentStatus !== 'Freigabe') {
+                    console.log(`  → Übersprungen (nicht Freigabe: ${currentStatus})`);
+                    continue;
                   }
-                } catch (err) {
-                  console.error(`  ❌ Fehler bei ${taraId} (Board ${projectId.slice(-8)}): ${err.message}`);
+
+                  // Status → Done setzen
+                  const mutation = `
+                    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                      updateProjectV2ItemFieldValue(input: {
+                        projectId: $projectId
+                        itemId: $itemId
+                        fieldId: $fieldId
+                        value: { singleSelectOptionId: $optionId }
+                      }) {
+                        projectV2Item { id }
+                      }
+                    }`;
+                  await github.graphql(mutation, {
+                    projectId,
+                    itemId: item.id,
+                    fieldId,
+                    optionId: doneOption,
+                  });
+                  console.log(`  ✅ ${taraId} → Done`);
+                  doneIds.push(taraId);
                 }
+              } catch (err) {
+                // TARA-0104: Ein Fehler beim Board-Update darf NICHT mehr
+                // still verschluckt werden - er wird gesammelt und fuehrt
+                // am Ende zu core.setFailed(), damit der Job sichtbar rot
+                // wird und der Dev-Agent den manuellen Fallback bewusst
+                // ausloest statt sich auf einen falschen Erfolg zu verlassen.
+                console.error(`  ❌ Fehler bei ${taraId}: ${err.message}`);
+                failures.push(`${taraId}: ${err.message}`);
               }
             }
 
-            // Bestätigungs-Kommentar
-            const taraList = [...ids].map(id => `\`${id}\``).join(', ');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: issueNumber,
-              body: `✅ **PO-Freigabe registriert** (${context.actor})\n\nFolgende Items wurden automatisch auf **Done** gesetzt: ${taraList}\n\n*Ausgelöst durch: "${comment.split('\n')[0].substring(0, 80)}"*`,
-            });
+            if (doneIds.length > 0) {
+              const taraList = doneIds.map(id => `\`${id}\``).join(', ');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `✅ **PO-Freigabe registriert** (${context.actor})\n\nFolgende Items wurden automatisch auf **Done** gesetzt: ${taraList}\n\n*Ausgelöst durch: "${comment.split('\n')[0].substring(0, 80)}"*`,
+              });
+            }
+
+            if (failures.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `⚠️ **P-15 – Board-Update fehlgeschlagen**\n\nFolgende TARA-IDs konnten NICHT automatisch auf Done gesetzt werden:\n\n${failures.map(f => `- ${f}`).join('\n')}\n\nBitte manuell per \`gh project item-edit\` nachziehen.`,
+              });
+              core.setFailed(`Board-Update fehlgeschlagen fuer: ${failures.join('; ')}`);
+            }
 
       - name: Keine Berechtigung – Warnung
-        if: steps.permission.outputs.allowed == 'false'
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'false'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

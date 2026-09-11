@@ -113,6 +113,12 @@ Wenn dieser Schritt erfolgreich ist, ist die Umgebung korrekt eingerichtet.
 
 ## Schritt 6 â€“ Workflow-Dokumente lesen (Pflicht)
 
+> âš ï¸ **Regel P-23:** Auch bei automatischem Session-Start (z.B. `/init` im
+> GitHub Copilot CLI) duerfen bis zu diesem Schritt **keine** Datei-Aenderungen,
+> Commits, Branches oder Board-Status-Wechsel vorgenommen werden. Dieser
+> Schritt ist ausschliesslich Lesen/Parsen - siehe
+> `.github/copilot-instructions.md` Abschnitt "`/init` und Session-Start".
+
 Bevor mit einer Story begonnen wird, diese Dokumente kennen:
 
 | Dokument                                       | Inhalt                                                      |
@@ -155,7 +161,13 @@ gh api graphql -f query='{
 ```
 1. PO gibt Story frei (Chat-Nachricht)
 2. Status â†’ "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
+   â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
+   .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
+   ⚠️ **P-24 (Epic-Sync-Pflicht):** Wird diese Story ueber `Bezug: #<Epic-Nr>`
+   einem Epic zugeordnet, MUSS im gleichen Arbeitsschritt das Epic-Issue-Body
+   (Checkliste "Enthaltene Stories") um die neue Story ergaenzt werden - nicht
+   erst nachtraeglich.
 4. tests/test_TARA_XXXX.py schreiben â†’ RED (müssen FEHLSCHLAGEN)
 5. Implementierung â†’ GREEN
 6. npm run format:check  (Prettier)
@@ -163,9 +175,13 @@ gh api graphql -f query='{
 8. pytest test_TARA_XXXX.py --noconftest -v
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
-11. Status â†’ "inReview", PR öffnen
-12. Review-Agent aufrufen, Findings beheben
-13. Prozess-Guard aufrufen (P-01â€“P-15)
+11. Status â†’ "inReview", PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
+    â›” GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
+12. Review-Agent aufrufen, Findings beheben. Danach zwingend einen PR-Kommentar
+    hinterlassen: `Review-Agent: OK - keine Findings` ODER `Review-Agent: Findings
+    siehe #<NNN>` - process-guard.yml erzwingt diesen Nachweis technisch (P-10,
+    siehe TARA-0089, `scripts/process_guard/check_review_agent_invoked.sh`).
+13. Prozess-Guard aufrufen (P-01â€“P-21)
 14. PR mergen â†’ Status â†’ "Freigabe"
 15. Auf PO-OK warten â†’ Status â†’ "Done"
 ```
@@ -174,22 +190,26 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01â€“P-15)
+## Prozessregeln Kurzübersicht (P-01–P-24)
 
-| Regel | Kurzform                                          |
-| ----- | ------------------------------------------------- |
-| P-01  | TARA-ID in jeder Chat-Antwort nennen              |
-| P-02  | Status â†’ In Progress VOR Arbeitsbeginn          |
-| P-03  | Tests VOR Implementierung schreiben               |
-| P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)  |
-| P-05  | Story-Tests vor Commit grün                       |
-| P-06  | Vollständige Suite vor PR grün                    |
-| P-07  | Branch: `feature/TARA-XXXX-*`                     |
-| P-08  | Commits referenzieren TARA-ID                     |
-| P-09  | Status â†’ inReview vor PR                        |
-| P-10  | Review-Agent aufgerufen, kein Critical/High offen |
-| P-11  | Nach Merge â†’ Freigabe (nicht direkt Done)       |
-| P-12  | Prettier grün vor Tests                           |
-| P-13  | ESLint grün vor Tests                             |
-| P-14  | TARA-IDs sind atomar und unveränderlich           |
-| P-15  | Done nur nach explizitem PO-OK                    |
+| Regel | Kurzform                                                                                                                                        |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| P-01  | TARA-ID in jeder Chat-Antwort nennen                                                                                                            |
+| P-02  | Status → In Progress VOR Arbeitsbeginn                                                                                                          |
+| P-03  | Tests VOR Implementierung schreiben                                                                                                             |
+| P-04  | Tests müssen initial FEHLSCHLAGEN (Red bewiesen)                                                                                                |
+| P-05  | Story-Tests vor Commit grün                                                                                                                     |
+| P-06  | Vollständige Suite vor PR grün                                                                                                                  |
+| P-07  | Branch: `feature/TARA-XXXX-*`                                                                                                                   |
+| P-08  | Commits referenzieren TARA-ID                                                                                                                   |
+| P-09  | Status → inReview vor PR                                                                                                                        |
+| P-10  | Review-Agent aufgerufen, kein Critical/High offen                                                                                               |
+| P-11  | Nach Merge → Freigabe (nicht direkt Done)                                                                                                       |
+| P-12  | Prettier grün vor Tests                                                                                                                         |
+| P-13  | ESLint grün vor Tests                                                                                                                           |
+| P-14  | TARA-IDs sind atomar und unveränderlich                                                                                                         |
+| P-15  | Done nur nach explizitem PO-OK                                                                                                                  |
+| P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body – stattdessen `Bezug: #NNN`                                                                        |
+| P-20  | Audit-Trail-Kommentar bei jedem Status-Wechsel; PO-OK-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` |
+| P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar)                                                               |
+| P-24  | Epic-Sync-Pflicht: neue Story mit `Bezug: #<Epic-Nr>` sofort im Epic-Body nachtragen; vor Epic-Abschluss auf Vollstaendigkeit pruefen           |
