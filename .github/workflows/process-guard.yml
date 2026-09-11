@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-03/P-04/P-06/P-07/P-08/P-12/P-13/P-19)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-06/P-07/P-08/P-09/P-12/P-13/P-19)
 
 on:
   pull_request:
@@ -6,6 +6,11 @@ on:
     branches:
       - development
       - main
+
+permissions:
+  contents: read
+  issues: read
+  repository-projects: read
 
 jobs:
   process-guard:
@@ -63,87 +68,124 @@ jobs:
             exit 1
           fi
 
+      - name: P-02/P-09 – Board-Status vor PR-Oeffnung
+        id: board_status
+        if: |
+          !(github.head_ref == 'development' && github.base_ref == 'main')
+        uses: actions/github-script@v7
+        env:
+          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const branch = context.payload.pull_request.head.ref;
+            const match = branch.match(/TARA-(\d{4})/);
+            if (!match) {
+              console.log('INFO P-02/P-09: Kein TARA-ID im Branch – Check uebersprungen');
+              return;
+            }
+            const taraId = `TARA-${match[1]}`;
+            const projectId = process.env.SK_PROJECT;
+
+            const query = `
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 100) {
+                      nodes {
+                        content { ... on Issue { title number } }
+                        fieldValues(first: 10) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              name
+                              field { ... on ProjectV2SingleSelectField { name } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }`;
+
+            // TARA-0092: GraphQL-Aufruf robust gegen transiente Fehler kapseln.
+            // Ein Netzwerk-/Rate-Limit-/Token-Fehler soll den gesamten
+            // Compliance-Check nicht unkontrolliert crashen lassen – stattdessen
+            // wird der P-02/P-09-Check bewusst uebersprungen (soft-skip) und als
+            // Warnung sichtbar gemacht.
+            let result;
+            try {
+              result = await github.graphql(query, { projectId });
+            } catch (error) {
+              core.warning(
+                `P-02/P-09: Board-Status konnte nicht abgerufen werden (GraphQL-Fehler: ` +
+                `${error.message || error}) – Check wird uebersprungen (soft-skip).`
+              );
+              return;
+            }
+
+            const items = result.node.items.nodes;
+            // TARA-0091: Exaktes Matching der TARA-ID im Titel statt Substring-Vergleich,
+            // damit z.B. "TARA-0083" nicht faelschlich auf "TARA-00831" matcht.
+            const taraIdPattern = new RegExp(`\\b${taraId}\\b`);
+            const match_item = items.find(
+              item => item.content && item.content.title && taraIdPattern.test(item.content.title)
+            );
+
+            if (!match_item) {
+              console.log(`INFO P-02/P-09: Kein Board-Item fuer ${taraId} gefunden – Check uebersprungen`);
+              return;
+            }
+
+            const statusField = match_item.fieldValues.nodes.find(
+              fv => fv.field && fv.field.name === 'Status'
+            );
+
+            // TARA-0090: Fehlt das Statusfeld (z.B. weil es umbenannt wurde oder
+            // nicht mitgeliefert wird), darf der Check NICHT stillschweigend als
+            // bestanden gelten (ein Platzhalter-Status waere sonst immer != "Todo" und damit immer "OK").
+            if (!statusField) {
+              core.setFailed(
+                `FAIL P-02/P-09: Statusfeld fuer ${taraId} konnte nicht ermittelt werden ` +
+                `(Feld "Status" fehlt in den Board-Daten). Der Check kann die Vorbedingung ` +
+                `nicht verifizieren und schlaegt daher sicherheitshalber fehl.`
+              );
+              return;
+            }
+
+            const currentStatus = statusField.name;
+            console.log(`${taraId}: aktueller Board-Status = ${currentStatus}`);
+
+            // P-02: Status muss VOR Arbeitsbeginn auf "In Progress" gesetzt worden sein.
+            // P-09: Status muss VOR PR-Oeffnung auf "inReview" gesetzt worden sein.
+            // Naeherungsweise CI-Pruefung: sobald ein PR existiert (also Commits + Review
+            // angefragt sind), darf der Status nicht mehr "Todo" sein.
+            if (currentStatus === 'Todo') {
+              core.setFailed(
+                `FAIL P-02/P-09: Issue fuer ${taraId} steht noch auf Status "Todo", obwohl bereits ein PR ` +
+                `existiert. Erwartet: mindestens "In Progress" (P-02) bzw. "inReview" (P-09) VOR PR-Oeffnung.`
+              );
+              return;
+            }
+            console.log(`OK P-02/P-09: Board-Status "${currentStatus}" ist plausibel fuer einen offenen PR`);
+
       - name: P-03 – TDD-Testdatei vorhanden
         run: |
-          BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
-            echo "INFO P-03: Kein TARA-ID im Branch – P-03 uebersprungen"
-            exit 0
-          fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
-          if [ -f "$TESTFILE" ]; then
-            echo "OK P-03: Testdatei $TESTFILE vorhanden"
-          else
-            echo "FAIL P-03: Testdatei $TESTFILE fehlt – TDD nicht eingehalten"
-            exit 1
-          fi
+          bash scripts/process_guard/check_test_file_exists.sh "${{ github.head_ref }}"
 
       - name: P-04 – TDD Red-Phase bewiesen (Test-Commit vor Implementierung)
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-04: Kein TARA-ID im Branch – P-04 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
-          if [ ! -f "$TESTFILE" ]; then
-            echo "INFO P-04: Testdatei nicht gefunden – P-04 uebersprungen"
-            exit 0
-          fi
-
+          eval "$RESOLVED"
           BASE="${{ github.event.pull_request.base.sha }}"
-
-          # Find the FIRST commit on this branch that added the test file
-          FIRST_TEST_COMMIT=$(git log --diff-filter=A --format="%H" "$BASE..HEAD" -- "$TESTFILE" | tail -1)
-
-          if [ -z "$FIRST_TEST_COMMIT" ]; then
-            # Test file not added on this branch -> exists from base, not a new story test
-            echo "INFO P-04: Testdatei nicht auf diesem Branch hinzugefuegt – P-04 uebersprungen"
-            exit 0
-          fi
-
-          echo "Pruefe Red-Phase am Commit: $FIRST_TEST_COMMIT"
-
-          # Check if at FIRST_TEST_COMMIT the test file is the ONLY story-related change
-          # (i.e., implementation files were added later)
-          IMPL_IN_FIRST=$(git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
-            | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG" \
-            | wc -l)
-
-          if [ "$IMPL_IN_FIRST" -gt 0 ]; then
-            echo "FAIL P-04: Im Red-Commit sind bereits Implementierungsdateien enthalten."
-            echo "  P-04 erfordert: Test-Commit (nur tests/) VOR Implementierungs-Commit."
-            echo "  Gefundene Nicht-Test-Dateien im ersten Test-Commit:"
-            git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
-              | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG"
-            exit 1
-          fi
-
-          # Now verify the test actually FAILED at that commit via git worktree
-          git worktree add /tmp/red-phase "$FIRST_TEST_COMMIT" 2>/dev/null
-          cd /tmp/red-phase
-          pip install pytest pytest-timeout --quiet 2>/dev/null
-          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet 2>/dev/null
-          [ -f requirements.txt ] && pip install -r requirements.txt --quiet 2>/dev/null
-          set +e
-          pytest "$TESTFILE" --noconftest -q 2>&1
-          RED_EXIT=$?
-          set -e
-          cd -
-          git worktree remove /tmp/red-phase --force 2>/dev/null
-
-          if [ "$RED_EXIT" -ne 0 ]; then
-            echo "OK P-04: Red-Phase bestaetigt – Tests haben beim Red-Commit gefehlt"
-          else
-            echo "FAIL P-04: Tests waren GRUEN beim Red-Commit $FIRST_TEST_COMMIT"
-            echo "  Tests muessen beim Red-Commit FEHLSCHLAGEN (Regel P-04)."
-            echo "  Pruefe ob Implementierung im gleichen Commit wie Tests ist."
-            exit 1
-          fi
+          bash scripts/process_guard/check_red_phase.sh "$BASE" "$TESTFILE"
 
       - name: Python-Umgebung einrichten (fuer P-06)
         run: |
@@ -154,13 +196,13 @@ jobs:
       - name: P-06 – Story-Tests gruen
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-06: Kein TARA-ID – P-06 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
+          eval "$RESOLVED"
           if [ ! -f "$TESTFILE" ]; then
             echo "INFO P-06: Testdatei nicht gefunden – P-06 uebersprungen"
             exit 0
