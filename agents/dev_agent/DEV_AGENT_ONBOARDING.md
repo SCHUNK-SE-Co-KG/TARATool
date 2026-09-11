@@ -164,6 +164,10 @@ gh api graphql -f query='{
    â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
    .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
+   ⚠️ **P-24 (Epic-Sync-Pflicht):** Wird diese Story ueber `Bezug: #<Epic-Nr>`
+   einem Epic zugeordnet, MUSS im gleichen Arbeitsschritt das Epic-Issue-Body
+   (Checkliste "Enthaltene Stories") um die neue Story ergaenzt werden - nicht
+   erst nachtraeglich.
 4. tests/test_TARA_XXXX.py schreiben â†’ RED (müssen FEHLSCHLAGEN)
 5. Implementierung â†’ GREEN
 6. npm run format:check  (Prettier)
@@ -186,7 +190,7 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 
 ---
 
-## Prozessregeln Kurzübersicht (P-01–P-21)
+## Prozessregeln Kurzübersicht (P-01–P-24)
 
 | Regel | Kurzform                                                                                                                                        |
 | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -208,3 +212,4 @@ Vollständige Beschreibung: `CONTRIBUTING.md`
 | P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body – stattdessen `Bezug: #NNN`                                                                        |
 | P-20  | Audit-Trail-Kommentar bei jedem Status-Wechsel; PO-OK-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` |
 | P-21  | Verbindliches Gate vor Commit/PR aktiv im Chat bestaetigen (nicht ueberspringbar)                                                               |
+| P-24  | Epic-Sync-Pflicht: neue Story mit `Bezug: #<Epic-Nr>` sofort im Epic-Body nachtragen; vor Epic-Abschluss auf Vollstaendigkeit pruefen           |
