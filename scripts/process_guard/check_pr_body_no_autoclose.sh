@@ -18,7 +18,7 @@ if [ -z "$BODY_FILE" ] || [ ! -f "$BODY_FILE" ]; then
   exit 0
 fi
 
-PATTERN='\b(closes?|fix(e|es|ed)?|resolves?)\s*:?\s*#[0-9]+'
+PATTERN='\b(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved)\s*:?\s*#[0-9]+'
 
 if grep -qiE "$PATTERN" "$BODY_FILE"; then
   echo "FAIL P-19: PR-Body enthaelt ein verbotenes 'Closes/Fixes/Resolves #NNN'."

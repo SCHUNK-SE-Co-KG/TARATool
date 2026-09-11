@@ -79,6 +79,32 @@ def test_script_fails_on_resolves_keyword():
     assert "FAIL P-19" in result.stdout
 
 
+@pytest.mark.TARA_0095
+def test_script_fails_on_closed_past_tense_keyword():
+    """TARA-0095: 'Closed #NNN' (Vergangenheitsform) ist laut GitHub ebenfalls
+    ein gueltiges Auto-Close-Schluesselwort und muss erkannt werden."""
+    result = _run_check("Closed #142")
+    assert result.returncode == 1, f"Erwartete FAIL: {result.stdout}{result.stderr}"
+    assert "FAIL P-19" in result.stdout
+
+
+@pytest.mark.TARA_0095
+def test_script_fails_on_resolved_past_tense_keyword():
+    """TARA-0095: 'Resolved #NNN' (Vergangenheitsform) muss ebenfalls erkannt werden."""
+    result = _run_check("Resolved #142")
+    assert result.returncode == 1, f"Erwartete FAIL: {result.stdout}{result.stderr}"
+    assert "FAIL P-19" in result.stdout
+
+
+@pytest.mark.TARA_0095
+def test_script_fails_on_bare_fix_keyword():
+    """TARA-0095: Regressionsschutz - die blosse Form 'fix #NNN' (ohne Suffix)
+    ist laut GitHub-Dokumentation ebenfalls ein gueltiges Schluesselwort."""
+    result = _run_check("fix #142")
+    assert result.returncode == 1, f"Erwartete FAIL: {result.stdout}{result.stderr}"
+    assert "FAIL P-19" in result.stdout
+
+
 @pytest.mark.TARA_0085
 def test_script_passes_on_bezug_reference():
     result = _run_check("## Aenderungen\n\nBezug: #142\n")
