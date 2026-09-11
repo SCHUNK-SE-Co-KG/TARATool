@@ -164,85 +164,20 @@ jobs:
 
       - name: P-03 – TDD-Testdatei vorhanden
         run: |
-          BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
-            echo "INFO P-03: Kein TARA-ID im Branch – P-03 uebersprungen"
-            exit 0
-          fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
-          if [ -f "$TESTFILE" ]; then
-            echo "OK P-03: Testdatei $TESTFILE vorhanden"
-          else
-            echo "FAIL P-03: Testdatei $TESTFILE fehlt – TDD nicht eingehalten"
-            exit 1
-          fi
+          bash scripts/process_guard/check_test_file_exists.sh "${{ github.head_ref }}"
 
       - name: P-04 – TDD Red-Phase bewiesen (Test-Commit vor Implementierung)
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-04: Kein TARA-ID im Branch – P-04 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
-          if [ ! -f "$TESTFILE" ]; then
-            echo "INFO P-04: Testdatei nicht gefunden – P-04 uebersprungen"
-            exit 0
-          fi
-
+          eval "$RESOLVED"
           BASE="${{ github.event.pull_request.base.sha }}"
-
-          # Find the FIRST commit on this branch that added the test file
-          FIRST_TEST_COMMIT=$(git log --diff-filter=A --format="%H" "$BASE..HEAD" -- "$TESTFILE" | tail -1)
-
-          if [ -z "$FIRST_TEST_COMMIT" ]; then
-            # Test file not added on this branch -> exists from base, not a new story test
-            echo "INFO P-04: Testdatei nicht auf diesem Branch hinzugefuegt – P-04 uebersprungen"
-            exit 0
-          fi
-
-          echo "Pruefe Red-Phase am Commit: $FIRST_TEST_COMMIT"
-
-          # Check if at FIRST_TEST_COMMIT the test file is the ONLY story-related change
-          # (i.e., implementation files were added later)
-          IMPL_IN_FIRST=$(git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
-            | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG" \
-            | wc -l)
-
-          if [ "$IMPL_IN_FIRST" -gt 0 ]; then
-            echo "FAIL P-04: Im Red-Commit sind bereits Implementierungsdateien enthalten."
-            echo "  P-04 erfordert: Test-Commit (nur tests/) VOR Implementierungs-Commit."
-            echo "  Gefundene Nicht-Test-Dateien im ersten Test-Commit:"
-            git diff-tree --no-commit-id -r --name-only "$FIRST_TEST_COMMIT" \
-              | grep -vE "^tests/|^\.github/|^docs/|^agents/|^scripts/|^README|^CONTRIBUTING|^CHANGELOG"
-            exit 1
-          fi
-
-          # Now verify the test actually FAILED at that commit via git worktree
-          git worktree add /tmp/red-phase "$FIRST_TEST_COMMIT" 2>/dev/null
-          cd /tmp/red-phase
-          pip install pytest pytest-timeout --quiet 2>/dev/null
-          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet 2>/dev/null
-          [ -f requirements.txt ] && pip install -r requirements.txt --quiet 2>/dev/null
-          set +e
-          pytest "$TESTFILE" --noconftest -q 2>&1
-          RED_EXIT=$?
-          set -e
-          cd -
-          git worktree remove /tmp/red-phase --force 2>/dev/null
-
-          if [ "$RED_EXIT" -ne 0 ]; then
-            echo "OK P-04: Red-Phase bestaetigt – Tests haben beim Red-Commit gefehlt"
-          else
-            echo "FAIL P-04: Tests waren GRUEN beim Red-Commit $FIRST_TEST_COMMIT"
-            echo "  Tests muessen beim Red-Commit FEHLSCHLAGEN (Regel P-04)."
-            echo "  Pruefe ob Implementierung im gleichen Commit wie Tests ist."
-            exit 1
-          fi
+          bash scripts/process_guard/check_red_phase.sh "$BASE" "$TESTFILE"
 
       - name: Python-Umgebung einrichten (fuer P-06)
         run: |
@@ -253,13 +188,13 @@ jobs:
       - name: P-06 – Story-Tests gruen
         run: |
           BRANCH="${{ github.head_ref }}"
-          TARA_ID=$(echo "$BRANCH" | grep -oE 'TARA-[0-9]{4}' | head -1)
-          if [ -z "$TARA_ID" ]; then
+          # TARA-0094: TARA-ID/Testdatei-Ableitung aus gemeinsamer Quelle
+          # beziehen statt sie hier erneut zu duplizieren.
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
             echo "INFO P-06: Kein TARA-ID – P-06 uebersprungen"
             exit 0
           fi
-          NUM=$(echo "$TARA_ID" | grep -oE '[0-9]{4}')
-          TESTFILE="tests/test_TARA_${NUM}.py"
+          eval "$RESOLVED"
           if [ ! -f "$TESTFILE" ]; then
             echo "INFO P-06: Testdatei nicht gefunden – P-06 uebersprungen"
             exit 0
