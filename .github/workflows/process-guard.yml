@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-06/P-07/P-08/P-09/P-12/P-13/P-19)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-06/P-07/P-08/P-09/P-10/P-12/P-13/P-19)
 
 on:
   pull_request:
@@ -28,6 +28,18 @@ jobs:
           BODY_FILE=$(mktemp)
           printf '%s' "$PR_BODY" > "$BODY_FILE"
           bash scripts/process_guard/check_pr_body_no_autoclose.sh "$BODY_FILE"
+
+      - name: P-10 – Review-Agent-Nachweis vorhanden
+        if: |
+          !(github.head_ref == 'development' && github.base_ref == 'main')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENTS_FILE=$(mktemp)
+          gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '.[].body' > "$COMMENTS_FILE" || true
+          bash scripts/process_guard/check_review_agent_invoked.sh "$COMMENTS_FILE"
 
       - name: P-07 – Branch-Name Schema
         run: |

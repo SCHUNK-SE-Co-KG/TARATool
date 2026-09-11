@@ -136,6 +136,28 @@ python agents/review_agent/runtime_scanner.py \
 | Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
 | Hoch/Kritisch      | Item zurück auf â€žIn Progress", Findings zuerst beheben             |
 
+### Technischer P-10-Nachweis (TARA-0089)
+
+Damit die Aktivierung des Review-Agenten nicht rein dokumentarisch bleibt, prueft
+`process-guard.yml` (Schritt "P-10 – Review-Agent-Nachweis vorhanden") bei jedem PR
+gegen `development`/`main`, ob mindestens ein PR-Kommentar eines der beiden
+maschinenlesbaren Marker enthaelt:
+
+```
+Review-Agent: OK - keine Findings
+```
+
+oder
+
+```
+Review-Agent: Findings siehe #<NNN>
+```
+
+(`<NNN>` = Nummer eines angelegten `review-finding`-Issues). Fehlt der Marker,
+schlaegt der Check fehl (`scripts/process_guard/check_review_agent_invoked.sh`).
+Der Dev-Agent muss also nach jeder Review-Agent-Aktivierung einen dieser
+Kommentare im PR hinterlassen, bevor der PR gemergt werden kann.
+
 ---
 
 ## Finding-Abschluss
