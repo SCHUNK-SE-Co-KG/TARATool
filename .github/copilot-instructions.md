@@ -23,10 +23,10 @@ Alle Commits, PRs und Board-Operationen erfolgen ausschliesslich auf `SCHUNK-SE-
 
 | Dokument | Pfad | Inhalt |
 |----------|------|--------|
-| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-21 |
+| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-18, P-21 (P-19/P-20 folgen nach Merge von PR #149/#150) |
 | **Board-IDs & GraphQL** | `docs/GITHUB_BOARD.md` | API-IDs, Status-Optionen, gh-Befehle |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
-| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-21 vollstaendig, Pre-Transition-Checks |
+| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18, P-21 (P-19/P-20 folgen nach Merge), Pre-Transition-Checks |
 | **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Severity, Finding-Framework |
 
 > **Beim Session-Start diese Dateien lesen**, bevor mit der Arbeit begonnen wird.
@@ -117,14 +117,21 @@ Vollstaendige Tabelle: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > reicht nicht - der Dev-Agent gibt jeden Punkt explizit im Chat aus.
 
 **Gate 1 - VOR dem ersten Commit einer Story:**
-- [ ] Board-Status auf **"In Progress"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-02/P-20)
+- [ ] Board-Status auf **"In Progress"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-02)
 - [ ] Testdatei `tests/test_TARA_XXXX.py` existiert bereits (P-03)?
 
 **Gate 2 - VOR `gh pr create`:**
-- [ ] Board-Status auf **"inReview"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-09/P-20)
+- [ ] Board-Status auf **"inReview"** gesetzt? (Issue-Kommentar mit Audit-Trail, P-09)
 - [ ] Story-Tests lokal gruen (P-06)?
 - [ ] Prettier/ESLint gruen, falls JS/HTML/CSS geaendert (P-12/P-13)?
-- [ ] PR-Body enthaelt `Bezug: #NNN`, **kein** `Closes/Fixes #NNN` (P-19)?
+- [ ] PR-Body enthaelt `Bezug: #NNN`, **kein** `Closes/Fixes #NNN`?
+
+> Hinweis (TARA-0098): Die Regeln P-19 (kein Auto-Close-Keyword im PR-Body) und
+> P-20 (Audit-Trail-Kommentar-Pflicht, vollstaendige Freigabe-Keyword-Liste)
+> werden auf separaten Branches (TARA-0085/PR #149, TARA-0086/PR #150)
+> eingefuehrt und sind hier bewusst noch nicht referenziert, solange diese
+> PRs nicht in `development` gemergt sind. Nach dem Merge sind die obigen
+> Referenzen um `(P-19)` bzw. `(P-20)` zu ergaenzen.
 
 Erst wenn **alle** Punkte eines Gates im Chat bestaetigt sind, darf der naechste
 Schritt (Commit bzw. PR-Oeffnung) ausgefuehrt werden. Fehlt eine Bestaetigung,
@@ -139,5 +146,5 @@ Beispiel: `[TARA-0026]`
 
 ---
 
-> Vollstaendige Prozessregeln (P-01-P-21): `agents/process_guard/PROCESS_GUARD_AGENT.md`
+> Vollstaendige Prozessregeln (P-01-P-18, P-21; P-19/P-20 nach Merge von PR #149/#150): `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > Vollstaendiger Story-Workflow: `docs/ENTWICKLUNGSPROZESS.md` (Abschnitt 4)
