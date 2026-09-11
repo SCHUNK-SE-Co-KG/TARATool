@@ -173,7 +173,10 @@ gh api graphql -f query='{
 10. git push origin feature/TARA-XXXX-...
 11. Status â†’ "inReview", PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
     â›” GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
-12. Review-Agent aufrufen, Findings beheben
+12. Review-Agent aufrufen, Findings beheben. Danach zwingend einen PR-Kommentar
+    hinterlassen: `Review-Agent: OK - keine Findings` ODER `Review-Agent: Findings
+    siehe #<NNN>` - process-guard.yml erzwingt diesen Nachweis technisch (P-10,
+    siehe TARA-0089, `scripts/process_guard/check_review_agent_invoked.sh`).
 13. Prozess-Guard aufrufen (P-01â€“P-21)
 14. PR mergen â†’ Status â†’ "Freigabe"
 15. Auf PO-OK warten â†’ Status â†’ "Done"
