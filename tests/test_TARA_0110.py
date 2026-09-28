@@ -237,6 +237,25 @@ def test_gate_passes_with_valid_review_and_timely_acceptance(gate_module):
 
 
 @pytest.mark.TARA_0110
+def test_gate_fails_when_acceptance_predates_review_timestamp(gate_module):
+    """PO darf nicht VOR dem Review-Nachweis akzeptiert haben (sonst hat der
+    PO gar kein gruenes Review-Ergebnis fuer diesen Stand gesehen)."""
+    comments = [
+        {"body": REVIEW_PASSED_JSON % "abc123", "created_at": "2026-01-10T09:10:00Z"},
+        {
+            "body": "akzeptiert TARA-0110",
+            "created_at": "2026-01-10T07:50:00Z",
+            "permitted": True,
+        },
+    ]
+    ok, msg = gate_module.validate_acceptance_gate(
+        comments, "TARA-0110", "abc123", "2026-01-10T07:00:00Z"
+    )
+    assert ok is False
+    assert "Review-Nachweis" in msg
+
+
+@pytest.mark.TARA_0110
 def test_gate_ignores_acceptance_bound_to_other_tara_id(gate_module):
     comments = [
         {"body": REVIEW_PASSED_JSON % "abc123", "created_at": "2026-01-10T09:10:00Z"},

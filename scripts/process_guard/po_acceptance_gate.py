@@ -88,9 +88,25 @@ def validate_acceptance_gate(
             "Commit-Stand und ist veraltet."
         )
 
+    # Verhindert, dass der PO "vorab" akzeptiert, BEVOR der Review-Agent
+    # ueberhaupt ein Ergebnis fuer diesen SHA veroeffentlicht hat (Review-
+    # Finding TARA-0110, PR #195): die Akzeptanz darf zeitlich nicht vor dem
+    # im Review-Nachweis dokumentierten Zeitstempel liegen.
+    review_timestamp = review_result.get("timestamp")
+    if review_timestamp:
+        try:
+            review_dt = _parse_iso(review_timestamp)
+        except ValueError as exc:
+            return False, f"P-25: Review-Zeitstempel nicht parsebar ({exc})."
+        if accepted_dt < review_dt:
+            return False, (
+                f"P-25: PO-Akzeptanz ({accepted_at}) liegt VOR dem Review-Nachweis "
+                f"({review_timestamp}) - PO kann nicht vor dem Review akzeptiert haben."
+            )
+
     return True, (
         "P-25: OK - Review bestanden (SHA-aktuell) und PO-Akzeptanz nach letztem "
-        "Push, TARA-ID-gebunden."
+        "Push und nach dem Review-Nachweis, TARA-ID-gebunden."
     )
 
 

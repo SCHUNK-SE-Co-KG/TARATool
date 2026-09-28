@@ -296,9 +296,23 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.issue.number }}
-          TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
         run: |
-          PR_HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq .head.sha)
+          PR_INFO=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq '{sha: .head.sha, ref: .head.ref}')
+          PR_HEAD_SHA=$(echo "$PR_INFO" | jq -r .sha)
+          BRANCH=$(echo "$PR_INFO" | jq -r .ref)
+
+          # Die massgebliche TARA-ID wird - wie in process-guard.yml (P-25) -
+          # AUSSCHLIESSLICH aus dem Branch-Namen dieses PRs abgeleitet, NICHT
+          # aus den im Kommentar genannten TARA-IDs. Andernfalls koennte ein
+          # Kommentar, der (versehentlich oder gezielt) mehrere TARA-IDs
+          # nennt, faelschlich eine fremde, gueltige Akzeptanz auf dieses PR
+          # uebertragen (Review-Finding TARA-0110, PR #195).
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
+            echo "INFO P-25: Kein TARA-ID im Branch-Namen - PO-Akzeptanz-Gate uebersprungen"
+            exit 0
+          fi
+          eval "$RESOLVED"
+          TARA_ID="$TARA_ID"
 
           RAW_COMMENTS_FILE=$(mktemp)
           gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
@@ -310,17 +324,11 @@ jobs:
 
           HEAD_PUSHED_AT=$(git log -1 --format=%cI "$PR_HEAD_SHA")
 
-          IFS=',' read -ra IDS <<< "$TARA_IDS_CSV"
-          GATE_OK="false"
-          for TARA_ID in "${IDS[@]}"; do
-            TARA_ID=$(echo "$TARA_ID" | xargs)
-            [ -z "$TARA_ID" ] && continue
-            if bash scripts/process_guard/check_po_acceptance_gate.sh "$COMMENTS_FILE" "$TARA_ID" "$PR_HEAD_SHA" "$HEAD_PUSHED_AT"; then
-              echo "GATE_OK_$TARA_ID=true" >> "$GITHUB_ENV"
-              GATE_OK="true"
-            fi
-          done
-          echo "gate_ok=$GATE_OK" >> "$GITHUB_OUTPUT"
+          if bash scripts/process_guard/check_po_acceptance_gate.sh "$COMMENTS_FILE" "$TARA_ID" "$PR_HEAD_SHA" "$HEAD_PUSHED_AT"; then
+            echo "gate_ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gate_ok=false" >> "$GITHUB_OUTPUT"
+          fi
         id: gate
 
       - name: Status auf "Accepted" setzen (Board)
