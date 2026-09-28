@@ -81,107 +81,42 @@ jobs:
             exit 1
           fi
 
-      - name: P-02/P-09 – Board-Status vor PR-Oeffnung
+      - name: P-02/P-09 – Audit-Trail-Zeitstempel deterministisch pruefen (TARA-0108)
         id: board_status
         if: |
           !(github.head_ref == 'development' && github.base_ref == 'main')
-        uses: actions/github-script@v7
         env:
-          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
-          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
-        with:
-          github-token: ${{ secrets.PROJECT_TOKEN }}
-          script: |
-            const branch = context.payload.pull_request.head.ref;
-            const match = branch.match(/TARA-(\d{4})/);
-            if (!match) {
-              console.log('INFO P-02/P-09: Kein TARA-ID im Branch – Check uebersprungen');
-              return;
-            }
-            const taraId = `TARA-${match[1]}`;
-            const projectId = process.env.SK_PROJECT;
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # TARA-0108: Ersetzt die bisherige "Status != Todo"-Heuristik durch
+          # einen deterministischen Vergleich zweier unveraenderlicher GitHub-
+          # Zeitstempel (Audit-Trail-Kommentar auf dem Story-Issue vs. erstes
+          # Commit-Datum bzw. PR-Erstellungsdatum) - kein Agent entscheidet
+          # mehr selbst, ob P-02/P-09 eingehalten wurden.
+          BODY_FILE=$(mktemp)
+          printf '%s' "$PR_BODY" > "$BODY_FILE"
+          ISSUE_NUMBER=$(BODY_FILE="$BODY_FILE" python3 -c "import sys, os; sys.path.insert(0, 'scripts/process_guard'); from status_timing_check import extract_issue_number; body = open(os.environ['BODY_FILE'], encoding='utf-8').read(); n = extract_issue_number(body); print(n if n is not None else '')")
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "INFO P-02/P-09: Kein 'Bezug: #NNN' im PR-Body gefunden - Check uebersprungen"
+            exit 0
+          fi
 
-            const query = `
-              query($projectId: ID!) {
-                node(id: $projectId) {
-                  ... on ProjectV2 {
-                    items(first: 100) {
-                      nodes {
-                        content { ... on Issue { title number } }
-                        fieldValues(first: 10) {
-                          nodes {
-                            ... on ProjectV2ItemFieldSingleSelectValue {
-                              name
-                              field { ... on ProjectV2SingleSelectField { name } }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }`;
+          COMMENTS_FILE=$(mktemp)
+          gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}/comments" \
+            --jq '[.[] | {body, created_at}]' > "$COMMENTS_FILE" || echo '[]' > "$COMMENTS_FILE"
 
-            // TARA-0092: GraphQL-Aufruf robust gegen transiente Fehler kapseln.
-            // Ein Netzwerk-/Rate-Limit-/Token-Fehler soll den gesamten
-            // Compliance-Check nicht unkontrolliert crashen lassen – stattdessen
-            // wird der P-02/P-09-Check bewusst uebersprungen (soft-skip) und als
-            // Warnung sichtbar gemacht.
-            let result;
-            try {
-              result = await github.graphql(query, { projectId });
-            } catch (error) {
-              core.warning(
-                `P-02/P-09: Board-Status konnte nicht abgerufen werden (GraphQL-Fehler: ` +
-                `${error.message || error}) – Check wird uebersprungen (soft-skip).`
-              );
-              return;
-            }
+          FIRST_COMMIT_ISO=$(git log --reverse --format=%aI "$BASE_SHA..$HEAD_SHA" | head -n1)
+          if [ -z "$FIRST_COMMIT_ISO" ]; then
+            echo "INFO P-02: Kein Commit im PR-Bereich gefunden - P-02-Zeitpruefung uebersprungen"
+          else
+            bash scripts/process_guard/check_status_transition_timing.sh "$COMMENTS_FILE" "In Progress" "$FIRST_COMMIT_ISO" "P-02"
+          fi
 
-            const items = result.node.items.nodes;
-            // TARA-0091: Exaktes Matching der TARA-ID im Titel statt Substring-Vergleich,
-            // damit z.B. "TARA-0083" nicht faelschlich auf "TARA-00831" matcht.
-            const taraIdPattern = new RegExp(`\\b${taraId}\\b`);
-            const match_item = items.find(
-              item => item.content && item.content.title && taraIdPattern.test(item.content.title)
-            );
-
-            if (!match_item) {
-              console.log(`INFO P-02/P-09: Kein Board-Item fuer ${taraId} gefunden – Check uebersprungen`);
-              return;
-            }
-
-            const statusField = match_item.fieldValues.nodes.find(
-              fv => fv.field && fv.field.name === 'Status'
-            );
-
-            // TARA-0090: Fehlt das Statusfeld (z.B. weil es umbenannt wurde oder
-            // nicht mitgeliefert wird), darf der Check NICHT stillschweigend als
-            // bestanden gelten (ein Platzhalter-Status waere sonst immer != "Todo" und damit immer "OK").
-            if (!statusField) {
-              core.setFailed(
-                `FAIL P-02/P-09: Statusfeld fuer ${taraId} konnte nicht ermittelt werden ` +
-                `(Feld "Status" fehlt in den Board-Daten). Der Check kann die Vorbedingung ` +
-                `nicht verifizieren und schlaegt daher sicherheitshalber fehl.`
-              );
-              return;
-            }
-
-            const currentStatus = statusField.name;
-            console.log(`${taraId}: aktueller Board-Status = ${currentStatus}`);
-
-            // P-02: Status muss VOR Arbeitsbeginn auf "In Progress" gesetzt worden sein.
-            // P-09: Status muss VOR PR-Oeffnung auf "inReview" gesetzt worden sein.
-            // Naeherungsweise CI-Pruefung: sobald ein PR existiert (also Commits + Review
-            // angefragt sind), darf der Status nicht mehr "Todo" sein.
-            if (currentStatus === 'Todo') {
-              core.setFailed(
-                `FAIL P-02/P-09: Issue fuer ${taraId} steht noch auf Status "Todo", obwohl bereits ein PR ` +
-                `existiert. Erwartet: mindestens "In Progress" (P-02) bzw. "inReview" (P-09) VOR PR-Oeffnung.`
-              );
-              return;
-            }
-            console.log(`OK P-02/P-09: Board-Status "${currentStatus}" ist plausibel fuer einen offenen PR`);
+          bash scripts/process_guard/check_status_transition_timing.sh "$COMMENTS_FILE" "inReview" "$PR_CREATED_AT" "P-09"
 
       - name: P-03 – TDD-Testdatei vorhanden
         run: |
