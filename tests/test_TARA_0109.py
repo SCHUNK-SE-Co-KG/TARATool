@@ -153,6 +153,56 @@ def test_blockquote_does_not_suppress_later_active_line(parser_module):
     assert ids == ["TARA-0109"]
 
 
+@pytest.mark.TARA_0109
+def test_keyword_and_id_across_sentence_boundary_not_bound(parser_module):
+    """Review-Finding PR #194: Bindung darf nicht ueber Satzgrenzen (.!?)
+    hinweg erfolgen."""
+    ids = parser_module.extract_approved_tara_ids(
+        "Sieht ok aus. TARA-0109 bitte nochmal pruefen und Tests ergaenzen."
+    )
+    assert ids == []
+
+
+@pytest.mark.TARA_0109
+def test_keyword_and_id_across_paragraph_boundary_not_bound(parser_module):
+    """Review-Finding PR #194: Bindung darf nicht ueber Absatzgrenzen
+    (Leerzeile) hinweg erfolgen."""
+    ids = parser_module.extract_approved_tara_ids(
+        "OK\n\nTARA-0109 needs more work, not approved yet."
+    )
+    assert ids == []
+
+
+@pytest.mark.TARA_0109
+def test_negation_with_extra_filler_word_still_rejected(parser_module):
+    """Review-Finding PR #194: Ein zusaetzliches Fuellwort zwischen Negation
+    und Keyword darf die Negations-Ausnahme (TARA-0096) nicht umgehen."""
+    ids = parser_module.extract_approved_tara_ids("nicht wirklich akzeptiert TARA-0109")
+    assert ids == []
+
+
+@pytest.mark.TARA_0109
+def test_indented_code_block_ignored(parser_module):
+    """Review-Finding PR #194: 4-Leerzeichen-eingerueckte Code-Bloecke
+    (GFM-Konvention) muessen wie Code-Fences ignoriert werden."""
+    ids = parser_module.extract_approved_tara_ids("    akzeptiert TARA-0109")
+    assert ids == []
+
+
+@pytest.mark.TARA_0109
+def test_multiple_ids_before_keyword_all_matched(parser_module):
+    """Review-Finding PR #194: Eine ID-Liste vor dem Keyword muss vollstaendig
+    gebunden werden, nicht nur die naechstgelegene ID."""
+    ids = parser_module.extract_approved_tara_ids("TARA-0108 und TARA-0109 akzeptiert")
+    assert ids == ["TARA-0108", "TARA-0109"]
+
+
+@pytest.mark.TARA_0109
+def test_multiple_ids_after_keyword_all_matched(parser_module):
+    ids = parser_module.extract_approved_tara_ids("akzeptiert TARA-0108, TARA-0109")
+    assert ids == ["TARA-0108", "TARA-0109"]
+
+
 # ---------------------------------------------------------------------------
 # Wrapper-Skript (Bash)
 # ---------------------------------------------------------------------------
@@ -162,6 +212,7 @@ def test_wrapper_matches_and_prints_id():
     result = _run_wrapper("akzeptiert TARA-0109")
     assert result.returncode == 0
     assert "TARA-0109" in result.stdout
+
 
 
 @pytest.mark.TARA_0109
