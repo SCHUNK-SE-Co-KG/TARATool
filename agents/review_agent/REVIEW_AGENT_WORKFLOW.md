@@ -187,27 +187,56 @@ Unsicherheit im Finding-Body explizit vermerkt.
 | Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
 | Hoch/Kritisch      | Item zurück auf â€žIn Progress", Findings zuerst beheben             |
 
-### Technischer P-10-Nachweis (TARA-0089)
+### Technischer P-10-Nachweis (TARA-0089, SHA-gebunden seit TARA-0107)
 
-Damit die Aktivierung des Review-Agenten nicht rein dokumentarisch bleibt, prueft
-`process-guard.yml` (Schritt "P-10 – Review-Agent-Nachweis vorhanden") bei jedem PR
-gegen `development`/`main`, ob mindestens ein PR-Kommentar eines der beiden
-maschinenlesbaren Marker enthaelt:
+Der urspruengliche Nachweis aus TARA-0089 (Freitext-Marker
+`Review-Agent: OK - keine Findings` / `Review-Agent: Findings siehe #<NNN>`) war
+faelschbar: er bewies nicht, welcher Agent geprueft hat, welchen Commit er
+geprueft hat, welcher Pruefkatalog verwendet wurde, und ob danach weitere
+Aenderungen gepusht wurden. Jeder – auch der Dev-Agent oder ein Mensch – konnte
+diesen Text schreiben. Seit TARA-0107 ist dieser Freitext-Marker **kein
+gueltiger Nachweis mehr**.
 
+Stattdessen veroeffentlicht der Review-Agent nach jeder Pruefung einen
+maschinenlesbaren JSON-Block als PR-Kommentar:
+
+```json
+{
+  "story": "TARA-0107",
+  "pull_request": 123,
+  "reviewed_head_sha": "abc123...",
+  "review_profile_version": "2.1",
+  "result": "passed",
+  "critical": 0,
+  "high": 0,
+  "timestamp": "2026-09-28T08:00:00Z",
+  "findings_issue": null
+}
 ```
-Review-Agent: OK - keine Findings
-```
 
-oder
+Pflichtfelder: `story`, `pull_request`, `reviewed_head_sha`,
+`review_profile_version`, `result`, `critical`, `high`, `timestamp`.
+`findings_issue` (optional) referenziert ein `review-finding`-Issue, falls
+`critical`/`high` > 0 sind – ohne diese Referenz gilt ein Ergebnis mit offenen
+Critical/High-Findings als blockierend.
 
-```
-Review-Agent: Findings siehe #<NNN>
-```
+`process-guard.yml` (Schritt "P-10 – Review-Agent-Nachweis vorhanden") laedt
+bei jedem PR gegen `development`/`main` alle PR-Kommentare inkl. Zeitstempel
+und den aktuellen `head.sha` und ruft
+`scripts/process_guard/check_review_agent_invoked.sh <COMMENTS_JSON_FILE> <PR_HEAD_SHA>`
+auf. Dieses Skript delegiert an
+`scripts/process_guard/review_result_parser.py`, das:
 
-(`<NNN>` = Nummer eines angelegten `review-finding`-Issues). Fehlt der Marker,
-schlaegt der Check fehl (`scripts/process_guard/check_review_agent_invoked.sh`).
-Der Dev-Agent muss also nach jeder Review-Agent-Aktivierung einen dieser
-Kommentare im PR hinterlassen, bevor der PR gemergt werden kann.
+1. den zuletzt veroeffentlichten vollstaendigen JSON-Block extrahiert,
+2. prueft, dass `reviewed_head_sha` exakt dem aktuellen PR-Head-SHA entspricht
+   (ein Push NACH dem Review invalidiert den Nachweis automatisch – der Check
+   schlaegt dann fehl, bis ein neues Review-Ergebnis fuer den neuen Head-SHA
+   vorliegt),
+3. prueft, dass keine offenen Critical/High-Findings ohne `findings_issue`
+   vorliegen.
+
+Fehlt ein gueltiger, SHA-aktueller JSON-Block, schlaegt der Check fehl und der
+PR ist nicht mergefaehig.
 
 ---
 

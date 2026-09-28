@@ -40,6 +40,47 @@ def build_full_report(
     return session.report
 
 
+def build_review_result_comment(
+    story_id: str,
+    pull_request: int,
+    reviewed_head_sha: str,
+    findings: list,
+    review_profile_version: str = "1.0",
+    findings_issue: int | None = None,
+) -> str:
+    """TARA-0107: Erzeugt den maschinenlesbaren, SHA-gebundenen P-10-Nachweis
+    als PR-Kommentar (Fenced ```json``` Block).
+
+    Ersetzt den faelschbaren Freitext-Marker aus TARA-0089
+    ("Review-Agent: OK - keine Findings"). Der Process Guard prueft ueber
+    ``scripts/process_guard/review_result_parser.py``, ob ``reviewed_head_sha``
+    dem aktuellen PR-Head-SHA entspricht und ob offene Critical/High-Findings
+    durch ``findings_issue`` abgedeckt sind.
+    """
+    critical = sum(1 for f in findings if f.get("severity") == "Kritisch")
+    high = sum(1 for f in findings if f.get("severity") == "Hoch")
+    decision = determine_merge_decision(findings)
+    result = "passed" if decision != "BLOCKED" else "failed"
+
+    payload = {
+        "story": story_id,
+        "pull_request": pull_request,
+        "reviewed_head_sha": reviewed_head_sha,
+        "review_profile_version": review_profile_version,
+        "result": result,
+        "critical": critical,
+        "high": high,
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    if findings_issue is not None:
+        payload["findings_issue"] = findings_issue
+
+    body = "Review-Agent-Ergebnis (P-10, TARA-0107):\n\n```json\n"
+    body += json.dumps(payload, indent=2, ensure_ascii=False)
+    body += "\n```\n"
+    return body
+
+
 def determine_merge_decision(findings: list) -> str:
     """
     'APPROVED' | 'APPROVED_WITH_BACKLOG' | 'BLOCKED'
