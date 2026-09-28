@@ -145,6 +145,14 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha }}"
           bash scripts/process_guard/check_red_phase.sh "$BASE" "$TESTFILE"
 
+      - name: Node.js einrichten (fuer P-06b/P-12/P-13)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm install (fuer ESLint/Prettier Tests in P-06b/P-12/P-13)
+        run: npm install --silent
+
       - name: P-04b – Finaler Red-Green-Nachweis (TARA-0111)
         run: |
           BRANCH="${{ github.head_ref }}"
@@ -245,11 +253,6 @@ jobs:
             echo "OK P-06b: Volle Regressionssuite nicht erforderlich (nur Story-Testdatei/Doku veraendert)"
           fi
 
-      - name: Node.js einrichten (fuer P-12/P-13)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: P-12 – Prettier (nur bei JS/HTML-Aenderungen)
         run: |
           # Check if any JS or HTML files were changed in this PR
@@ -263,7 +266,6 @@ jobs:
             echo "INFO P-12: Kein package.json – P-12 uebersprungen"
             exit 0
           fi
-          npm install --silent
           npm run format:check
           if [ $? -eq 0 ]; then
             echo "OK P-12: Prettier – alle Dateien korrekt formatiert"
