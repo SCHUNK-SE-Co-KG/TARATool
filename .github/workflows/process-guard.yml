@@ -42,6 +42,39 @@ jobs:
             --jq '[.[] | {body, created_at}]' > "$COMMENTS_FILE" || echo '[]' > "$COMMENTS_FILE"
           bash scripts/process_guard/check_review_agent_invoked.sh "$COMMENTS_FILE" "$PR_HEAD_SHA"
 
+      - name: P-25 – PO-Akzeptanz-Gate vor Merge (Statusmodell B, TARA-0110)
+        if: |
+          !(github.head_ref == 'development' && github.base_ref == 'main')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
+            echo "INFO P-25: Kein TARA-ID im Branch-Namen - PO-Akzeptanz-Gate uebersprungen"
+            exit 0
+          fi
+          eval "$RESOLVED"
+
+          RAW_COMMENTS_FILE=$(mktemp)
+          gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | {body, created_at, author: .user.login}]' > "$RAW_COMMENTS_FILE" || echo '[]' > "$RAW_COMMENTS_FILE"
+
+          # Kommentare mit Berechtigungs-Flag anreichern: nur Kommentare von
+          # Nutzern mit write/maintain/admin-Rechten duerfen als gebundene
+          # PO-Akzeptanz zaehlen (siehe annotate_comment_permissions.py).
+          COMMENTS_FILE=$(mktemp)
+          python3 scripts/process_guard/annotate_comment_permissions.py \
+            "$RAW_COMMENTS_FILE" "$COMMENTS_FILE" "${{ github.repository }}"
+
+          # Referenz-Zeitstempel "letzter Push": Committer-Datum des aktuellen
+          # Head-Commits (dieselbe, bereits fuer P-02/P-09 akzeptierte
+          # Datenquelle samt dokumentiertem Restrisiko, siehe Folge-Issue #193).
+          HEAD_PUSHED_AT=$(git log -1 --format=%cI "$PR_HEAD_SHA")
+
+          bash scripts/process_guard/check_po_acceptance_gate.sh "$COMMENTS_FILE" "$TARA_ID" "$PR_HEAD_SHA" "$HEAD_PUSHED_AT"
+
       - name: P-07 – Branch-Name Schema
         run: |
           BRANCH="${{ github.head_ref }}"

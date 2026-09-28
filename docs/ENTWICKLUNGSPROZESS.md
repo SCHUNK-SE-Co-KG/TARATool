@@ -15,7 +15,7 @@
 | **P-08** | Commits referenzieren TARA-ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Jeder Commit                                       |
 | **P-09** | Status → inReview vor PR-Öffnung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Vor PR                                             |
 | **P-10** | Review-Agent aufgerufen, kein Critical/High offen                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Vor PR                                             |
-| **P-11** | Nach Merge → Freigabe (nicht direkt Done)                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Nach Merge                                         |
+| **P-11** | Nach Merge → Done (nur wenn Status vorher „Accepted" war, Statusmodell B seit TARA-0110)                                                                                                                                                                                                                                                                                                                                                                                                                           | Nach Merge                                         |
 | **P-12** | Prettier grün vor Tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Vor Commit                                         |
 | **P-13** | ESLint grün vor Tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Vor Commit                                         |
 | **P-14** | TARA-IDs unveränderlich (atomar)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Jederzeit                                          |
@@ -86,15 +86,19 @@ Der Dev-Agent darf **eigenstaendig mergen** wenn:
 1. Review abgeschlossen (keine offenen Critical/High Findings)
 2. Prozess-Guard: PROCESS OK
 3. Alle Story-Tests gruen
+4. **Statusmodell B (seit TARA-0110, P-25):** PO-Akzeptanz-Gate erfuellt (Status
+   bereits auf **Accepted**) - Merge nach `development` ist technisch ueber einen
+   required Status-Check blockiert, solange dieses Gate nicht erfuellt ist.
 
-Nach dem Merge: Status -> **Freigabe** setzen und auf PO-Abnahme warten.
+Nach dem Merge: Status wird automatisch auf **Done** gesetzt (P-11, nur wenn Status
+vorher „Accepted" war).
 
 ### Epic-Batch-Testing (Regel P-17)
 
-Wenn **alle Stories eines Epics** auf **Freigabe** stehen:
+Wenn **alle Stories eines Epics** auf **Accepted** (bzw. bereits **Done**) stehen:
 
 1. Dev-Agent zieht `development` lokal (git pull)
-2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Freigabe - bitte testen"
+2. Dev-Agent informiert PO im Epic-Issue: "Alle Stories des Epic TARA-XXXX sind auf Accepted/Done - bitte testen"
 3. PO testet den aktuellen Stand auf dem development-Branch
 4. PO kommentiert im Epic-Issue mit einem der Freigabe-Schluesselwoerter (siehe **P-20**:
    `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK`)
@@ -193,8 +197,8 @@ Eine Story darf erst bearbeitet werden, wenn alle folgenden Punkte erfüllt sind
 Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 
 1. Dev-Agent prüft nach jeder Story-Fertigstellung, ob alle Child-Stories Done sind.
-2. Wenn ja: Epic-Status auf **Freigabe** setzen, PO bestätigt -> **Done**.
-3. Ein Epic geht **nicht** direkt auf Done (P-15 gilt auch für Epics).
+2. Wenn ja: Epic-Status auf **Accepted** setzen, PO bestätigt -> **Done**.
+3. Ein Epic geht **nicht** direkt auf Done (P-25 gilt auch für Epics).
 
 ---
 
@@ -249,28 +253,32 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 â”‚  âš ï¸ Prototypen: Review-Agent kann entfallen (PO-Genehmigung)    â”‚
 â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
                             â†“
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  SCHRITT 6 â€“ Prozess-Guard                                      â”‚
-â”‚  â€¢ Dev-Agent aktiviert Prozess-Guard als Sub-Agent              â”‚
-â”‚  â€¢ Guard prüft P-01 bis P-15                                    â”‚
-â”‚  â€¢ âœ… PROCESS OK  â†’ PR auf development MERGEN (Dev-Agent, nach Review-OK) öffnen                   â”‚
-â”‚  â€¢ âŒ PROCESS BLOCKED â†’ Findings beheben, zurück zu Schritt 4   â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â†“
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  SCHRITT 7 â€“ Merge                                              â”‚
-â”‚  â€¢ PR auf Development öffnen und mergen                         â”‚
-â”‚  â€¢ Feature-Branch wird gelöscht                                 â”‚
-â”‚  â€¢ Status â†’ "Freigabe" im Board                                 â”‚
-â”‚  â€¢ Dev-Agent wartet â€” setzt NICHT selbst auf Done!              â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                            â†“
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  SCHRITT 8 â€“ PO-Freigabe (Pflicht)                              â”‚
-â”‚  â€¢ PO prüft das Ergebnis im Browser / Repository                â”‚
-â”‚  â€¢ PO kommentiert im Issue mit einem Freigabe-Keyword (siehe P-20 Tabelle) â”‚
-â”‚  â€¢ Dev-Agent setzt Status â†’ "Done"                              â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
++------------------------------------------------------------------+
+|  SCHRITT 6 - Prozess-Guard                                        |
+|  * Dev-Agent aktiviert Prozess-Guard als Sub-Agent                |
+|  * Guard prueft P-01 bis P-13 sowie P-25 (PO-Akzeptanz-Gate)      |
+|  * OK: PROCESS OK -> PR auf development oeffnen (Dev-Agent)       |
+|  * FEHLER: PROCESS BLOCKED -> Findings beheben, zurueck zu Schritt 4 |
++------------------------------------------------------------------+
+                            |
+                            v
++------------------------------------------------------------------+
+|  SCHRITT 7 - PO-Akzeptanz VOR Merge (Statusmodell B, P-25)        |
+|  * PO prueft PR/Story im Browser bzw. auf dem Feature-Branch      |
+|  * PO postet ein an die TARA-ID GEBUNDENES Akzeptanz-Kommando     |
+|    auf dem PR selbst (z.B. "TARA-XXXX akzeptiert")                |
+|  * Automation setzt Status -> "Accepted" (inReview -> Accepted)   |
+|  * Merge nach development ist erst jetzt technisch zulaessig      |
++------------------------------------------------------------------+
+                            |
+                            v
++------------------------------------------------------------------+
+|  SCHRITT 8 - Merge (automatisch -> Done)                          |
+|  * PR auf Development mergen (Dev-Agent, nach P-25-OK)            |
+|  * Feature-Branch wird geloescht (P-16)                          |
+|  * Status -> "Done" automatisch, nur wenn Status vorher           |
+|    "Accepted" war (Sicherheitscheck gegen P-25-Umgehung)          |
++------------------------------------------------------------------+
 ```
 
 ---
@@ -278,17 +286,17 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 ## 5. Board-Statusübergänge
 
 ```
-Todo â”€â”€â†’ In Progress â”€â”€â†’ inReview â”€â”€â†’ Freigabe â”€â”€â†’ Done
-          (Dev-Agent)    (Dev-Agent)   (Dev-Agent)   (PO)
+Todo --> In Progress --> inReview --> Accepted --> Done
+          (Dev-Agent)    (Dev-Agent)   (Automation)  (Automation)
 ```
 
-| Status          | Bedeutung                          | Wer setzt                     |
-| --------------- | ---------------------------------- | ----------------------------- |
-| **Todo**        | Geplant, noch nicht begonnen       | Dev-Agent nach PO-Freigabe    |
-| **In Progress** | Aktiv in Bearbeitung               | Dev-Agent (vor Arbeitsbeginn) |
-| **inReview**    | Review läuft, PR offen             | Dev-Agent                     |
-| **Freigabe**    | Gemergt, wartet auf PO-OK          | Dev-Agent                     |
-| **Done**        | Abgeschlossen (PO-OK im Issue) âœ… | **Product Owner**             |
+| Status          | Bedeutung                                            | Wer setzt                     |
+| --------------- | ---------------------------------------------------- | ----------------------------- |
+| **Todo**        | Geplant, noch nicht begonnen                         | Dev-Agent nach PO-Freigabe    |
+| **In Progress** | Aktiv in Bearbeitung                                 | Dev-Agent (vor Arbeitsbeginn) |
+| **inReview**    | Review laeuft, PR offen                              | Dev-Agent                     |
+| **Accepted**    | PO-Akzeptanz auf PR erteilt (P-25), wartet auf Merge | GitHub Automation             |
+| **Done**        | Nach Merge automatisch gesetzt (P-11)                | GitHub Automation             |
 
 ---
 
@@ -349,19 +357,20 @@ gemeldet und das Item auf **Blocking** gesetzt.
 | **P-08** | Commits referenzieren TARA-ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Jeder Commit                                           |
 | **P-09** | Status → inReview vor PR-Öffnung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Vor PR                                                 |
 | **P-10** | Review-Agent aufgerufen, kein Critical/High offen                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Vor PR                                                 |
-| **P-11** | Nach Merge → Freigabe (nicht direkt Done)                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Nach Merge                                             |
+| **P-11** | Nach Merge → Done (nur wenn Status vorher „Accepted" war, Statusmodell B seit TARA-0110)                                                                                                                                                                                                                                                                                                                                                                                                                           | Nach Merge                                             |
 | **P-12** | Prettier grün vor Tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Vor Commit                                             |
 | **P-13** | ESLint grün vor Tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Vor Commit                                             |
 | **P-14** | TARA-IDs unveränderlich (atomar)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Jederzeit                                              |
-| **P-15** | Done nur nach PO-OK als Issue-Kommentar (automatisch via po-approve.yml)                                                                                                                                                                                                                                                                                                                                                                                                                                           | Nach Merge                                             |
+| **P-15** | Done automatisch, sofern Status vorher „Accepted" war (Sicherheitscheck); seit TARA-0110 abgeloest durch P-25 als primaeren Merge-Gate (po-approve.yml bleibt manueller Fallback)                                                                                                                                                                                                                                                                                                                                  | Nach Merge                                             |
 | **P-16** | Feature-Branch nach Merge löschen                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Nach Merge                                             |
-| **P-17** | Alle Epic-Stories Freigabe → development lokal pullen + PO per Issue informieren                                                                                                                                                                                                                                                                                                                                                                                                                                   | Nach letztem Merge                                     |
+| **P-17** | Alle Epic-Stories Accepted/Done → development lokal pullen + PO per Issue informieren                                                                                                                                                                                                                                                                                                                                                                                                                              | Nach letztem Merge                                     |
 | **P-18** | **Pre-Transition Check**: Prozess-Guard prüft Vorbedingungen **vor jedem** Status-Wechsel. Bei Verletzung: Item → Blocking, Finding-Issue anlegen.                                                                                                                                                                                                                                                                                                                                                                 | Vor jedem Status-Wechsel                               |
-| **P-19** | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterläuft P-11/P-15 durch Auto-Close). Stattdessen `Bezug: #NNN` verwenden.                                                                                                                                                                                                                                                                                                                                                                                         | Vor PR / bei PR-Update                                 |
+| **P-19** | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterläuft P-11/P-25 durch Auto-Close). Stattdessen `Bezug: #NNN` verwenden.                                                                                                                                                                                                                                                                                                                                                                                         | Vor PR / bei PR-Update                                 |
 | **P-20** | Audit-Trail-Kommentar bei jedem Board-Status-Wechsel (wann/warum/durch wen). PO-Freigabe-Keywords: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK` (Story oder Epic).                                                                                                                                                                                                                                                                                                              | Bei jedem Status-Wechsel                               |
 | **P-22** | **Review-Finding-Abschluss & Priorisierung**: Ein Finding-Issue wird nach direktem Fix-Commit sofort geschlossen (entkoppelt vom Status der Source-Story); erfordert das Finding eine strukturelle Verbesserung, wird zuerst eine Folge-Story angelegt, bevor das Finding schliesst. Vom PO akzeptierte Findings (Freigabe-Schluesselwort im Kommentar) werden sofort auf "In Progress" gesetzt und vor anderen laufenden Stories priorisiert bearbeitet. Details: `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`. | Beim Finding-Abschluss / bei PO-Freigabe-Kommentar     |
 | **P-23** | **Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten und Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen. Details: `.github/copilot-instructions.md`.                                                                                                                                                                                                | Bei jedem Session-/Init-Start                          |
 | **P-24** | **Epic-Sync-Pflicht**: Wird eine Story mit `Bezug: #<Epic-Nr>` angelegt (initial oder als Folge-Story waehrend laufender Epic-Bearbeitung), muss der Dev-Agent im gleichen Arbeitsschritt das Epic-Issue-Body um die neue Story ergaenzen. Vor dem Schliessen eines Epics prueft der Dev-Agent, dass alle Issues mit `Bezug: #<Epic-Nr>` auch im Epic-Body gelistet sind - fehlt eine Story, wird sie zuerst nachgetragen.                                                                                         | Bei Story-Anlage unter einem Epic / vor Epic-Abschluss |
+| **P-25** | **PO-Akzeptanz-Gate vor Merge (Statusmodell B, TARA-0110)**: Merge nach `development` erst zulaessig, wenn (1) SHA-aktueller Review-Nachweis (P-10) UND (2) an die TARA-ID gebundene, nach dem letzten Push auf dem PR gepostete PO-Akzeptanz vorliegen. Status wechselt dabei automatisch inReview → Accepted (`po-approve.yml`); Merge wird ueber einen required Status-Check in `process-guard.yml` blockiert, solange das Gate nicht erfuellt ist.                                                             | Vor jedem Merge nach `development`                     |
 
 Vollständige Regeln: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 

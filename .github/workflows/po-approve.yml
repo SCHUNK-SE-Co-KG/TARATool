@@ -168,8 +168,14 @@ jobs:
                   const currentStatus = statusField ? statusField.name : 'unknown';
                   console.log(`${taraId}: Status=${currentStatus}, Item=${item.id}`);
 
-                  if (currentStatus !== 'Freigabe') {
-                    console.log(`  → Übersprungen (nicht Freigabe: ${currentStatus})`);
+                  // TARA-0110: Board-Option "Freigabe" wurde zu "Accepted"
+                  // umbenannt (gleiche Options-ID d98e05b2). In der Regel
+                  // wird "Done" bereits automatisch beim Merge gesetzt
+                  // (post-merge-status.yml); dieser Pfad bleibt als
+                  // manueller Fallback erhalten, falls ein Item aus
+                  // irgendeinem Grund bei "Accepted" haengen bleibt.
+                  if (currentStatus !== 'Accepted') {
+                    console.log(`  → Übersprungen (nicht Accepted: ${currentStatus})`);
                     continue;
                   }
 
@@ -236,4 +242,154 @@ jobs:
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: `⚠️ **P-15 – Keine Berechtigung**: ${context.actor} hat keine Schreibberechtigung und kann keine Freigabe erteilen. Nur Repository-Maintainer können \`PO-OK\` erteilen.`,
+            });
+
+  # TARA-0110 (Statusmodell B, P-25): PO-Akzeptanz-Kommentare auf dem PR
+  # SELBST (nicht auf dem Story-Issue) setzen den Board-Status von
+  # "inReview" auf "Accepted" - VOR dem Merge. Das eigentliche technische
+  # Merge-Gate ist P-25 in process-guard.yml (required Status-Check); dieser
+  # Job dient nur der Board-Sichtbarkeit und laesst sich unabhaengig vom
+  # Merge-Gate nachvollziehen.
+  check-po-acceptance-pr:
+    name: PO-Akzeptanz auf PR prüfen (P-25/Statusmodell B)
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request != null
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pruefe gebundenes PO-Akzeptanz-Kommando (TARA-0109-Format)
+        id: keyword
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
+          IDS_FILE=$(mktemp)
+          if bash scripts/process_guard/check_po_approval_keyword.sh "$BODY_FILE" > "$IDS_FILE"; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+          IDS_CSV=$(paste -sd, "$IDS_FILE" 2>/dev/null || true)
+          echo "tara_ids=$IDS_CSV" >> "$GITHUB_OUTPUT"
+
+      - name: Prüfe Berechtigungen des Kommentators
+        id: permission
+        if: steps.keyword.outputs.matched == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const allowed = ['write', 'maintain', 'admin'].includes(perm.permission);
+            core.setOutput('allowed', String(allowed));
+            if (!allowed) {
+              core.warning(`${context.actor} hat keine Schreibberechtigung – PO-Akzeptanz ignoriert`);
+            }
+            return allowed;
+
+      - name: P-25-Gate erneut pruefen und Status auf "Accepted" setzen
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
+        run: |
+          PR_HEAD_SHA=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}" --jq .head.sha)
+
+          RAW_COMMENTS_FILE=$(mktemp)
+          gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | {body, created_at, author: .user.login}]' > "$RAW_COMMENTS_FILE" || echo '[]' > "$RAW_COMMENTS_FILE"
+
+          COMMENTS_FILE=$(mktemp)
+          python3 scripts/process_guard/annotate_comment_permissions.py \
+            "$RAW_COMMENTS_FILE" "$COMMENTS_FILE" "${{ github.repository }}"
+
+          HEAD_PUSHED_AT=$(git log -1 --format=%cI "$PR_HEAD_SHA")
+
+          IFS=',' read -ra IDS <<< "$TARA_IDS_CSV"
+          GATE_OK="false"
+          for TARA_ID in "${IDS[@]}"; do
+            TARA_ID=$(echo "$TARA_ID" | xargs)
+            [ -z "$TARA_ID" ] && continue
+            if bash scripts/process_guard/check_po_acceptance_gate.sh "$COMMENTS_FILE" "$TARA_ID" "$PR_HEAD_SHA" "$HEAD_PUSHED_AT"; then
+              echo "GATE_OK_$TARA_ID=true" >> "$GITHUB_ENV"
+              GATE_OK="true"
+            fi
+          done
+          echo "gate_ok=$GATE_OK" >> "$GITHUB_OUTPUT"
+        id: gate
+
+      - name: Status auf "Accepted" setzen (Board)
+        if: steps.gate.outputs.gate_ok == 'true'
+        uses: actions/github-script@v7
+        env:
+          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+          ACCEPTED_OPTION: "d98e05b2"
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const prNumber = context.issue.number;
+            const projectId = process.env.SK_PROJECT;
+            const fieldId = process.env.SK_FIELD;
+            const acceptedOption = process.env.ACCEPTED_OPTION;
+
+            const query = `
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 100) {
+                      nodes {
+                        id
+                        content { ... on Issue { title number } }
+                      }
+                    }
+                  }
+                }
+              }`;
+            const result = await github.graphql(query, { projectId });
+            const items = result.node.items.nodes;
+
+            // Der PR-Body enthaelt "Bezug: #NNN" (P-19) - das verlinkte
+            // Story-Issue wird ueber diese Referenz identifiziert.
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            const match = (pr.body || '').match(/Bezug:\s*#(\d+)/i);
+            if (!match) {
+              console.log('Kein "Bezug: #NNN" im PR-Body gefunden - keine Board-Aktion');
+              return;
+            }
+            const issueNumber = parseInt(match[1], 10);
+            const item = items.find(i => i.content && i.content.number === issueNumber);
+            if (!item) {
+              console.log(`Kein Board-Item fuer Issue #${issueNumber} gefunden`);
+              return;
+            }
+
+            const mutation = `
+              mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId
+                  itemId: $itemId
+                  fieldId: $fieldId
+                  value: { singleSelectOptionId: $optionId }
+                }) { projectV2Item { id } }
+              }`;
+            await github.graphql(mutation, {
+              projectId, itemId: item.id, fieldId, optionId: acceptedOption,
+            });
+            console.log(`Issue #${issueNumber} -> Accepted`);
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `P-25: Status inReview -> Accepted (PO-Akzeptanz auf PR #${prNumber}, Kommentar von @${context.actor})`,
             });

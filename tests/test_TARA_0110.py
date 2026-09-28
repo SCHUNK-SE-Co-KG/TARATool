@@ -55,6 +55,11 @@ def gate_module():
     return _load_module("po_acceptance_gate", "po_acceptance_gate.py")
 
 
+@pytest.fixture(scope="module")
+def annotate_module():
+    return _load_module("annotate_comment_permissions", "annotate_comment_permissions.py")
+
+
 def _to_bash_path(win_path: str) -> str:
     """Wandelt einen Windows-Pfad in einen WSL-Pfad (/mnt/c/...) fuer den
     Aufruf von echtem WSL-bash um (dieselbe Hilfsfunktion wie in
@@ -292,3 +297,103 @@ def test_wrapper_fails_without_acceptance_comment():
 
     result = _run_wrapper(json.dumps(comments), "TARA-0110", "abc123", "2026-01-10T09:00:00Z")
     assert result.returncode != 0
+
+
+# ---------------------------------------------------------------------------
+# annotate_comment_permissions.py
+# ---------------------------------------------------------------------------
+
+@pytest.mark.TARA_0110
+def test_annotate_permissions_marks_write_users_as_permitted(annotate_module, monkeypatch):
+    def fake_run(cmd, capture_output, text):
+        class FakeResult:
+            returncode = 0
+            stdout = "write\n"
+
+        return FakeResult()
+
+    monkeypatch.setattr(annotate_module.subprocess, "run", fake_run)
+    comments = [{"body": "akzeptiert TARA-0110", "created_at": "x", "author": "po-user"}]
+    result = annotate_module.annotate_permissions(comments, "org/repo")
+    assert result == [{"body": "akzeptiert TARA-0110", "created_at": "x", "permitted": True}]
+
+
+@pytest.mark.TARA_0110
+def test_annotate_permissions_marks_read_users_as_not_permitted(annotate_module, monkeypatch):
+    def fake_run(cmd, capture_output, text):
+        class FakeResult:
+            returncode = 0
+            stdout = "read\n"
+
+        return FakeResult()
+
+    monkeypatch.setattr(annotate_module.subprocess, "run", fake_run)
+    comments = [{"body": "akzeptiert TARA-0110", "created_at": "x", "author": "random-user"}]
+    result = annotate_module.annotate_permissions(comments, "org/repo")
+    assert result[0]["permitted"] is False
+
+
+@pytest.mark.TARA_0110
+def test_annotate_permissions_caches_per_author(annotate_module, monkeypatch):
+    call_count = {"n": 0}
+
+    def fake_run(cmd, capture_output, text):
+        call_count["n"] += 1
+
+        class FakeResult:
+            returncode = 0
+            stdout = "write\n"
+
+        return FakeResult()
+
+    monkeypatch.setattr(annotate_module.subprocess, "run", fake_run)
+    comments = [
+        {"body": "a", "created_at": "1", "author": "po-user"},
+        {"body": "b", "created_at": "2", "author": "po-user"},
+    ]
+    annotate_module.annotate_permissions(comments, "org/repo")
+    assert call_count["n"] == 1
+
+
+@pytest.mark.TARA_0110
+def test_annotate_permissions_missing_author_is_not_permitted(annotate_module, monkeypatch):
+    def fake_run(cmd, capture_output, text):
+        raise AssertionError("should not be called for missing author")
+
+    monkeypatch.setattr(annotate_module.subprocess, "run", fake_run)
+    comments = [{"body": "a", "created_at": "1", "author": None}]
+    result = annotate_module.annotate_permissions(comments, "org/repo")
+    assert result[0]["permitted"] is False
+
+
+# ---------------------------------------------------------------------------
+# auto_set_freigabe_after_merge.py (P-11-Automatisierung, angepasst fuer
+# Statusmodell B / P-25: Ziel ist jetzt "Done" statt "Freigabe", nur wenn
+# der aktuelle Status "Accepted" ist)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="module")
+def merge_module():
+    return _load_module("auto_set_freigabe_after_merge", "auto_set_freigabe_after_merge.py")
+
+
+@pytest.mark.TARA_0110
+def test_merge_status_update_refuses_when_not_accepted(merge_module, monkeypatch):
+    monkeypatch.setattr(merge_module, "get_project_item_id", lambda *a, **k: "ITEM_ID")
+    monkeypatch.setattr(merge_module, "get_current_status_name", lambda *a, **k: "inReview")
+    called = {"n": 0}
+    monkeypatch.setattr(
+        merge_module, "set_status_done", lambda *a, **k: called.__setitem__("n", called["n"] + 1) or True
+    )
+    rc = merge_module.main(["Bezug: #180", "owner/repo", "PROJ_ID", "FIELD_ID"])
+    assert rc == 1
+    assert called["n"] == 0
+
+
+@pytest.mark.TARA_0110
+def test_merge_status_update_sets_done_when_accepted(merge_module, monkeypatch):
+    monkeypatch.setattr(merge_module, "get_project_item_id", lambda *a, **k: "ITEM_ID")
+    monkeypatch.setattr(merge_module, "get_current_status_name", lambda *a, **k: "Accepted")
+    monkeypatch.setattr(merge_module, "set_status_done", lambda *a, **k: True)
+    rc = merge_module.main(["Bezug: #180", "owner/repo", "PROJ_ID", "FIELD_ID"])
+    assert rc == 0

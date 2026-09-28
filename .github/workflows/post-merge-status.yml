@@ -1,9 +1,14 @@
 name: Post-Merge Status Update (P-11)
 
-# TARA-0108: Automatisiert den bisher manuellen Schritt "nach Merge Status auf
-# 'Freigabe' setzen" (P-11). Der Dev-Agent kann diesen Schritt weder vergessen
+# TARA-0108/TARA-0110: Automatisiert den bisher manuellen Schritt "nach Merge
+# Status setzen" (P-11). Der Dev-Agent kann diesen Schritt weder vergessen
 # noch sich selbst faelschlich als regelkonform attestieren - die
 # Statusaenderung erfolgt technisch, ausgeloest durch das Merge-Event selbst.
+#
+# TARA-0110 (Statusmodell B): Seit Einfuehrung des PO-Akzeptanz-Gates (P-25)
+# ist die PO-Akzeptanz bereits VOR dem Merge erfolgt (Status "Accepted",
+# vormals "Freigabe"). Dieser Workflow setzt den Status nach dem Merge
+# deshalb direkt auf "Done" (nicht mehr auf "Freigabe").
 
 on:
   pull_request:
@@ -17,7 +22,7 @@ permissions:
 
 jobs:
   set-freigabe-after-merge:
-    name: Board-Status nach Merge auf "Freigabe" setzen
+    name: Board-Status nach Merge auf "Done" setzen
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +31,7 @@ jobs:
       - name: Python-Umgebung einrichten
         run: pip install --quiet --upgrade pip
 
-      - name: P-11 â€“ Status automatisch auf "Freigabe" setzen
+      - name: P-11 – Status automatisch auf "Done" setzen (nur wenn zuvor "Accepted")
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
           PR_BODY: ${{ github.event.pull_request.body }}

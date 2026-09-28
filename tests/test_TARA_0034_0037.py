@@ -26,12 +26,17 @@ def test_process_guard_contains_p15():
 
 @pytest.mark.TARA_0034
 def test_process_guard_p11_references_freigabe():
-    """P-11 muss auf Freigabe verweisen (nicht nur auf Merge)."""
+    """P-11 muss auf den Post-Merge-Status verweisen (nicht nur auf Merge).
+
+    Seit TARA-0110 (Statusmodell B) setzt P-11 den Status direkt auf "Done"
+    (statt vormals "Freigabe"), da die PO-Akzeptanz jetzt VOR dem Merge
+    ueber P-25 erfolgt.
+    """
     content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
-    # Find P-11 line and check it mentions Freigabe
+    # Find P-11 line and check it mentions the post-merge status
     p11_line = [l for l in content.splitlines() if 'P-11' in l and '|' in l]
     assert p11_line, 'P-11 nicht in Tabelle gefunden'
-    assert 'Freigabe' in p11_line[0], 'P-11 muss auf Freigabe verweisen'
+    assert 'Done' in p11_line[0], 'P-11 muss auf den Post-Merge-Status (Done) verweisen'
 
 
 @pytest.mark.TARA_0034

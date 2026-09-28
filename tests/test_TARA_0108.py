@@ -243,7 +243,8 @@ def test_auto_freigabe_main_fails_without_bezug(auto_freigabe_module):
 @pytest.mark.TARA_0108
 def test_auto_freigabe_main_sets_status_on_success(auto_freigabe_module):
     with patch.object(auto_freigabe_module, "get_project_item_id", return_value="ITEM_ID"), \
-         patch.object(auto_freigabe_module, "set_status_freigabe", return_value=True) as mock_set:
+         patch.object(auto_freigabe_module, "get_current_status_name", return_value="Accepted"), \
+         patch.object(auto_freigabe_module, "set_status_done", return_value=True) as mock_set:
         rc = auto_freigabe_module.main(["Bezug: #178", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 0
     mock_set.assert_called_once_with("PROJ_ID", "ITEM_ID", "FIELD_ID")
@@ -259,7 +260,8 @@ def test_auto_freigabe_main_fails_when_item_not_found(auto_freigabe_module):
 @pytest.mark.TARA_0108
 def test_auto_freigabe_main_fails_when_mutation_fails(auto_freigabe_module):
     with patch.object(auto_freigabe_module, "get_project_item_id", return_value="ITEM_ID"), \
-         patch.object(auto_freigabe_module, "set_status_freigabe", return_value=False):
+         patch.object(auto_freigabe_module, "get_current_status_name", return_value="Accepted"), \
+         patch.object(auto_freigabe_module, "set_status_done", return_value=False):
         rc = auto_freigabe_module.main(["Bezug: #178", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 1
 
