@@ -279,9 +279,10 @@ Architektur-Findings mit Schwere Mittel/Niedrig ohne konkreten Patch).
 
 ### Priorisierung akzeptierter Findings (P-22)
 
-Setzt der PO ein Review-Finding-Issue durch einen Kommentar mit einem der
-Freigabe-Schluesselwoerter (`PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`)
-auf **akzeptiert**, gilt:
+Setzt der PO ein Review-Finding-Issue durch einen Kommentar mit einem an die
+TARA-ID des Finding-Issues GEBUNDENEN Freigabe-Kommando (TARA-0109, z.B.
+`akzeptiert TARA-XXXX`; lose Keywords ohne ID-Bindung reichen seit TARA-0109
+nicht mehr aus) auf **akzeptiert**, gilt:
 
 1. Der Dev-Agent setzt den Board-Status des Finding-Issues **unmittelbar** auf
    **"In Progress"** (Audit-Trail-Kommentar mit Verweis auf den PO-Freigabe-Kommentar,
