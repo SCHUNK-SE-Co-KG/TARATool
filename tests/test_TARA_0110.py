@@ -60,13 +60,17 @@ def annotate_module():
     return _load_module("annotate_comment_permissions", "annotate_comment_permissions.py")
 
 
-def _to_bash_path(win_path: str) -> str:
-    """Wandelt einen Windows-Pfad in einen WSL-Pfad (/mnt/c/...) fuer den
-    Aufruf von echtem WSL-bash um (dieselbe Hilfsfunktion wie in
+def _to_bash_path(path: str) -> str:
+    """Wandelt einen Windows-Pfad in einen WSL-Pfad (/mnt/c/...) um, sofern
+    ein Laufwerksbuchstabe vorhanden ist (lokale Windows-Entwicklung); auf
+    Linux (z.B. CI, natives bash) ist der Pfad bereits POSIX-konform und wird
+    unveraendert zurueckgegeben (dieselbe Hilfsfunktion wie in
     test_TARA_0108.py/test_TARA_0109.py)."""
-    drive, rest = win_path.split(":", 1)
-    rest = rest.replace("\\", "/")
-    return f"/mnt/{drive.lower()}{rest}"
+    path = path.replace("\\", "/")
+    if len(path) > 1 and path[1] == ":":
+        drive = path[0].lower()
+        path = f"/mnt/{drive}{path[2:]}"
+    return path
 
 
 def _run_wrapper(comments_json: str, tara_id: str, head_sha: str, pushed_at: str):
