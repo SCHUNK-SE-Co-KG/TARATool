@@ -1,4 +1,4 @@
-﻿"""TARA-0110: PO-Akzeptanz-Gate vor Merge (P-25, Statusmodell B).
+"""TARA-0110: PO-Akzeptanz-Gate vor Merge (P-25, Statusmodell B).
 
 Siehe tests/test_TARA_0110.py fuer die vollstaendige fachliche Begruendung.
 Kurzfassung: Merge nach `development` darf erst erfolgen, wenn

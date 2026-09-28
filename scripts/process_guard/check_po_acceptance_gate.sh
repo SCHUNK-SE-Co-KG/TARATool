@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # Prueft P-25 (TARA-0110, Statusmodell B): Merge nach `development` darf erst
 # erfolgen, wenn (1) ein gueltiger, SHA-aktueller Review-Nachweis (P-10)
 # vorliegt UND (2) eine an die TARA-ID gebundene, zeitlich gueltige

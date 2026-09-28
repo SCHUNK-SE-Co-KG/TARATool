@@ -1,4 +1,4 @@
-﻿"""TARA-0110: Reichert PR-/Issue-Kommentare mit einem `permitted`-Flag an
+"""TARA-0110: Reichert PR-/Issue-Kommentare mit einem `permitted`-Flag an
 (nur Kommentare von Nutzern mit `write`/`maintain`/`admin`-Berechtigung
 duerfen als gebundene PO-Akzeptanz zaehlen, P-25).
 
