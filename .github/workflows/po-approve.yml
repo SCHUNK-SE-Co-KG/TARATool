@@ -1,18 +1,27 @@
 name: PO-Approve – Freigabe → Done (P-15 Enforcement)
 
 # Dieser Workflow erzwingt P-15: Done darf NUR gesetzt werden wenn
-# der PO eines der gueltigen Freigabe-Keywords als Issue-Kommentar hinterlassen
-# hat (siehe scripts/process_guard/check_po_approval_keyword.sh /
-# .github/copilot-instructions.md fuer die vollstaendige, deckungsgleiche Liste:
-# PO-OK, Freigabe erteilt, freigegeben, akzeptiert, Accepted, Ok).
+# der PO ein an eine konkrete TARA-ID GEBUNDENES Freigabe-Kommando als
+# Issue-Kommentar hinterlassen hat (z.B. "akzeptiert TARA-0109" oder
+# "TARA-0109 ist akzeptiert"), siehe
+# scripts/process_guard/po_approval_parser.py /
+# scripts/process_guard/check_po_approval_keyword.sh /
+# .github/copilot-instructions.md.
+#
+# TARA-0109: Ersetzt die bisherige lose Schluesselwort-Erkennung (jedes
+# eigenstaendige Vorkommen eines Keywords im Kommentar, unabhaengig vom
+# Bezug zu einer TARA-ID) durch das gebundene Kommando-Format. Die
+# TARA-ID(s) werden jetzt aus dem FREIGABE-KOMMENTAR SELBST entnommen
+# (nicht mehr pauschal aus Issue-Titel/-Body), und zitierte/eingebettete
+# Texte (Blockquote, Code-Fence) werden nicht als aktives Kommando gewertet.
 #
 # Trigger: Neuer Kommentar an einem Issue
 # Ablauf:
-#   1. Pruefe ob der Kommentar ein gueltiges Freigabe-Keyword enthaelt
+#   1. Extrahiere die per gebundenem Kommando im Kommentar freigegebenen
+#      TARA-ID(s) (po_approval_parser.py)
 #   2. Pruefe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
-#   3. Extrahiere TARA-ID(s) aus dem Issue
-#   4. Setze alle gefundenen Items auf "Done" auf dem TARATool-Board
-#   5. Bestätigung als Reply-Kommentar
+#   3. Setze alle gefundenen Items auf "Done" auf dem TARATool-Board
+#   4. Bestätigung als Reply-Kommentar
 #
 # TARA-0104: Der schreibende Projects-v2-Aufruf benoetigt secrets.PROJECT_TOKEN
 # (ein PAT mit "project"-Scope) statt des Default-GITHUB_TOKEN, da GITHUB_TOKEN
@@ -45,18 +54,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Pruefe PO-Freigabe-Keyword
+      - name: Pruefe gebundenes PO-Freigabe-Kommando (TARA-0109)
         id: keyword
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
         run: |
           BODY_FILE=$(mktemp)
           printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
-          if bash scripts/process_guard/check_po_approval_keyword.sh "$BODY_FILE"; then
+          IDS_FILE=$(mktemp)
+          if bash scripts/process_guard/check_po_approval_keyword.sh "$BODY_FILE" > "$IDS_FILE"; then
             echo "matched=true" >> "$GITHUB_OUTPUT"
           else
             echo "matched=false" >> "$GITHUB_OUTPUT"
           fi
+          IDS_CSV=$(paste -sd, "$IDS_FILE" 2>/dev/null || true)
+          echo "tara_ids=$IDS_CSV" >> "$GITHUB_OUTPUT"
 
       - name: Prüfe Berechtigungen des Kommentators
         id: permission
@@ -86,27 +98,26 @@ jobs:
           SK_PROJECT:   "PVT_kwDOBu4dv84BfbaR"
           SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
           DONE_OPTION:  "98236657"
+          TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
         with:
           github-token: ${{ secrets.PROJECT_TOKEN }}
           script: |
             const issueNumber = context.issue.number;
             const issueTitle  = context.payload.issue.title;
-            const issueBody   = context.payload.issue.body || '';
             const comment     = context.payload.comment.body;
 
             console.log(`Issue #${issueNumber}: ${issueTitle}`);
             console.log(`Kommentar von ${context.actor}: ${comment}`);
 
-            // TARA-IDs aus Titel und Body extrahieren
-            const taraPattern = /TARA-(\d{4})/g;
-            const ids = new Set();
-            for (const match of (issueTitle + ' ' + issueBody).matchAll(taraPattern)) {
-              ids.add(match[0]);
-            }
-            console.log(`Gefundene TARA-IDs: ${[...ids].join(', ')}`);
+            // TARA-0109: TARA-IDs werden aus dem gebundenen Kommando im
+            // Freigabe-KOMMENTAR SELBST entnommen (po_approval_parser.py),
+            // nicht mehr pauschal aus Issue-Titel/-Body gesammelt.
+            const idsCsv = process.env.TARA_IDS_CSV || '';
+            const ids = new Set(idsCsv.split(',').map(s => s.trim()).filter(Boolean));
+            console.log(`Gebundene TARA-IDs aus Kommando: ${[...ids].join(', ')}`);
 
             if (ids.size === 0) {
-              console.log('Keine TARA-IDs im Issue – keine Board-Aktion');
+              console.log('Keine gebundene TARA-ID im Freigabe-Kommando – keine Board-Aktion');
               return;
             }
 

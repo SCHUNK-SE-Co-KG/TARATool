@@ -44,9 +44,16 @@ Der aktive Chat-Gespraechspartner ist der PO.
 
 **Keine Implementierung, kein Branch, keine Tests - ohne nachgewiesene Freigabe.**
 
-Freigabe ist gegeben wenn eine der folgenden Bedingungen erfuellt ist:
-1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben`, `Freigabe fuer TARA-XXXX`, `PO-OK`, `akzeptiert`, `Accepted`, `Ok`
-2. GitHub Issue-Kommentar am Epic oder Story enthaelt: `PO-OK`, `Freigabe erteilt`, `freigegeben`, `akzeptiert`, `Accepted`, `Ok`
+Freigabe ist gegeben wenn eine der folgenden Bedingungen erfuellt ist (TARA-0109:
+gebundenes Kommando `<Keyword> TARA-XXXX` bzw. `TARA-XXXX <Keyword>` - einheitlich
+fuer beide Pfade, damit keine zwei unterschiedlichen Freigabe-Grammatiken existieren):
+1. Chat-Nachricht in der aktuellen Session enthaelt: `freigegeben TARA-XXXX`,
+   `Freigabe fuer TARA-XXXX`, `PO-OK TARA-XXXX`, `akzeptiert TARA-XXXX`,
+   `Accepted TARA-XXXX`, `TARA-XXXX Ok`
+2. GitHub Issue-Kommentar am Epic oder Story enthaelt dasselbe gebundene Kommando-Format
+   (siehe Abschnitt "Schluesselwoerter in Issue-Kommentaren" unten); bei Kommentar im
+   **Epic-Issue** mit der Epic-ID gilt dies als Sammelfreigabe fuer alle im Epic-Body
+   gelisteten Stories.
 
 ---
 
@@ -86,12 +93,23 @@ bevor irgendeine weitere Aktion erfolgt.
 ## Schluesselwoerter in Issue-Kommentaren
 
 Diese Liste ist deckungsgleich mit der tatsaechlichen Erkennung in
-`scripts/process_guard/check_po_approval_keyword.sh` (aufgerufen von
-`.github/workflows/po-approve.yml`, TARA-0086). Freigabe gilt sowohl bei
+`scripts/process_guard/po_approval_parser.py` (aufgerufen ueber
+`scripts/process_guard/check_po_approval_keyword.sh` aus
+`.github/workflows/po-approve.yml`, TARA-0086/TARA-0109). Freigabe gilt sowohl bei
 Kommentar im **Story-Issue** als auch im **Epic-Issue** (z.B. Sammelfreigabe
 fuer alle Stories eines Epics).
 
-| Schluesselwort | Bedeutung | Wirkung |
+> **TARA-0109 (gebundenes Kommando statt loser Keywords):** Ein Keyword allein
+> (z.B. das eigenstaendige Wort `OK`) genuegt **nicht mehr**. Das Keyword muss
+> in enger Nachbarschaft **an eine konkrete TARA-ID gebunden** sein, z.B.
+> `akzeptiert TARA-0109` oder `TARA-0109 ist nun akzeptiert`. Damit entfaellt der
+> bisherige Fehlalarm bei Saetzen wie "Der Test ist OK, aber die Story ist noch
+> nicht freigegeben." (kein TARA-Bezug in der Naehe -> keine Freigabe). Zitierte
+> Passagen (Markdown-Blockquote `>`) und Code-Fences werden nicht als aktives
+> Kommando gewertet. Die TARA-ID wird aus dem Freigabe-**Kommentar selbst**
+> entnommen, nicht mehr pauschal aus Issue-Titel/-Body.
+
+| Schluesselwort | Bedeutung | Wirkung (gebunden an TARA-XXXX) |
 |----------------|-----------|---------|
 | `PO-OK` | PO-Freigabe | Story/Epic freigegeben ODER Done-Setzen erlaubt |
 | `Freigabe erteilt` | PO-Freigabe | Story/Epic freigegeben |

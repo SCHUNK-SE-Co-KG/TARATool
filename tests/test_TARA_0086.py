@@ -10,6 +10,12 @@ Prueft:
 - po-approve.yml ruft dieses Skript auf statt einer starren contains()-Liste.
 - copilot-instructions.md dokumentiert exakt dieselben Schluesselwoerter wie
   das Skript tatsaechlich erkennt (Accepted, Ok ergaenzt).
+
+TARA-0109-Anpassung: Seit TARA-0109 genuegt ein Keyword allein NICHT mehr -
+es muss an eine konkrete TARA-ID GEBUNDEN sein (siehe test_TARA_0109.py fuer
+die vollstaendige Spezifikation des Bindungsverhaltens). Die folgenden Tests
+wurden entsprechend um eine gebundene TARA-ID ergaenzt bzw. um Faelle
+erweitert, die ein Keyword OHNE gebundene ID erwartungsgemaess ablehnen.
 """
 import os
 import re
@@ -20,6 +26,7 @@ import pytest
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(REPO_ROOT, "scripts", "process_guard", "check_po_approval_keyword.sh")
+PARSER_MODULE = os.path.join(REPO_ROOT, "scripts", "process_guard", "po_approval_parser.py")
 WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "po-approve.yml")
 INSTRUCTIONS = os.path.join(REPO_ROOT, ".github", "copilot-instructions.md")
 
@@ -53,22 +60,22 @@ def _run_check(comment_text):
 @pytest.mark.parametrize(
     "comment",
     [
-        "PO-OK",
-        "po-ok bitte umsetzen",
+        "PO-OK TARA-0086",
+        "po-ok TARA-0086 bitte umsetzen",
         "Freigabe erteilt fuer TARA-0086",
-        "freigabe erteilt",
-        "freigegeben, danke",
-        "Ich habe es akzeptiert",
-        "Accepted, thanks!",
-        "Ok",
-        "OK passt",
-        "ok, mach das",
+        "freigabe erteilt TARA-0086",
+        "freigegeben TARA-0086, danke",
+        "TARA-0086 ist akzeptiert",
+        "TARA-0086 Accepted, thanks!",
+        "TARA-0086 Ok",
+        "OK TARA-0086 passt",
+        "ok TARA-0086, mach das",
     ],
 )
 def test_recognizes_valid_po_approval_keywords(comment):
     result = _run_check(comment)
     assert result.returncode == 0, f"'{comment}' haette erkannt werden muessen: {result.stdout}{result.stderr}"
-    assert "MATCH" in result.stdout
+    assert "TARA-0086" in result.stdout
 
 
 @pytest.mark.TARA_0086
@@ -88,21 +95,43 @@ def test_rejects_comments_without_po_approval_keyword(comment):
     assert "NO_MATCH" in result.stdout
 
 
+@pytest.mark.TARA_0109
+@pytest.mark.parametrize(
+    "comment",
+    [
+        "PO-OK",
+        "Freigabe erteilt",
+        "freigegeben, danke",
+        "Ich habe es akzeptiert",
+        "Accepted, thanks!",
+        "Ok",
+        "OK passt",
+    ],
+)
+def test_rejects_keyword_without_bound_tara_id(comment):
+    """TARA-0109: Ein Keyword OHNE gebundene TARA-ID genuegt seit TARA-0109
+    NICHT mehr als Freigabe (Kernaenderung dieser Story)."""
+    result = _run_check(comment)
+    assert result.returncode == 1, f"'{comment}' haette OHNE gebundene TARA-ID NICHT erkannt werden duerfen: {result.stdout}"
+    assert "NO_MATCH" in result.stdout
+
+
 @pytest.mark.TARA_0096
 @pytest.mark.parametrize(
     "comment",
     [
-        "Bitte NICHT ok geben",
-        "das ist NICHT OK fuer mich",
-        "Nicht ok, bitte nochmal",
-        "kein OK",
-        "keine ok",
-        "not ok",
+        "Bitte NICHT ok TARA-0086 geben",
+        "das ist NICHT OK TARA-0086 fuer mich",
+        "Nicht ok TARA-0086, bitte nochmal",
+        "kein OK TARA-0086",
+        "keine ok TARA-0086",
+        "not ok TARA-0086",
     ],
 )
 def test_rejects_negated_approval_phrases(comment):
     """TARA-0096: Eine explizite Ablehnung (Negation unmittelbar vor dem
-    Freigabe-Keyword) darf NICHT als gueltige Freigabe gewertet werden."""
+    Freigabe-Keyword) darf NICHT als gueltige Freigabe gewertet werden -
+    auch nicht, wenn eine TARA-ID in der Naehe steht (TARA-0109)."""
     result = _run_check(comment)
     assert result.returncode == 1, f"'{comment}' haette NICHT als Freigabe erkannt werden duerfen: {result.stdout}{result.stderr}"
     assert "NO_MATCH" in result.stdout
@@ -127,15 +156,18 @@ def test_entwicklungsprozess_no_incomplete_keyword_phrase_remaining():
         "Veraltete, unvollstaendige Keyword-Nennung noch vorhanden - "
         "muss auf die vollstaendige Liste (P-20) verweisen"
     )
-    """copilot-instructions.md muss exakt die vom Skript erkannten Schluesselwoerter dokumentieren."""
+    """copilot-instructions.md muss exakt die vom Skript (TARA-0109: dessen
+    Kernlogik seit dieser Story in po_approval_parser.py liegt) erkannten
+    Schluesselwoerter dokumentieren."""
     with open(INSTRUCTIONS, "r", encoding="utf-8") as f:
         doc_content = f.read()
-    with open(SCRIPT, "r", encoding="utf-8") as f:
-        script_content = f.read()
+    with open(PARSER_MODULE, "r", encoding="utf-8") as f:
+        parser_content = f.read()
 
     expected_keywords = ["PO-OK", "Freigabe erteilt", "freigegeben", "akzeptiert", "Accepted", "Ok"]
     for kw in expected_keywords:
         assert kw in doc_content, f"'{kw}' fehlt in copilot-instructions.md"
-        assert re.search(re.escape(kw.lower()), script_content, re.IGNORECASE), (
+        assert re.search(re.escape(kw.lower()), parser_content, re.IGNORECASE), (
             f"'{kw}' fehlt im Erkennungs-Skript"
         )
+

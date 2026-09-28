@@ -1,22 +1,21 @@
 #!/usr/bin/env bash
-# Prueft P-15: Enthaelt ein Issue-Kommentar eines der gueltigen
-# PO-Freigabe-Schluesselwoerter (dokumentiert in .github/copilot-instructions.md)?
+# TARA-0109: Prueft P-15 ueber ein an eine TARA-ID GEBUNDENES Freigabe-
+# Kommando (z.B. "akzeptiert TARA-0109" oder "TARA-0109 ist akzeptiert")
+# statt der bisherigen losen Schluesselwort-Erkennung (TARA-0086/TARA-0096),
+# die jedes eigenstaendige Vorkommen eines Keywords im Kommentar akzeptierte
+# - unabhaengig davon, ob es sich inhaltlich ueberhaupt auf eine Freigabe
+# bezog (Beispiel-Fehlalarm: "Der Test ist OK, aber die Story ist noch nicht
+# freigegeben.").
 #
-# Erkannte Schluesselwoerter (Gross-/Kleinschreibung egal):
-#   PO-OK, Freigabe erteilt, freigegeben, akzeptiert, Accepted, Ok
-#
-# Die Keywords werden nur als EIGENSTAENDIGES Wort/Phrase erkannt (Wortgrenzen),
-# um False-Positives bei Woertern zu vermeiden, die zufaellig die
-# Buchstabenfolge "ok" enthalten (z.B. "Token", "broken", "Stock").
-#
-# TARA-0096: Zusaetzlich wird eine unmittelbar vorausgehende Negation
-# ("nicht ", "kein ", "keine ", "not ") per PCRE-Negativ-Lookbehind
-# ausgeschlossen, damit ablehnende Kommentare wie "Nicht ok" oder
-# "das ist NICHT OK fuer mich" nicht faelschlich als Freigabe gewertet werden.
+# Die eigentliche Extraktion/Validierung uebernimmt po_approval_parser.py.
+# Dieses Skript ist nur ein duenner Wrapper (analog zu
+# check_review_agent_invoked.sh aus TARA-0107), damit der Aufruf aus
+# po-approve.yml unveraendert bash-basiert bleibt.
 #
 # Usage: check_po_approval_keyword.sh <COMMENT_FILE>
-# Exit 0 + "MATCH" auf stdout: Kommentar enthaelt ein gueltiges Freigabe-Keyword
-# Exit 1 + "NO_MATCH" auf stdout: kein Keyword gefunden
+# Exit 0: mind. eine gebundene TARA-ID gefunden - IDs werden zeilenweise auf
+#         stdout ausgegeben (eine TARA-ID pro Zeile)
+# Exit 1: kein gueltiges, gebundenes Freigabe-Kommando gefunden ("NO_MATCH")
 set -e
 
 COMMENT_FILE="$1"
@@ -26,12 +25,14 @@ if [ -z "$COMMENT_FILE" ] || [ ! -f "$COMMENT_FILE" ]; then
   exit 1
 fi
 
-PATTERN='\b(?<!nicht )(?<!kein )(?<!keine )(?<!not )(po-ok|freigabe erteilt|freigegeben|akzeptiert|accepted|ok)\b'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PARSER="$SCRIPT_DIR/po_approval_parser.py"
 
-if grep -Pqi "$PATTERN" "$COMMENT_FILE"; then
-  echo "MATCH"
-  exit 0
-else
-  echo "NO_MATCH"
-  exit 1
+PYTHON_BIN="python3"
+if ! command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="python"
 fi
+
+set +e
+"$PYTHON_BIN" "$PARSER" "$COMMENT_FILE"
+exit $?
