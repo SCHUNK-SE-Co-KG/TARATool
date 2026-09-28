@@ -141,8 +141,12 @@ def _has_unfilled_negation(clause: str, keyword_start: int) -> bool:
     preceding = clause[:keyword_start]
     # Bis zu ein Fuellwort (<=12 Zeichen, kein TARA-Treffer) zwischen
     # Negationswort und Keyword zulassen.
+    # Beliebig viele (nicht nur ein einzelnes) Fuellwoerter zwischen
+    # Negationswort und Keyword zulassen - begrenzt durch die Satzgrenze der
+    # umschliessenden Clause (siehe `_split_into_clauses`), daher unproblema-
+    # tisch bzgl. Backtracking/False Positives ueber weite Distanzen hinweg.
     negation_pattern = re.compile(
-        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\s+(?:(?!TARA-\d{4})\S{1,12}\s+)?$",
+        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\s+(?:(?!TARA-\d{4})\S{1,12}\s+)*$",
         re.IGNORECASE,
     )
     return bool(negation_pattern.search(preceding))

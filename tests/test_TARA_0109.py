@@ -182,6 +182,20 @@ def test_negation_with_extra_filler_word_still_rejected(parser_module):
 
 
 @pytest.mark.TARA_0109
+def test_negation_with_two_filler_words_still_rejected(parser_module):
+    """Review-Finding (2. Runde, PR #194): auch zwei Fuellwoerter zwischen
+    Negationswort und Keyword duerfen die Ausnahme nicht umgehen."""
+    ids = parser_module.extract_approved_tara_ids(
+        "nicht wirklich richtig akzeptiert TARA-0109"
+    )
+    assert ids == []
+    ids2 = parser_module.extract_approved_tara_ids(
+        "kein wirklich wirklich akzeptiert TARA-0109"
+    )
+    assert ids2 == []
+
+
+@pytest.mark.TARA_0109
 def test_indented_code_block_ignored(parser_module):
     """Review-Finding PR #194: 4-Leerzeichen-eingerueckte Code-Bloecke
     (GFM-Konvention) muessen wie Code-Fences ignoriert werden."""
