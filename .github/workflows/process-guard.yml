@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-06/P-07/P-08/P-09/P-10/P-12/P-13/P-19)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-04b/P-06/P-06b/P-07/P-08/P-09/P-10/P-12/P-13/P-19)
 
 on:
   pull_request:
@@ -145,6 +145,19 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha }}"
           bash scripts/process_guard/check_red_phase.sh "$BASE" "$TESTFILE"
 
+      - name: P-04b – Finaler Red-Green-Nachweis (TARA-0111)
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
+            echo "INFO P-04b: Kein TARA-ID im Branch – P-04b uebersprungen"
+            exit 0
+          fi
+          eval "$RESOLVED"
+          BASE="${{ github.event.pull_request.base.sha }}"
+          export PATH="$HOME/.local/bin:$PATH"
+          pip install --user pytest pytest-timeout --quiet
+          bash scripts/process_guard/check_final_red_green.sh "$BASE" "$TESTFILE"
+
       - name: Python-Umgebung einrichten (fuer P-06)
         run: |
           pip install pytest pytest-timeout --quiet
@@ -171,6 +184,29 @@ jobs:
           else
             echo "FAIL P-06: Story-Tests fehlgeschlagen"
             exit 1
+          fi
+
+      - name: P-06b – Regressionssuite bei gemeinsam genutztem Code (TARA-0111)
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
+            echo "INFO P-06b: Kein TARA-ID im Branch – P-06b uebersprungen"
+            exit 0
+          fi
+          eval "$RESOLVED"
+          BASE="${{ github.event.pull_request.base.sha }}"
+          SCOPE_OUTPUT=$(bash scripts/process_guard/check_regression_scope.sh "$BASE" "$TESTFILE")
+          echo "$SCOPE_OUTPUT"
+          if echo "$SCOPE_OUTPUT" | grep -q "REGRESSION_NEEDED=true"; then
+            pytest tests/ --timeout=90 -q
+            if [ $? -eq 0 ]; then
+              echo "OK P-06b: Volle Regressionssuite gruen"
+            else
+              echo "FAIL P-06b: Regressionssuite fehlgeschlagen"
+              exit 1
+            fi
+          else
+            echo "OK P-06b: Volle Regressionssuite nicht erforderlich (nur Story-Testdatei/Doku veraendert)"
           fi
 
       - name: Node.js einrichten (fuer P-12/P-13)
