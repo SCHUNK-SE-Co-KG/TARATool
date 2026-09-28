@@ -196,6 +196,31 @@ def test_negation_with_two_filler_words_still_rejected(parser_module):
 
 
 @pytest.mark.TARA_0109
+def test_negation_survives_unbounded_filler_padding(parser_module):
+    """Review-Finding (4. Runde, PR #194): ein fest begrenzter
+    Fuellwort-Zaehler waere durch simples Auffuellen mit weiteren
+    Fuellwoertern umgehbar - die Negation muss unabhaengig von der Anzahl
+    der Fuellwoerter (innerhalb derselben Clause) erkannt werden."""
+    ids = parser_module.extract_approved_tara_ids(
+        "nicht wirklich richtig sicher ganz klar akzeptiert TARA-0109"
+    )
+    assert ids == []
+
+
+@pytest.mark.TARA_0109
+def test_negation_with_comma_enclosed_aside_still_rejected(parser_module):
+    """Review-Finding (4. Runde, PR #194): ein Komma-Einschub (kein
+    Kontrast-Konnektor) darf eine unmittelbar vorausgehende Negation nicht
+    aufheben."""
+    ids = parser_module.extract_approved_tara_ids(
+        "Das ist nicht, wie besprochen, akzeptiert TARA-0109"
+    )
+    assert ids == []
+    ids2 = parser_module.extract_approved_tara_ids("nicht, akzeptiert TARA-0109")
+    assert ids2 == []
+
+
+@pytest.mark.TARA_0109
 def test_negation_does_not_suppress_unrelated_later_approval_after_comma(parser_module):
     """Review-Finding (3. Runde, PR #194): eine fruehere, unabhaengige
     Negation im selben Satz darf einen spaeteren, durch Komma/Kontrast-

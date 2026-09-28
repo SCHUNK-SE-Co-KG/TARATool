@@ -134,31 +134,40 @@ def _split_into_clauses(text: str) -> List[str]:
 
 
 def _has_unfilled_negation(clause: str, keyword_start: int) -> bool:
-    """Prueft, ob vor der Keyword-Position (mit einer begrenzten Anzahl
-    Fuellwoerter dazwischen, ohne Komma-/Kontrast-Grenze) ein Negationswort
-    steht (TARA-0096, gehaertet gegen Review-Finding PR #194: mehrere
-    Fuellwoerter duerfen die Negation nicht umgehen)."""
+    """Prueft, ob vor der Keyword-Position (mit beliebig vielen
+    Fuellwoertern dazwischen, aber ohne Kontrast-Konnektor-Grenze) ein
+    Negationswort steht (TARA-0096, gehaertet gegen Review-Finding PR #194:
+    mehrere Fuellwoerter duerfen die Negation nicht umgehen)."""
     preceding = clause[:keyword_start]
-    # Die unmittelbar vor dem Keyword liegende Teil-Klausel isolieren: ein
-    # Komma oder ein Kontrast-Konnektor ("aber", "trotzdem", "jedoch", "doch")
-    # beendet die Reichweite einer vorausgehenden Negation, damit ein
-    # semantisch unabhaengiger, spaeter im selben Satz stehender echter
-    # Freigabe-Befehl nicht faelschlich durch eine fruehere, unabhaengige
-    # Negation unterdrueckt wird (Review-Finding Runde 3: z.B. "Der alte
-    # Vorschlag ist nicht akzeptabel, aber jetzt akzeptiert TARA-0109" muss
-    # weiterhin als Freigabe erkannt werden).
+    # Nur ein expliziter Kontrast-Konnektor ("aber", "trotzdem", "jedoch",
+    # "doch", "but", "however") beendet die Reichweite einer vorausgehenden
+    # Negation - ein blosses Komma NICHT, da Kommata haeufig nur einen
+    # Einschub abtrennen, ohne die Negation inhaltlich aufzuheben (Review-
+    # Finding Runde 4: "Das ist nicht, wie besprochen, akzeptiert TARA-0109"
+    # muss weiterhin als NICHT freigegeben gelten). Damit ein spaeterer,
+    # semantisch unabhaengiger echter Freigabe-Befehl im selben Satz nicht
+    # faelschlich durch eine fruehere, unabhaengige Negation unterdrueckt
+    # wird, gilt weiterhin (Review-Finding Runde 3): "Der alte Vorschlag ist
+    # nicht akzeptabel, aber jetzt akzeptiert TARA-0109" muss als Freigabe
+    # erkannt werden - hier trennt der Kontrast-Konnektor "aber" die
+    # Negation vom spaeteren Keyword.
     boundary_match = list(
-        re.finditer(r",|\b(?:aber|trotzdem|jedoch|doch|but|however)\b", preceding, re.IGNORECASE)
+        re.finditer(r"\b(?:aber|trotzdem|jedoch|doch|but|however)\b", preceding, re.IGNORECASE)
     )
     if boundary_match:
         preceding = preceding[boundary_match[-1].end():]
-    # Bis zu 4 kurze Fuellwoerter (<=12 Zeichen, kein TARA-Treffer) zwischen
-    # Negationswort und Keyword zulassen - genug fuer natuerliche
-    # Verstaerkungen ("nicht wirklich richtig sicher akzeptiert"), aber
-    # begrenzt genug, um nicht ueber weite, unabhaengige Satzteile hinweg zu
-    # binden.
+    # Beliebig viele Fuellwoerter (<=12 Zeichen, kein TARA-Treffer) zwischen
+    # Negationswort und Keyword zulassen - ein fester Wortzaehler waere
+    # durch simples Auffuellen mit weiteren Fuellwoertern umgehbar (Review-
+    # Finding Runde 4). Die Reichweite bleibt durch die Satz-/Absatzgrenze
+    # der umschliessenden Clause (`_split_into_clauses`) sowie die obige
+    # Kontrast-Konnektor-Grenze beschraenkt.
+    # Nach dem Negationswort selbst darf direkt anhaengende Interpunktion
+    # (z.B. "nicht," bei einem Einschub) stehen, bevor der Zwischenraum
+    # beginnt - sonst wird die Negation durch ein einfaches Komma direkt
+    # danach faelschlich uebersehen (Review-Finding Runde 4).
     negation_pattern = re.compile(
-        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\s+(?:(?!TARA-\d{4})\S{1,12}\s+){0,4}$",
+        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\b[^\w\s]*\s+(?:(?!TARA-\d{4})\S{1,12}\s+)*$",
         re.IGNORECASE,
     )
     return bool(negation_pattern.search(preceding))
