@@ -198,8 +198,7 @@ jobs:
           SCOPE_OUTPUT=$(bash scripts/process_guard/check_regression_scope.sh "$BASE" "$TESTFILE")
           echo "$SCOPE_OUTPUT"
           if echo "$SCOPE_OUTPUT" | grep -q "REGRESSION_NEEDED=true"; then
-            pytest tests/ --timeout=90 -q
-            if [ $? -eq 0 ]; then
+            if pytest tests/ --timeout=90 -q; then
               echo "OK P-06b: Volle Regressionssuite gruen"
             else
               echo "FAIL P-06b: Regressionssuite fehlgeschlagen"

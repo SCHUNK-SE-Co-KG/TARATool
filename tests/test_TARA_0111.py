@@ -227,6 +227,24 @@ def test_regression_scope_not_needed_for_docs_only_change(temp_repo):
     assert "REGRESSION_NEEDED=false" in result.stdout
 
 
+@pytest.mark.TARA_0111
+def test_regression_scope_not_fooled_by_readme_prefixed_code_filename(temp_repo):
+    """Review-Finding (High, Code-Review PR #196): eine Code-Datei, deren Name
+    lediglich mit 'README'/'CONTRIBUTING'/'CHANGELOG' BEGINNT (z.B. eine
+    absichtlich so benannte Implementierungsdatei), darf NICHT faelschlich
+    als reine Doku-Datei durchgehen und die volle Regression umgehen."""
+    base = _base_sha(temp_repo)
+    testfile_rel = "tests/test_TARA_9108.py"
+    _write(temp_repo, testfile_rel, "def test_ok():\n    assert True\n")
+    _write(temp_repo, "README_exploit.py", "# eigentlich Implementierungscode, kein Markdown\n")
+    _git(["add", "."], cwd=temp_repo)
+    _git(["commit", "-q", "-m", "feat+test: TARA-9108 (Tarnung als Doku)"], cwd=temp_repo)
+
+    result = _run_bash([CHECK_REGRESSION_SCOPE, base, testfile_rel], cwd=temp_repo)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "REGRESSION_NEEDED=true" in result.stdout
+
+
 # ---------------------------------------------------------------------------
 # Workflow-Verdrahtung
 # ---------------------------------------------------------------------------

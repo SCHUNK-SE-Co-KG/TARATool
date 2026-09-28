@@ -26,7 +26,7 @@ while IFS= read -r file; do
   if [ "$file" = "$TESTFILE" ]; then
     continue
   fi
-  if echo "$file" | grep -qE '^(docs/|README|CONTRIBUTING|CHANGELOG)|\.md$'; then
+  if echo "$file" | grep -qE '^(docs/|README([./]|$)|CONTRIBUTING([./]|$)|CHANGELOG([./]|$))|\.md$'; then
     continue
   fi
   SHARED_CODE_CHANGED=1

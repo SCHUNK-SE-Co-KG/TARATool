@@ -48,21 +48,35 @@ if ! ADD_OUTPUT=$(git worktree add "$WORKTREE_DIR" "$BASE" 2>&1); then
   exit 1
 fi
 
+# TARA-0111 Review-Finding (Medium): Ein 'trap' stellt sicher, dass das
+# Worktree-Verzeichnis auch dann bereinigt wird, wenn ein nachfolgender
+# Befehl (z.B. ein fehlschlagendes 'pip install') unter 'set -e' das
+# Skript vorzeitig beendet, statt den Cleanup-Code am Skriptende zu
+# erreichen.
+cleanup_worktree() {
+  git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
+  git worktree prune 2>/dev/null || true
+}
+trap cleanup_worktree EXIT
+
 mkdir -p "$(dirname "$WORKTREE_DIR/$TESTFILE")"
 cp "$FINAL_TEST_CONTENT" "$WORKTREE_DIR/$TESTFILE"
 
 pushd "$WORKTREE_DIR" >/dev/null
-python3 -m pip install --user pytest pytest-timeout --quiet 2>/dev/null
-[ -f tests/requirements.txt ] && python3 -m pip install --user -r tests/requirements.txt --quiet 2>/dev/null
-[ -f requirements.txt ] && python3 -m pip install --user -r requirements.txt --quiet 2>/dev/null
+# TARA-0111 Review-Finding (Medium): pip-Installationen duerfen das Skript
+# unter 'set -e' nicht vorzeitig abbrechen (z.B. bei Netzwerkfehlern) -
+# explizit mit '|| true' abgesichert, analog zu check_red_phase.sh.
+python3 -m pip install --user pytest pytest-timeout --quiet 2>/dev/null || true
+[ -f tests/requirements.txt ] && { python3 -m pip install --user -r tests/requirements.txt --quiet 2>/dev/null || true; }
+[ -f requirements.txt ] && { python3 -m pip install --user -r requirements.txt --quiet 2>/dev/null || true; }
 set +e
 python3 -m pytest "$TESTFILE" --noconftest -q 2>&1
 BASE_EXIT=$?
 set -e
 popd >/dev/null
 
-git worktree remove "$WORKTREE_DIR" --force 2>/dev/null || true
-git worktree prune 2>/dev/null || true
+cleanup_worktree
+trap - EXIT
 rm -f "$FINAL_TEST_CONTENT"
 
 if [ "$BASE_EXIT" -eq 0 ]; then
