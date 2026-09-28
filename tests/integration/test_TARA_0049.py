@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0049: Consolidated report builder."""
+"""Tests for TARA-0049: Consolidated report builder."""
 import json
 import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.mark.TARA_0049

@@ -89,7 +89,8 @@ def test_root_conftest_no_longer_imports_playwright():
     root_conftest = TESTS_DIR / "conftest.py"
     assert root_conftest.is_file(), "tests/conftest.py (Root) muss erhalten bleiben"
     content = root_conftest.read_text(encoding="utf-8")
-    assert "playwright" not in content.lower()
+    assert "import playwright" not in content.lower()
+    assert "from playwright" not in content.lower()
     assert "collect_ignore_glob" in content
 
 

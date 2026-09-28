@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0046: CSP and Promise Rejections (R-19)."""
+"""Tests for TARA-0054: Clickjacking and Reverse Tabnabbing (R-27/28)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):
@@ -14,7 +14,7 @@ def _make_session(page, context, app_url):
         page=page,
         context=context,
         report={
-            "story_id": "TARA-0046",
+            "story_id": "TARA-0054",
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "app_url": app_url,
             "findings": [],
@@ -24,36 +24,32 @@ def _make_session(page, context, app_url):
     )
 
 
-@pytest.mark.TARA_0046
-def test_csp_monitor_detects_unhandled_rejection(tmp_path):
-    """Scanner should detect unhandled Promise rejection."""
+@pytest.mark.TARA_0054
+def test_tabnabbing_detects_missing_noopener(tmp_path):
+    """Scanner should detect _blank link without noopener noreferrer."""
     html = tmp_path / "test.html"
     html.write_text("""
 <!DOCTYPE html>
 <html><body>
-<script>
-Promise.reject(new Error("test rejection"));
-</script>
+<a target="_blank" href="https://example.com">Link</a>
 </body></html>
 """, encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from agents.review_agent.csp_checker import attach_csp_monitor, get_csp_findings
+    from agents.review_agent.clickjacking_checker import check_reverse_tabnabbing
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
         context = browser.new_context()
         page = context.new_page()
         session = _make_session(page, context, app_url)
-
-        attach_csp_monitor(session)
         page.goto(app_url)
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(100)
 
-        findings = get_csp_findings(session)
-        rejections = session.report.get("raw", {}).get("unhandled_rejections", [])
+        findings = check_reverse_tabnabbing(session)
+        types = [f.get("type") for f in findings]
 
-        assert len(rejections) > 0, f"Expected unhandled rejections, got: {rejections}"
+        assert "reverse_tabnabbing" in types, f"Expected reverse_tabnabbing in {types}"
 
         browser.close()

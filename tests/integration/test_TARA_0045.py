@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0048: Browser permissions (R-21)."""
+"""Tests for TARA-0045: Accessibility checker (R-18)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):
@@ -14,7 +14,7 @@ def _make_session(page, context, app_url):
         page=page,
         context=context,
         report={
-            "story_id": "TARA-0048",
+            "story_id": "TARA-0045",
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "app_url": app_url,
             "findings": [],
@@ -24,36 +24,33 @@ def _make_session(page, context, app_url):
     )
 
 
-@pytest.mark.TARA_0048
-def test_permissions_monitor_detects_geolocation(tmp_path):
-    """Scanner should detect geolocation API call."""
+@pytest.mark.TARA_0045
+def test_accessibility_detects_unnamed_button(tmp_path):
+    """Scanner should find button without accessible name."""
     html = tmp_path / "test.html"
     html.write_text("""
 <!DOCTYPE html>
 <html><body>
-<script>
-navigator.geolocation.getCurrentPosition(function() {}, function() {});
-</script>
+<button></button>
 </body></html>
 """, encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from agents.review_agent.permissions_checker import attach_permissions_monitor, get_permissions_findings
+    from agents.review_agent.accessibility_checker import check_accessibility, get_accessibility_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
         context = browser.new_context()
         page = context.new_page()
         session = _make_session(page, context, app_url)
-
-        attach_permissions_monitor(session)
         page.goto(app_url)
-        page.wait_for_timeout(200)
+        page.wait_for_timeout(100)
 
-        findings = get_permissions_findings(session)
-        apis = [f.get("api") for f in findings]
+        check_accessibility(session)
+        findings = get_accessibility_findings(session)
 
-        assert "geolocation.getCurrentPosition" in apis, f"Expected geolocation in {apis}"
+        types = [f.get("type") for f in findings]
+        assert "missing_accessible_name" in types, f"Expected missing_accessible_name in {types}"
 
         browser.close()

@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0041: Network monitoring (R-14)."""
+"""Tests for TARA-0041: Network monitoring (R-14)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):

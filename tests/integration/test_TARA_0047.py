@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0045: Accessibility checker (R-18)."""
+"""Tests for TARA-0047: Service Worker and Cross-Origin (R-20)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):
@@ -14,7 +14,7 @@ def _make_session(page, context, app_url):
         page=page,
         context=context,
         report={
-            "story_id": "TARA-0045",
+            "story_id": "TARA-0047",
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "app_url": app_url,
             "findings": [],
@@ -24,33 +24,36 @@ def _make_session(page, context, app_url):
     )
 
 
-@pytest.mark.TARA_0045
-def test_accessibility_detects_unnamed_button(tmp_path):
-    """Scanner should find button without accessible name."""
+@pytest.mark.TARA_0047
+def test_postmessage_monitor_detects_wildcard(tmp_path):
+    """Scanner should detect postMessage with wildcard origin."""
     html = tmp_path / "test.html"
     html.write_text("""
 <!DOCTYPE html>
 <html><body>
-<button></button>
+<script>
+window.postMessage("sensitive data", "*");
+</script>
 </body></html>
 """, encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from agents.review_agent.accessibility_checker import check_accessibility, get_accessibility_findings
+    from agents.review_agent.service_worker_checker import attach_postmessage_monitor, get_service_worker_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
         context = browser.new_context()
         page = context.new_page()
         session = _make_session(page, context, app_url)
+
+        attach_postmessage_monitor(session)
         page.goto(app_url)
-        page.wait_for_timeout(100)
+        page.wait_for_timeout(200)
 
-        check_accessibility(session)
-        findings = get_accessibility_findings(session)
-
+        findings = get_service_worker_findings(session)
         types = [f.get("type") for f in findings]
-        assert "missing_accessible_name" in types, f"Expected missing_accessible_name in {types}"
+
+        assert "postmessage_wildcard" in types, f"Expected postmessage_wildcard in {types}"
 
         browser.close()
