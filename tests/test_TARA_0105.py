@@ -27,12 +27,15 @@ def _read(path):
 @pytest.mark.TARA_0105
 def test_process_guard_documents_p24():
     """P-24 muss in der vollstaendigen Regeltabelle von
-    PROCESS_GUARD_AGENT.md auftauchen, inkl. Kernaussage (Epic-Body
-    Nachtragen im selben Arbeitsschritt)."""
+    PROCESS_GUARD_AGENT.md auftauchen. Seit TARA-0113 lautet die
+    Kernaussage nicht mehr "Epic-Body im selben Arbeitsschritt nachtragen"
+    (manuelle Text-Checkliste), sondern "native Sub-Issue-Verknuepfung per
+    Skript" - siehe tests/test_TARA_0113.py fuer die Details der neuen
+    Fassung."""
     content = _read(PROCESS_GUARD_PATH)
     assert "P-24" in content
     assert "Epic" in content
-    assert "gleichen Arbeitsschritt" in content or "gleichen Zug" in content
+    assert "Sub-Issue" in content
 
 
 @pytest.mark.TARA_0105
@@ -63,11 +66,17 @@ def test_epic_close_precondition_checks_all_bezug_references():
 
 @pytest.mark.TARA_0105
 def test_p24_not_falsely_marked_as_automatable():
-    """P-24 ist (noch) nicht automatisiert - muss in der
-    'Nicht automatisierbar'-Aufzaehlung der PROCESS_GUARD_AGENT.md stehen."""
+    """Bis TARA-0113 war P-24 rein manuell und durfte NICHT faelschlich als
+    automatisiert gelten. Seit TARA-0113 ist P-24 tatsaechlich automatisiert
+    (scripts/workflow/link_epic_subissue.sh, siehe tests/test_TARA_0113.py)
+    und wurde deshalb bewusst aus der 'Nicht automatisierbar'-Aufzaehlung
+    entfernt - das ist keine Regression, sondern der beabsichtigte Zustand
+    nach TARA-0113. Dieser Test stellt sicher, dass P-24 dort NICHT mehr
+    (faelschlich) als weiterhin rein manuell gelistet ist."""
     content = _read(PROCESS_GUARD_PATH)
     assert "Nicht automatisierbar" in content
     non_automatable_line = [
         line for line in content.splitlines() if "Nicht automatisierbar" in line
     ][0]
-    assert "P-24" in non_automatable_line
+    assert "P-24" not in non_automatable_line
+    assert "link_epic_subissue.sh" in content

@@ -20,6 +20,7 @@ Artefakt - es findet KEINE rueckwirkende Migration statt.
 """
 import json
 import os
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -78,15 +79,23 @@ def _make_fake_gh(tmpdir, story_db_id=555111222, sub_issues_exit=0, sub_issues_s
 
 
 def _run_script(args, fake_gh_path, call_log):
-    env = os.environ.copy()
-    env["GH_BIN"] = _to_bash_path(fake_gh_path)
-    env["CALL_LOG"] = _to_bash_path(call_log)
+    # Hinweis: Das lokale `bash` auf diesem Windows-Rechner ist WSL-bash, das
+    # Umgebungsvariablen NICHT ueber die Prozessgrenze hinweg von Windows in
+    # den WSL-Prozess uebernimmt (subprocess.run(env=...) wirkt hier nicht).
+    # Daher werden GH_BIN/CALL_LOG explizit auf der bash-Kommandozeile
+    # gesetzt statt ueber env= - das funktioniert identisch unter nativem
+    # Linux-bash (z.B. in GitHub Actions).
+    cmd = "GH_BIN={} CALL_LOG={} bash {} {}".format(
+        shlex.quote(_to_bash_path(fake_gh_path)),
+        shlex.quote(_to_bash_path(call_log)),
+        shlex.quote(_to_bash_path(SCRIPT)),
+        " ".join(shlex.quote(a) for a in args),
+    )
     result = subprocess.run(
-        ["bash", _to_bash_path(SCRIPT)] + args,
+        ["bash", "-c", cmd],
         capture_output=True,
         text=True,
         timeout=30,
-        env=env,
     )
     return result
 

@@ -114,6 +114,38 @@ mutation {
 }'
 ```
 
+### Story als native Sub-Issue mit ihrem Epic verknuepfen (P-24, ab TARA-0113)
+
+Seit TARA-0113 wird eine **neu** angelegte Story nicht mehr per manueller
+Text-Checkliste im Epic-Body verknuepft, sondern ueber die native
+GitHub-Sub-Issues-Beziehung. Bestehende Epics (z.B. #176) behalten ihre
+Text-Checkliste unveraendert (Bestandsschutz, keine rueckwirkende
+Migration).
+
+```bash
+scripts/workflow/link_epic_subissue.sh \
+  --owner SCHUNK-SE-Co-KG --repo TARATool \
+  --epic <Epic-Issue-Nr> --story <Story-Issue-Nr>
+```
+
+Das Skript ruft intern den REST-Endpunkt
+`POST /repos/{owner}/{repo}/issues/{epic}/sub_issues` auf. Wichtig:
+`sub_issue_id` erwartet die **numerische REST-Datenbank-ID** des
+Story-Issues (Feld `id` der Issue-Ressource), NICHT die sichtbare
+Issue-Nummer und NICHT die GraphQL-Node-ID (Feld `node_id`):
+
+```bash
+# Datenbank-ID der Story ermitteln:
+gh api repos/SCHUNK-SE-Co-KG/TARATool/issues/<Story-Nr> --jq .id
+
+# Sub-Issue-Beziehung anlegen:
+gh api repos/SCHUNK-SE-Co-KG/TARATool/issues/<Epic-Nr>/sub_issues \
+  -f sub_issue_id=<Story-Datenbank-ID>
+```
+
+Die installierte `gh`-CLI (Stand TARA-0113, gh 2.86.0) bietet keinen
+nativen `gh issue ... sub-issue`-Subbefehl, daher der direkte `gh api`-Aufruf.
+
 ### Alle Status-Optionen mit IDs abrufen (z.B. nach Anlage von „Freigabe")
 
 ```bash
