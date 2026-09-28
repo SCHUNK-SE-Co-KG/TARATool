@@ -196,6 +196,22 @@ def test_negation_with_two_filler_words_still_rejected(parser_module):
 
 
 @pytest.mark.TARA_0109
+def test_negation_does_not_suppress_unrelated_later_approval_after_comma(parser_module):
+    """Review-Finding (3. Runde, PR #194): eine fruehere, unabhaengige
+    Negation im selben Satz darf einen spaeteren, durch Komma/Kontrast-
+    Konnektor getrennten echten Freigabe-Befehl nicht unterdruecken."""
+    ids = parser_module.extract_approved_tara_ids(
+        "Der alte Vorschlag ist nicht akzeptabel, aber jetzt akzeptiert TARA-0109"
+    )
+    assert ids == ["TARA-0109"]
+    ids2 = parser_module.extract_approved_tara_ids(
+        "Das war nicht gut gemacht, ich habe es trotzdem nochmal geprueft "
+        "und jetzt akzeptiert TARA-0109"
+    )
+    assert ids2 == ["TARA-0109"]
+
+
+@pytest.mark.TARA_0109
 def test_indented_code_block_ignored(parser_module):
     """Review-Finding PR #194: 4-Leerzeichen-eingerueckte Code-Bloecke
     (GFM-Konvention) muessen wie Code-Fences ignoriert werden."""

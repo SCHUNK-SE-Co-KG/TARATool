@@ -134,19 +134,31 @@ def _split_into_clauses(text: str) -> List[str]:
 
 
 def _has_unfilled_negation(clause: str, keyword_start: int) -> bool:
-    """Prueft, ob unmittelbar vor der Keyword-Position (mit max. einem
-    Fuellwort dazwischen) ein Negationswort steht (TARA-0096, gehaertet
-    gegen Review-Finding PR #194: ein zusaetzliches Fuellwort darf die
-    Negation nicht mehr umgehen)."""
+    """Prueft, ob vor der Keyword-Position (mit einer begrenzten Anzahl
+    Fuellwoerter dazwischen, ohne Komma-/Kontrast-Grenze) ein Negationswort
+    steht (TARA-0096, gehaertet gegen Review-Finding PR #194: mehrere
+    Fuellwoerter duerfen die Negation nicht umgehen)."""
     preceding = clause[:keyword_start]
-    # Bis zu ein Fuellwort (<=12 Zeichen, kein TARA-Treffer) zwischen
-    # Negationswort und Keyword zulassen.
-    # Beliebig viele (nicht nur ein einzelnes) Fuellwoerter zwischen
-    # Negationswort und Keyword zulassen - begrenzt durch die Satzgrenze der
-    # umschliessenden Clause (siehe `_split_into_clauses`), daher unproblema-
-    # tisch bzgl. Backtracking/False Positives ueber weite Distanzen hinweg.
+    # Die unmittelbar vor dem Keyword liegende Teil-Klausel isolieren: ein
+    # Komma oder ein Kontrast-Konnektor ("aber", "trotzdem", "jedoch", "doch")
+    # beendet die Reichweite einer vorausgehenden Negation, damit ein
+    # semantisch unabhaengiger, spaeter im selben Satz stehender echter
+    # Freigabe-Befehl nicht faelschlich durch eine fruehere, unabhaengige
+    # Negation unterdrueckt wird (Review-Finding Runde 3: z.B. "Der alte
+    # Vorschlag ist nicht akzeptabel, aber jetzt akzeptiert TARA-0109" muss
+    # weiterhin als Freigabe erkannt werden).
+    boundary_match = list(
+        re.finditer(r",|\b(?:aber|trotzdem|jedoch|doch|but|however)\b", preceding, re.IGNORECASE)
+    )
+    if boundary_match:
+        preceding = preceding[boundary_match[-1].end():]
+    # Bis zu 4 kurze Fuellwoerter (<=12 Zeichen, kein TARA-Treffer) zwischen
+    # Negationswort und Keyword zulassen - genug fuer natuerliche
+    # Verstaerkungen ("nicht wirklich richtig sicher akzeptiert"), aber
+    # begrenzt genug, um nicht ueber weite, unabhaengige Satzteile hinweg zu
+    # binden.
     negation_pattern = re.compile(
-        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\s+(?:(?!TARA-\d{4})\S{1,12}\s+)*$",
+        r"\b(?:" + "|".join(_NEGATION_WORDS) + r")\s+(?:(?!TARA-\d{4})\S{1,12}\s+){0,4}$",
         re.IGNORECASE,
     )
     return bool(negation_pattern.search(preceding))
