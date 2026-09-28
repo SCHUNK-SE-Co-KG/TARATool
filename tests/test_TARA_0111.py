@@ -13,6 +13,7 @@ zusaetzliche Gate ab:
   Regressionssuite laufen, sonst genuegt die Story-Testdatei - PO-Entscheidung
   TARA-0111 Frage 3).
 """
+import json
 import os
 import shutil
 import subprocess
@@ -250,27 +251,30 @@ def test_workflow_p06b_excludes_playwright_tests_like_ci_tests_yml():
     """Review-Regression: der P-06b-Schritt in process-guard.yml lief zunaechst
     OHNE Playwright-Ausschlussliste und schlug deshalb bei jeder ausgeloesten
     vollen Regression fehl (Playwright ist in diesem Job nicht installiert).
-    Die Ignore-Liste muss dieselben Playwright-Testdateien ausschliessen wie
-    der etablierte 'Python Unit Tests (non-Playwright)'-Job in ci-tests.yml."""
-    ci_tests_path = os.path.join(REPO_ROOT, ".github", "workflows", "ci-tests.yml")
+    Die Ignore-Liste muss dieselben Playwright-Testverzeichnisse ausschliessen
+    wie der 'test:unit'-Skript in package.json (TARA-0112: seit der
+    Verzeichnis-Umstellung auf tests/e2e/ und tests/integration/ statt
+    einzelner Dateinamen)."""
+    package_json_path = os.path.join(REPO_ROOT, "package.json")
     process_guard_path = os.path.join(REPO_ROOT, ".github", "workflows", "process-guard.yml")
-    with open(ci_tests_path, "r", encoding="utf-8") as f:
-        ci_content = f.read()
+    with open(package_json_path, "r", encoding="utf-8") as f:
+        package_json = json.load(f)
     with open(process_guard_path, "r", encoding="utf-8") as f:
         pg_content = f.read()
 
     import re
 
-    ci_ignores = set(re.findall(r"--ignore=(tests/\S+\.py)", ci_content))
-    assert ci_ignores, "ci-tests.yml sollte eine Playwright-Ignore-Liste enthalten"
+    unit_script = package_json["scripts"]["test:unit"]
+    unit_ignores = set(re.findall(r"--ignore=([^\s;\\]+)", unit_script))
+    assert unit_ignores, "test:unit sollte eine Playwright-Ignore-Liste enthalten"
 
     p06b_start = pg_content.index("P-06b – Regressionssuite")
     p06b_section = pg_content[p06b_start : p06b_start + 4000]
-    pg_ignores = set(re.findall(r"--ignore=(tests/\S+\.py)", p06b_section))
+    pg_ignores = set(re.findall(r"--ignore=([^\s;\\]+)", p06b_section))
 
-    missing = ci_ignores - pg_ignores
+    missing = unit_ignores - pg_ignores
     assert not missing, (
-        f"P-06b-Schritt fehlen Playwright-Ignores aus ci-tests.yml: {missing} "
+        f"P-06b-Schritt fehlen Playwright-Ignores aus test:unit: {missing} "
         "(P-06b wuerde sonst bei ausgeloester voller Regression an "
         "Playwright-Setup-Fehlern scheitern)"
     )

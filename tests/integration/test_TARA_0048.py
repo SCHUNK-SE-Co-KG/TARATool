@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0050: DOM-XSS sink scanner (R-22)."""
+"""Tests for TARA-0048: Browser permissions (R-21)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):
@@ -14,7 +14,7 @@ def _make_session(page, context, app_url):
         page=page,
         context=context,
         report={
-            "story_id": "TARA-0050",
+            "story_id": "TARA-0048",
             "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "app_url": app_url,
             "findings": [],
@@ -24,34 +24,36 @@ def _make_session(page, context, app_url):
     )
 
 
-@pytest.mark.TARA_0050
-def test_find_dangerous_sinks_detects_innerhtml(tmp_path):
-    """Scanner should find innerHTML assignment in page source."""
+@pytest.mark.TARA_0048
+def test_permissions_monitor_detects_geolocation(tmp_path):
+    """Scanner should detect geolocation API call."""
     html = tmp_path / "test.html"
     html.write_text("""
 <!DOCTYPE html>
 <html><body>
-<div id="out"></div>
 <script>
-document.getElementById("out").innerHTML = document.location.hash.substr(1);
+navigator.geolocation.getCurrentPosition(function() {}, function() {});
 </script>
 </body></html>
 """, encoding="utf-8")
     app_url = f"file:///{html.as_posix()}"
 
     from playwright.sync_api import sync_playwright
-    from agents.review_agent.dom_xss_scanner import find_dangerous_sinks
+    from agents.review_agent.permissions_checker import attach_permissions_monitor, get_permissions_findings
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True, args=["--allow-file-access-from-files"])
         context = browser.new_context()
         page = context.new_page()
         session = _make_session(page, context, app_url)
+
+        attach_permissions_monitor(session)
         page.goto(app_url)
+        page.wait_for_timeout(200)
 
-        findings = find_dangerous_sinks(session)
-        types = [f.get("type") for f in findings]
+        findings = get_permissions_findings(session)
+        apis = [f.get("api") for f in findings]
 
-        assert "dangerous_sink" in types, f"Expected dangerous_sink in {types}"
+        assert "geolocation.getCurrentPosition" in apis, f"Expected geolocation in {apis}"
 
         browser.close()
