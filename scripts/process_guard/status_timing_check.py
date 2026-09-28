@@ -51,9 +51,26 @@ def _parse_iso(timestamp: str) -> datetime:
 def find_earliest_transition_comment(
     comments: List[Dict[str, Any]], pattern: str
 ) -> Optional[Dict[str, Any]]:
-    """Findet den zeitlich fruehesten Kommentar, dessen Body `pattern`
-    (case-insensitive Teilstring) enthaelt. Liefert None, wenn keiner passt."""
-    matching = [c for c in comments if pattern.lower() in (c.get("body") or "").lower()]
+    """Findet den zeitlich fruehesten Kommentar, der einen tatsaechlichen
+    Statuswechsel HIN ZU `pattern` dokumentiert (Audit-Trail-Format
+    "... -> <Zielstatus> ...", siehe P-02/P-20).
+
+    Ein reiner Teilstring-Vergleich wuerde zwei Probleme verursachen (siehe
+    Review-Finding zu TARA-0108/PR #192):
+    1. Ein unbeteiligter Kommentar, der `pattern` nur beilaeufig erwaehnt
+       (z.B. "wir verschieben das nach In Progress"), wuerde faelschlich
+       als Nachweis akzeptiert.
+    2. Der Zielstatus eines Uebergangs kann Teilstring des NAECHSTEN
+       Uebergangs sein (z.B. "In Progress" ist Teilstring/Quelle von
+       "Status In Progress -> inReview"), sodass der falsche Kommentar
+       fuer P-02 herangezogen wird.
+
+    Deshalb wird ausschliesslich auf das Muster "-> <Zielstatus>" (Pfeil
+    unmittelbar vor dem Zielstatus, Wortgrenze danach) geprueft."""
+    transition_pattern = re.compile(
+        r"->\s*" + re.escape(pattern) + r"\b", re.IGNORECASE
+    )
+    matching = [c for c in comments if transition_pattern.search(c.get("body") or "")]
     if not matching:
         return None
     return min(matching, key=lambda c: c.get("created_at") or "")

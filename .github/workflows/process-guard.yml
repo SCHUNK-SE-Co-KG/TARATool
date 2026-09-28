@@ -109,7 +109,17 @@ jobs:
           gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}/comments" \
             --jq '[.[] | {body, created_at}]' > "$COMMENTS_FILE" || echo '[]' > "$COMMENTS_FILE"
 
-          FIRST_COMMIT_ISO=$(git log --reverse --format=%aI "$BASE_SHA..$HEAD_SHA" | head -n1)
+          # Hinweis (Review-Finding PR #192, siehe #193): Sowohl Autor- als
+          # auch Committer-Datum eines Commits sind vom Ersteller lokal frei
+          # waehlbar (z.B. `git commit --date=...` bzw. GIT_COMMITTER_DATE)
+          # und damit theoretisch faelschbar. Wir verwenden hier bewusst das
+          # Committer-Datum (%cI) statt des Autor-Datums (%aI), da es bei
+          # jedem Amend/Rebase automatisch aktualisiert wird und ein
+          # gezieltes Faelschen dadurch schwerer unbemerkt bleibt - das
+          # ersetzt aber keinen serverseitigen, nicht faelschbaren Zeitstempel.
+          # Verfolgt als Folge-Issue #193 (haertere, server-seitige Quelle,
+          # z.B. Workflow-Run-Zeitstempel des ersten Pushs).
+          FIRST_COMMIT_ISO=$(git log --reverse --format=%cI "$BASE_SHA..$HEAD_SHA" | head -n1)
           if [ -z "$FIRST_COMMIT_ISO" ]; then
             echo "INFO P-02: Kein Commit im PR-Bereich gefunden - P-02-Zeitpruefung uebersprungen"
           else

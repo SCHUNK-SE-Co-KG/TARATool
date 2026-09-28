@@ -109,6 +109,16 @@ Test-Ergebnis:    PASSED / FAILED
 > nicht mehr Teil dieser Liste - sie werden deterministisch durch GitHub Actions
 > geprueft bzw. automatisch gesetzt (siehe Tabelle oben).
 
+> **Bekannte Grenze (TARA-0108, dokumentiert nach Review-Finding PR #192):**
+> Die P-02-Zeitpruefung vergleicht den Audit-Trail-Kommentar gegen das
+> Committer-Datum des ersten Commits (`git log --format=%cI`). Dieses Datum
+> wird lokal vom Ersteller des Commits gesetzt und ist – wie jedes
+> Git-Commit-Metadatum – grundsaetzlich faelschbar (z.B. via
+> `GIT_COMMITTER_DATE`). Es handelt sich damit NICHT um einen serverseitigen,
+> unfaelschbaren Zeitstempel. Eine haertere Loesung (z.B. Ableitung aus dem
+> Zeitpunkt des ersten GitHub-Actions-Workflow-Laufs fuer den Branch, der
+> serverseitig erzeugt wird) ist als Folge-Issue #193 erfasst.
+
 ---
 
 ## P-18: Pre-Transition Checks (Vorbedingungen je Status-Uebergang)

@@ -161,6 +161,29 @@ def test_validate_transition_before_event_fails_without_matching_comment(timing_
     )
     assert ok is False
 
+@pytest.mark.TARA_0108
+def test_find_earliest_transition_comment_ignores_beilaeufige_erwaehnung(timing_module):
+    """Review-Finding PR #192: Ein Kommentar, der 'In Progress' nur beilaeufig
+    erwaehnt (ohne '-> In Progress'-Uebergangsmuster), darf NICHT als
+    P-02-Nachweis akzeptiert werden."""
+    comments = [
+        {"body": "Wir verschieben das jetzt nach In Progress, oder?", "created_at": "2026-09-28T06:00:00Z"},
+    ]
+    result = timing_module.find_earliest_transition_comment(comments, "In Progress")
+    assert result is None
+
+
+@pytest.mark.TARA_0108
+def test_find_earliest_transition_comment_does_not_confuse_source_and_target(timing_module):
+    """Review-Finding PR #192: 'In Progress' ist Teilstring/Quelle des P-09-
+    Uebergangs 'Status In Progress -> inReview'. Dieser Kommentar darf NICHT
+    faelschlich als P-02-Nachweis (Ziel 'In Progress') herangezogen werden."""
+    comments = [
+        {"body": "P-09: Status In Progress -> inReview", "created_at": "2026-09-28T05:00:00Z"},
+    ]
+    result = timing_module.find_earliest_transition_comment(comments, "In Progress")
+    assert result is None
+
 
 @pytest.mark.TARA_0108
 def test_validate_transition_before_event_passes_at_exact_same_timestamp(timing_module):
