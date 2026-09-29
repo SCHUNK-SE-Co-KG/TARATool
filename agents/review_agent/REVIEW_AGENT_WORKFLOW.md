@@ -179,13 +179,13 @@ Unsicherheit im Finding-Body explizit vermerkt.
 
 ---
 
-## Merge-Freigabe
+## Merge-Freigabe (Statusmodell B, seit TARA-0110: PO-Akzeptanz VOR Merge)
 
-| Ergebnis           | Vorgehen                                                             |
-| ------------------ | -------------------------------------------------------------------- |
-| Keine Findings     | PR auf Development, Item â†’ **Freigabe** (PO-OK abwarten â†’ Done)  |
-| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen â†’ **Freigabe** |
-| Hoch/Kritisch      | Item zurück auf â€žIn Progress", Findings zuerst beheben             |
+| Ergebnis           | Vorgehen                                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------- |
+| Keine Findings     | Gebundene PO-Akzeptanz auf PR abwarten (P-25) → Item automatisch **Accepted**, danach Merge → Done |
+| Nur Niedrig/Mittel | PR möglich, Findings als neue Backlog-Items anlegen, dann wie oben → **Accepted**                  |
+| Hoch/Kritisch      | Item zurück auf „In Progress", Findings zuerst beheben                                             |
 
 ### Technischer P-10-Nachweis (TARA-0089, SHA-gebunden seit TARA-0107)
 
@@ -257,8 +257,8 @@ Das Finding wird durch einen Fix-Commit auf dem Branch der Source-Story behoben.
 2. Sobald der Fix-Commit **gepusht** ist, darf das Finding-Issue **sofort** geschlossen werden
    (Kommentar mit Verweis auf Commit-SHA/PR). Das ist **entkoppelt** vom aktuellen Board-Status
    der Source-Story: Die Source-Story durchlaeuft weiterhin eigenstaendig den vollen Workflow
-   (Todo → In Progress → inReview → Freigabe → Done); das Finding muss nicht auf deren
-   Freigabe/Done warten.
+   (Todo → In Progress → inReview → Accepted → Done); das Finding muss nicht auf deren
+   Accepted/Done warten.
 
 ### Fall B – Folge-Story (keine direkte Fix)
 

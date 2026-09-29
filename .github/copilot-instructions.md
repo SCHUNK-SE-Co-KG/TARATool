@@ -126,8 +126,8 @@ fuer alle Stories eines Epics).
 
 ## Audit-Trail bei Board-Status-Wechseln (TARA-0086)
 
-Bei **jedem** Statuswechsel (Todo -> In Progress -> inReview -> Freigabe -> Done)
-hinterlaesst der Dev-Agent einen kurzen Kommentar im betroffenen Issue, z.B.:
+Bei **jedem** Statuswechsel (Todo -> In Progress -> inReview -> Accepted -> Done)
+hinterlaesst der Dev-Agent bzw. die Automation einen kurzen Kommentar im betroffenen Issue, z.B.:
 
 > `P-02: Status Todo -> In Progress (PO-Freigabe: "akzeptiert", Kommentar von @po-user)`
 
@@ -175,8 +175,8 @@ Vollstaendige Tabelle: `agents/process_guard/PROCESS_GUARD_AGENT.md`
 |-----------|-----------------------|
 | Todo -> In Progress | PO-Freigabe nachgewiesen |
 | In Progress -> inReview | Prettier + ESLint + Tests gruen |
-| inReview -> Freigabe | Kein offenes Critical/High Finding, PR gemergt |
-| Freigabe -> Done | PO-OK im Issue-Kommentar |
+| inReview -> Accepted | P-25: SHA-aktueller Review-Nachweis + gebundene PO-Akzeptanz auf dem PR (nach letztem Push) - automatisch gesetzt |
+| Accepted -> Done | Automatisch nach Merge, nur wenn Status vorher "Accepted" war |
 | any -> Blocking | Offenes Critical/High Finding ODER Prozessverletzung |
 
 ---
