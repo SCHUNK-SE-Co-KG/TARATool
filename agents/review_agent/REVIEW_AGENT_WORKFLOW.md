@@ -125,6 +125,21 @@ TARA-0090 bis TARA-0099, die vom bisherigen Katalog nicht erfasst wurden:
 | R-33 | Qualität    | Regex-/Parsing-Robustheit (Wortgrenzen, Gross-/Kleinschreibung, Vergangenheitsformen, Negation) bei Text-Verarbeitung in Automatisierung      |
 | R-34 | Architektur | Stille Bypässe: fehlende Felder/Werte dürfen nicht automatisch als "OK"/bestanden gewertet werden (sicherheitshalber FAIL statt stillem PASS) |
 
+### Priorisierte neue Reviewdimensionen (TARA-0114)
+
+Story TARA-0114 hat vorgeschlagen, den Prüfkatalog um 14 zusätzliche
+Dimensionen zu erweitern (u.a. Recovery, Race Conditions,
+Performance-Budget, Barrierefreiheit-Semantik). Die PO-Rückmeldung war,
+**priorisiert/gestuft** vorzugehen statt alle 14 auf einmal aufzunehmen:
+zunächst nur die beiden für TARATool als reines Browser-Tool relevantesten
+Dimensionen. Weitere Dimensionen aus der Story können in Folge-Stories
+schrittweise als weitere R-Regeln ergänzt werden.
+
+| #    | Bereich        | Prüfung                                                                                                                                                                                |
+| ---- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-35 | Kompatibilität | Datenmigration und Rückwärtskompatibilität: `localStorage`-Schemaänderungen dürfen bestehende gespeicherte Analysen nicht unlesbar machen (Migrationspfad oder Versionsfeld vorhanden) |
+| R-36 | Abhängigkeiten | Neue/geänderte npm- oder pip-Abhängigkeiten: Lizenzkompatibilität geprüft, keine unerwarteten transitiven Abhängigkeiten mit inkompatibler Lizenz                                      |
+
 ---
 
 ## Finding-Format
@@ -176,6 +191,91 @@ gelten folgende verbindliche Kriterien pro Stufe (jeweils zusätzlich mit einem
 Nur Findings mit **Konfidenz ≥ 6** duerfen die Schwere "Kritisch"/"Hoch" erhalten;
 bei geringerer Konfidenz wird die Schwere um eine Stufe reduziert und die
 Unsicherheit im Finding-Body explizit vermerkt.
+
+### Finding-Ablage-Differenzierung (TARA-0114)
+
+Bisher erzeugte der Review-Agent für **jedes** Finding ≥ Mittel automatisch ein
+eigenes GitHub-Issue mit neuer, globaler TARA-ID (`get_next_tara_id()`). Das
+verwaltungsaufwendige Anlegen einer eigenen Issue-ID auch für triviale,
+direkt behebbare Findings verwässert das Backlog. Der Review-Agent
+differenziert die Ablage stattdessen nach **Finding-Art**:
+
+| Finding-Art                              | Ablage                           |
+| ---------------------------------------- | -------------------------------- |
+| Direkt behebbares PR-Problem             | PR-Review-Kommentar (kein Issue) |
+| Blockierendes Security-/Funktionsproblem | Finding-Issue (wie bisher)       |
+| Akzeptierte technische Schuld            | Backlog-Story (statt Finding)    |
+| Wiederkehrendes systemisches Problem     | Epic- oder Improvement-Issue     |
+
+Technisch trägt jedes Finding-Dict optional ein Feld `disposition` mit einem
+der Werte `pr_comment`, `finding_issue`, `backlog_story` oder
+`systemic_issue`. `report_builder.create_github_issues_for_findings()`
+respektiert dieses Feld:
+
+- `pr_comment`: Es wird **kein** GitHub-Issue angelegt. Das Finding wird
+  stattdessen als formatierter PR-Review-Kommentar zurückgegeben
+  (`result["pr_comments"]`), den der Dev-/Review-Agent direkt im PR postet.
+- `finding_issue`: Wie bisher – Issue mit Label `review-finding` + `sp:1`.
+- `backlog_story`: Issue mit Label `story` (kein `review-finding`-Label,
+  Titelformat `[TARA-XXXX] STORY: ...`), referenziert die Source-Story als
+  Ursprung, aber **nicht** als blockierendes Finding.
+- `systemic_issue`: Issue im Titelformat `[TARA-XXXX] EPIC: ...` (nicht
+  `REVIEW-FINDING:`, da der Process-Guard-Issue-Checker diesen Praefix
+  zwingend an das Label `review-finding` koppelt) mit Label `epic` (bei
+  mehreren betroffenen Komponenten) bzw. zusaetzlich `enhancement` (bei
+  einem einzelnen wiederkehrenden Muster).
+
+**Interim-Regelung (PO-Entscheidung, TARA-0114):** Für die erste Umsetzung
+setzt der Review-Agent `disposition` per **Selbsteinschaetzung** (analog zur
+Schwere-Rubrik oben). Fehlt das Feld, gilt aus Rückwärtskompatibilität die
+bisherige Regel (Mittel/Hoch/Kritisch → `finding_issue`, Niedrig → kein
+Eintrag). Die dauerhafte, **deterministische Heuristik**, die diese
+Selbsteinschätzung ersetzt, wird in Folge-Story **#185 (TARA-0115)**
+entwickelt (siehe auch die analoge Interim-Regelung für "behebbar vs.
+blockierend" im Abschnitt "Priorisierung akzeptierter Findings" unten).
+
+---
+
+## Unabhängigkeit des Review-Agent (TARA-0114)
+
+Der Review-Agent ist laut Überblick oben "ein separater Copilot-Sub-Agent".
+Diese Story präzisiert verbindlich, was "unabhängig" konkret bedeutet.
+**Alle sieben Punkte sind Voraussetzung**, nicht optionale Empfehlungen:
+
+1. **Separater Kontext:** Der Review-Agent läuft in einem eigenen Kontext
+   ohne gemeinsamen Chat-/Gedächtnis-Verlauf mit dem Dev-Agent (technisch:
+   eigener Sub-Agent-Aufruf, z.B. über das `task`-Tool mit
+   `agent_type: code-review`, nicht als Fortsetzung derselben Konversation).
+2. **Keine Übernahme der Dev-Agent-Begründung:** Der Review-Agent bewertet
+   eigenständig, ob eine Änderung korrekt ist. Die vom Dev-Agent gelieferte
+   Zusammenfassung/Begründung dient höchstens als Kontext-Hinweis, niemals
+   als Ersatz für die eigene Prüfung.
+3. **Eigene Diff-Verifikation:** Siehe "Unabhaengige Diff-Verifikation"
+   oben (TARA-0102) — verbindliche Voraussetzung, nicht nur
+   Abweichungs-Detektor: `gh pr diff --name-only` bzw. `git diff --name-only`
+   wird in **jedem** Review ausgeführt, unabhängig von der Dateiliste des
+   Dev-Agenten.
+4. **Story und Akzeptanzkriterien selbst lesen:** Der Review-Agent liest die
+   Story/Akzeptanzkriterien direkt aus dem referenzierten GitHub-Issue,
+   nicht aus einer Zusammenfassung des Dev-Agenten.
+5. **Prüfung gegen unveränderlichen Commit-SHA:** Direkte Kopplung an Story
+   #177/TARA-0107 — der SHA-gebundene JSON-Review-Nachweis
+   (`reviewed_head_sha`) stellt sicher, dass ein Review-Ergebnis nach einem
+   weiteren Push automatisch ungültig wird.
+6. **Modell-Unabhängigkeit:** Es wird **kein separates Pflicht-Modell**
+   vorgeschrieben (PO-Entscheidung, TARA-0114: "immer den Development
+   Agenten anziehen" — gemeint ist, dass der Review-Agent als eigener
+   Sub-Agent-**Typ** (`code-review`) aufgerufen wird, unabhängig davon,
+   welches konkrete Modell der Dev-Agent für die Story-Implementierung
+   selbst nutzt). Ein expliziter `model`-Parameter kann bei Bedarf gesetzt
+   werden, ist aber nicht verbindlich vorgeschrieben.
+7. **Least-Privilege-Zugriff:** Der Review-Agent hat **keine Schreibrechte**
+   auf den Feature-Code — nur Leserechte auf den Diff plus das Recht,
+   Checks/PR-Kommentare zu erzeugen. Direkte Kopplung an Story #178/
+   TARA-0108 (Rollentrennung Dev-/Review-Agent/Process Guard): der
+   Review-Agent darf Findings melden und Board-Labels setzen
+   (`_set_story_blocked`), aber keine Datei-Änderungen am geprüften Code
+   vornehmen.
 
 ---
 
@@ -299,12 +399,13 @@ nicht mehr aus) auf **akzeptiert**, gilt:
 
 ## Scope-Entscheidung: Welche R-Checks laufen wann?
 
-| Änderungen betreffen                        | Pflicht-Checks        | Optionale Checks                           |
-| ------------------------------------------- | --------------------- | ------------------------------------------ |
-| `js/`, `index.html`                         | R-01–R-12 + R-22–R-30 | R-13–R-21 (Runtime, nur wenn App startbar) |
-| `agents/`, `scripts/`, `.github/workflows/` | R-01–R-12 + R-31–R-34 | R-22–R-30 entfallen (kein Browser-Code)    |
-| `tests/`                                    | R-09, R-10            | –                                          |
-| `docs/`, `*.md`                             | R-01                  | –                                          |
+| Änderungen betreffen                                                                                     | Pflicht-Checks                                                                        | Optionale Checks                           |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `js/`, `index.html`                                                                                      | R-01–R-12 + R-22–R-30                                                                 | R-13–R-21 (Runtime, nur wenn App startbar) |
+| `agents/`, `scripts/`, `.github/workflows/`                                                              | R-01–R-12 + R-31–R-34                                                                 | R-22–R-30 entfallen (kein Browser-Code)    |
+| `tests/`                                                                                                 | R-09, R-10                                                                            | –                                          |
+| `docs/`, `*.md`                                                                                          | R-01                                                                                  | –                                          |
+| `package.json`, `requirements.txt`, `tests/requirements.txt`, `localStorage`-Schemaänderungen (in `js/`) | R-35, R-36 (zusätzlich zu den oben genannten Pflicht-Checks des jeweiligen Dateityps) | –                                          |
 
 **Runtime-Checks (R-13–R-30) sind Pflicht** für alle Commits, die `index.html`, `js/` oder
 `agents/review_agent/` verändern. Sie erfordern eine lauffähige App-Instanz.

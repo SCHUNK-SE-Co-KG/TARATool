@@ -11,6 +11,11 @@ if TYPE_CHECKING:
 
 SEVERITY_LEVELS = {"Kritisch": 4, "Hoch": 3, "Mittel": 2, "Niedrig": 1}
 
+# TARA-0114 Teil 2: Erlaubte Werte fuer das optionale Finding-Feld
+# 'disposition', das steuert, WIE ein Finding abgelegt wird (statt
+# pauschal jedes Finding >= Mittel als eigenes review-finding-Issue).
+DISPOSITIONS = {"pr_comment", "finding_issue", "backlog_story", "systemic_issue"}
+
 
 def build_full_report(
     session: "ReviewSession",
@@ -35,7 +40,8 @@ def build_full_report(
         created = create_github_issues_for_findings(
             session.report.get("findings", []), story_id, repo
         )
-        session.report["github_issues_created"] = created
+        session.report["github_issues_created"] = created["issues"]
+        session.report["review_pr_comments"] = created["pr_comments"]
 
     return session.report
 
@@ -165,31 +171,77 @@ def get_next_tara_id(repo: str) -> str:
         return "TARA-XXXX"
 
 
+def _resolve_disposition(finding: dict) -> str | None:
+    """TARA-0114 Teil 2: Bestimmt die Ablage-Kategorie eines Findings.
+
+    Nutzt ein explizites 'disposition'-Feld (Review-Agent-Selbsteinschaetzung,
+    Uebergangsloesung bis zur deterministischen Heuristik aus TARA-0115/#185).
+    Fehlt das Feld oder ist der Wert ungueltig, greift zur Rueckwaertskompatibilitaet
+    das bisherige Verhalten: Mittel/Hoch/Kritisch -> 'finding_issue', Niedrig -> None
+    (kein Eintrag, wie vor TARA-0114).
+    """
+    disposition = finding.get("disposition")
+    if isinstance(disposition, str) and disposition in DISPOSITIONS:
+        return disposition
+    severity = finding.get("severity", "Niedrig")
+    if SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Mittel"]:
+        return "finding_issue"
+    return None
+
+
+def _format_pr_comment(finding: dict) -> str:
+    """TARA-0114 Teil 2: Formatiert ein Finding mit disposition='pr_comment'
+    als direkt postbaren PR-Review-Kommentar (kein eigenes Issue)."""
+    severity = finding.get("severity", "Niedrig")
+    ftype = finding.get("type", "unknown")
+    detail = finding.get("detail", finding.get("message", finding.get("text", "-")))
+    file_path = finding.get("file", "-")
+    line_no = finding.get("line", "-")
+    return (
+        f"**[{severity}] {ftype}** (`{file_path}`, Zeile {line_no}): {detail}"
+    )
+
+
 def create_github_issues_for_findings(
     findings: list, story_id: str, repo: str
-) -> list:
-    """Create review-finding issues via gh CLI for findings >= Mittel.
+) -> dict:
+    """Erstellt je nach Finding-Art (TARA-0114 Teil 2, 'disposition') GitHub
+    Issues oder formatiert das Finding als PR-Kommentar.
 
-    Title format:  [TARA-XXXX] REVIEW-FINDING: <type> (<severity>)
-                   TARA-XXXX is a NEW unique ID — the source story is in the body.
-    Labels:        review-finding, sp:1
-    Body:          Formatted markdown per REVIEW_AGENT_WORKFLOW.md
+    Title format je nach Disposition:
+      finding_issue:  [TARA-XXXX] REVIEW-FINDING: <type> (<severity>)
+      backlog_story:  [TARA-XXXX] STORY: <type> (akzeptierte technische Schuld)
+      systemic_issue: [TARA-XXXX] REVIEW-FINDING: <type> (systemisch, <severity>)
+      TARA-XXXX ist stets eine NEUE eindeutige ID - die Source-Story steht im Body.
 
-    Critical/High findings also trigger a Blocking status on the board
-    (P-18: pre-transition check violation).
+    Labels:
+      finding_issue:  review-finding, sp:1
+      backlog_story:  story
+      systemic_issue: epic ODER enhancement
+
+    Critical/High Findings (unabhaengig von der Disposition) loesen zusaetzlich
+    eine Blocked-Markierung auf dem Story-Issue aus (P-18).
+
+    Rueckgabe: {"issues": [<Issue-URLs>], "pr_comments": [<formatierte Texte>]}
     """
     import subprocess
 
-    created = []
+    created: list[str] = []
+    pr_comments: list[str] = []
     has_critical_or_high = False
 
     for finding in findings:
         severity = finding.get("severity", "Niedrig")
-        if SEVERITY_LEVELS.get(severity, 1) < SEVERITY_LEVELS["Mittel"]:
+        disposition = _resolve_disposition(finding)
+        if disposition is None:
             continue
 
         if SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Hoch"]:
             has_critical_or_high = True
+
+        if disposition == "pr_comment":
+            pr_comments.append(_format_pr_comment(finding))
+            continue
 
         rule = finding.get("rule", "R-??")
         ftype = finding.get("type", "unknown")
@@ -202,38 +254,71 @@ def create_github_issues_for_findings(
 
         # Each finding gets its own unique TARA ID (never reuse story ID)
         finding_id = get_next_tara_id(repo)
-        title = f"[{finding_id}] REVIEW-FINDING: {ftype} ({severity})"
 
-        body = (
-            f"## Review Finding\n\n"
-            f"**Finding-ID:** {finding_id}  \n"
-            f"**Source-Story:** {story_id}  \n"
-            f"**Typ:** {ftype}  \n"
-            f"**Schwere:** {severity}  \n"
-            f"**Regel:** {rule}  \n"
-            f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
-            f"### Problem\n\n{detail}\n\n"
-            f"### Code\n\n```\n{code_snippet}\n```\n\n"
-            f"### Begründung\n\n{reasoning}\n"
-        )
+        if disposition == "backlog_story":
+            title = f"[{finding_id}] STORY: {ftype} (akzeptierte technische Schuld aus Review)"
+            labels = ["story"]
+            body = (
+                f"## Akzeptierte technische Schuld (aus Review von {story_id})\n\n"
+                f"**Finding-ID:** {finding_id}  \n"
+                f"**Source-Story:** {story_id}  \n"
+                f"**Typ:** {ftype}  \n"
+                f"**Schwere (im Review):** {severity}  \n"
+                f"**Regel:** {rule}  \n"
+                f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
+                f"### Beschreibung\n\n{detail}\n\n"
+                f"### Begründung\n\n{reasoning}\n"
+            )
+        elif disposition == "systemic_issue":
+            # Titel folgt bewusst dem EPIC-Nomenklaturschema (nicht
+            # REVIEW-FINDING), da der Process-Guard-Issue-Checker
+            # (agents/process_guard/issue_checker.py) jeden Titel mit dem
+            # Praefix "REVIEW-FINDING:" als Typ 'review_finding' erkennt und
+            # dafuer zwingend das Label 'review-finding' verlangt - das
+            # systemische Problem ist aber kein einzelnes Finding, sondern ein
+            # neuer Epic-/Verbesserungs-Issue.
+            title = f"[{finding_id}] EPIC: {ftype} (systemisches Problem, {severity})"
+            labels = (
+                ["epic"]
+                if finding.get("recurring_scope") == "multiple"
+                else ["epic", "enhancement"]
+            )
+            body = (
+                f"## Wiederkehrendes systemisches Problem (aus Review von {story_id})\n\n"
+                f"**Finding-ID:** {finding_id}  \n"
+                f"**Source-Story:** {story_id}  \n"
+                f"**Typ:** {ftype}  \n"
+                f"**Schwere:** {severity}  \n"
+                f"**Regel:** {rule}  \n"
+                f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
+                f"### Problem\n\n{detail}\n\n"
+                f"### Begründung\n\n{reasoning}\n"
+            )
+        else:  # finding_issue (Standardfall, wie vor TARA-0114)
+            title = f"[{finding_id}] REVIEW-FINDING: {ftype} ({severity})"
+            labels = ["review-finding", "sp:1"]
+            body = (
+                f"## Review Finding\n\n"
+                f"**Finding-ID:** {finding_id}  \n"
+                f"**Source-Story:** {story_id}  \n"
+                f"**Typ:** {ftype}  \n"
+                f"**Schwere:** {severity}  \n"
+                f"**Regel:** {rule}  \n"
+                f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
+                f"### Problem\n\n{detail}\n\n"
+                f"### Code\n\n```\n{code_snippet}\n```\n\n"
+                f"### Begründung\n\n{reasoning}\n"
+            )
+
+        cmd = ["gh", "issue", "create", "--repo", repo, "--title", title, "--body", body]
+        for label in labels:
+            cmd += ["--label", label]
 
         try:
-            result = subprocess.run(
-                [
-                    "gh", "issue", "create",
-                    "--repo", repo,
-                    "--title", title,
-                    "--body", body,
-                    "--label", "review-finding",
-                    "--label", "sp:1",
-                ],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
             if result.returncode == 0:
                 created.append(result.stdout.strip())
-        except Exception as exc:
+        except Exception:
             pass
 
     # P-18: Critical/High findings block the story -> mark as blocked
@@ -241,7 +326,7 @@ def create_github_issues_for_findings(
     if has_critical_or_high:
         _set_story_blocked(story_id, repo)
 
-    return created
+    return {"issues": created, "pr_comments": pr_comments}
 
 
 def _set_story_blocked(story_id: str, repo: str) -> None:

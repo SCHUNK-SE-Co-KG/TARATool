@@ -139,6 +139,15 @@ def main() -> int:
         for url in issue_urls:
             print(f"  {url}")
 
+    # TARA-0114 Teil 2: Direkt behebbare Findings (disposition='pr_comment')
+    # werden nicht als Issue angelegt, sondern hier als PR-Kommentar-Text
+    # ausgegeben - der Dev-/Review-Agent postet sie direkt auf den PR.
+    pr_comments = report.get("review_pr_comments", [])
+    if pr_comments:
+        print(f"[Review-Agent] Direkt behebbare Findings (als PR-Kommentar zu posten):")
+        for comment in pr_comments:
+            print(f"  - {comment}")
+
     if decision == "BLOCKED":
         print("[Review-Agent] BLOCKED: Critical/High Findings gefunden. Item auf Blocking gesetzt (P-18).")
         return 1
