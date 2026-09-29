@@ -23,9 +23,10 @@
 
 > ⚠️ **Kein `Closes #NNN` / `Fixes #NNN` / `Resolves #NNN` verwenden!**
 > Diese Schlüsselwörter lassen GitHub das Issue beim Merge automatisch
-> schließen und unterlaufen damit P-11/P-15 (Status erst "Freigabe", Status
-> "Done" erst nach explizitem PO-OK-Kommentar). Stattdessen den Issue-Bezug
-> so formulieren: `Bezug: #NNN` (siehe TARA-0085, PR #139 als Negativ-Beispiel).
+> schließen und unterlaufen damit P-11/P-25 (Status erst "Accepted" nach
+> gebundener PO-Akzeptanz auf dem PR, Status "Done" erst automatisch nach
+> dem Merge). Stattdessen den Issue-Bezug so formulieren: `Bezug: #NNN`
+> (siehe TARA-0085, PR #139 als Negativ-Beispiel).
 
 ## TDD – Pflicht-Nachweis
 
@@ -56,12 +57,19 @@
 - [ ] Review-Agent aktiviert (Status → inReview)
 - [ ] Alle Kritisch/Hoch-Findings behoben
 
+## PO-Akzeptanz VOR dem Merge (P-25, Statusmodell B)
+
+> ⏳ Der Merge ist erst zulässig, wenn der PO ein an diese TARA-ID
+> GEBUNDENES Akzeptanz-Kommando auf **diesem PR** postet (z. B.
+> `TARA-XXXX akzeptiert`), gepostet **nach** dem letzten Push. Die
+> Automation setzt den Status daraufhin automatisch von **inReview** auf
+> **Accepted**. Ein required Status-Check blockiert den Merge, solange
+> dieses Gate nicht erfüllt ist.
+
+- [ ] Gebundenes PO-Akzeptanz-Kommando auf diesem PR gepostet
+- [ ] Status automatisch auf **Accepted** gewechselt
+
 ## Nach dem Merge (P-11, P-16)
 
-- [ ] Status → **Freigabe** gesetzt (nicht Done!)
-- [ ] Feature-Branch gelöscht: `git push origin --delete feature/TARA-XXXX-...`
-
-## PO-Freigabe (nach Merge)
-
-> ⏳ Nach dem Merge setzt der Dev-Agent den Status auf **„Freigabe"** und wartet auf
-> das explizite OK des Product Owners, bevor der Status auf **„Done"** gesetzt wird.
+- [ ] Status automatisch → **Done** (nur wenn Status vorher „Accepted" war)
+- [ ] Feature-Branch gelöscht (gekoppelt an den Merge, `git push origin --delete feature/TARA-XXXX-...` bzw. automatisch)

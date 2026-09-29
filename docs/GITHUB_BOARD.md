@@ -23,14 +23,14 @@ Alle IDs für programmatischen Zugriff via `gh api graphql`.
 | **Feld-Name** | Status                           |
 | **Feld-ID**   | `PVTSSF_lADOBu4dv84BfbaRzhZuYME` |
 
-| Status          | Option-ID  | Bedeutung                                          |
-| --------------- | ---------- | -------------------------------------------------- |
-| **Todo**        | `f75ad846` | Noch nicht begonnen                                |
-| **In Progress** | `47fc9ee4` | Dev-Agent arbeitet daran                           |
-| **inReview**    | `2338665f` | Review-Agent aktiv / PR offen                      |
-| **Freigabe**    | `d98e05b2` | Wartet auf PO-Freigabe nach Merge                  |
-| **Blocking**    | `a21de5e9` | Blockiert – offene Findings oder Prozessverletzung |
-| **Done**        | `98236657` | PO hat freigegeben, abgeschlossen                  |
+| Status          | Option-ID  | Bedeutung                                                                  |
+| --------------- | ---------- | -------------------------------------------------------------------------- |
+| **Todo**        | `f75ad846` | Noch nicht begonnen                                                        |
+| **In Progress** | `47fc9ee4` | Dev-Agent arbeitet daran                                                   |
+| **inReview**    | `2338665f` | Review-Agent aktiv / PR offen                                              |
+| **Accepted**    | `d98e05b2` | PO hat vor dem Merge akzeptiert (Statusmodell B, P-25, ehemals "Freigabe") |
+| **Blocking**    | `a21de5e9` | Blockiert – offene Findings oder Prozessverletzung                         |
+| **Done**        | `98236657` | Automatisch nach Merge gesetzt (P-11), Story abgeschlossen                 |
 
 #### Projekt-ID ermitteln (falls Board neu aufgesetzt wird):
 
@@ -152,22 +152,34 @@ gh api graphql -f query='{
 
 ---
 
-## Statusübergänge im Workflow
+## Statusübergänge im Workflow (Statusmodell B, seit TARA-0110)
+
+Seit TARA-0110 erfolgt die PO-Akzeptanz **vor** dem Merge (nicht mehr danach).
+Der Status "Freigabe" wurde in **"Accepted"** umbenannt (gleiche Option-ID
+`d98e05b2`, keine bestehenden Zuordnungen verloren gegangen). "Done" wird
+automatisch **nach dem Merge** gesetzt (P-11), sofern der Status vorher
+"Accepted" war (Sicherheitscheck gegen P-25-Umgehung).
 
 ```
-Todo → In Progress → inReview → Freigabe → Done
+Todo → In Progress → inReview → Accepted → (Merge) → Done
               ↕                      ↑
            Blocking  ←───────────────┘
      (P-18 Vorbedingung verletzt)
 ```
 
-| Wer setzt              | Von         | Nach         | Bedingung (P-18)                                                |
-| ---------------------- | ----------- | ------------ | --------------------------------------------------------------- |
-| Dev-Agent              | Todo        | In Progress  | PO-Freigabe nachgewiesen (Chat/Issue)                           |
-| Dev-Agent              | In Progress | inReview     | Prettier ✅ ESLint ✅ Tests ✅ Commit gepusht                   |
-| Dev-Agent              | inReview    | Freigabe     | Kein offenes Critical/High Finding, PR gemergt, Branch gelöscht |
-| **GitHub Automation**  | Freigabe    | **Done**     | **PO-OK im Issue-Kommentar**                                    |
-| Prozess-Guard          | any         | **Blocking** | P-18-Vorbedingung verletzt, Finding-Issue angelegt              |
-| Dev-Agent (nach PO-OK) | Blocking    | In Progress  | Alle Blocking-Gründe behoben                                    |
+| Wer setzt                         | Von         | Nach         | Bedingung (P-18)                                                                                        |
+| --------------------------------- | ----------- | ------------ | ------------------------------------------------------------------------------------------------------- |
+| Dev-Agent                         | Todo        | In Progress  | PO-Freigabe nachgewiesen (Chat/Issue)                                                                   |
+| Dev-Agent                         | In Progress | inReview     | Prettier ✅ ESLint ✅ Tests ✅ Commit gepusht                                                           |
+| **GitHub Automation**             | inReview    | **Accepted** | **P-25: gebundene PO-Akzeptanz auf dem PR (nach letztem Push) UND gültiger SHA-Review-Nachweis (P-10)** |
+| **GitHub Automation (P-25-Gate)** | Accepted    | **(Merge)**  | Merge nur zulässig, wenn Status bereits "Accepted" ist (required Status-Check in process-guard.yml)     |
+| **GitHub Automation**             | Accepted    | **Done**     | Automatisch nach erfolgreichem Merge (P-11), sofern Status vorher "Accepted" war                        |
+| Prozess-Guard                     | any         | **Blocking** | P-18-Vorbedingung verletzt, Finding-Issue angelegt                                                      |
+| Dev-Agent (nach PO-OK)            | Blocking    | In Progress  | Alle Blocking-Gründe behoben                                                                            |
+
+Das Kommando zur PO-Akzeptanz muss an die TARA-ID gebunden sein (TARA-0109-
+Format, z.B. "TARA-0110 akzeptiert") und **auf dem Pull Request selbst**
+gepostet werden (nicht nur auf dem Story-Issue), damit der Bezug zum
+geprüften `head_sha` eindeutig ist.
 
 ---
