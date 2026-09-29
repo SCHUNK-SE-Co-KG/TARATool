@@ -250,7 +250,9 @@ unumstoessliches Regelwerk. Der Review-Agent kann bewusst abweichen, muss
 dies aber ueber das Feld `override_reason` explizit begruenden; ohne
 Begruendung setzt die Heuristik ihr eigenes Ergebnis durch. Jede Abweichung
 wird in `session.report["disposition_deviations"]` protokolliert (Process
-Guard-Sichtbarkeit).
+Guard-Sichtbarkeit). **Ausnahme:** Das Sicherheitsnetz (Punkt 1 im
+Entscheidungsbaum unten) wird IMMER VOR der Abweichungspruefung ausgewertet
+und ist dadurch selbst mit `override_reason` nicht umgehbar.
 
 **PO-Entscheidung zu Frage 2 (Issue #185):** Wiederholung wird
 **automatisiert** erkannt (`count_similar_prior_findings()`, Suche unter
