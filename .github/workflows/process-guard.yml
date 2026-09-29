@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-04b/P-06/P-06b/P-07/P-08/P-09/P-10/P-12/P-13/P-19)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-04b/P-06/P-06b/P-07/P-08/P-09/P-10/P-12/P-13/P-19/P-25/P-26)
 
 on:
   pull_request:
@@ -74,6 +74,66 @@ jobs:
           HEAD_PUSHED_AT=$(git log -1 --format=%cI "$PR_HEAD_SHA")
 
           bash scripts/process_guard/check_po_acceptance_gate.sh "$COMMENTS_FILE" "$TARA_ID" "$PR_HEAD_SHA" "$HEAD_PUSHED_AT"
+
+      - name: P-26 – PO-Accepted-Gate vor Story-Start (TARA-0121)
+        if: |
+          !(github.head_ref == 'development' && github.base_ref == 'main')
+        env:
+          # Projects-v2-GraphQL-Zugriff erfordert secrets.PROJECT_TOKEN (PAT) -
+          # der Standard-github.token hat keine Berechtigung auf ProjectV2-Knoten
+          # ("Resource not accessible by integration").
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          # P-26: Die verlinkte Story darf beim Oeffnen eines PRs nicht mehr
+          # auf "Todo" stehen - das wuerde bedeuten, dass der gebundene
+          # "PO Accepted TARA-XXXX"-Schritt (Todo -> PO Accepted) uebersprungen
+          # wurde und somit keine PO-Freigabe fuer den Arbeitsbeginn vorliegt.
+          BODY_FILE=$(mktemp)
+          printf '%s' "$PR_BODY" > "$BODY_FILE"
+          ISSUE_NUMBER=$(BODY_FILE="$BODY_FILE" python3 -c "import sys, os; sys.path.insert(0, 'scripts/process_guard'); from status_timing_check import extract_issue_number; body = open(os.environ['BODY_FILE'], encoding='utf-8').read(); n = extract_issue_number(body); print(n if n is not None else '')")
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "INFO P-26: Kein 'Bezug: #NNN' im PR-Body gefunden - Check uebersprungen"
+            exit 0
+          fi
+
+          STATUS=$(gh api graphql -f query='
+            query($projectId: ID!) {
+              node(id: $projectId) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      content { ... on Issue { number } }
+                      fieldValues(first: 10) {
+                        nodes {
+                          ... on ProjectV2ItemFieldSingleSelectValue {
+                            name
+                            field { ... on ProjectV2SingleSelectField { name } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' -f projectId="PVT_kwDOBu4dv84BfbaR" > /tmp/p26-board-items.json)
+          API_RC=$?
+          if [ "$API_RC" -ne 0 ]; then
+            echo "FAIL P-26: gh api graphql fehlgeschlagen - Board-Status konnte nicht geprueft werden (kein stiller Bypass)"
+            exit 1
+          fi
+
+          STATUS=$(jq -r ".data.node.items.nodes[] | select(.content.number == ${ISSUE_NUMBER}) | .fieldValues.nodes[] | select(.field.name == \"Status\") | .name" /tmp/p26-board-items.json)
+
+          if [ -z "$STATUS" ]; then
+            echo "INFO P-26: Kein Board-Status fuer Issue #$ISSUE_NUMBER ermittelbar (kein Board-Item) - Check uebersprungen"
+            exit 0
+          fi
+          if [ "$STATUS" = "Todo" ]; then
+            echo "FAIL P-26: Story #$ISSUE_NUMBER steht noch auf 'Todo' - 'PO Accepted' wurde offenbar uebersprungen"
+            exit 1
+          fi
+          echo "OK P-26: Story #$ISSUE_NUMBER Status='$STATUS' (bereits mindestens 'PO Accepted')"
 
       - name: P-07 – Branch-Name Schema
         run: |

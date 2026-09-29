@@ -406,7 +406,7 @@ def test_merge_status_update_refuses_when_not_accepted(merge_module, monkeypatch
     monkeypatch.setattr(merge_module, "get_current_status_name", lambda *a, **k: "inReview")
     called = {"n": 0}
     monkeypatch.setattr(
-        merge_module, "set_status_done", lambda *a, **k: called.__setitem__("n", called["n"] + 1) or True
+        merge_module, "post_audit_comment", lambda *a, **k: called.__setitem__("n", called["n"] + 1) or True
     )
     rc = merge_module.main(["Bezug: #180", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 1
@@ -414,9 +414,12 @@ def test_merge_status_update_refuses_when_not_accepted(merge_module, monkeypatch
 
 
 @pytest.mark.TARA_0110
-def test_merge_status_update_sets_done_when_accepted(merge_module, monkeypatch):
+def test_merge_status_update_confirms_accepted_without_setting_done(merge_module, monkeypatch):
+    """TARA-0121 (P-27): 'Done' wird nach dem Merge nicht mehr automatisch
+    gesetzt - nur noch nach gebundenem 'PO Release TARA-XXXX'-Kommando
+    (check-po-release-Job). Dieses Skript bestaetigt lediglich 'Accepted'."""
     monkeypatch.setattr(merge_module, "get_project_item_id", lambda *a, **k: "ITEM_ID")
     monkeypatch.setattr(merge_module, "get_current_status_name", lambda *a, **k: "Accepted")
-    monkeypatch.setattr(merge_module, "set_status_done", lambda *a, **k: True)
+    monkeypatch.setattr(merge_module, "post_audit_comment", lambda *a, **k: True)
     rc = merge_module.main(["Bezug: #180", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 0

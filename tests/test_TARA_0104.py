@@ -38,23 +38,25 @@ def test_stale_bheowulf_project_references_removed():
 
 @pytest.mark.TARA_0104
 def test_project_write_step_uses_project_token_not_default_token():
-    """Der Schritt, der das Projects-v2-Statusfeld schreibend aendert, muss
-    ein Token mit tatsaechlichen Projects-Schreibrechten (secrets.PROJECT_TOKEN)
-    verwenden - das Default-GITHUB_TOKEN hat keine Projects-v2-Berechtigung."""
+    """Jeder Schritt, der das Projects-v2-Statusfeld schreibend aendert
+    (updateProjectV2ItemFieldValue), muss ein Token mit tatsaechlichen
+    Projects-Schreibrechten (secrets.PROJECT_TOKEN) verwenden - das
+    Default-GITHUB_TOKEN hat keine Projects-v2-Berechtigung.
+
+    Seit TARA-0121 ist der frühere Schritt "Freigabe verarbeiten" nur noch
+    ein reiner Audit-Kommentar (kein Board-Schreibzugriff mehr) und wird
+    daher hier bewusst NICHT mehr geprueft; stattdessen werden alle
+    "- name:"-Step-Bloecke gesucht, die tatsaechlich die Mutation aufrufen.
+    """
     content = _read(WORKFLOW_PATH)
-    # Der Abschnitt beginnt bei "Freigabe verarbeiten" und reicht bis zum
-    # naechsten "- name:" Step-Header.
-    match = re.search(
-        r"- name: Freigabe verarbeiten\b.*?(?=\n\s*- name:|\Z)",
-        content,
-        re.DOTALL,
-    )
-    assert match, "Step 'Freigabe verarbeiten' nicht gefunden"
-    step_block = match.group(0)
-    assert "secrets.PROJECT_TOKEN" in step_block, (
-        "Freigabe verarbeiten muss secrets.PROJECT_TOKEN verwenden - "
-        "das Default-GITHUB_TOKEN hat keine Projects-v2-Schreibrechte"
-    )
+    step_blocks = re.findall(r"- name:.*?(?=\n\s*- name:|\Z)", content, re.DOTALL)
+    write_steps = [b for b in step_blocks if "updateProjectV2ItemFieldValue" in b]
+    assert write_steps, "Kein Step mit updateProjectV2ItemFieldValue-Mutation gefunden"
+    for step_block in write_steps:
+        assert "secrets.PROJECT_TOKEN" in step_block, (
+            f"Board-Schreib-Step muss secrets.PROJECT_TOKEN verwenden - "
+            f"das Default-GITHUB_TOKEN hat keine Projects-v2-Schreibrechte:\n{step_block[:120]}"
+        )
 
 
 @pytest.mark.TARA_0104

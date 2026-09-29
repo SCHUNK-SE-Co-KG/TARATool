@@ -241,13 +241,20 @@ def test_auto_freigabe_main_fails_without_bezug(auto_freigabe_module):
 
 
 @pytest.mark.TARA_0108
-def test_auto_freigabe_main_sets_status_on_success(auto_freigabe_module):
+def test_auto_freigabe_main_confirms_accepted_without_setting_done(auto_freigabe_module):
+    """TARA-0121 (P-27): Nach dem Merge wird NICHT mehr automatisch 'Done'
+    gesetzt - das wuerde das neue PO-Release-Gate umgehen. Das Skript
+    bestaetigt nur den Status 'Accepted' und postet einen Audit-Kommentar."""
     with patch.object(auto_freigabe_module, "get_project_item_id", return_value="ITEM_ID"), \
          patch.object(auto_freigabe_module, "get_current_status_name", return_value="Accepted"), \
-         patch.object(auto_freigabe_module, "set_status_done", return_value=True) as mock_set:
+         patch.object(auto_freigabe_module, "post_audit_comment", return_value=True) as mock_comment:
         rc = auto_freigabe_module.main(["Bezug: #178", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 0
-    mock_set.assert_called_once_with("PROJ_ID", "ITEM_ID", "FIELD_ID")
+    mock_comment.assert_called_once_with("owner/repo", 178)
+    assert not hasattr(auto_freigabe_module, "set_status_done"), (
+        "set_status_done wurde entfernt (TARA-0121) - Done wird nur noch "
+        "ueber den check-po-release-Job (P-27) gesetzt"
+    )
 
 
 @pytest.mark.TARA_0108
@@ -258,10 +265,9 @@ def test_auto_freigabe_main_fails_when_item_not_found(auto_freigabe_module):
 
 
 @pytest.mark.TARA_0108
-def test_auto_freigabe_main_fails_when_mutation_fails(auto_freigabe_module):
+def test_auto_freigabe_main_fails_when_status_not_accepted(auto_freigabe_module):
     with patch.object(auto_freigabe_module, "get_project_item_id", return_value="ITEM_ID"), \
-         patch.object(auto_freigabe_module, "get_current_status_name", return_value="Accepted"), \
-         patch.object(auto_freigabe_module, "set_status_done", return_value=False):
+         patch.object(auto_freigabe_module, "get_current_status_name", return_value="inReview"):
         rc = auto_freigabe_module.main(["Bezug: #178", "owner/repo", "PROJ_ID", "FIELD_ID"])
     assert rc == 1
 
