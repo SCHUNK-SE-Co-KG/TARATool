@@ -9,6 +9,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:unit": "pytest tests/ --noconftest -q --ignore=tests/e2e --ignore=tests/integration",
+    "test:integration": "pytest tests/integration -q",
+    "test:e2e": "pytest tests/e2e -q",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
     "lint": "eslint js/"

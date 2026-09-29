@@ -73,8 +73,10 @@ Test-Ergebnis:    PASSED / FAILED
 | P-02  | Item auf „In Progress" gesetzt **bevor** Arbeit begann                                                                                                                                                                                                                                                                                                                                                                                                                                            | **GitHub Actions (PR)** – deterministischer Zeitstempel-Vergleich (Audit-Trail-Kommentar vs. erster Commit, TARA-0108)                                           |
 | P-03  | **Tests vor Implementierung** geschrieben – Testdatei existiert                                                                                                                                                                                                                                                                                                                                                                                                                                   | **GitHub Actions (PR)**                                                                                                                                          |
 | P-04  | Tests haben initial **fehlgeschlagen** – Red-Commit vor Green-Commit, Tests rot am Red-Commit                                                                                                                                                                                                                                                                                                                                                                                                     | **GitHub Actions (PR)**                                                                                                                                          |
+| P-04b | **Finaler Red-Green-Nachweis (TARA-0111)**: der FINALE Testinhalt (PR-Head-Stand) schlaegt beim Code des Basis-Branches nachweislich fehl und besteht beim PR-Head-Code – ergaenzt P-04, das nur den ERSTEN Commit-Snapshot prueft und einen spaeter durch inhaltsleere Tests ersetzten Teststand nicht erkennen wuerde                                                                                                                                                                           | **GitHub Actions (PR)** – `check_final_red_green.sh`                                                                                                             |
 | P-05  | Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen                                                                                                                                                                                                                                                                                                                                                                                                                                   | Manuell (Dev-Agent-Pflicht)                                                                                                                                      |
-| P-06  | Alle Story-Tests gruen vor PR: `pytest tests/test_TARA_XXXX.py --noconftest -v`                                                                                                                                                                                                                                                                                                                                                                                                                   | **GitHub Actions (PR)**                                                                                                                                          |
+| P-06  | Story-Testdatei gruen vor PR (Teilmenge von `test:unit`, TARA-0112): `npm run test:unit -- tests/test_TARA_XXXX.py` bzw. `pytest tests/test_TARA_XXXX.py --noconftest -v` – **keine** vollstaendige Suite, siehe P-06b/`test:integration`/`test:e2e` fuer den vollstaendigen Nachweis                                                                                                                                                                                                             | **GitHub Actions (PR)**                                                                                                                                          |
+| P-06b | **Regressionsschutz bei gemeinsam genutztem Code (TARA-0111)**: wurde ausser der Story-Testdatei/Doku auch gemeinsam genutzter Code veraendert (z.B. `scripts/`, andere Testdateien, Anwendungscode, Workflow-YAML), muss zusaetzlich `test:unit` (volle Suite ohne `tests/e2e/`/`tests/integration/`) gruen sein; `test:integration`/`test:e2e` laufen als eigene CI-Gates in `ci-tests.yml` vor Merge/Release (TARA-0112)                                                                       | **GitHub Actions (PR)** – `check_regression_scope.sh`                                                                                                            |
 | P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                                                                                                                                                                                                                                                                                                                                                                                                    | **GitHub Actions (PR)**                                                                                                                                          |
 | P-08  | Commit-Messages referenzieren TARA-ID                                                                                                                                                                                                                                                                                                                                                                                                                                                             | **GitHub Actions (PR)**                                                                                                                                          |
 | P-09  | Item auf „inReview" gesetzt **vor** PR-Erstellung                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Manuell                                                                                                                                                          |
@@ -97,13 +99,13 @@ Test-Ergebnis:    PASSED / FAILED
 
 ### Automatisierungsmatrix
 
-| Trigger                                  | Workflow                        | Geprueft Regeln                                                  |
-| ---------------------------------------- | ------------------------------- | ---------------------------------------------------------------- |
-| PR geoeffnet/aktualisiert                | `process-guard.yml`             | P-02, P-03, P-04, P-06, P-07, P-08, P-09, P-10, P-12, P-13, P-25 |
-| PR gemergt (development)                 | `post-merge-status.yml`         | P-11 (Status automatisch auf "Done", nur wenn vorher "Accepted") |
-| Issue erstellt                           | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels                  |
-| PR-Kommentar mit gebundener PO-Akzeptanz | `po-approve.yml`                | P-25 (Status inReview → Accepted, VOR Merge)                     |
-| Issue-Kommentar mit PO-OK                | `po-approve.yml`                | P-15 (manueller Fallback: Status → Done)                         |
+| Trigger                                  | Workflow                        | Geprueft Regeln                                                                |
+| ---------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------ |
+| PR geoeffnet/aktualisiert                | `process-guard.yml`             | P-02, P-03, P-04, P-04b, P-06, P-06b, P-07, P-08, P-09, P-10, P-12, P-13, P-25 |
+| PR gemergt (development)                 | `post-merge-status.yml`         | P-11 (Status automatisch auf "Done", nur wenn vorher "Accepted")               |
+| Issue erstellt                           | `process-guard-issue-check.yml` | P-14 (Eindeutigkeit), Nomenklatur, Body, Labels                                |
+| PR-Kommentar mit gebundener PO-Akzeptanz | `po-approve.yml`                | P-25 (Status inReview → Accepted, VOR Merge)                                   |
+| Issue-Kommentar mit PO-OK                | `po-approve.yml`                | P-15 (manueller Fallback: Status → Done)                                       |
 
 > **Nicht automatisierbar:** P-01, P-05, P-16, P-17, P-18, P-21, P-22, P-23, P-24
 > werden durch den Dev-Agent eigenverantwortlich eingehalten und am Session-Ende
@@ -120,6 +122,43 @@ Test-Ergebnis:    PASSED / FAILED
 > unfaelschbaren Zeitstempel. Eine haertere Loesung (z.B. Ableitung aus dem
 > Zeitpunkt des ersten GitHub-Actions-Workflow-Laufs fuer den Branch, der
 > serverseitig erzeugt wird) ist als Folge-Issue #193 erfasst.
+
+> **Red-Green-Refactor statt nur Red/"Passed" (TARA-0111):** P-04 beweist nur,
+> dass IRGENDEINE fruehe Version der Testdatei am Anfang des Branches
+> fehlgeschlagen ist - nicht, dass der tatsaechlich gemergte, FINALE Teststand
+> (PR-Head) sinnvoll etwas prueft (ein Test koennte spaeter durch einen
+> inhaltsleeren Test ersetzt worden sein). **P-04b** schliesst diese Luecke:
+> der finale Testinhalt wird zusaetzlich gegen den Code des Basis-Branches
+> ausgefuehrt (muss dort fehlschlagen) und gegen den PR-Head-Code (muss dort
+> bestehen) - unabhaengig davon, wie viele Zwischen-Commits es gab. Die dritte
+> TDD-Phase ("Refactor": Code nach Erreichen von Gruen strukturell verbessern,
+> waehrend Tests durchgehend gruen bleiben) wird nicht separat erzwungen, ist
+> aber implizit erlaubt und gewuenscht, solange P-06/P-06b bei jedem weiteren
+> Push weiterhin gruen bleiben.
+>
+> **Mutation Testing (optional, nicht verpflichtend):** Fuer besonders
+> kritische Logik (z.B. `scripts/process_guard/`, `agents/*/`) wird empfohlen,
+> zusaetzlich Mutation Testing (z.B. `mutmut` oder `cosmic-ray` fuer
+> Python-Testdateien) einzusetzen, um die tatsaechliche Testwirkung ueber
+> reine Code-Coverage hinaus zu pruefen. Dies ist aktuell **nicht** Teil des
+> automatisierten Prozess-Guard-Gates (Laufzeit-/Kosten-Abwaegung), sondern
+> ein optionales, empfohlenes Werkzeug fuer den Dev-Agenten bei sicherheits-
+> oder prozesskritischen Aenderungen.
+
+> **Drei Teststufen statt pauschalem `--noconftest` (TARA-0112):** Die
+> vormalige Konvention, ALLE Story-Tests grundsaetzlich mit `--noconftest`
+> auszufuehren, verschleierte, dass `test:integration`/`test:e2e` real
+> Playwright-Fixtures pruefen muessen. Zuordnung erfolgt per Namenskonvention/
+> Verzeichnis:
+>
+> | Stufe              | Verzeichnis          | Pflicht-Gate                                                    |
+> | ------------------ | -------------------- | --------------------------------------------------------------- |
+> | `test:unit`        | `tests/` (flach)     | Vor PR (P-06/P-06b) und vor Merge                               |
+> | `test:integration` | `tests/integration/` | Vor PR (Dev-Agent-Pflicht) und CI-Gate `ci-tests.yml` vor Merge |
+> | `test:e2e`         | `tests/e2e/`         | Vor PR (Dev-Agent-Pflicht) und CI-Gate `ci-tests.yml` vor Merge |
+>
+> `--noconftest` gilt seit TARA-0112 **nur noch fuer `test:unit`**. Details:
+> `tests/README.md`.
 
 ---
 

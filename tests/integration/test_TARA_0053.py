@@ -1,11 +1,11 @@
-﻿"""Tests for TARA-0053: CORS header analysis (R-26)."""
+"""Tests for TARA-0053: CORS header analysis (R-26)."""
 import sys
 import datetime
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 def _make_session(page, context, app_url):
