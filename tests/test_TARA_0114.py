@@ -44,12 +44,16 @@ def _read(path):
 
 @pytest.fixture()
 def report_builder_module():
-    sys.path.insert(0, os.path.join(REPO_ROOT, "agents"))
+    # REPO_ROOT (nicht agents/) muss auf sys.path, damit
+    # "import agents.review_agent.report_builder" als Paketpfad funktioniert -
+    # relevant insbesondere in CI, wo pytest ohne "python -m" (und damit ohne
+    # automatisches Voranstellen des CWD an sys.path) aufgerufen wird.
+    sys.path.insert(0, REPO_ROOT)
     from agents.review_agent import report_builder  # noqa: E402
     yield report_builder
     sys.modules.pop("agents.review_agent.report_builder", None)
-    if os.path.join(REPO_ROOT, "agents") in sys.path:
-        sys.path.remove(os.path.join(REPO_ROOT, "agents"))
+    if REPO_ROOT in sys.path:
+        sys.path.remove(REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
