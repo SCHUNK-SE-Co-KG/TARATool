@@ -1,11 +1,18 @@
-name: PO-Approve – Freigabe → Done (P-15 Enforcement)
+name: PO-Approve – PO Accepted / PO Release (P-26/P-27, TARA-0121)
 
-# Dieser Workflow erzwingt P-15: Done darf NUR gesetzt werden wenn
-# der PO ein an eine konkrete TARA-ID GEBUNDENES Freigabe-Kommando als
-# Issue-Kommentar hinterlassen hat (z.B. "akzeptiert TARA-0109" oder
-# "TARA-0109 ist akzeptiert"), siehe
+# TARA-0121 (P-26/P-27): Die beiden kritischen Statuswechsel Todo -> PO
+# Accepted (Arbeitsbeginn erlauben) und Accepted -> PO Release -> Done
+# (finale Freigabe) werden AUSSCHLIESSLICH ueber die an eine konkrete
+# TARA-ID GEBUNDENEN Kommandos "PO Accepted TARA-XXXX" bzw.
+# "PO Release TARA-XXXX" ausgeloest (check-po-accepted / check-po-release
+# Jobs unten). Die aeltere lose Keyword-Liste (`PO-OK`, `freigegeben`,
+# `akzeptiert`, `Accepted`, `Ok`/`OK`) autorisiert diese beiden Uebergaenge
+# seit TARA-0121 NICHT MEHR - der bestehende check-po-approval-Job bleibt
+# nur noch als reiner Audit-Kommentar (P-20) erhalten, siehe
 # scripts/process_guard/po_approval_parser.py /
 # scripts/process_guard/check_po_approval_keyword.sh /
+# scripts/process_guard/check_po_accepted_keyword.sh /
+# scripts/process_guard/check_po_release_keyword.sh /
 # .github/copilot-instructions.md.
 #
 # TARA-0109: Ersetzt die bisherige lose Schluesselwort-Erkennung (jedes
@@ -16,12 +23,11 @@ name: PO-Approve – Freigabe → Done (P-15 Enforcement)
 # Texte (Blockquote, Code-Fence) werden nicht als aktives Kommando gewertet.
 #
 # Trigger: Neuer Kommentar an einem Issue
-# Ablauf:
-#   1. Extrahiere die per gebundenem Kommando im Kommentar freigegebenen
+# Ablauf (check-po-approval, Audit-only seit TARA-0121):
+#   1. Extrahiere die per gebundenem Kommando im Kommentar erkannten
 #      TARA-ID(s) (po_approval_parser.py)
 #   2. Pruefe ob Kommentator Write-Berechtigung hat (nur PO/Maintainer)
-#   3. Setze alle gefundenen Items auf "Done" auf dem TARATool-Board
-#   4. Bestätigung als Reply-Kommentar
+#   3. Poste einen Audit-Hinweis-Kommentar (setzt selbst keinen Board-Status)
 #
 # TARA-0104: Der schreibende Projects-v2-Aufruf benoetigt secrets.PROJECT_TOKEN
 # (ein PAT mit "project"-Scope) statt des Default-GITHUB_TOKEN, da GITHUB_TOKEN
@@ -91,145 +97,40 @@ jobs:
             }
             return allowed;
 
-      - name: Freigabe verarbeiten
+      - name: Freigabe verarbeiten (Audit-only seit TARA-0121)
         if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
         uses: actions/github-script@v7
         env:
-          SK_PROJECT:   "PVT_kwDOBu4dv84BfbaR"
-          SK_FIELD:     "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
-          DONE_OPTION:  "98236657"
           TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
         with:
-          github-token: ${{ secrets.PROJECT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            // TARA-0121 (P-26/P-27): Die lose Keyword-Liste (`PO-OK`,
+            // `freigegeben`, `akzeptiert`, `Accepted`, `Ok`/`OK`) autorisiert
+            // die kritischen Uebergaenge Todo -> PO Accepted und
+            // Accepted -> PO Release -> Done NICHT MEHR allein. Sie werden
+            // ausschliesslich ueber die gebundenen Kommandos
+            // "PO Accepted TARA-XXXX" (check-po-accepted) bzw.
+            // "PO Release TARA-XXXX" (check-po-release) gesetzt. Dieser Job
+            // dient nur noch der Nachvollziehbarkeit (Audit-Kommentar), er
+            // setzt selbst KEINEN Board-Status mehr.
             const issueNumber = context.issue.number;
-            const issueTitle  = context.payload.issue.title;
-            const comment     = context.payload.comment.body;
-
-            console.log(`Issue #${issueNumber}: ${issueTitle}`);
-            console.log(`Kommentar von ${context.actor}: ${comment}`);
-
-            // TARA-0109: TARA-IDs werden aus dem gebundenen Kommando im
-            // Freigabe-KOMMENTAR SELBST entnommen (po_approval_parser.py),
-            // nicht mehr pauschal aus Issue-Titel/-Body gesammelt.
+            const comment = context.payload.comment.body;
             const idsCsv = process.env.TARA_IDS_CSV || '';
-            const ids = new Set(idsCsv.split(',').map(s => s.trim()).filter(Boolean));
-            console.log(`Gebundene TARA-IDs aus Kommando: ${[...ids].join(', ')}`);
+            const ids = [...new Set(idsCsv.split(',').map(s => s.trim()).filter(Boolean))];
 
-            if (ids.size === 0) {
-              console.log('Keine gebundene TARA-ID im Freigabe-Kommando – keine Board-Aktion');
+            if (ids.length === 0) {
+              console.log('Keine gebundene TARA-ID im Kommentar - kein Audit-Kommentar');
               return;
             }
 
-            const projectId  = process.env.SK_PROJECT;
-            const fieldId    = process.env.SK_FIELD;
-            const doneOption = process.env.DONE_OPTION;
-
-            const doneIds = [];
-            const failures = [];
-
-            for (const taraId of ids) {
-              try {
-                // Alle Items des Projekts abrufen und nach TARA-ID filtern
-                const query = `
-                  query($projectId: ID!) {
-                    node(id: $projectId) {
-                      ... on ProjectV2 {
-                        items(first: 100) {
-                          nodes {
-                            id
-                            content {
-                              ... on Issue { title number }
-                            }
-                            fieldValues(first: 10) {
-                              nodes {
-                                ... on ProjectV2ItemFieldSingleSelectValue {
-                                  name
-                                  field { ... on ProjectV2SingleSelectField { name } }
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }`;
-                const result = await github.graphql(query, { projectId });
-                const items = result.node.items.nodes;
-                const matching = items.filter(item =>
-                  item.content && item.content.title && item.content.title.includes(taraId)
-                );
-
-                for (const item of matching) {
-                  // Aktuellen Status prüfen (nur Freigabe-Items auf Done setzen)
-                  const statusField = item.fieldValues.nodes.find(
-                    fv => fv.field && fv.field.name === 'Status'
-                  );
-                  const currentStatus = statusField ? statusField.name : 'unknown';
-                  console.log(`${taraId}: Status=${currentStatus}, Item=${item.id}`);
-
-                  // TARA-0110: Board-Option "Freigabe" wurde zu "Accepted"
-                  // umbenannt (gleiche Options-ID d98e05b2). In der Regel
-                  // wird "Done" bereits automatisch beim Merge gesetzt
-                  // (post-merge-status.yml); dieser Pfad bleibt als
-                  // manueller Fallback erhalten, falls ein Item aus
-                  // irgendeinem Grund bei "Accepted" haengen bleibt.
-                  if (currentStatus !== 'Accepted') {
-                    console.log(`  → Übersprungen (nicht Accepted: ${currentStatus})`);
-                    continue;
-                  }
-
-                  // Status → Done setzen
-                  const mutation = `
-                    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
-                      updateProjectV2ItemFieldValue(input: {
-                        projectId: $projectId
-                        itemId: $itemId
-                        fieldId: $fieldId
-                        value: { singleSelectOptionId: $optionId }
-                      }) {
-                        projectV2Item { id }
-                      }
-                    }`;
-                  await github.graphql(mutation, {
-                    projectId,
-                    itemId: item.id,
-                    fieldId,
-                    optionId: doneOption,
-                  });
-                  console.log(`  ✅ ${taraId} → Done`);
-                  doneIds.push(taraId);
-                }
-              } catch (err) {
-                // TARA-0104: Ein Fehler beim Board-Update darf NICHT mehr
-                // still verschluckt werden - er wird gesammelt und fuehrt
-                // am Ende zu core.setFailed(), damit der Job sichtbar rot
-                // wird und der Dev-Agent den manuellen Fallback bewusst
-                // ausloest statt sich auf einen falschen Erfolg zu verlassen.
-                console.error(`  ❌ Fehler bei ${taraId}: ${err.message}`);
-                failures.push(`${taraId}: ${err.message}`);
-              }
-            }
-
-            if (doneIds.length > 0) {
-              const taraList = doneIds.map(id => `\`${id}\``).join(', ');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body: `✅ **PO-Freigabe registriert** (${context.actor})\n\nFolgende Items wurden automatisch auf **Done** gesetzt: ${taraList}\n\n*Ausgelöst durch: "${comment.split('\n')[0].substring(0, 80)}"*`,
-              });
-            }
-
-            if (failures.length > 0) {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body: `⚠️ **P-15 – Board-Update fehlgeschlagen**\n\nFolgende TARA-IDs konnten NICHT automatisch auf Done gesetzt werden:\n\n${failures.map(f => `- ${f}`).join('\n')}\n\nBitte manuell per \`gh project item-edit\` nachziehen.`,
-              });
-              core.setFailed(`Board-Update fehlgeschlagen fuer: ${failures.join('; ')}`);
-            }
+            const taraList = ids.map(id => `\`${id}\``).join(', ');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: `ℹ️ **Audit-Hinweis (P-20, nicht autorisierend seit TARA-0121)**\n\nDer Kommentar von ${context.actor} wurde als lose Freigabe-Formulierung fuer ${taraList} erkannt, setzt aber seit TARA-0121 **keinen** Board-Status mehr. Fuer Story-/Epic-Start bitte \`PO Accepted TARA-XXXX\`, fuer die finale Freigabe \`PO Release TARA-XXXX\` verwenden.\n\n*Ausgeloest durch: "${comment.split('\n')[0].substring(0, 80)}"*`,
+            });
 
       - name: Keine Berechtigung – Warnung
         if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'false'
@@ -381,6 +282,14 @@ jobs:
               return;
             }
 
+            // TARA-0121: Die TARA-ID wird aus dem Issue-Titel extrahiert und
+            // im Audit-Kommentar mitgefuehrt, damit das spaetere P-27-Gate
+            // (check-po-release) den korrekten "Accepted"-Zeitpunkt fuer
+            // GENAU diese TARA-ID ermitteln kann - auch wenn mehrere Stories
+            // eines Epics unterschiedliche Accepted-Zeitpunkte haben.
+            const taraIdMatch = (item.content.title || '').match(/TARA-\d{4}/);
+            const taraId = taraIdMatch ? taraIdMatch[0] : null;
+
             const mutation = `
               mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
                 updateProjectV2ItemFieldValue(input: {
@@ -395,9 +304,319 @@ jobs:
             });
             console.log(`Issue #${issueNumber} -> Accepted`);
 
+            const taraIdSuffix = taraId ? ` \`${taraId}\`` : '';
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issueNumber,
-              body: `P-25: Status inReview -> Accepted (PO-Akzeptanz auf PR #${prNumber}, Kommentar von @${context.actor})`,
+              body: `P-25: Status inReview -> Accepted (PO-Akzeptanz auf PR #${prNumber}, Kommentar von @${context.actor})${taraIdSuffix}`,
             });
+
+  # TARA-0121 (P-26): Todo -> "PO Accepted" - erst danach darf der Dev-Agent
+  # die Story ziehen und mit der Arbeit beginnen. Ausgeloest durch das an die
+  # TARA-ID gebundene Kommando "PO Accepted TARA-XXXX" im Story- oder
+  # Epic-Issue (Sammelfreigabe fuer alle Stories eines Epics).
+  check-po-accepted:
+    name: PO Accepted setzen (P-26, TARA-0121)
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request == null
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pruefe gebundenes "PO Accepted TARA-XXXX"-Kommando (P-26)
+        id: keyword
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
+          IDS_FILE=$(mktemp)
+          if bash scripts/process_guard/check_po_accepted_keyword.sh "$BODY_FILE" > "$IDS_FILE"; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+          IDS_CSV=$(paste -sd, "$IDS_FILE" 2>/dev/null || true)
+          echo "tara_ids=$IDS_CSV" >> "$GITHUB_OUTPUT"
+
+      - name: Prüfe Berechtigungen des Kommentators
+        id: permission
+        if: steps.keyword.outputs.matched == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const allowed = ['write', 'maintain', 'admin'].includes(perm.permission);
+            core.setOutput('allowed', String(allowed));
+            if (!allowed) {
+              core.warning(`${context.actor} hat keine Schreibberechtigung – PO Accepted ignoriert`);
+            }
+            return allowed;
+
+      - name: Status Todo -> "PO Accepted" setzen
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
+        uses: actions/github-script@v7
+        env:
+          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+          PO_ACCEPTED_OPTION: "d2d86c41"
+          TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const issueNumber = context.issue.number;
+            const idsCsv = process.env.TARA_IDS_CSV || '';
+            const ids = [...new Set(idsCsv.split(',').map(s => s.trim()).filter(Boolean))];
+            if (ids.length === 0) {
+              console.log('Keine gebundene TARA-ID im Kommando - keine Board-Aktion');
+              return;
+            }
+
+            const projectId = process.env.SK_PROJECT;
+            const fieldId = process.env.SK_FIELD;
+            const poAcceptedOption = process.env.PO_ACCEPTED_OPTION;
+
+            const query = `
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 100) {
+                      nodes {
+                        id
+                        content { ... on Issue { title number } }
+                        fieldValues(first: 10) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              name
+                              field { ... on ProjectV2SingleSelectField { name } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }`;
+            const result = await github.graphql(query, { projectId });
+            const items = result.node.items.nodes;
+
+            const acceptedIds = [];
+            for (const taraId of ids) {
+              const matching = items.filter(i => i.content && i.content.title && i.content.title.includes(taraId));
+              for (const item of matching) {
+                const statusField = item.fieldValues.nodes.find(fv => fv.field && fv.field.name === 'Status');
+                const currentStatus = statusField ? statusField.name : 'unknown';
+                if (currentStatus !== 'Todo') {
+                  console.log(`${taraId}: übersprungen (Status=${currentStatus}, nicht Todo)`);
+                  continue;
+                }
+                const mutation = `
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }) { projectV2Item { id } }
+                  }`;
+                await github.graphql(mutation, { projectId, itemId: item.id, fieldId, optionId: poAcceptedOption });
+                console.log(`${taraId} -> PO Accepted`);
+                acceptedIds.push(taraId);
+              }
+            }
+
+            if (acceptedIds.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `P-26: Status Todo -> PO Accepted (${acceptedIds.map(id => `\`${id}\``).join(', ')}, Kommentar von @${context.actor})`,
+              });
+            }
+
+  # TARA-0121 (P-27): Accepted -> "PO Release" -> "Done" - die finale,
+  # fachliche/releasebezogene PO-Freigabe des bereits gemergten Standes.
+  # Ausgeloest durch das an die TARA-ID gebundene Kommando
+  # "PO Release TARA-XXXX" im Story- oder Epic-Issue.
+  check-po-release:
+    name: PO Release + Done setzen (P-27, TARA-0121)
+    runs-on: ubuntu-latest
+    if: github.event.issue.pull_request == null
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pruefe gebundenes "PO Release TARA-XXXX"-Kommando (P-27)
+        id: keyword
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$COMMENT_BODY" > "$BODY_FILE"
+          IDS_FILE=$(mktemp)
+          if bash scripts/process_guard/check_po_release_keyword.sh "$BODY_FILE" > "$IDS_FILE"; then
+            echo "matched=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "matched=false" >> "$GITHUB_OUTPUT"
+          fi
+          IDS_CSV=$(paste -sd, "$IDS_FILE" 2>/dev/null || true)
+          echo "tara_ids=$IDS_CSV" >> "$GITHUB_OUTPUT"
+
+      - name: Prüfe Berechtigungen des Kommentators
+        id: permission
+        if: steps.keyword.outputs.matched == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.actor,
+            });
+            const allowed = ['write', 'maintain', 'admin'].includes(perm.permission);
+            core.setOutput('allowed', String(allowed));
+            if (!allowed) {
+              core.warning(`${context.actor} hat keine Schreibberechtigung – PO Release ignoriert`);
+            }
+            return allowed;
+
+      - name: Python-Umgebung fuer P-27-Gate einrichten
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
+        run: pip install --quiet --user pytest || true
+
+      - name: P-27-Gate pruefen, Accepted -> PO Release -> Done setzen
+        if: steps.keyword.outputs.matched == 'true' && steps.permission.outputs.allowed == 'true'
+        uses: actions/github-script@v7
+        env:
+          SK_PROJECT: "PVT_kwDOBu4dv84BfbaR"
+          SK_FIELD: "PVTSSF_lADOBu4dv84BfbaRzhZuYME"
+          PO_RELEASE_OPTION: "a21de5e9"
+          DONE_OPTION: "98236657"
+          TARA_IDS_CSV: ${{ steps.keyword.outputs.tara_ids }}
+        with:
+          github-token: ${{ secrets.PROJECT_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const { execFileSync } = require('child_process');
+            const issueNumber = context.issue.number;
+            const idsCsv = process.env.TARA_IDS_CSV || '';
+            const ids = [...new Set(idsCsv.split(',').map(s => s.trim()).filter(Boolean))];
+            if (ids.length === 0) {
+              console.log('Keine gebundene TARA-ID im Kommando - keine Board-Aktion');
+              return;
+            }
+
+            const projectId = process.env.SK_PROJECT;
+            const fieldId = process.env.SK_FIELD;
+            const releaseOption = process.env.PO_RELEASE_OPTION;
+            const doneOption = process.env.DONE_OPTION;
+
+            const query = `
+              query($projectId: ID!) {
+                node(id: $projectId) {
+                  ... on ProjectV2 {
+                    items(first: 100) {
+                      nodes {
+                        id
+                        content { ... on Issue { title number } }
+                        fieldValues(first: 10) {
+                          nodes {
+                            ... on ProjectV2ItemFieldSingleSelectValue {
+                              name
+                              field { ... on ProjectV2SingleSelectField { name } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }`;
+            const result = await github.graphql(query, { projectId });
+            const items = result.node.items.nodes;
+
+            // Alle Kommentare dieses Issues laden - fuer das P-27-Gate muss
+            // das gebundene "PO Release"-Kommando NACH dem Erreichen von
+            // "Accepted" gepostet worden sein (po_release_gate.py).
+            const { data: allComments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              per_page: 100,
+            });
+
+            const releasedIds = [];
+            for (const taraId of ids) {
+              const matching = items.filter(i => i.content && i.content.title && i.content.title.includes(taraId));
+              for (const item of matching) {
+                const statusField = item.fieldValues.nodes.find(fv => fv.field && fv.field.name === 'Status');
+                const currentStatus = statusField ? statusField.name : 'unknown';
+                if (currentStatus !== 'Accepted') {
+                  console.log(`${taraId}: übersprungen (Status=${currentStatus}, nicht Accepted)`);
+                  continue;
+                }
+
+                // accepted_at: Zeitpunkt des P-25-Audit-Kommentars
+                // "Status inReview -> Accepted" - TARA-0121: an die
+                // konkrete TARA-ID gebunden (Kommentar enthaelt die
+                // TARA-ID seit dem Fix in check-po-acceptance-pr), damit
+                // auf einem Epic-Issue mit mehreren Stories nicht
+                // versehentlich der Accepted-Zeitpunkt einer ANDEREN
+                // Story verwendet wird.
+                const acceptedComments = allComments
+                  .filter(c => /Status inReview -> Accepted/.test(c.body || '') && (c.body || '').includes(taraId))
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                const acceptedAt = acceptedComments.length > 0
+                  ? acceptedComments[0].created_at
+                  : new Date(0).toISOString();
+
+                const commentsPayload = allComments.map(c => ({
+                  body: c.body, created_at: c.created_at, author: c.user.login,
+                }));
+                const rawFile = `/tmp/raw-comments-${taraId}.json`;
+                const annotatedFile = `/tmp/annotated-comments-${taraId}.json`;
+                fs.writeFileSync(rawFile, JSON.stringify(commentsPayload));
+                execFileSync('python3', [
+                  'scripts/process_guard/annotate_comment_permissions.py',
+                  rawFile, annotatedFile, `${context.repo.owner}/${context.repo.repo}`,
+                ]);
+
+                let gateOk = false;
+                try {
+                  execFileSync('bash', [
+                    'scripts/process_guard/check_po_release_gate.sh',
+                    annotatedFile, taraId, currentStatus, acceptedAt,
+                  ], { stdio: 'inherit' });
+                  gateOk = true;
+                } catch (e) {
+                  console.log(`${taraId}: P-27-Gate nicht erfuellt - keine Board-Aktion`);
+                }
+                if (!gateOk) continue;
+
+                const mutation = `
+                  mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
+                    updateProjectV2ItemFieldValue(input: {
+                      projectId: $projectId
+                      itemId: $itemId
+                      fieldId: $fieldId
+                      value: { singleSelectOptionId: $optionId }
+                    }) { projectV2Item { id } }
+                  }`;
+                await github.graphql(mutation, { projectId, itemId: item.id, fieldId, optionId: releaseOption });
+                await github.graphql(mutation, { projectId, itemId: item.id, fieldId, optionId: doneOption });
+                console.log(`${taraId} -> PO Release -> Done`);
+                releasedIds.push(taraId);
+              }
+            }
+
+            if (releasedIds.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `P-27: Status Accepted -> PO Release -> Done (${releasedIds.map(id => `\`${id}\``).join(', ')}, Kommentar von @${context.actor})`,
+              });
+            }

@@ -236,23 +236,51 @@ def create_github_issues_for_findings(
         except Exception as exc:
             pass
 
-    # P-18: Critical/High findings block the story -> set to Blocking
+    # P-18: Critical/High findings block the story -> mark as blocked
+    # (TARA-0121: Label statt Board-Status Blocking, der entfallen ist)
     if has_critical_or_high:
-        _set_story_blocking(story_id, repo)
+        _set_story_blocked(story_id, repo)
 
     return created
 
 
-def _set_story_blocking(story_id: str, repo: str) -> None:
-    """Set the board item for story_id to Blocking status (P-18)."""
+def _set_story_blocked(story_id: str, repo: str) -> None:
+    """Markiert das Story-Issue ueber das Label "blocked" (P-18).
+
+    TARA-0121: Der bisherige Board-Status Blocking entfaellt (PO-
+    Entscheidung) - die zugehoerige Options-ID wurde im Board zu
+    "PO Release" umbenannt. Ein Aufruf von `set_story_status.py ... Blocking`
+    wuerde daher inzwischen faelschlich die "PO Release"-Spalte setzen.
+    Blockierte Items behalten stattdessen ihren aktuellen Board-Status und
+    werden ueber das bestehende Issue-Label "blocked" markiert (siehe auch
+    `scripts/process_health_check.py`, das bereits per Label filtert)."""
     import subprocess
 
     tara_num = story_id.replace("TARA-", "")
-    script = Path(__file__).parent.parent.parent / "scripts" / "set_story_status.py"
-    if script.exists():
-        subprocess.run(
-            ["python", str(script), tara_num, "Blocking"],
+    try:
+        result = subprocess.run(
+            [
+                "gh", "issue", "list", "--repo", repo,
+                "--search", f"TARA-{tara_num} in:title",
+                "--state", "all", "--json", "number", "--limit", "1",
+            ],
             capture_output=True,
             text=True,
             timeout=30,
         )
+        issues = json.loads(result.stdout or "[]")
+    except Exception:
+        issues = []
+    if not issues:
+        return
+    issue_number = issues[0]["number"]
+    try:
+        subprocess.run(
+            ["gh", "issue", "edit", str(issue_number), "--repo", repo, "--add-label", "blocked"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+    except Exception:
+        pass
+

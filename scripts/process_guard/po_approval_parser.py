@@ -57,6 +57,18 @@ KEYWORDS = (
 
 _KEYWORD_ALTERNATION = "|".join(re.escape(k) for k in KEYWORDS)
 
+# TARA-0121: Zwei eigene, an eine TARA-ID gebundene Kommandos fuer die
+# beiden KRITISCHEN Statusuebergaenge "Todo -> PO Accepted" (Bearbeitungs-
+# erlaubnis) und "Accepted -> PO Release" (fachliche/releasebezogene
+# Abnahme). Diese sind bewusst NICHT Teil von KEYWORDS: die alten, losen
+# Keywords ("akzeptiert", "OK", ...) duerfen diese beiden kritischen
+# Uebergaenge NICHT mehr autorisieren (siehe extract_po_accepted_ids /
+# extract_po_release_ids). "po\s+accepted"/"po\s+release" statt einer
+# einzelnen Alternation, da re.escape() Leerzeichen nicht als Trennzeichen
+# fuer beliebigen Whitespace behandelt.
+_PO_ACCEPTED_ALTERNATION = r"po\s+accepted"
+_PO_RELEASE_ALTERNATION = r"po\s+release"
+
 _NEGATION_WORDS = ("nicht", "kein", "keine", "not")
 
 # Bis zu zwei kurze "Verbindungswoerter" (je max. 12 Zeichen, kein weiteres
@@ -81,22 +93,29 @@ _ID_LIST_PATTERN = (
     + r")*)"
 )
 
-_KEYWORD_THEN_IDS = re.compile(
-    r"\b(?:"
-    + _KEYWORD_ALTERNATION
-    + r")\b"
-    + _CONNECTOR
-    + _ID_LIST_PATTERN,
-    re.IGNORECASE,
-)
+def _build_patterns(keyword_alternation: str):
+    """Baut die beiden Match-Patterns ("Keyword -> IDs" und "IDs ->
+    Keyword") fuer eine gegebene Keyword-Alternation (TARA-0121: generalisiert
+    aus dem urspruenglich fest verdrahteten KEYWORDS-Fall, damit dieselbe
+    Bindungs-/Negations-/Zitat-Logik auch fuer die neuen "PO Accepted"/
+    "PO Release"-Kommandos wiederverwendet werden kann)."""
+    keyword_then_ids = re.compile(
+        r"\b(?:" + keyword_alternation + r")\b" + _CONNECTOR + _ID_LIST_PATTERN,
+        re.IGNORECASE,
+    )
+    ids_then_keyword = re.compile(
+        _ID_LIST_PATTERN + _CONNECTOR + r"\b(?:" + keyword_alternation + r")\b",
+        re.IGNORECASE,
+    )
+    return keyword_then_ids, ids_then_keyword
 
-_IDS_THEN_KEYWORD = re.compile(
-    _ID_LIST_PATTERN
-    + _CONNECTOR
-    + r"\b(?:"
-    + _KEYWORD_ALTERNATION
-    + r")\b",
-    re.IGNORECASE,
+
+_KEYWORD_THEN_IDS, _IDS_THEN_KEYWORD = _build_patterns(_KEYWORD_ALTERNATION)
+_PO_ACCEPTED_KEYWORD_THEN_IDS, _PO_ACCEPTED_IDS_THEN_KEYWORD = _build_patterns(
+    _PO_ACCEPTED_ALTERNATION
+)
+_PO_RELEASE_KEYWORD_THEN_IDS, _PO_RELEASE_IDS_THEN_KEYWORD = _build_patterns(
+    _PO_RELEASE_ALTERNATION
 )
 
 _CODE_FENCE_PATTERN = re.compile(r"```.*?```", re.DOTALL)
@@ -173,17 +192,26 @@ def _has_unfilled_negation(clause: str, keyword_start: int) -> bool:
     return bool(negation_pattern.search(preceding))
 
 
-def extract_approved_tara_ids(body: str) -> List[str]:
-    """Liefert die sortierte, eindeutige Liste aller TARA-IDs, die im
-    uebergebenen Kommentar-Text durch ein gebundenes Freigabe-Kommando
-    (Keyword <-> TARA-ID(s) im selben Satz/Absatz, ausserhalb von Zitat/
-    Code, ohne vorausgehende Negation) freigegeben wurden."""
+def _extract_ids_for_patterns(
+    body: str,
+    keyword_then_ids,
+    ids_then_keyword,
+    keyword_alternation: str,
+) -> List[str]:
+    """Generische Extraktion (TARA-0121): liefert die sortierte, eindeutige
+    Liste aller TARA-IDs, die im uebergebenen Kommentar-Text durch ein an
+    die gegebenen Patterns gebundenes Kommando (Keyword <-> TARA-ID(s) im
+    selben Satz/Absatz, ausserhalb von Zitat/Code, ohne vorausgehende
+    Negation) freigegeben wurden. Wird von `extract_approved_tara_ids`
+    sowie den neuen `extract_po_accepted_ids`/`extract_po_release_ids`
+    verwendet, damit alle drei Kommandos dieselbe gehaertete Bindungs-/
+    Negations-/Zitat-Logik teilen."""
     cleaned = _strip_quotes_and_code(body)
     found: List[str] = []
     for clause in _split_into_clauses(cleaned):
         for pattern, keyword_is_first in (
-            (_KEYWORD_THEN_IDS, True),
-            (_IDS_THEN_KEYWORD, False),
+            (keyword_then_ids, True),
+            (ids_then_keyword, False),
         ):
             for match in pattern.finditer(clause):
                 keyword_start = match.start() if keyword_is_first else match.end()
@@ -192,7 +220,7 @@ def extract_approved_tara_ids(body: str) -> List[str]:
                 # Match-Anfang (der bei diesem Muster die ID-Liste ist).
                 if not keyword_is_first:
                     kw_match = re.search(
-                        r"\b(?:" + _KEYWORD_ALTERNATION + r")\b$",
+                        r"\b(?:" + keyword_alternation + r")\b$",
                         match.group(0),
                         re.IGNORECASE,
                     )
@@ -206,13 +234,81 @@ def extract_approved_tara_ids(body: str) -> List[str]:
     return sorted(found)
 
 
+def extract_approved_tara_ids(body: str) -> List[str]:
+    """Liefert die sortierte, eindeutige Liste aller TARA-IDs, die im
+    uebergebenen Kommentar-Text durch ein gebundenes Freigabe-Kommando
+    (Keyword <-> TARA-ID(s) im selben Satz/Absatz, ausserhalb von Zitat/
+    Code, ohne vorausgehende Negation) freigegeben wurden."""
+    return _extract_ids_for_patterns(
+        body, _KEYWORD_THEN_IDS, _IDS_THEN_KEYWORD, _KEYWORD_ALTERNATION
+    )
+
+
+def extract_po_accepted_ids(body: str) -> List[str]:
+    """TARA-0121 (P-26): Liefert die TARA-IDs, fuer die im Kommentar ein an
+    die ID gebundenes "PO Accepted"-Kommando steht (z.B. "PO Accepted
+    TARA-0121" oder "TARA-0121 ist PO Accepted"). Die alten, losen
+    Keywords aus KEYWORDS (z.B. "akzeptiert") loesen dies bewusst NICHT
+    aus - dieser Uebergang (Todo -> PO Accepted) ist die Bearbeitungs-
+    erlaubnis und darf nur durch das explizite neue Kommando autorisiert
+    werden."""
+    return _extract_ids_for_patterns(
+        body,
+        _PO_ACCEPTED_KEYWORD_THEN_IDS,
+        _PO_ACCEPTED_IDS_THEN_KEYWORD,
+        _PO_ACCEPTED_ALTERNATION,
+    )
+
+
+def extract_po_release_ids(body: str) -> List[str]:
+    """TARA-0121 (P-27): Liefert die TARA-IDs, fuer die im Kommentar ein an
+    die ID gebundenes "PO Release"-Kommando steht (z.B. "PO Release
+    TARA-0121" oder "TARA-0121 PO Release"). Autorisiert den Uebergang
+    Accepted -> PO Release -> Done (fachliche/releasebezogene Abnahme nach
+    Merge) - ebenfalls NICHT durch die alten losen Keywords ausloesbar."""
+    return _extract_ids_for_patterns(
+        body,
+        _PO_RELEASE_KEYWORD_THEN_IDS,
+        _PO_RELEASE_IDS_THEN_KEYWORD,
+        _PO_RELEASE_ALTERNATION,
+    )
+
+
+_MODE_EXTRACTORS = {
+    "approval": extract_approved_tara_ids,
+    "accepted": extract_po_accepted_ids,
+    "release": extract_po_release_ids,
+}
+
+
 def main(argv: List[str] | None = None) -> int:
     import sys
 
     argv = argv if argv is not None else sys.argv[1:]
+    mode = "approval"
+    # TARA-0121: optionales "--mode {approval,accepted,release}" fuer die
+    # neuen Wrapper-Skripte check_po_accepted_keyword.sh /
+    # check_po_release_keyword.sh; ohne Flag bleibt das bisherige Verhalten
+    # (Modus "approval") unveraendert (Rueckwaertskompatibilitaet TARA-0109).
+    if "--mode" in argv:
+        idx = argv.index("--mode")
+        try:
+            mode = argv[idx + 1]
+        except IndexError:
+            print("NO_MATCH")
+            print("FAIL: --mode benoetigt einen Wert", file=sys.stderr)
+            return 1
+        del argv[idx : idx + 2]
+
     if len(argv) < 1:
         print("NO_MATCH")
-        print("FAIL: Usage: po_approval_parser.py <COMMENT_FILE>", file=sys.stderr)
+        print("FAIL: Usage: po_approval_parser.py [--mode approval|accepted|release] <COMMENT_FILE>", file=sys.stderr)
+        return 1
+
+    extractor = _MODE_EXTRACTORS.get(mode)
+    if extractor is None:
+        print("NO_MATCH")
+        print(f"FAIL: Unbekannter Modus '{mode}'", file=sys.stderr)
         return 1
 
     comment_file = argv[0]
@@ -224,7 +320,7 @@ def main(argv: List[str] | None = None) -> int:
         print(f"FAIL: Kommentar-Datei konnte nicht gelesen werden: {exc}", file=sys.stderr)
         return 1
 
-    ids = extract_approved_tara_ids(body)
+    ids = extractor(body)
     if not ids:
         print("NO_MATCH")
         return 1
