@@ -148,6 +148,31 @@ def test_script_resolves_story_database_id_and_links_sub_issue():
 
 
 @pytest.mark.TARA_0113
+def test_script_sends_sub_issue_id_as_raw_field_not_string_field():
+    """Regressionstest fuer Review-Finding TARA-0122 (Issue #200): `gh api -f`
+    sendet Werte immer als JSON-STRING, aber der Sub-Issues-Endpunkt verlangt
+    `sub_issue_id` als JSON-INTEGER (sonst HTTP 422 gegen die echte API,
+    obwohl der bisherige Fake-Mock dies nicht erkennt). Das Skript muss
+    `-F`/`--raw-field` (typisiert) statt `-f`/`--field` (immer String)
+    verwenden."""
+    with tempfile.TemporaryDirectory() as tmp:
+        fake_gh, call_log = _make_fake_gh(tmp, story_db_id=987654321)
+        result = _run_script(
+            ["--owner", "SCHUNK-SE-Co-KG", "--repo", "TARATool", "--epic", "176", "--story", "183"],
+            fake_gh,
+            call_log,
+        )
+        assert result.returncode == 0, f"stdout={result.stdout} stderr={result.stderr}"
+        with open(call_log, "r", encoding="utf-8") as f:
+            calls = f.read()
+        assert "-F sub_issue_id=987654321" in calls, (
+            "Skript muss -F (raw-field, typisiert) statt -f (field, immer "
+            f"String) fuer sub_issue_id verwenden. Tatsaechliche Aufrufe:\n{calls}"
+        )
+        assert "-f sub_issue_id=987654321" not in calls
+
+
+@pytest.mark.TARA_0113
 def test_script_fails_when_gh_api_call_fails():
     with tempfile.TemporaryDirectory() as tmp:
         fake_gh, call_log = _make_fake_gh(

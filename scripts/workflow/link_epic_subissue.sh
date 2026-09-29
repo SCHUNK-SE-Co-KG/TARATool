@@ -75,7 +75,7 @@ if [[ -z "$STORY_DB_ID" ]]; then
 fi
 
 if ! "$GH_BIN" api "repos/$OWNER/$REPO/issues/$EPIC/sub_issues" \
-  -f sub_issue_id="$STORY_DB_ID" >/dev/null; then
+  -F sub_issue_id="$STORY_DB_ID" >/dev/null; then
   echo "FAIL: Sub-Issue-Verknuepfung von Story #$STORY mit Epic #$EPIC fehlgeschlagen." >&2
   exit 1
 fi
