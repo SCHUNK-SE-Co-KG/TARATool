@@ -120,6 +120,13 @@ def save_report(report: dict, output_dir: Path) -> Path:
     timestamp = report.get("timestamp", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")).replace(":", "-")
 
     clean_report = {k: v for k, v in report.items() if not k.startswith("_")}
+    if isinstance(clean_report.get("findings"), list):
+        # TARA-0115: interne Heuristik-Marker (z.B. '_heuristic_repeat_count')
+        # gehoeren nicht in den persistierten Report - Schema bleibt sauber.
+        clean_report["findings"] = [
+            {k: v for k, v in f.items() if not k.startswith("_")}
+            for f in clean_report["findings"]
+        ]
 
     json_path = output_dir / f"review_{story_id}_{timestamp[:19].replace(':', '-')}.json"
     json_path.write_text(
@@ -209,10 +216,10 @@ def count_similar_prior_findings(finding: dict, repo: str) -> int:
 
     rule = finding.get("rule")
     ftype = finding.get("type")
-    if not rule and not ftype:
+    if not rule or not ftype:
         return 0
 
-    search_term = " ".join(str(term) for term in (rule, ftype) if term)
+    search_term = f"{rule} {ftype}"
     try:
         result = subprocess.run(
             [
@@ -228,7 +235,7 @@ def count_similar_prior_findings(finding: dict, repo: str) -> int:
         return 0
 
 
-def resolve_disposition_heuristic(finding: dict, repo: str) -> dict:
+def resolve_disposition_heuristic(finding: dict, repo: str, _repeat_cache: dict | None = None) -> dict:
     """TARA-0115: Deterministische Heuristik fuer die Finding-Ablage.
 
     Ersetzt die reine Review-Agent-Selbsteinschaetzung aus TARA-0114 durch
@@ -247,6 +254,26 @@ def resolve_disposition_heuristic(finding: dict, repo: str) -> dict:
         isinstance(explicit_disposition, str) and explicit_disposition in DISPOSITIONS
     )
 
+    severity = finding.get("severity", "Niedrig")
+    category = finding.get("category")
+
+    # Sicherheitsnetz (NICHT abweichbar, wird VOR jeder Abweichungspruefung
+    # ausgewertet): Sicherheit + Schwere>=Hoch ist IMMER ein blockierendes
+    # Finding-Issue, nie ein reiner PR-Kommentar - auch nicht mit
+    # 'override_reason'. Ein dennoch vorhandener Abweichungsversuch wird
+    # zur Nachvollziehbarkeit in der Begruendung vermerkt, aber NICHT als
+    # 'deviated' gewertet (die Abweichung wurde abgelehnt, nicht gewaehrt).
+    if category == "Sicherheit" and SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Hoch"]:
+        reasoning = "Sicherheitsnetz: Sicherheit + Schwere>=Hoch ist immer ein Finding-Issue (nicht abweichbar)."
+        if override_reason:
+            reasoning += f" Abweichungsversuch abgelehnt (override_reason: {override_reason!r})."
+        return {
+            "disposition": "finding_issue",
+            "deviated": False,
+            "reasoning": reasoning,
+            "repeat_count": 0,
+        }
+
     # Bewusste, begruendete Abweichung von der Heuristik (Leitplanke) -
     # wird respektiert UND protokolliert (Process Guard, siehe P-18).
     if has_valid_explicit and override_reason:
@@ -257,22 +284,15 @@ def resolve_disposition_heuristic(finding: dict, repo: str) -> dict:
             "repeat_count": 0,
         }
 
-    severity = finding.get("severity", "Niedrig")
-    category = finding.get("category")
-
-    # Sicherheitsnetz (nicht abweichbar): Sicherheit + Schwere>=Hoch ist
-    # IMMER ein blockierendes Finding-Issue, nie ein reiner PR-Kommentar.
-    if category == "Sicherheit" and SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Hoch"]:
-        return {
-            "disposition": "finding_issue",
-            "deviated": False,
-            "reasoning": "Sicherheitsnetz: Sicherheit + Schwere>=Hoch ist immer ein Finding-Issue.",
-            "repeat_count": 0,
-        }
-
     repeat_count = finding.get("repeat_count")
     if repeat_count is None:
-        repeat_count = count_similar_prior_findings(finding, repo)
+        cache_key = (finding.get("rule"), finding.get("type"))
+        if _repeat_cache is not None and cache_key in _repeat_cache:
+            repeat_count = _repeat_cache[cache_key]
+        else:
+            repeat_count = count_similar_prior_findings(finding, repo)
+            if _repeat_cache is not None:
+                _repeat_cache[cache_key] = repeat_count
 
     if repeat_count and repeat_count >= 1:
         return {
@@ -326,10 +346,15 @@ def apply_disposition_heuristic(findings: list, repo: str) -> tuple[list, list]:
     setzt/bestaetigt dessen 'disposition'-Feld und liefert zusaetzlich eine
     Liste protokollierter Abweichungen (fuer Process-Guard-Sichtbarkeit)
     zurueck: (findings_mit_disposition, deviations).
+
+    Nutzt einen gemeinsamen Cache je (rule, type), damit identische
+    Findings innerhalb EINES Review-Laufs nicht mehrfach dieselbe
+    Wiederholungs-Suche (gh-Aufruf) ausloesen.
     """
     deviations = []
+    repeat_cache: dict = {}
     for finding in findings:
-        result = resolve_disposition_heuristic(finding, repo)
+        result = resolve_disposition_heuristic(finding, repo, _repeat_cache=repeat_cache)
         finding["disposition"] = result["disposition"]
         if result["repeat_count"]:
             finding["_heuristic_repeat_count"] = result["repeat_count"]

@@ -101,6 +101,23 @@ def test_count_similar_prior_findings_returns_zero_without_rule_or_type(report_b
     mocked_run.assert_not_called()
 
 
+@pytest.mark.TARA_0115
+def test_count_similar_prior_findings_requires_both_rule_and_type(report_builder_module):
+    """Nur rule ODER nur type allein reicht nicht als Identitaetsmerkmal
+    aus (sonst falsch-positive Wiederholungserkennung, z.B. bei
+    Runtime-Findings ohne 'rule')."""
+    with mock.patch("subprocess.run") as mocked_run:
+        count_rule_only = report_builder_module.count_similar_prior_findings(
+            {"rule": "R-02"}, "SCHUNK-SE-Co-KG/TARATool"
+        )
+        count_type_only = report_builder_module.count_similar_prior_findings(
+            {"type": "console_error"}, "SCHUNK-SE-Co-KG/TARATool"
+        )
+    assert count_rule_only == 0
+    assert count_type_only == 0
+    mocked_run.assert_not_called()
+
+
 # ---------------------------------------------------------------------------
 # resolve_disposition_heuristic
 # ---------------------------------------------------------------------------
@@ -196,6 +213,24 @@ def test_heuristic_ignores_override_without_reason(report_builder_module):
     assert result["deviated"] is False
 
 
+@pytest.mark.TARA_0115
+def test_heuristic_security_safety_net_cannot_be_overridden_even_with_reason(report_builder_module):
+    """Sicherheitsnetz ist NICHT abweichbar - auch ein explizites
+    override_reason darf Sicherheit+Schwere>=Hoch nicht auf pr_comment
+    umleiten (Regression fuer TARA-0115-Code-Review-Finding)."""
+    finding = {
+        "severity": "Hoch",
+        "category": "Sicherheit",
+        "disposition": "pr_comment",
+        "override_reason": "Ich denke, das ist trotzdem nur ein PR-Kommentar wert.",
+    }
+    result = report_builder_module.resolve_disposition_heuristic(
+        finding, "SCHUNK-SE-Co-KG/TARATool"
+    )
+    assert result["disposition"] == "finding_issue"
+    assert result["deviated"] is False
+
+
 # ---------------------------------------------------------------------------
 # apply_disposition_heuristic
 # ---------------------------------------------------------------------------
@@ -217,6 +252,21 @@ def test_apply_disposition_heuristic_sets_disposition_and_collects_deviations(re
     assert updated[1]["disposition"] == "finding_issue"
     assert len(deviations) == 1
     assert "Sicherheitsrelevant" in deviations[0]["reasoning"]
+
+
+@pytest.mark.TARA_0115
+def test_apply_disposition_heuristic_caches_repeat_lookup_per_rule_and_type(report_builder_module):
+    """Zwei Findings mit identischer (rule, type)-Kombination duerfen nur
+    EINEN gh-Aufruf zur Wiederholungserkennung ausloesen (Performance/
+    Rate-Limit-Schutz, Regression fuer TARA-0115-Code-Review-Finding)."""
+    findings = [
+        {"severity": "Mittel", "rule": "R-02", "type": "bug"},
+        {"severity": "Mittel", "rule": "R-02", "type": "bug"},
+    ]
+    fake_result = mock.Mock(returncode=0, stdout=json.dumps([{"number": 1}]))
+    with mock.patch("subprocess.run", return_value=fake_result) as mocked_run:
+        report_builder_module.apply_disposition_heuristic(findings, "SCHUNK-SE-Co-KG/TARATool")
+    assert mocked_run.call_count == 1
 
 
 # ---------------------------------------------------------------------------
