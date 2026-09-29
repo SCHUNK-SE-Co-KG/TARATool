@@ -226,13 +226,57 @@ respektiert dieses Feld:
   einem einzelnen wiederkehrenden Muster).
 
 **Interim-Regelung (PO-Entscheidung, TARA-0114):** Für die erste Umsetzung
-setzt der Review-Agent `disposition` per **Selbsteinschaetzung** (analog zur
+setzte der Review-Agent `disposition` per **Selbsteinschaetzung** (analog zur
 Schwere-Rubrik oben). Fehlt das Feld, gilt aus Rückwärtskompatibilität die
 bisherige Regel (Mittel/Hoch/Kritisch → `finding_issue`, Niedrig → kein
 Eintrag). Die dauerhafte, **deterministische Heuristik**, die diese
-Selbsteinschätzung ersetzt, wird in Folge-Story **#185 (TARA-0115)**
-entwickelt (siehe auch die analoge Interim-Regelung für "behebbar vs.
-blockierend" im Abschnitt "Priorisierung akzeptierter Findings" unten).
+Selbsteinschätzung ersetzt, wurde in Folge-Story **#185 (TARA-0115)**
+entwickelt - siehe Abschnitt "Ablage-Heuristik (TARA-0115)" unten (Antwort
+auf die in #185 offen gelassene Frage 3, wer im Zweifel entscheidet).
+
+---
+
+### Ablage-Heuristik (TARA-0115)
+
+Ersetzt die reine Review-Agent-Selbsteinschaetzung aus TARA-0114 durch eine
+nachvollziehbare, auf **objektiven Finding-Merkmalen** basierende Regel
+(`report_builder.resolve_disposition_heuristic()`), konsistent mit dem
+Rollenmodell aus #178 (TARA-0108: keine LLM-Selbstattestierung fuer
+prozessrelevante Entscheidungen).
+
+**PO-Entscheidung zu Frage 1 (Issue #185):** Die Heuristik ist eine
+**Leitplanke mit begründeter Abweichungsmöglichkeit** - kein striktes,
+unumstoessliches Regelwerk. Der Review-Agent kann bewusst abweichen, muss
+dies aber ueber das Feld `override_reason` explizit begruenden; ohne
+Begruendung setzt die Heuristik ihr eigenes Ergebnis durch. Jede Abweichung
+wird in `session.report["disposition_deviations"]` protokolliert (Process
+Guard-Sichtbarkeit).
+
+**PO-Entscheidung zu Frage 2 (Issue #185):** Wiederholung wird
+**automatisiert** erkannt (`count_similar_prior_findings()`, Suche unter
+bestehenden `review-finding`-Issues nach Regel + Typ). Tritt ein Finding
+wiederholt auf, wird **keine** neue Epic-Instanz angelegt, sondern eine
+**Story**, die den Harness gezielt auf Prozessluecken bzgl. wiederholter
+Findings untersucht (Titelformat `[TARA-XXXX] STORY: Prozessluecken-
+Ueberpruefung - ...`, Label `story`).
+
+**Entscheidungsbaum (objektive Merkmale, in Prüfreihenfolge):**
+
+1. **Sicherheitsnetz (nicht abweichbar):** Kategorie `Sicherheit` **und**
+   Schwere ≥ Hoch → immer `finding_issue`, nie `pr_comment`.
+2. **Wiederholung** (`repeat_count` ≥ 1, automatisiert ermittelt) →
+   `systemic_issue`, umgesetzt als Prozessluecken-Story (s.o.).
+3. **Akzeptierte technische Schuld** (`accepted_debt: true`) →
+   `backlog_story`.
+4. **Direkt behebbar** (`fix_scope: "in_diff"` und Schwere ≤ Mittel) →
+   `pr_comment`.
+5. **Fallback:** bestehende Schwere-basierte Regel aus TARA-0114
+   (Mittel/Hoch/Kritisch → `finding_issue`, Niedrig → kein Eintrag).
+
+Neue optionale Finding-Felder: `category` (`Sicherheit`/`Architektur`/
+`Test`/`Code-Qualitaet`), `repeat_count` (int, sonst automatisch ermittelt),
+`accepted_debt` (bool), `fix_scope` (`in_diff`/`outside_diff`),
+`override_reason` (str, erzwingt Protokollierung bei bewusster Abweichung).
 
 ---
 
