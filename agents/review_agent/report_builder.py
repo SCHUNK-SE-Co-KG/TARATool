@@ -37,9 +37,15 @@ def build_full_report(
     )
 
     if repo and create_issues:
-        created = create_github_issues_for_findings(
-            session.report.get("findings", []), story_id, repo
+        # TARA-0115: Deterministische Ablage-Heuristik VOR der Issue-
+        # Erzeugung anwenden (setzt/bestaetigt 'disposition' je Finding und
+        # protokolliert bewusste Abweichungen der Review-Agent-
+        # Selbsteinschaetzung, siehe P-18/Process-Guard).
+        findings, deviations = apply_disposition_heuristic(
+            session.report.get("findings", []), repo
         )
+        session.report["disposition_deviations"] = deviations
+        created = create_github_issues_for_findings(findings, story_id, repo)
         session.report["github_issues_created"] = created["issues"]
         session.report["review_pr_comments"] = created["pr_comments"]
 
@@ -114,6 +120,13 @@ def save_report(report: dict, output_dir: Path) -> Path:
     timestamp = report.get("timestamp", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")).replace(":", "-")
 
     clean_report = {k: v for k, v in report.items() if not k.startswith("_")}
+    if isinstance(clean_report.get("findings"), list):
+        # TARA-0115: interne Heuristik-Marker (z.B. '_heuristic_repeat_count')
+        # gehoeren nicht in den persistierten Report - Schema bleibt sauber.
+        clean_report["findings"] = [
+            {k: v for k, v in f.items() if not k.startswith("_")}
+            for f in clean_report["findings"]
+        ]
 
     json_path = output_dir / f"review_{story_id}_{timestamp[:19].replace(':', '-')}.json"
     json_path.write_text(
@@ -187,6 +200,171 @@ def _resolve_disposition(finding: dict) -> str | None:
     if SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Mittel"]:
         return "finding_issue"
     return None
+
+
+def count_similar_prior_findings(finding: dict, repo: str) -> int:
+    """TARA-0115: Automatisierte Wiederholungserkennung (PO-Entscheidung).
+
+    Sucht unter bestehenden 'review-finding'-Issues nach frueheren
+    Vorkommen desselben Findings (gleiche Regel + gleicher Typ) und liefert
+    die Anzahl der Treffer zurueck. Bei Fehlern (gh-Aufruf schlaegt fehl,
+    kein rule/type vorhanden) wird konservativ 0 zurueckgegeben - eine
+    fehlgeschlagene Wiederholungserkennung darf niemals einen Review
+    blockieren.
+    """
+    import subprocess
+
+    rule = finding.get("rule")
+    ftype = finding.get("type")
+    if not rule or not ftype:
+        return 0
+
+    search_term = f"{rule} {ftype}"
+    try:
+        result = subprocess.run(
+            [
+                "gh", "issue", "list", "--repo", repo, "--state", "all",
+                "--label", "review-finding", "--search", search_term,
+                "--json", "number", "--limit", "50",
+            ],
+            capture_output=True, text=True, timeout=30,
+        )
+        items = json.loads(result.stdout or "[]")
+        return len(items) if isinstance(items, list) else 0
+    except Exception:
+        return 0
+
+
+def resolve_disposition_heuristic(finding: dict, repo: str, _repeat_cache: dict | None = None) -> dict:
+    """TARA-0115: Deterministische Heuristik fuer die Finding-Ablage.
+
+    Ersetzt die reine Review-Agent-Selbsteinschaetzung aus TARA-0114 durch
+    eine nachvollziehbare Regel, die auf objektiven Finding-Merkmalen
+    basiert (Schwere, Kategorie, Wiederholung, Fix-Umfang, akzeptierte
+    Schuld). PO-Entscheidung (Issue #185): Leitplanke mit begruendeter
+    Abweichungsmoeglichkeit - der Review-Agent kann bewusst von der
+    Heuristik abweichen, MUSS dies aber ueber 'override_reason' begruenden;
+    ohne Begruendung wird die Heuristik durchgesetzt.
+
+    Rueckgabe: {"disposition", "deviated", "reasoning", "repeat_count"}.
+    """
+    explicit_disposition = finding.get("disposition")
+    override_reason = finding.get("override_reason")
+    has_valid_explicit = (
+        isinstance(explicit_disposition, str) and explicit_disposition in DISPOSITIONS
+    )
+
+    severity = finding.get("severity", "Niedrig")
+    category = finding.get("category")
+
+    # Sicherheitsnetz (NICHT abweichbar, wird VOR jeder Abweichungspruefung
+    # ausgewertet): Sicherheit + Schwere>=Hoch ist IMMER ein blockierendes
+    # Finding-Issue, nie ein reiner PR-Kommentar - auch nicht mit
+    # 'override_reason'. Ein dennoch vorhandener Abweichungsversuch wird
+    # zur Nachvollziehbarkeit in der Begruendung vermerkt, aber NICHT als
+    # 'deviated' gewertet (die Abweichung wurde abgelehnt, nicht gewaehrt).
+    if category == "Sicherheit" and SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Hoch"]:
+        reasoning = "Sicherheitsnetz: Sicherheit + Schwere>=Hoch ist immer ein Finding-Issue (nicht abweichbar)."
+        if override_reason:
+            reasoning += f" Abweichungsversuch abgelehnt (override_reason: {override_reason!r})."
+        return {
+            "disposition": "finding_issue",
+            "deviated": False,
+            "reasoning": reasoning,
+            "repeat_count": 0,
+        }
+
+    # Bewusste, begruendete Abweichung von der Heuristik (Leitplanke) -
+    # wird respektiert UND protokolliert (Process Guard, siehe P-18).
+    if has_valid_explicit and override_reason:
+        return {
+            "disposition": explicit_disposition,
+            "deviated": True,
+            "reasoning": override_reason,
+            "repeat_count": 0,
+        }
+
+    repeat_count = finding.get("repeat_count")
+    if repeat_count is None:
+        cache_key = (finding.get("rule"), finding.get("type"))
+        if _repeat_cache is not None and cache_key in _repeat_cache:
+            repeat_count = _repeat_cache[cache_key]
+        else:
+            repeat_count = count_similar_prior_findings(finding, repo)
+            if _repeat_cache is not None:
+                _repeat_cache[cache_key] = repeat_count
+
+    if repeat_count and repeat_count >= 1:
+        return {
+            "disposition": "systemic_issue",
+            "deviated": False,
+            "reasoning": (
+                f"Automatisierte Wiederholungserkennung: {repeat_count}x zuvor "
+                "aufgetreten - Story zur Prozessluecken-Ueberpruefung erforderlich "
+                "(PO-Entscheidung TARA-0115)."
+            ),
+            "repeat_count": repeat_count,
+        }
+
+    if finding.get("accepted_debt") is True:
+        return {
+            "disposition": "backlog_story",
+            "deviated": False,
+            "reasoning": "Explizit als akzeptierte technische Schuld markiert.",
+            "repeat_count": 0,
+        }
+
+    if finding.get("fix_scope") == "in_diff" and SEVERITY_LEVELS.get(severity, 1) <= SEVERITY_LEVELS["Mittel"]:
+        return {
+            "disposition": "pr_comment",
+            "deviated": False,
+            "reasoning": "Direkt im PR-Diff behebbar, Schwere <= Mittel.",
+            "repeat_count": 0,
+        }
+
+    # Explizite Selbsteinschaetzung ohne Abweichungsgrund, aber deckungsgleich
+    # mit keinem der obigen objektiven Merkmale - wird respektiert (kein
+    # Verhaltensbruch gegenueber TARA-0114).
+    if has_valid_explicit:
+        return {
+            "disposition": explicit_disposition,
+            "deviated": False,
+            "reasoning": "Uebereinstimmend mit expliziter Selbsteinschaetzung (kein Heuristik-Merkmal ausschlaggebend).",
+            "repeat_count": 0,
+        }
+
+    return {
+        "disposition": _resolve_disposition(finding),
+        "deviated": False,
+        "reasoning": "Rueckwaertskompatibler Schwere-Fallback (kein Heuristik-Merkmal gesetzt).",
+        "repeat_count": 0,
+    }
+
+
+def apply_disposition_heuristic(findings: list, repo: str) -> tuple[list, list]:
+    """TARA-0115: Wendet resolve_disposition_heuristic() auf jedes Finding an,
+    setzt/bestaetigt dessen 'disposition'-Feld und liefert zusaetzlich eine
+    Liste protokollierter Abweichungen (fuer Process-Guard-Sichtbarkeit)
+    zurueck: (findings_mit_disposition, deviations).
+
+    Nutzt einen gemeinsamen Cache je (rule, type), damit identische
+    Findings innerhalb EINES Review-Laufs nicht mehrfach dieselbe
+    Wiederholungs-Suche (gh-Aufruf) ausloesen.
+    """
+    deviations = []
+    repeat_cache: dict = {}
+    for finding in findings:
+        result = resolve_disposition_heuristic(finding, repo, _repeat_cache=repeat_cache)
+        finding["disposition"] = result["disposition"]
+        if result["repeat_count"]:
+            finding["_heuristic_repeat_count"] = result["repeat_count"]
+        if result["deviated"]:
+            deviations.append({
+                "type": finding.get("type", "unknown"),
+                "rule": finding.get("rule", "R-??"),
+                "reasoning": result["reasoning"],
+            })
+    return findings, deviations
 
 
 def _format_pr_comment(finding: dict) -> str:
@@ -270,30 +448,64 @@ def create_github_issues_for_findings(
                 f"### Begründung\n\n{reasoning}\n"
             )
         elif disposition == "systemic_issue":
-            # Titel folgt bewusst dem EPIC-Nomenklaturschema (nicht
-            # REVIEW-FINDING), da der Process-Guard-Issue-Checker
-            # (agents/process_guard/issue_checker.py) jeden Titel mit dem
-            # Praefix "REVIEW-FINDING:" als Typ 'review_finding' erkennt und
-            # dafuer zwingend das Label 'review-finding' verlangt - das
-            # systemische Problem ist aber kein einzelnes Finding, sondern ein
-            # neuer Epic-/Verbesserungs-Issue.
-            title = f"[{finding_id}] EPIC: {ftype} (systemisches Problem, {severity})"
-            labels = (
-                ["epic"]
-                if finding.get("recurring_scope") == "multiple"
-                else ["epic", "enhancement"]
-            )
-            body = (
-                f"## Wiederkehrendes systemisches Problem (aus Review von {story_id})\n\n"
-                f"**Finding-ID:** {finding_id}  \n"
-                f"**Source-Story:** {story_id}  \n"
-                f"**Typ:** {ftype}  \n"
-                f"**Schwere:** {severity}  \n"
-                f"**Regel:** {rule}  \n"
-                f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
-                f"### Problem\n\n{detail}\n\n"
-                f"### Begründung\n\n{reasoning}\n"
-            )
+            repeat_count = finding.get("_heuristic_repeat_count")
+            if repeat_count:
+                # TARA-0115: Automatisiert erkannte Wiederholung (>=1x
+                # zuvor aufgetreten) - PO-Entscheidung: hierfuer wird KEIN
+                # Epic angelegt, sondern eine STORY, die den Harness
+                # gezielt auf Prozessluecken bzgl. wiederholter Findings
+                # ueberprueft (nicht nur das Symptom selbst behebt).
+                title = (
+                    f"[{finding_id}] STORY: Prozessluecken-Ueberpruefung - "
+                    f"{ftype} wiederholt aufgetreten ({repeat_count}x zuvor)"
+                )
+                labels = ["story"]
+                body = (
+                    f"## Automatisiert erkannte Wiederholung eines Findings "
+                    f"(aus Review von {story_id})\n\n"
+                    f"**Finding-ID:** {finding_id}  \n"
+                    f"**Source-Story:** {story_id}  \n"
+                    f"**Typ:** {ftype}  \n"
+                    f"**Schwere:** {severity}  \n"
+                    f"**Regel:** {rule}  \n"
+                    f"**Vorherige Vorkommen:** {repeat_count}  \n"
+                    f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
+                    f"### Problem\n\n{detail}\n\n"
+                    f"### Auftrag (PO-Entscheidung, TARA-0115)\n\n"
+                    "Dieses Finding ist bereits mehrfach aufgetreten. Statt nur das "
+                    "Symptom erneut zu melden, soll diese Story den Entwicklungsharness "
+                    "(Dev-Agent/Process-Guard/Review-Agent) gezielt auf Prozessluecken "
+                    "untersuchen, die das wiederholte Auftreten begünstigen, und "
+                    "Gegenmassnahmen vorschlagen.\n\n"
+                    f"### Begründung\n\n{reasoning}\n"
+                )
+            else:
+                # Manuell/selbst zugeordnetes systemisches Problem (wie in
+                # TARA-0114 eingefuehrt): Titel folgt bewusst dem
+                # EPIC-Nomenklaturschema (nicht REVIEW-FINDING), da der
+                # Process-Guard-Issue-Checker
+                # (agents/process_guard/issue_checker.py) jeden Titel mit dem
+                # Praefix "REVIEW-FINDING:" als Typ 'review_finding' erkennt
+                # und dafuer zwingend das Label 'review-finding' verlangt -
+                # das systemische Problem ist aber kein einzelnes Finding,
+                # sondern ein neuer Epic-/Verbesserungs-Issue.
+                title = f"[{finding_id}] EPIC: {ftype} (systemisches Problem, {severity})"
+                labels = (
+                    ["epic"]
+                    if finding.get("recurring_scope") == "multiple"
+                    else ["epic", "enhancement"]
+                )
+                body = (
+                    f"## Wiederkehrendes systemisches Problem (aus Review von {story_id})\n\n"
+                    f"**Finding-ID:** {finding_id}  \n"
+                    f"**Source-Story:** {story_id}  \n"
+                    f"**Typ:** {ftype}  \n"
+                    f"**Schwere:** {severity}  \n"
+                    f"**Regel:** {rule}  \n"
+                    f"**Datei:** `{file_path}` (Zeile {line_no})\n\n"
+                    f"### Problem\n\n{detail}\n\n"
+                    f"### Begründung\n\n{reasoning}\n"
+                )
         else:  # finding_issue (Standardfall, wie vor TARA-0114)
             title = f"[{finding_id}] REVIEW-FINDING: {ftype} ({severity})"
             labels = ["review-finding", "sp:1"]
