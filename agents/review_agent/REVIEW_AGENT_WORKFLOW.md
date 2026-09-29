@@ -219,9 +219,11 @@ respektiert dieses Feld:
 - `backlog_story`: Issue mit Label `story` (kein `review-finding`-Label,
   Titelformat `[TARA-XXXX] STORY: ...`), referenziert die Source-Story als
   Ursprung, aber **nicht** als blockierendes Finding.
-- `systemic_issue`: Issue mit Label `epic` (bei mehreren betroffenen
-  Komponenten) oder `enhancement` (bei einem einzelnen wiederkehrenden
-  Muster).
+- `systemic_issue`: Issue im Titelformat `[TARA-XXXX] EPIC: ...` (nicht
+  `REVIEW-FINDING:`, da der Process-Guard-Issue-Checker diesen Praefix
+  zwingend an das Label `review-finding` koppelt) mit Label `epic` (bei
+  mehreren betroffenen Komponenten) bzw. zusaetzlich `enhancement` (bei
+  einem einzelnen wiederkehrenden Muster).
 
 **Interim-Regelung (PO-Entscheidung, TARA-0114):** Für die erste Umsetzung
 setzt der Review-Agent `disposition` per **Selbsteinschaetzung** (analog zur

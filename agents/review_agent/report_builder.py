@@ -181,7 +181,7 @@ def _resolve_disposition(finding: dict) -> str | None:
     (kein Eintrag, wie vor TARA-0114).
     """
     disposition = finding.get("disposition")
-    if disposition in DISPOSITIONS:
+    if isinstance(disposition, str) and disposition in DISPOSITIONS:
         return disposition
     severity = finding.get("severity", "Niedrig")
     if SEVERITY_LEVELS.get(severity, 1) >= SEVERITY_LEVELS["Mittel"]:
@@ -270,8 +270,19 @@ def create_github_issues_for_findings(
                 f"### Begründung\n\n{reasoning}\n"
             )
         elif disposition == "systemic_issue":
-            title = f"[{finding_id}] REVIEW-FINDING: {ftype} (systemisch, {severity})"
-            labels = ["epic"] if finding.get("recurring_scope") == "multiple" else ["enhancement"]
+            # Titel folgt bewusst dem EPIC-Nomenklaturschema (nicht
+            # REVIEW-FINDING), da der Process-Guard-Issue-Checker
+            # (agents/process_guard/issue_checker.py) jeden Titel mit dem
+            # Praefix "REVIEW-FINDING:" als Typ 'review_finding' erkennt und
+            # dafuer zwingend das Label 'review-finding' verlangt - das
+            # systemische Problem ist aber kein einzelnes Finding, sondern ein
+            # neuer Epic-/Verbesserungs-Issue.
+            title = f"[{finding_id}] EPIC: {ftype} (systemisches Problem, {severity})"
+            labels = (
+                ["epic"]
+                if finding.get("recurring_scope") == "multiple"
+                else ["epic", "enhancement"]
+            )
             body = (
                 f"## Wiederkehrendes systemisches Problem (aus Review von {story_id})\n\n"
                 f"**Finding-ID:** {finding_id}  \n"
