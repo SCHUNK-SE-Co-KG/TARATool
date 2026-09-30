@@ -32,7 +32,9 @@ main          â† Stable Release (nur via PR aus Development)
 [Product Owner gibt Story frei]
         |
 Schritt 1 - Setup
-  * Status -> "In Progress"  (Board-Status via scripts/set_story_status.py)
+  * Status -> "In Progress"  (TARA-0117, P-18: via
+    `gh workflow run transition.yml -f story=TARA-XXXX -f to="In Progress"`,
+    NICHT mehr direkt via scripts/set_story_status.py)
   * Branch anlegen: git checkout -b feature/TARA-XXXX-kurzbeschreibung
 
         |
@@ -70,7 +72,8 @@ Schritt 4 - Vor dem Green-Commit (Pflicht-Checks)
 
         |
 Schritt 5 - Review
-  * Status -> "inReview"
+  * Status -> "inReview"  (TARA-0117, P-18: via
+    `gh workflow run transition.yml -f story=TARA-XXXX -f to=inReview -f head_sha=<SHA>`)
   * PR auf Development oeffnen
   * Review-Agent aktivieren (siehe agents/review_agent/REVIEW_AGENT_WORKFLOW.md)
   * Findings beheben oder als Backlog-Items anlegen

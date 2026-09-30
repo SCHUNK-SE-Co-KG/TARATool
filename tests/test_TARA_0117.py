@@ -190,7 +190,7 @@ def test_set_story_status_delegates_mutation_to_transition_engine():
 
 def test_post_merge_workflow_deletes_branch():
     text = POST_MERGE_WORKFLOW.read_text(encoding="utf-8")
-    assert "delete-branch" in text.lower() or "deleteRef" in text
+    assert "git/refs/heads" in text and "DELETE" in text
 
 
 # ---------------------------------------------------------------------------
