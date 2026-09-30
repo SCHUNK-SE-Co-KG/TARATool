@@ -190,7 +190,13 @@ def run_transition(
 
 
 def _run_gh(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
-    return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+    # Bugfix (Windows): ohne explizites encoding="utf-8" faellt subprocess auf
+    # die lokale Konsolen-Codepage (z.B. cp1252) zurueck, was bei UTF-8-Inhalt
+    # (z.B. Umlaute in Issue-Titeln) mit UnicodeDecodeError abbricht und
+    # result.stdout als None zurueckliefert.
+    return subprocess.run(
+        ["gh", *args], capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace"
+    )
 
 
 def fetch_item_via_gh(tara_id: str) -> Optional[Dict[str, Any]]:
