@@ -134,6 +134,25 @@ def test_run_transition_failure_does_not_mutate_but_posts_violation():
     assert calls == [("violation", 999, msg)]
 
 
+def test_run_transition_success_but_comment_fails_surfaces_warning():
+    """Review-Finding (Mittel): Mutation erfolgreich, Audit-Kommentar (P-20)
+    schlaegt fehl -> darf NICHT als reines "OK" verschwinden, sonst geht der
+    Nachweis der Nachvollziehbarkeit unbemerkt verloren."""
+    item = _make_item("PO Accepted")
+    ok, msg = te.run_transition(
+        "TARA-9999",
+        "In Progress",
+        None,
+        fetch_item=lambda tid: item,
+        mutate_status=lambda *a: True,
+        post_comment=lambda *a: False,
+        post_process_violation=lambda *a: True,
+    )
+    assert ok, "Status-Mutation selbst war erfolgreich, muss weiterhin ok=True liefern"
+    assert "Audit-Kommentar" in msg
+    assert "NICHT" in msg
+
+
 def test_run_transition_unknown_item_fails_without_side_effects():
     calls = []
     ok, msg = te.run_transition(

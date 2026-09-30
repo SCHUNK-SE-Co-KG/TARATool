@@ -166,8 +166,20 @@ def run_transition(
         return False, f"FAIL: Board-Mutation fuer {tara_id} -> {to_status} fehlgeschlagen."
 
     issue_number = item.get("issue_number")
+    comment_posted = True
     if issue_number:
-        post_comment(issue_number, build_audit_comment(to_status, head_sha))
+        comment_posted = post_comment(issue_number, build_audit_comment(to_status, head_sha))
+
+    if not comment_posted:
+        # Review-Finding (Mittel): Status-Mutation war erfolgreich, aber der
+        # Audit-Trail-Kommentar (P-20) konnte nicht gepostet werden - das
+        # MUSS sichtbar bleiben statt als "OK" durchzugehen, sonst faellt
+        # der Nachweis der Nachvollziehbarkeit unbemerkt weg.
+        return (
+            True,
+            f"OK (mit Warnung): {tara_id} -> {to_status} gesetzt, "
+            f"Audit-Kommentar auf Issue #{issue_number} konnte NICHT gepostet werden.",
+        )
 
     return True, f"OK: {tara_id} -> {to_status}"
 

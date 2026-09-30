@@ -39,10 +39,19 @@ jobs:
       - name: Board-Uebergang pruefen und setzen
         env:
           GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          # Sicherheit (Review-Finding, Hoch): workflow_dispatch-Inputs
+          # NICHT direkt per ${{ }} in den Skript-Body interpolieren
+          # (Script-Injection-Risiko, da GH Actions dies als reine
+          # Textersetzung VOR der Shell-Ausfuehrung durchfuehrt). Stattdessen
+          # ueber env: durchreichen und als gequotete Shell-Variable nutzen.
+          STORY_INPUT: ${{ github.event.inputs.story }}
+          TO_INPUT: ${{ github.event.inputs.to }}
+          HEAD_SHA_INPUT: ${{ github.event.inputs.head_sha }}
+          REPO_INPUT: ${{ github.repository }}
         run: |
           chmod +x scripts/workflow/transition.sh
           ./scripts/workflow/transition.sh \
-            --story "${{ github.event.inputs.story }}" \
-            --to "${{ github.event.inputs.to }}" \
-            --head-sha "${{ github.event.inputs.head_sha }}" \
-            --repo "${{ github.repository }}"
+            --story "$STORY_INPUT" \
+            --to "$TO_INPUT" \
+            --head-sha "$HEAD_SHA_INPUT" \
+            --repo "$REPO_INPUT"
