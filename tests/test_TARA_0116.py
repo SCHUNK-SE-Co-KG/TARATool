@@ -125,6 +125,44 @@ def test_audit_trail_example_and_p01_unchanged():
     assert "TARA-ID in jeder Chat-Antwort" in process_guard_doc
 
 
+def test_generator_fails_hard_when_expected_marker_is_missing(tmp_path):
+    """R-34-Regressionsschutz: fehlt in einer Zieldatei ein dort erwarteter
+    Marker (z.B. versehentlich geloescht oder END-Tag umbenannt), darf der
+    Generator dies NIEMALS als 'kein Drift' werten, sondern muss hart
+    fehlschlagen (Returncode != 0/1, mit erklaerender Fehlermeldung)."""
+    sys.path.insert(0, str(GENERATOR_SCRIPT.parent))
+    broken_file = tmp_path / "broken_missing.md"
+    broken_pair_file = tmp_path / "broken_pair.md"
+    try:
+        import generate_process_docs as gpd
+
+        data = gpd.load_definition()
+
+        # Fall 1: Marker fehlt komplett.
+        text_missing = "# Doku ohne jeglichen Marker\n"
+        broken_file.write_text(text_missing, encoding="utf-8")
+        gpd.EXPECTED_MARKERS[broken_file] = {"process-rules-table"}
+        with pytest.raises(gpd.MissingMarkerError):
+            gpd.process_file(broken_file, data, check_only=True)
+
+        # Fall 2: START-Tag vorhanden, END-Tag durch Tippfehler umbenannt.
+        text_broken_pair = (
+            "<!-- GENERATED:process-rules-table:START (docs/process_definition.yml, "
+            "scripts/process_guard/generate_process_docs.py) -->\nalt\n"
+            "<!-- GENERATED:process-rules-tablee:END -->\n"
+        )
+        broken_pair_file.write_text(text_broken_pair, encoding="utf-8")
+        gpd.EXPECTED_MARKERS[broken_pair_file] = {"process-rules-table"}
+        with pytest.raises(gpd.MissingMarkerError):
+            gpd.process_file(broken_pair_file, data, check_only=True)
+    finally:
+        if "gpd" in dir():
+            gpd.EXPECTED_MARKERS.pop(broken_file, None)
+            gpd.EXPECTED_MARKERS.pop(broken_pair_file, None)
+        sys.path.remove(str(GENERATOR_SCRIPT.parent))
+        sys.modules.pop("generate_process_docs", None)
+
+
 def test_process_violation_and_review_finding_labels_documented_distinctly():
     """PO-Entscheidung Frage 2: 'process-violation' (Process Guard) und
     'review-finding' (Review-Agent) muessen in beiden Agenten-Dokumenten klar

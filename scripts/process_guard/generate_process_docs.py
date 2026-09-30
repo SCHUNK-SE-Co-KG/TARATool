@@ -32,6 +32,21 @@ PROCESS_GUARD_AGENT = REPO_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AG
 REVIEW_AGENT_WORKFLOW = REPO_ROOT / "agents" / "review_agent" / "REVIEW_AGENT_WORKFLOW.md"
 COPILOT_INSTRUCTIONS = REPO_ROOT / ".github" / "copilot-instructions.md"
 
+# Pro Zieldatei die dort erwarteten Marker-Namen (R-34: fehlende/umbenannte
+# Marker duerfen NIE als "kein Drift" durchgehen, sondern muessen hart
+# fehlschlagen).
+EXPECTED_MARKERS = {
+    DEV_AGENT_ONBOARDING: {"rule-range", "process-rules-table"},
+    PROCESS_GUARD_AGENT: {"process-rules-table"},
+    REVIEW_AGENT_WORKFLOW: {"review-rules-table"},
+    COPILOT_INSTRUCTIONS: {"rule-range"},
+}
+
+
+class MissingMarkerError(RuntimeError):
+    """Wird ausgeloest, wenn ein fuer eine Datei erwarteter Marker fehlt oder
+    ein START/END-Markerpaar nicht zusammenpasst (z.B. Tippfehler)."""
+
 MARKER_START = "<!-- GENERATED:{name}:START (docs/process_definition.yml, scripts/process_guard/generate_process_docs.py) -->"
 MARKER_END = "<!-- GENERATED:{name}:END -->"
 
@@ -144,10 +159,48 @@ def apply_generators(text: str, data: dict) -> tuple[str, list[str]]:
     return text, applied
 
 
+def _display_path(path: Path) -> str:
+    """Formatiert einen Pfad relativ zum Repo-Root, falls moeglich (sonst
+    absolut) - z.B. fuer Testdateien ausserhalb des Repos."""
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def _check_expected_markers(path: Path, original: str, applied: list[str]) -> None:
+    """R-34: fehlende oder kaputte Marker duerfen niemals als 'kein Drift'
+    durchgehen. Prueft explizit, dass jeder fuer diese Datei erwartete Marker
+    tatsaechlich (mind. einmal) angewendet wurde."""
+    expected = EXPECTED_MARKERS.get(path, set())
+    missing = expected - set(applied)
+    if not missing:
+        return
+    details = []
+    for name in sorted(missing):
+        start_token = MARKER_START.format(name=name)
+        end_token = MARKER_END.format(name=name)
+        if start_token not in original:
+            details.append(f"'{name}': Marker fehlt komplett (kein START-Tag gefunden)")
+        elif end_token not in original:
+            details.append(f"'{name}': START-Tag vorhanden, aber END-Tag fehlt/ist umbenannt")
+        else:
+            details.append(f"'{name}': START/END vorhanden, aber Ersetzung fehlgeschlagen")
+    raise MissingMarkerError(
+        f"{_display_path(path)}: erwartete Marker fehlen oder sind defekt -> " + "; ".join(details)
+    )
+
+
 def process_file(path: Path, data: dict, check_only: bool) -> bool:
-    """Gibt True zurueck, wenn Drift gefunden wurde (nur relevant bei check_only)."""
+    """Gibt True zurueck, wenn Drift gefunden wurde (nur relevant bei check_only).
+
+    Wirft MissingMarkerError (statt still 'kein Drift' zu melden), wenn ein
+    fuer diese Datei erwarteter Marker fehlt oder ein START/END-Paar nicht
+    zusammenpasst - siehe R-34.
+    """
     original = path.read_text(encoding="utf-8")
     updated, applied = apply_generators(original, data)
+    _check_expected_markers(path, original, applied)
     if not applied:
         return False
     updated = format_with_prettier(path.relative_to(REPO_ROOT), updated)
@@ -171,9 +224,13 @@ def main() -> int:
     targets = [DEV_AGENT_ONBOARDING, PROCESS_GUARD_AGENT, REVIEW_AGENT_WORKFLOW, COPILOT_INSTRUCTIONS]
 
     drift_found = False
-    for target in targets:
-        if process_file(target, data, check_only=args.check):
-            drift_found = True
+    try:
+        for target in targets:
+            if process_file(target, data, check_only=args.check):
+                drift_found = True
+    except MissingMarkerError as exc:
+        print(f"FEHLER: {exc}", file=sys.stderr)
+        return 2
 
     if args.check:
         if drift_found:
