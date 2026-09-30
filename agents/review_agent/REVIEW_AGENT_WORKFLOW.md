@@ -4,20 +4,26 @@
 
 ---
 
-## Ãœberblick
+## Überblick
 
-Der Review-Agent ist ein separater Copilot-Sub-Agent. Er prüft Ã„nderungen **unabhängig vom Dev-Agent** und kommuniziert ausschlieÃŸlich über GitHub Issues (Label: `review-finding`).
+Der Review-Agent ist ein separater Copilot-Sub-Agent. Er prüft Änderungen **unabhängig vom Dev-Agent** und kommuniziert ausschließlich über GitHub Issues (Label: `review-finding`).
+
+> **Abgrenzung zu `process-violation` (TARA-0116):** `review-finding` ist
+> ausschliesslich fuer inhaltliche Review-Agent-Findings (R-01 bis R-36)
+> reserviert. Deterministisch vom Process Guard festgestellte Regelverstoesse
+> (P-01 bis P-27) erhalten stattdessen das eigene Label `process-violation`
+> (siehe `agents/process_guard/PROCESS_GUARD_AGENT.md`).
 
 ```
 Dev-Agent implementiert Story
-        â†“
-Dev-Agent setzt Item auf "Review" und aktiviert Review-Agent
-        â†“
+        ↓
+Dev-Agent setzt Item auf "inReview" und aktiviert Review-Agent
+        ↓
 Review-Agent analysiert Diff / geänderte Dateien
-        â†“
+        ↓
 Review-Agent öffnet GitHub Issues mit Label review-finding
-        â†“
-Dev-Agent sieht Findings als Issues im Board â€“ kein direkter Dialog
+        ↓
+Dev-Agent sieht Findings als Issues im Board – kein direkter Dialog
 ```
 
 ---
@@ -77,38 +83,48 @@ python agents/review_agent/runtime_scanner.py \
 
 ## Prüfkatalog
 
-| #    | Bereich     | Prüfung                                                                          |
-| ---- | ----------- | -------------------------------------------------------------------------------- |
-| R-01 | Korrektheit | Alle Akzeptanzkriterien der Story erfüllt                                        |
-| R-02 | Korrektheit | Keine offensichtlichen Logikfehler, Edge Cases behandelt                         |
-| R-03 | Architektur | IIFE-Pattern korrekt (nur Dateien mit internem State)                            |
-| R-04 | Architektur | `_`-Prefix für intern konzipierte Funktionen                                     |
-| R-05 | Architektur | Nur `document.getElementById()`, kein `window.elementId`                         |
-| R-06 | Architektur | Script-Ladereihenfolge in `index.html` eingehalten                               |
-| R-07 | Sicherheit  | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash                                     |
-| R-08 | Sicherheit  | Kein `eval()`, keine unsichere DOM-Manipulation                                  |
-| R-09 | Tests       | Alle bestehenden Tests weiterhin grün                                            |
-| R-10 | Tests       | Neue Funktionalität durch Story-Tests abgedeckt (TDD)                            |
-| R-11 | Qualität    | Kein duplizierter Code (DRY)                                                     |
-| R-12 | Qualität    | Keine auskommentierten Code-Blöcke                                               |
-| R-13 | Runtime     | Konsolen-Fehler und -Warnungen erfasst (TARA-0040)                               |
-| R-14 | Runtime     | Fehlgeschlagene Netzwerkaufrufe erkannt (TARA-0041)                              |
-| R-15 | Runtime     | DOM-Zustand und Event-Listener-Leaks geprüft (TARA-0042)                         |
-| R-16 | Runtime     | localStorage, sessionStorage, Cookies analysiert (TARA-0043)                     |
-| R-17 | Runtime     | Performance-Timing und Speicherentwicklung gemessen (TARA-0044)                  |
-| R-18 | Runtime     | Accessibility-Tree auf ARIA-Verletzungen geprüft (TARA-0045)                     |
-| R-19 | Runtime     | CSP-Verletzungen und unbehandelte Promise-Rejections erfasst (TARA-0046)         |
-| R-20 | Runtime     | Service-Worker-Verhalten und Cross-Origin-Kommunikation überwacht (TARA-0047)    |
-| R-21 | Runtime     | Browser-Berechtigungen inventarisiert (TARA-0048)                                |
-| R-22 | Sicherheit  | DOM-XSS-Sinks erkannt â€“ innerHTML, document.write etc. (TARA-0050)             |
-| R-23 | Sicherheit  | HTML-Injection in dynamisch gerenderte Inhalte geprüft (TARA-0051)               |
-| R-24 | Sicherheit  | Ressourcen-Manipulation via script/link src geprüft (TARA-0051)                  |
-| R-25 | Sicherheit  | eval()/Function()-Aufrufe zur Laufzeit erkannt (TARA-0052)                       |
-| R-26 | Sicherheit  | CORS-Header auf Wildcard + Credentials geprüft (TARA-0053)                       |
-| R-27 | Sicherheit  | Clickjacking-Schutz (X-Frame-Options / CSP frame-ancestors) geprüft (TARA-0054)  |
-| R-28 | Sicherheit  | Reverse-Tabnabbing â€“ target=_blank ohne noopener erkannt (TARA-0054)           |
-| R-29 | Sicherheit  | Storage-Deep-Scan: sensible Schlüssel in localStorage/sessionStorage (TARA-0055) |
-| R-30 | Sicherheit  | XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055)                  |
+<!-- GENERATED:review-rules-table:START (docs/process_definition.yml, scripts/process_guard/generate_process_docs.py) -->
+
+| Regel | Kategorie      | Beschreibung                                                                                                                                                                           |
+| ----- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-01  | Korrektheit    | Alle Akzeptanzkriterien der Story erfüllt                                                                                                                                              |
+| R-02  | Korrektheit    | Keine offensichtlichen Logikfehler, Edge Cases behandelt                                                                                                                               |
+| R-03  | Architektur    | IIFE-Pattern korrekt (nur Dateien mit internem State)                                                                                                                                  |
+| R-04  | Architektur    | `_`-Prefix für intern konzipierte Funktionen                                                                                                                                           |
+| R-05  | Architektur    | Nur `document.getElementById()`, kein `window.elementId`                                                                                                                               |
+| R-06  | Architektur    | Script-Ladereihenfolge in `index.html` eingehalten                                                                                                                                     |
+| R-07  | Sicherheit     | Keine neuen CDN-Abhängigkeiten ohne SRI-Hash                                                                                                                                           |
+| R-08  | Sicherheit     | Kein `eval()`, keine unsichere DOM-Manipulation                                                                                                                                        |
+| R-09  | Tests          | Alle bestehenden Tests weiterhin grün                                                                                                                                                  |
+| R-10  | Tests          | Neue Funktionalität durch Story-Tests abgedeckt (TDD)                                                                                                                                  |
+| R-11  | Qualität       | Kein duplizierter Code (DRY)                                                                                                                                                           |
+| R-12  | Qualität       | Keine auskommentierten Code-Blöcke                                                                                                                                                     |
+| R-13  | Runtime        | Konsolen-Fehler und -Warnungen erfasst (TARA-0040)                                                                                                                                     |
+| R-14  | Runtime        | Fehlgeschlagene Netzwerkaufrufe erkannt (TARA-0041)                                                                                                                                    |
+| R-15  | Runtime        | DOM-Zustand und Event-Listener-Leaks geprüft (TARA-0042)                                                                                                                               |
+| R-16  | Runtime        | localStorage, sessionStorage, Cookies analysiert (TARA-0043)                                                                                                                           |
+| R-17  | Runtime        | Performance-Timing und Speicherentwicklung gemessen (TARA-0044)                                                                                                                        |
+| R-18  | Runtime        | Accessibility-Tree auf ARIA-Verletzungen geprüft (TARA-0045)                                                                                                                           |
+| R-19  | Runtime        | CSP-Verletzungen und unbehandelte Promise-Rejections erfasst (TARA-0046)                                                                                                               |
+| R-20  | Runtime        | Service-Worker-Verhalten und Cross-Origin-Kommunikation überwacht (TARA-0047)                                                                                                          |
+| R-21  | Runtime        | Browser-Berechtigungen inventarisiert (TARA-0048)                                                                                                                                      |
+| R-22  | Sicherheit     | DOM-XSS-Sinks erkannt – innerHTML, document.write etc. (TARA-0050)                                                                                                                     |
+| R-23  | Sicherheit     | HTML-Injection in dynamisch gerenderte Inhalte geprüft (TARA-0051)                                                                                                                     |
+| R-24  | Sicherheit     | Ressourcen-Manipulation via script/link src geprüft (TARA-0051)                                                                                                                        |
+| R-25  | Sicherheit     | eval()/Function()-Aufrufe zur Laufzeit erkannt (TARA-0052)                                                                                                                             |
+| R-26  | Sicherheit     | CORS-Header auf Wildcard + Credentials geprüft (TARA-0053)                                                                                                                             |
+| R-27  | Sicherheit     | Clickjacking-Schutz (X-Frame-Options / CSP frame-ancestors) geprüft (TARA-0054)                                                                                                        |
+| R-28  | Sicherheit     | Reverse-Tabnabbing – target=_blank ohne noopener erkannt (TARA-0054)                                                                                                                   |
+| R-29  | Sicherheit     | Storage-Deep-Scan: sensible Schlüssel in localStorage/sessionStorage (TARA-0055)                                                                                                       |
+| R-30  | Sicherheit     | XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055)                                                                                                                        |
+| R-31  | Sicherheit     | GitHub-Actions Script-Injection: keine `${{ github.event.*.body/title }}`-Interpolation direkt in `run:`-Blöcken, stattdessen `env:`                                                   |
+| R-32  | Qualität       | Fehlendes Error-Handling um externe API-/GraphQL-Aufrufe in Workflows/Skripten (kein unkontrollierter Crash/Abbruch)                                                                   |
+| R-33  | Qualität       | Regex-/Parsing-Robustheit (Wortgrenzen, Gross-/Kleinschreibung, Vergangenheitsformen, Negation) bei Text-Verarbeitung in Automatisierung                                               |
+| R-34  | Architektur    | Stille Bypässe: fehlende Felder/Werte dürfen nicht automatisch als "OK"/bestanden gewertet werden (sicherheitshalber FAIL statt stillem PASS)                                          |
+| R-35  | Kompatibilität | Datenmigration und Rückwärtskompatibilität: `localStorage`-Schemaänderungen dürfen bestehende gespeicherte Analysen nicht unlesbar machen (Migrationspfad oder Versionsfeld vorhanden) |
+| R-36  | Abhängigkeiten | Neue/geänderte npm- oder pip-Abhängigkeiten: Lizenzkompatibilität geprüft, keine unerwarteten transitiven Abhängigkeiten mit inkompatibler Lizenz                                      |
+
+<!-- GENERATED:review-rules-table:END -->
 
 ### Erweiterter Prüfkatalog für Nicht-Browser-Code (TARA-0102)
 
@@ -117,13 +133,6 @@ GitHub-Actions-Workflows, Bash- und Python-Automatisierungsskripten
 (`agents/`, `scripts/`, `.github/workflows/`) werden zusaetzlich gegen die
 folgenden Regeln geprueft — genau diese Kategorie war die Quelle der Findings
 TARA-0090 bis TARA-0099, die vom bisherigen Katalog nicht erfasst wurden:
-
-| #    | Bereich     | Prüfung                                                                                                                                       |
-| ---- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| R-31 | Sicherheit  | GitHub-Actions Script-Injection: keine `${{ github.event.*.body/title }}`-Interpolation direkt in `run:`-Blöcken, stattdessen `env:`          |
-| R-32 | Qualität    | Fehlendes Error-Handling um externe API-/GraphQL-Aufrufe in Workflows/Skripten (kein unkontrollierter Crash/Abbruch)                          |
-| R-33 | Qualität    | Regex-/Parsing-Robustheit (Wortgrenzen, Gross-/Kleinschreibung, Vergangenheitsformen, Negation) bei Text-Verarbeitung in Automatisierung      |
-| R-34 | Architektur | Stille Bypässe: fehlende Felder/Werte dürfen nicht automatisch als "OK"/bestanden gewertet werden (sicherheitshalber FAIL statt stillem PASS) |
 
 ### Priorisierte neue Reviewdimensionen (TARA-0114)
 
@@ -134,11 +143,6 @@ Performance-Budget, Barrierefreiheit-Semantik). Die PO-Rückmeldung war,
 zunächst nur die beiden für TARATool als reines Browser-Tool relevantesten
 Dimensionen. Weitere Dimensionen aus der Story können in Folge-Stories
 schrittweise als weitere R-Regeln ergänzt werden.
-
-| #    | Bereich        | Prüfung                                                                                                                                                                                |
-| ---- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R-35 | Kompatibilität | Datenmigration und Rückwärtskompatibilität: `localStorage`-Schemaänderungen dürfen bestehende gespeicherte Analysen nicht unlesbar machen (Migrationspfad oder Versionsfeld vorhanden) |
-| R-36 | Abhängigkeiten | Neue/geänderte npm- oder pip-Abhängigkeiten: Lizenzkompatibilität geprüft, keine unerwarteten transitiven Abhängigkeiten mit inkompatibler Lizenz                                      |
 
 ---
 

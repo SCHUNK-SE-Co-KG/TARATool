@@ -21,6 +21,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: TARA-0116 – Prozessdoku-Konsistenz (process_definition.yml)
+        run: |
+          pip install PyYAML --quiet
+          python3 scripts/process_guard/generate_process_docs.py --check
+
       - name: P-19 – Kein automatisches Issue-Schliessen im PR-Body
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
