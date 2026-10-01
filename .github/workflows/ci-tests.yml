@@ -30,6 +30,7 @@ jobs:
         run: |
           pip install pytest pytest-timeout --quiet
           [ -f requirements.txt ] && pip install -r requirements.txt --quiet || true
+          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet || true
 
       - name: Node.js einrichten (fuer ESLint/Prettier Tests)
         uses: actions/setup-node@v4
