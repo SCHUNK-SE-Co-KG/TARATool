@@ -35,6 +35,29 @@ Alle Commits, PRs und Board-Operationen erfolgen ausschliesslich auf `SCHUNK-SE-
 
 ---
 
+## Vier-Ebenen-Modell (seit TARA-0119)
+
+Prozesswissen in diesem Repository ist bewusst auf vier Ebenen verteilt,
+um Wiederverwendbarkeit, Testbarkeit und Wartung einzeln voneinander zu
+ermoeglichen. Keine Ebene dupliziert den Inhalt einer anderen Ebene -
+jede verweist stattdessen auf die zustaendige Quelle:
+
+| Ebene | Pfad | Inhalt |
+|-------|------|--------|
+| **Instructions** | `.github/copilot-instructions.md` (diese Datei) | Dauerhafte, universelle Regeln (P-01 bis P-27), Freigabe-Bedingungen |
+| **Skills** | `.github/skills/*/SKILL.md` | Wiederholbare Vorgehensweisen (Schritt-fuer-Schritt-Anleitungen fuer wiederkehrende Aufgaben, z.B. TDD-Entwicklung, Code-Review, Release) |
+| **Agents** | `agents/*/*.md` | Rolle, Rechte und Verantwortungsgrenzen (wer darf was, wer entscheidet was nicht) |
+| **Actions/Skripte** | `.github/workflows/*`, `scripts/*` | Erzwingen Fakten und Zustandsuebergaenge (deterministisch, nicht LLM-basiert) |
+
+Verfuegbare Skills: `story-refinement`, `tdd-development`,
+`independent-code-review`, `security-review`, `acceptance-testing`,
+`release-readiness`. Jede `SKILL.md` folgt demselben Template (Zweck,
+Voraussetzungen, Schritte, Verifikation, Bezug zu Regeln/Stories) und
+verweist auf die zugehoerigen Regeln/Agents/Scripts, statt sie zu
+wiederholen.
+
+---
+
 ## Wer ist der Product Owner?
 
 Der PO ist der GitHub-User mit **Schreibrechten auf** `SCHUNK-SE-Co-KG/TARATool`.
