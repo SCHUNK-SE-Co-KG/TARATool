@@ -158,3 +158,44 @@ class TestConsistencyWithExistingRoles:
         )
         content = _read(review_agent_doc)
         assert "Unabhaengig" in content or "unabhaengig" in content.lower()
+
+    def test_requirements_agent_doc_does_not_claim_approval_authority(self):
+        """Die neue Requirements-Agent-Doku darf an keiner Stelle eine
+        fachliche Freigabebefugnis fuer sich beanspruchen - diese Formulierung
+        waere ein direkter Widerspruch zur PO-Entscheidung in Issue #189."""
+        content = _read(REQUIREMENTS_AGENT_DOC).lower()
+        forbidden_phrases = [
+            "requirements-agent gibt die freigabe",
+            "requirements-agent genehmigt",
+            "requirements-agent entscheidet ueber die freigabe",
+        ]
+        for phrase in forbidden_phrases:
+            assert phrase not in content, "Unzulaessige Formulierung gefunden: " + phrase
+        assert "keine fachliche freigabe" in content
+
+    def test_acceptance_agent_doc_does_not_claim_approval_authority(self):
+        """Die Acceptance-Agent-Doku darf keine eigene Freigabebefugnis
+        beanspruchen (PO-Entscheidung Issue #189: nur dokumentiert)."""
+        content = _read(ACCEPTANCE_AGENT_DOC).lower()
+        forbidden_phrases = [
+            "acceptance-agent entscheidet",
+            "acceptance-agent genehmigt",
+            "acceptance-agent gibt frei",
+        ]
+        for phrase in forbidden_phrases:
+            assert phrase not in content, "Unzulaessige Formulierung gefunden: " + phrase
+        assert (
+            "keine eigene freigabeentscheidung" in content
+            or "keine eigene freigabebefugnis" in content
+        )
+
+    def test_markdown_links_to_new_docs_are_well_formed(self):
+        """Regression gegen TARA-0118-Review-Finding: kaputte Markdown-Links
+        (z.B. fehlende/verrutschte Backticks) auf die neuen Agenten-Dateien."""
+        for doc_path in (ENTWICKLUNGSPROZESS_DOC, AGENTS_README, COPILOT_INSTRUCTIONS):
+            content = _read(doc_path)
+            well_formed = (
+                "`agents/requirements_agent/REQUIREMENTS_AGENT.md`" in content
+                or "requirements_agent/REQUIREMENTS_AGENT.md)" in content
+            )
+            assert well_formed, "Kein wohlgeformter Link/Codeblock in " + doc_path

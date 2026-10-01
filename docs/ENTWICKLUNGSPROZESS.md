@@ -215,7 +215,7 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 > **Optionaler Schritt -1 (seit TARA-0118): Requirements-Agent.** Bei
 > einer neuen, noch unstrukturierten Chat-Anforderung kann der PO vor
 > Schritt 0 den **Requirements-Agent** (separater Sub-Agent-Kontext,
-> siehe \gents/requirements_agent/REQUIREMENTS_AGENT.md\) aktivieren.
+> siehe `agents/requirements_agent/REQUIREMENTS_AGENT.md`) aktivieren.
 > Dieser erstellt/ergaenzt das Story-Issue (Akzeptanzkriterien, Scope/
 > Nicht-Scope, Abhaengigkeiten) und prueft die Definition-of-Ready-
 > Checkliste (Abschnitt 3). Der Requirements-Agent hat **keine
