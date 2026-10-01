@@ -9,58 +9,57 @@ die dedizierten, PO-gebundenen GitHub-Actions-Jobs (`check-po-accepted` /
 (nach erfolgreicher Pruefung von P-26/P-27). Ein Versuch, sie hier direkt
 zu setzen, wird deterministisch zurueckgewiesen.
 
+TARA-0117 (P-18): "In Progress" und "inReview" sind ebenfalls NICHT mehr
+ueber dieses Skript setzbar - diese beiden Uebergaenge liefen bisher OHNE
+jede Vorbedingungspruefung (der Dev-Agent haette hier jeden beliebigen
+Statuswechsel ausloesen koennen). Sie laufen jetzt ausschliesslich ueber
+die vorbedingungsgepruefte, atomare Transition-API
+(`scripts/workflow/transition_engine.py`), angestossen per
+`gh workflow run transition.yml -f story=<TARA-ID> -f to=<Status>
+-f head_sha=<SHA>` (.github/workflows/transition.yml). Die eigentliche
+GraphQL-Mutation wird ausschliesslich in transition_engine.py ausgefuehrt
+(kein Duplikat mehr hier) - siehe tests/test_TARA_0117.py,
+test_no_other_python_script_calls_the_mutation_directly.
+
 Der bisherige Status Blocking entfaellt (PO-Entscheidung, TARA-0121): die
 Options-ID wurde im Board zu "PO Release" umbenannt. Blockierte Items
 werden seitdem ueber das Issue-Label "blocked" markiert (Board-Status
 bleibt unveraendert), siehe `agents/review_agent/report_builder.py`.
 """
-import json, subprocess, sys, tempfile
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
-PO_GATED_STATUSES = ("PO Accepted", "PO Release")
+sys.path.insert(0, str(Path(__file__).resolve().parent / "workflow"))
+from transition_engine import STATUS_OPTION_IDS, mutate_status_via_gh  # noqa: E402
 
-def gql(q):
-    with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
-        tmp = f.name
-    subprocess.run(['gh','api','graphql','-f',f'query={q}'], stdout=open(tmp,'wb'), stderr=subprocess.PIPE)
-    d = json.loads(Path(tmp).read_bytes().decode('utf-8','ignore'))
-    Path(tmp).unlink(missing_ok=True)
-    return d
+PO_GATED_STATUSES = ("PO Accepted", "PO Release")
+TRANSITION_API_STATUSES = ("In Progress", "inReview")
+
+STATUS_SK = dict(STATUS_OPTION_IDS)
+STATUS_SK["Freigabe"] = STATUS_SK["Accepted"]  # historischer Alias, TARA-0110
+
 
 def fetch(cmd):
-    with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
         tmp = f.name
-    subprocess.run(cmd, stdout=open(tmp,'wb'), stderr=subprocess.PIPE)
-    d = json.loads(Path(tmp).read_bytes().decode('utf-8','ignore'))
+    subprocess.run(cmd, stdout=open(tmp, "wb"), stderr=subprocess.PIPE)
+    d = json.loads(Path(tmp).read_bytes().decode("utf-8", "ignore"))
     Path(tmp).unlink(missing_ok=True)
     return d
 
-def set_status(project_id, item_id, field_id, option_id, label):
-    q = (f'mutation {{ updateProjectV2ItemFieldValue(input: {{'
-         f' projectId: "{project_id}" itemId: "{item_id}"'
-         f' fieldId: "{field_id}" value: {{ singleSelectOptionId: "{option_id}" }}'
-         f' }}) {{ projectV2Item {{ id }} }} }}')
-    r = gql(q)
-    if "errors" in r:
-        print(f"  FAIL {label}: {r['errors'][0]['message']}")
-    else:
+
+def set_status(item_id, option_id, label):
+    if mutate_status_via_gh(item_id, option_id):
         print(f"  OK {label}")
+    else:
+        print(f"  FAIL {label}: Mutation fehlgeschlagen")
 
-SK = {"project":"PVT_kwDOBu4dv84BfbaR","field":"PVTSSF_lADOBu4dv84BfbaRzhZuYME"}
 
-STATUS_SK = {
-    "Todo": "f75ad846",
-    "PO Accepted": "d2d86c41",
-    "In Progress": "47fc9ee4",
-    "inReview": "2338665f",
-    "Freigabe": "d98e05b2",
-    "Accepted": "d98e05b2",
-    "PO Release": "a21de5e9",
-    "Done": "98236657",
-}
-
-tara_id = sys.argv[1]   # e.g. "0062"
-status  = sys.argv[2]   # e.g. "inReview"
+tara_id = sys.argv[1]  # e.g. "0062"
+status = sys.argv[2]  # e.g. "Accepted"
 
 if status in PO_GATED_STATUSES:
     print(
@@ -71,12 +70,23 @@ if status in PO_GATED_STATUSES:
     )
     sys.exit(1)
 
-sk_items = fetch(['gh','project','item-list','4','--owner','SCHUNK-SE-Co-KG','--format','json','--limit','100'])['items']
+if status in TRANSITION_API_STATUSES:
+    print(
+        f"FAIL: '{status}' darf nicht direkt ueber set_story_status.py gesetzt "
+        "werden (TARA-0117, P-18) - keine Vorbedingungspruefung hier. Stattdessen: "
+        f'gh workflow run transition.yml -f story=TARA-{tara_id} -f to="{status}" '
+        "-f head_sha=<SHA>"
+    )
+    sys.exit(1)
 
-sk = next((i for i in sk_items if tara_id in i.get('title','')), None)
+sk_items = fetch(
+    ["gh", "project", "item-list", "4", "--owner", "SCHUNK-SE-Co-KG", "--format", "json", "--limit", "100"]
+)["items"]
+
+sk = next((i for i in sk_items if tara_id in i.get("title", "")), None)
 
 if sk:
-    set_status(SK['project'], sk['id'], SK['field'], STATUS_SK[status], f"SK TARA-{tara_id} -> {status}")
+    set_status(sk["id"], STATUS_SK[status], f"SK TARA-{tara_id} -> {status}")
 else:
     print(f"SKIP TARA-{tara_id}: not on board")
 

@@ -1,0 +1,57 @@
+name: Transition (P-18, TARA-0117)
+
+# Zentrale, gebundene Board-Status-Transition-API. Ersetzt direkte,
+# unkontrollierte GraphQL-Mutationen durch den Dev-Agenten fuer die beiden
+# bisher NICHT automatisierten Uebergaenge "PO Accepted -> In Progress"
+# (P-02) und "In Progress -> inReview" (P-09).
+#
+# PO-Entscheidung (Issue #188, Frage 1): transition.sh/transition_engine.py
+# wird AUSSCHLIESSLICH ueber diesen Workflow aufgerufen - kein interaktiver/
+# lokaler Aufruf durch den Dev-Agenten. Der Dev-Agent loest den Uebergang
+# per `gh workflow run transition.yml -f story=<TARA-ID> -f to=<Status>
+# -f head_sha=<SHA>` aus; die Vorbedingungspruefung erfolgt deterministisch
+# in transition_engine.py, nicht durch Selbstattestierung des Agenten.
+
+on:
+  workflow_dispatch:
+    inputs:
+      story:
+        description: "TARA-ID, z.B. TARA-0117"
+        required: true
+      to:
+        description: "Zielstatus ('In Progress' oder 'inReview')"
+        required: true
+      head_sha:
+        description: "Commit-SHA (Pflicht fuer 'inReview', P-10)"
+        required: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  transition:
+    name: Statuswechsel pruefen und setzen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Board-Uebergang pruefen und setzen
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          # Sicherheit (Review-Finding, Hoch): workflow_dispatch-Inputs
+          # NICHT direkt per ${{ }} in den Skript-Body interpolieren
+          # (Script-Injection-Risiko, da GH Actions dies als reine
+          # Textersetzung VOR der Shell-Ausfuehrung durchfuehrt). Stattdessen
+          # ueber env: durchreichen und als gequotete Shell-Variable nutzen.
+          STORY_INPUT: ${{ github.event.inputs.story }}
+          TO_INPUT: ${{ github.event.inputs.to }}
+          HEAD_SHA_INPUT: ${{ github.event.inputs.head_sha }}
+          REPO_INPUT: ${{ github.repository }}
+        run: |
+          chmod +x scripts/workflow/transition.sh
+          ./scripts/workflow/transition.sh \
+            --story "$STORY_INPUT" \
+            --to "$TO_INPUT" \
+            --head-sha "$HEAD_SHA_INPUT" \
+            --repo "$REPO_INPUT"

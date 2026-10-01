@@ -23,11 +23,11 @@ Alle Commits, PRs und Board-Operationen erfolgen ausschliesslich auf `SCHUNK-SE-
 
 | Dokument | Pfad | Inhalt |
 |----------|------|--------|
-| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln P-01-P-18, P-21 (P-19/P-20 folgen nach Merge von PR #149/#150) |
+| **Entwicklungsprozess** | `docs/ENTWICKLUNGSPROZESS.md` | Vollstaendiger Prozess, Rollen, Workflow, Regeln <!-- GENERATED:rule-range:START (docs/process_definition.yml, scripts/process_guard/generate_process_docs.py) -->Prozessregeln P-01-P-27, Review-Regeln R-01-R-36<!-- GENERATED:rule-range:END --> |
 | **Board-IDs & GraphQL** | `docs/GITHUB_BOARD.md` | API-IDs, Status-Optionen, gh-Befehle |
 | **Dev-Agent Einrichtung** | `agents/dev_agent/DEV_AGENT_ONBOARDING.md` | Setup, Smoke-Test, Kurzreferenz |
-| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | P-01-P-18, P-21 (P-19/P-20 folgen nach Merge), Pre-Transition-Checks |
-| **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | R-01-R-30, Severity, Finding-Framework |
+| **Prozess-Guard-Regeln** | `agents/process_guard/PROCESS_GUARD_AGENT.md` | Vollstaendige Regel-Tabelle (`docs/process_definition.yml`), Pre-Transition-Checks |
+| **Review-Agent** | `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` | Vollstaendiger Pruefkatalog (`docs/process_definition.yml`), Severity, Finding-Framework |
 | **Requirements-Agent** (seit TARA-0118) | `agents/requirements_agent/REQUIREMENTS_AGENT.md` | Chat-Anforderung -> Story (AC/Scope/Abhaengigkeiten), DoR-Pruefung, separater Kontext, keine fachliche Freigabe |
 | **Acceptance-Agent** (seit TARA-0118, nur dokumentiert) | `agents/acceptance_agent/ACCEPTANCE_AGENT.md` | Konzeptionelle Rolle, kein Code/Prototyp, keine eigene Freigabebefugnis |
 
@@ -212,5 +212,5 @@ Beispiel: `[TARA-0026]`
 
 ---
 
-> Vollstaendige Prozessregeln (P-01-P-23): `agents/process_guard/PROCESS_GUARD_AGENT.md`
+> Vollstaendige Prozessregeln (<!-- GENERATED:rule-range:START (docs/process_definition.yml, scripts/process_guard/generate_process_docs.py) -->Prozessregeln P-01-P-27, Review-Regeln R-01-R-36<!-- GENERATED:rule-range:END -->): `agents/process_guard/PROCESS_GUARD_AGENT.md`
 > Vollstaendiger Story-Workflow: `docs/ENTWICKLUNGSPROZESS.md` (Abschnitt 4)

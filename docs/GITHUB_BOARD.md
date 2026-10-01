@@ -67,6 +67,15 @@ Story Points werden als **Zahl** gesetzt (kein Single-Select).
 
 ## GraphQL-Beispiele
 
+> **TARA-0117/P-18:** Fuer die Statusuebergaenge "PO Accepted → In Progress" und
+> "In Progress → inReview" MUSS `gh workflow run transition.yml -f story=... -f to=...`
+> verwendet werden (siehe `.github/workflows/transition.yml` und
+> `scripts/workflow/transition_engine.py` - einzige Quelle der
+> `updateProjectV2ItemFieldValue`-Mutation fuer diese beiden Uebergaenge, inkl.
+> Vorbedingungs-Pruefung und Audit-Kommentar). `scripts/set_story_status.py`
+> lehnt diese beiden Status explizit ab. Die folgenden Rohbeispiele dienen nur
+> dem Verstaendnis des zugrunde liegenden GraphQL-Musters.
+
 ### Status eines Items setzen
 
 ```bash
@@ -208,17 +217,17 @@ Todo → PO Accepted → In Progress → inReview → Accepted → (Merge) → P
                     Board-Status bleibt unveraendert)
 ```
 
-| Wer setzt                         | Von         | Nach            | Bedingung (P-18)                                                                                                     |
-| --------------------------------- | ----------- | --------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **GitHub Automation**             | Todo        | **PO Accepted** | **P-26: gebundenes `PO Accepted TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten**                               |
-| Dev-Agent                         | PO Accepted | In Progress     | Status ist nachweislich "PO Accepted"                                                                                |
-| Dev-Agent                         | In Progress | inReview        | Prettier ✅ ESLint ✅ Tests ✅ Commit gepusht                                                                        |
-| **GitHub Automation**             | inReview    | **Accepted**    | **P-25: gebundene PO-Akzeptanz auf dem PR (nach letztem Push) UND gültiger SHA-Review-Nachweis (P-10)**              |
-| **GitHub Automation (P-25-Gate)** | Accepted    | **(Merge)**     | Merge nur zulässig, wenn Status bereits "Accepted" ist (required Status-Check in process-guard.yml)                  |
-| **GitHub Automation**             | Accepted    | **PO Release**  | **P-27: gebundenes `PO Release TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten, nach Erreichen von "Accepted"** |
-| **GitHub Automation**             | PO Release  | **Done**        | Automatisch im selben Lauf wie Accepted → PO Release (P-27)                                                          |
-| Review-Agent/Prozess-Guard        | any         | Label `blocked` | P-18-Vorbedingung verletzt, Finding-Issue angelegt (Board-Status bleibt unverändert)                                 |
-| Dev-Agent (nach PO-OK)            | -           | Label entfernt  | Alle Blocking-Gründe behoben                                                                                         |
+| Wer setzt                         | Von         | Nach            | Bedingung (P-18)                                                                                                                                                                                                                             |
+| --------------------------------- | ----------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GitHub Automation**             | Todo        | **PO Accepted** | **P-26: gebundenes `PO Accepted TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten**                                                                                                                                                       |
+| **GitHub Automation**             | PO Accepted | In Progress     | **TARA-0117/P-18: Dev-Agent triggert `gh workflow run transition.yml -f story=TARA-XXXX -f to="In Progress"` - Vorbedingung (Status = "PO Accepted") wird automatisiert geprueft**                                                           |
+| **GitHub Automation**             | In Progress | inReview        | **TARA-0117/P-18: Dev-Agent triggert `gh workflow run transition.yml -f story=TARA-XXXX -f to=inReview -f head_sha=<SHA>` - Vorbedingung (Prettier ✅ ESLint ✅ Tests ✅ Commit gepusht) wird vom Dev-Agent vor dem Trigger sichergestellt** |
+| **GitHub Automation**             | inReview    | **Accepted**    | **P-25: gebundene PO-Akzeptanz auf dem PR (nach letztem Push) UND gültiger SHA-Review-Nachweis (P-10)**                                                                                                                                      |
+| **GitHub Automation (P-25-Gate)** | Accepted    | **(Merge)**     | Merge nur zulässig, wenn Status bereits "Accepted" ist (required Status-Check in process-guard.yml)                                                                                                                                          |
+| **GitHub Automation**             | Accepted    | **PO Release**  | **P-27: gebundenes `PO Release TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten, nach Erreichen von "Accepted"**                                                                                                                         |
+| **GitHub Automation**             | PO Release  | **Done**        | Automatisch im selben Lauf wie Accepted → PO Release (P-27)                                                                                                                                                                                  |
+| Review-Agent/Prozess-Guard        | any         | Label `blocked` | P-18-Vorbedingung verletzt, Finding-Issue angelegt (Board-Status bleibt unverändert)                                                                                                                                                         |
+| Dev-Agent (nach PO-OK)            | -           | Label entfernt  | Alle Blocking-Gründe behoben                                                                                                                                                                                                                 |
 
 Das Kommando zur PO-Akzeptanz (P-25, inReview → Accepted) muss an die
 TARA-ID gebunden sein (TARA-0109-Format, z.B. "TARA-0110 akzeptiert") und
