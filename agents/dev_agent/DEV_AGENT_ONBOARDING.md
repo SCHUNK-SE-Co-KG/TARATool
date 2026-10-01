@@ -160,8 +160,12 @@ gh api graphql -f query='{
 
 ```
 1. PO gibt Story frei (Chat-Nachricht)
-2. Status → "In Progress"  (Board-ID aus docs/GITHUB_BOARD.md)
-   ⛔ GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
+2. Status → "In Progress" (TARA-0117, P-18: NICHT mehr per direkter
+   GraphQL-Mutation/set_story_status.py, sondern per
+   `gh workflow run transition.yml -f story=TARA-XXXX -f to="In Progress"` -
+   `.github/workflows/transition.yml` prueft die Vorbedingung (Status muss
+   "PO Accepted" sein) und setzt Status + Audit-Kommentar atomar)
+   â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
    .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
    ⚠️ **P-24 (Epic-Sync-Pflicht):** Wird diese Story ueber `Bezug: #<Epic-Nr>`
@@ -175,8 +179,10 @@ gh api graphql -f query='{
 8. pytest test_TARA_XXXX.py --noconftest -v
 9. git add / git commit "TARA-XXXX: Beschreibung"
 10. git push origin feature/TARA-XXXX-...
-11. Status → "inReview", PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
-    ⛔ GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
+11. Status → "inReview" (TARA-0117, P-18: per
+    `gh workflow run transition.yml -f story=TARA-XXXX -f to=inReview -f head_sha=<SHA>`),
+    PR öffnen (PR-Body: `Bezug: #NNN`, NIE `Closes/Fixes #NNN`, siehe P-19)
+    â›” GATE 2 (P-21): Vor `gh pr create` aktiv im Chat bestaetigen
 12. Review-Agent aufrufen, Findings beheben. Danach zwingend einen PR-Kommentar
     hinterlassen: `Review-Agent: OK - keine Findings` ODER `Review-Agent: Findings
     siehe #<NNN>` - process-guard.yml erzwingt diesen Nachweis technisch (P-10,

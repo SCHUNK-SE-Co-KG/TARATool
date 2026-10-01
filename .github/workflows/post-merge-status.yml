@@ -19,15 +19,18 @@ on:
     types: [closed]
     branches:
       - development
+      - main
 
 permissions:
-  contents: read
+  contents: write
   issues: read
 
 jobs:
   set-freigabe-after-merge:
     name: Merge-Bestaetigung (Status bleibt Accepted, P-27)
-    if: github.event.pull_request.merged == true
+    # Gilt nur fuer Merges nach `development` (Story-PRs) - Release-PRs
+    # development -> main haben kein "Bezug: #NNN" auf ein Story-Issue.
+    if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'development'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,3 +48,30 @@ jobs:
         run: |
           python3 scripts/process_guard/auto_set_freigabe_after_merge.py \
             "$PR_BODY" "$REPO" "$PROJECT_ID" "$STATUS_FIELD_ID"
+
+  delete-branch-after-merge:
+    name: P-16 – Feature-Branch nach Merge loeschen
+    # TARA-0117 (P-16, PO-Entscheidung Issue #188 Frage 2): Branch-Loeschung
+    # wird explizit an den Merge-Workflow gekoppelt (nicht nur der globalen
+    # Repo-Einstellung "Automatically delete head branches" ueberlassen),
+    # damit sie im Audit-Trail nachvollziehbar ist - fuer Merges nach
+    # `development` UND `main` gleichermassen (eigener Job, damit dies auch
+    # fuer Release-PRs development -> main greift, die im Job oben bewusst
+    # uebersprungen werden).
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Branch loeschen (ausser development/main)
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if [ "$HEAD_REF" = "development" ] || [ "$HEAD_REF" = "main" ]; then
+            echo "INFO P-16: '$HEAD_REF' ist ein geschuetzter Branch, wird nicht geloescht."
+          else
+            gh api -X DELETE "repos/$REPO/git/refs/heads/$HEAD_REF" \
+              && echo "OK P-16: Branch '$HEAD_REF' geloescht." \
+              || echo "WARN P-16: Branch '$HEAD_REF' konnte nicht geloescht werden (evtl. bereits weg)."
+          fi
+
