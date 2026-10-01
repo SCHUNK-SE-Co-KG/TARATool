@@ -19,6 +19,17 @@ Alle Rückmeldungen erfolgen als GitHub Issues mit Label `review-finding`.
 > den Prozess erfuellt - diese Entscheidung trifft ausschliesslich die
 > deterministische Pruefung (Skript/Workflow/Ruleset) bzw. der PO.
 
+> **TARA-0118: Klarstellung "Process Explainer".** Ein optionaler
+> **Process Explainer** (LLM-Sub-Agent, der Prozess-Guard-Findings oder
+> P-01–P-27-Regeln in natuerlicher Sprache fuer den PO/Dev-Agent erlaeutert)
+> **hat keine Entscheidungsbefugnis** und **trifft keine Entscheidung**
+> ueber Status-Uebergaenge, Compliance oder Freigaben. Seine Erklaerungen
+> sind rein informativ. Jede tatsaechliche Entscheidung (PROCESS OK/FAIL,
+> Status-Wechsel, Finding-Schweregrad) wird weiterhin ausschliesslich
+> durch die deterministischen Skripte/Workflows dieses Dokuments bzw.
+> durch den PO getroffen - ein Process Explainer ersetzt oder umgeht
+> diese Pruefungen in keinem Fall.
+
 ---
 
 ## Aktivierung

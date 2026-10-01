@@ -54,12 +54,14 @@ Entwicklung starten möchten.
 
 ## 1. Rollen und Verantwortlichkeiten
 
-| Rolle                  | Wer                | Aufgaben                                                   |
-| ---------------------- | ------------------ | ---------------------------------------------------------- |
-| **Product Owner (PO)** | @NicoPeperSchunk   | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen |
-| **Dev-Agent**          | GitHub Copilot CLI | Implementierung, TDD, Commits, PRs                         |
-| **Review-Agent**       | Copilot Sub-Agent  | Code-Review, Finding-Issues erstellen                      |
-| **Prozess-Guard**      | Copilot Sub-Agent  | Workflow-Compliance prüfen (P-01â€“P-15)                   |
+| Rolle                                                   | Wer                                   | Aufgaben                                                                                                                                                          |
+| ------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Product Owner (PO)**                                  | @NicoPeperSchunk                      | Epics/Stories genehmigen, Freigabe nach Merge, Done setzen                                                                                                        |
+| **Requirements-Agent** (seit TARA-0118)                 | Copilot Sub-Agent (separater Kontext) | Chat-Anforderung -> Story mit AC/Scope/Abhaengigkeiten, DoR-Pruefung; **keine fachliche Freigabe** - siehe `agents/requirements_agent/REQUIREMENTS_AGENT.md`      |
+| **Dev-Agent**                                           | GitHub Copilot CLI                    | Implementierung, TDD, Commits, PRs                                                                                                                                |
+| **Review-Agent**                                        | Copilot Sub-Agent                     | Code-Review, Finding-Issues erstellen                                                                                                                             |
+| **Prozess-Guard**                                       | Copilot Sub-Agent                     | Workflow-Compliance prüfen (P-01â€“P-15)                                                                                                                          |
+| **Acceptance-Agent** (seit TARA-0118, nur dokumentiert) | - (kein Code/Prototyp)                | Konzeptionelle Rolle: Entscheidungsgrundlage fuer PO-Abnahme aufbereiten; **keine eigene Freigabebefugnis** - siehe `agents/acceptance_agent/ACCEPTANCE_AGENT.md` |
 
 ### Kommunikationsregeln
 
@@ -209,6 +211,17 @@ Ein Epic wechselt auf **Done**, wenn alle zugehörigen Stories Done sind.
 ---
 
 ## 4. Der vollständige Story-Workflow
+
+> **Optionaler Schritt -1 (seit TARA-0118): Requirements-Agent.** Bei
+> einer neuen, noch unstrukturierten Chat-Anforderung kann der PO vor
+> Schritt 0 den **Requirements-Agent** (separater Sub-Agent-Kontext,
+> siehe \gents/requirements_agent/REQUIREMENTS_AGENT.md\) aktivieren.
+> Dieser erstellt/ergaenzt das Story-Issue (Akzeptanzkriterien, Scope/
+> Nicht-Scope, Abhaengigkeiten) und prueft die Definition-of-Ready-
+> Checkliste (Abschnitt 3). Der Requirements-Agent hat **keine
+> fachliche Freigabe-Befugnis** - die Freigabe (Schritt 0) bleibt
+> ausschliesslich beim PO. Bereits vollstaendige Stories koennen diesen
+> Schritt ueberspringen.
 
 ```
 â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
