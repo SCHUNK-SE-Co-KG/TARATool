@@ -4,11 +4,13 @@ Dieses Verzeichnis enthält die Prozessdokumentationen und Implementierungen all
 
 ## Agenten
 
-| Agent         | Rolle                                                           | Prozessdatei                                                                   |
-| ------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Dev Agent     | TDD-Implementierung, Branch-Management, Story-Umsetzung         | [dev_agent/DEV_AGENT_ONBOARDING.md](dev_agent/DEV_AGENT_ONBOARDING.md)         |
-| Review Agent  | Diff-Review (R-01–R-30), Browser-Runtime-Scan, Qualitätsprüfung | [review_agent/REVIEW_AGENT_WORKFLOW.md](review_agent/REVIEW_AGENT_WORKFLOW.md) |
-| Prozess-Guard | Compliance-Check (P-01–P-15) vor PR, Branch-Schutz              | [process_guard/PROCESS_GUARD_AGENT.md](process_guard/PROCESS_GUARD_AGENT.md)   |
+| Agent                                               | Rolle                                                                                                 | Prozessdatei                                                                         |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| Requirements-Agent (seit TARA-0118)                 | Chat-Anforderung -> Story (AC/Scope/Abhaengigkeiten), DoR-Pruefung; keine fachliche Freigabe          | [requirements_agent/REQUIREMENTS_AGENT.md](requirements_agent/REQUIREMENTS_AGENT.md) |
+| Dev Agent                                           | TDD-Implementierung, Branch-Management, Story-Umsetzung                                               | [dev_agent/DEV_AGENT_ONBOARDING.md](dev_agent/DEV_AGENT_ONBOARDING.md)               |
+| Review Agent                                        | Diff-Review (R-01–R-30), Browser-Runtime-Scan, Qualitätsprüfung                                       | [review_agent/REVIEW_AGENT_WORKFLOW.md](review_agent/REVIEW_AGENT_WORKFLOW.md)       |
+| Prozess-Guard                                       | Compliance-Check (P-01–P-15) vor PR, Branch-Schutz                                                    | [process_guard/PROCESS_GUARD_AGENT.md](process_guard/PROCESS_GUARD_AGENT.md)         |
+| Acceptance-Agent (seit TARA-0118, nur dokumentiert) | Entscheidungsgrundlage fuer PO-Abnahme aufbereiten; keine eigene Freigabebefugnis; kein Code/Prototyp | [acceptance_agent/ACCEPTANCE_AGENT.md](acceptance_agent/ACCEPTANCE_AGENT.md)         |
 
 ## Zusammenspiel der Agenten
 
