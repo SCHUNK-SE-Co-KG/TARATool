@@ -456,6 +456,28 @@ Wenn nach einem Merge auf `development` ein **kritischer Bug** gefunden wird:
 
 ---
 
+## 8a. Skills (seit TARA-0119)
+
+Prozesswissen ist auf vier Ebenen verteilt, damit wiederkehrende
+Vorgehensweisen unabhängig von den dauerhaften Regeln gepflegt werden
+können:
+
+| Ebene        | Pfad                               | Inhalt                                               |
+| ------------ | ---------------------------------- | ---------------------------------------------------- |
+| Instructions | `.github/copilot-instructions.md`  | Dauerhafte, universelle Regeln (P-01–P-27), Freigabe |
+| **Skills**   | `.github/skills/*/SKILL.md`        | Wiederholbare Schritt-für-Schritt-Vorgehensweisen    |
+| Agents       | `agents/*/*.md`                    | Rolle, Rechte, Verantwortungsgrenzen                 |
+| Actions      | `.github/workflows/*`, `scripts/*` | Erzwingen Fakten/Zustandsübergänge (deterministisch) |
+
+Verfügbare Skills: `story-refinement`, `tdd-development`,
+`independent-code-review`, `security-review`, `acceptance-testing`,
+`release-readiness`. Skills sind eigenständige Markdown-Dateien und
+**kein** Teil der aus `docs/process_definition.yml` generierten Doku
+(TARA-0116) – sie beschreiben Vorgehen statt Regeln und dürfen keine
+dauerhaften Regeltexte duplizieren, sondern verweisen darauf.
+
+---
+
 ## 9. Dokumente auf einen Blick
 
 | Dokument                  | Pfad                                           | Für wen            | Inhalt                                         |
