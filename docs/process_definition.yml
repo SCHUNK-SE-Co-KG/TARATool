@@ -1,0 +1,258 @@
+# Prozessdefinition - TARATool (Single Source of Truth, TARA-0116)
+#
+# Diese Datei ist die EINZIGE massgebliche Quelle fuer:
+#   - Regel-IDs, Titel und Automatisierungsstatus der Prozessregeln (P-01..P-27)
+#   - Regel-IDs, Kategorie und Beschreibung der Review-Regeln (R-01..R-36)
+#   - Das gueltige Board-Status-Enum (Statusmodell C, TARA-0121)
+#
+# Die entsprechenden Markdown-Abschnitte in
+#   - agents/dev_agent/DEV_AGENT_ONBOARDING.md
+#   - agents/process_guard/PROCESS_GUARD_AGENT.md
+#   - agents/review_agent/REVIEW_AGENT_WORKFLOW.md
+#   - .github/copilot-instructions.md
+# werden aus dieser Datei durch
+#   scripts/process_guard/generate_process_docs.py
+# generiert - NICHT mehr manuell und redundant gepflegt. Diese Datei bei
+# jeder neuen/geaenderten Regel als Erstes anpassen und danach
+#   python scripts/process_guard/generate_process_docs.py
+# ausfuehren, um die generierten Abschnitte zu aktualisieren.
+
+process_version: '3.0'
+
+# Board-Status-Enum (Statusmodell C, seit TARA-0121). "inReview" ist der
+# offiziell gueltige Schreibweise (nicht "Review"/"In Review"). Blockierte
+# Items werden ueber das Issue-Label `blocked` markiert, nicht ueber einen
+# eigenen Status.
+statuses:
+  - Todo
+  - PO Accepted
+  - In Progress
+  - inReview
+  - Accepted
+  - PO Release
+  - Done
+
+labels:
+  process-violation: 'Prozess-Guard: deterministisch erkannter Regelverstoss (P-01..P-27)'
+  review-finding: 'Review-Agent: inhaltliches Finding (R-01..R-36)'
+
+# Prozessregeln P-01 bis P-27 (Dev-Agent-Workflow). "automation" ist die
+# fuer die generierten Tabellen verwendete Kurzbeschreibung des
+# Automatisierungsstatus (z.B. "Manuell" oder "GitHub Actions (PR)").
+rules:
+  P-01:
+    title: Dev-Agent nennt TARA-ID in jeder Chat-Antwort
+    automation: Manuell
+  P-02:
+    title: Item auf „In Progress" gesetzt **bevor** Arbeit begann
+    automation: '**GitHub Actions (PR)** – deterministischer Zeitstempel-Vergleich (Audit-Trail-Kommentar vs. erster Commit, TARA-0108)'
+  P-03:
+    title: '**Tests vor Implementierung** geschrieben – Testdatei existiert'
+    automation: '**GitHub Actions (PR)**'
+  P-04:
+    title: 'Tests haben initial **fehlgeschlagen** – Red-Commit vor Green-Commit, Tests rot am Red-Commit'
+    automation: '**GitHub Actions (PR)**'
+  P-04b:
+    title: '**Finaler Red-Green-Nachweis (TARA-0111)**: der FINALE Testinhalt (PR-Head-Stand) schlaegt beim Code des Basis-Branches nachweislich fehl und besteht beim PR-Head-Code – ergaenzt P-04, das nur den ERSTEN Commit-Snapshot prueft und einen spaeter durch inhaltsleere Tests ersetzten Teststand nicht erkennen wuerde'
+    automation: '**GitHub Actions (PR)** – `check_final_red_green.sh`'
+  P-05:
+    title: 'Story-spezifische Tests **vor Commit** ausgefuehrt → alle gruen'
+    automation: Manuell (Dev-Agent-Pflicht)
+  P-06:
+    title: 'Story-Testdatei gruen vor PR (Teilmenge von `test:unit`, TARA-0112): `npm run test:unit -- tests/test_TARA_XXXX.py` bzw. `pytest tests/test_TARA_XXXX.py --noconftest -v` – **keine** vollstaendige Suite, siehe P-06b/`test:integration`/`test:e2e` fuer den vollstaendigen Nachweis'
+    automation: '**GitHub Actions (PR)**'
+  P-06b:
+    title: '**Regressionsschutz bei gemeinsam genutztem Code (TARA-0111)**: wurde ausser der Story-Testdatei/Doku auch gemeinsam genutzter Code veraendert (z.B. `scripts/`, andere Testdateien, Anwendungscode, Workflow-YAML), muss zusaetzlich `test:unit` (volle Suite ohne `tests/e2e/`/`tests/integration/`) gruen sein; `test:integration`/`test:e2e` laufen als eigene CI-Gates in `ci-tests.yml` vor Merge/Release (TARA-0112)'
+    automation: '**GitHub Actions (PR)** – `check_regression_scope.sh`'
+  P-07:
+    title: Branch-Name folgt `feature/TARA-XXXX-*` Schema
+    automation: '**GitHub Actions (PR)**'
+  P-08:
+    title: Commit-Messages referenzieren TARA-ID
+    automation: '**GitHub Actions (PR)**'
+  P-09:
+    title: Item auf „inReview" gesetzt **vor** PR-Erstellung
+    automation: Manuell
+  P-10:
+    title: 'Review-Agent aufgerufen, Nachweis als SHA-gebundener JSON-Block (`reviewed_head_sha` == PR-Head-SHA), kein offenes Critical/High Finding ohne `findings_issue` (TARA-0107)'
+    automation: '**GitHub Actions (PR)**'
+  P-11:
+    title: 'Nach Merge: Item auf „Done“ setzen (seit TARA-0110/Statusmodell B nur zulaessig, wenn Status vorher „Accepted“ war – sonst P-25-Umgehung)'
+    automation: '**GitHub Actions (Post-Merge)** – `post-merge-status.yml` setzt Status automatisch beim Merge-Event (TARA-0108/TARA-0110), kein manueller Dev-Agent-Schritt mehr'
+  P-12:
+    title: '**Prettier** (`npm run format:check`) bei JS/HTML-Aenderungen'
+    automation: '**GitHub Actions (PR)**'
+  P-13:
+    title: '**ESLint** (`npm run lint`) bei JS-Aenderungen'
+    automation: '**GitHub Actions (PR)**'
+  P-14:
+    title: '**TARA-IDs sind atomar und unveraenderlich** – keine ID mehrfach vergeben'
+    automation: '**GitHub Actions (Issue-Erstellung)**'
+  P-15:
+    title: '**Done NUR nach vorherigem "Accepted"** – seit TARA-0110 (Statusmodell B) ersetzt durch P-25 (PO-Akzeptanz VOR Merge, nicht mehr danach); `po-approve.yml` bleibt als manueller Fallback fuer Issue-Kommentare'
+    automation: Manuell (Fallback)
+  P-16:
+    title: '**Feature-Branch nach Merge loeschen**'
+    automation: Manuell
+  P-17:
+    title: '**Epic-Batch-Testing**: PO informieren wenn alle Stories auf Freigabe'
+    automation: Manuell
+  P-18:
+    title: '**Pre-Transition Check**: Vorbedingungen vor jedem Status-Wechsel'
+    automation: Manuell (Dev-Agent-Pflicht)
+  P-19:
+    title: 'Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterlaeuft P-11/P-15 durch Auto-Close) - stattdessen `Bezug: #NNN`'
+    automation: '**GitHub Actions (PR)**'
+  P-20:
+    title: 'Audit-Trail-Kommentar bei jedem Board-Status-Wechsel; PO-Freigabe erfordert seit TARA-0109 ein an die TARA-ID GEBUNDENES Kommando (`akzeptiert TARA-XXXX`, nicht mehr lose Keywords)'
+    automation: '**GitHub Actions (Issue-Kommentar)**'
+  P-21:
+    title: '**Verbindliches Gate vor Commit/PR**: Checkliste in `.github/copilot-instructions.md` aktiv im Chat bestaetigen (Board-Status In Progress vor 1. Commit, Board-Status inReview vor `gh pr create`)'
+    automation: Manuell (Dev-Agent-Pflicht, nicht ueberspringbar)
+  P-22:
+    title: '**Review-Finding-Abschluss & Priorisierung**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story; vom PO akzeptierte Findings (Kommentar mit Freigabe-Schluesselwort) werden sofort auf "In Progress" gesetzt und **vor** anderen laufenden Stories priorisiert bearbeitet – siehe `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` Abschnitt "Finding-Abschluss"'
+    automation: Manuell (Dev-Agent-Pflicht)
+  P-23:
+    title: '**Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten, Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen – siehe `.github/copilot-instructions.md` Abschnitt "`/init` und Session-Start"'
+    automation: Manuell (Dev-Agent-Pflicht)
+  P-24:
+    title: '**Epic-Sync-Pflicht (ab TARA-0113: native Sub-Issues)**: Wird eine NEUE Story mit `Bezug: #<Epic-Nr>` angelegt, verknuepft der Dev-Agent sie ueber `scripts/workflow/link_epic_subissue.sh --owner <owner> --repo <repo> --epic <Epic-Nr> --story <Story-Nr>` als native GitHub-Sub-Issue mit ihrem Epic (REST-Endpunkt `POST /repos/{owner}/{repo}/issues/{epic}/sub_issues`). Diese Sub-Issue-Beziehung ist die Source of Truth fuer "Epic enthaelt Story X" - keine manuelle Text-Checkliste im Epic-Body mehr fuer neue Epics/Stories. **Bestandsschutz (PO-Entscheidung, Issue #183):** Bestehende Epics (z.B. #176 mit den Stories #177-#182) behalten ihre bereits gepflegte Text-Checkliste unveraendert als historisches Artefakt - es findet KEINE rueckwirkende Migration auf Sub-Issues statt'
+    automation: Automatisiert per Skript, Aufruf durch Dev-Agent (TARA-0113)
+  P-25:
+    title: '**PO-Akzeptanz-Gate vor Merge (Statusmodell B, TARA-0110)**: Merge nach `development` erst zulaessig, wenn (1) SHA-aktueller Review-Nachweis (P-10) UND (2) an die TARA-ID gebundene, nach dem letzten Push gepostete PO-Akzeptanz auf dem PR selbst vorliegen; Status wechselt dabei automatisch inReview → Accepted'
+    automation: '**GitHub Actions (PR-Kommentar + required Status-Check)**'
+  P-26:
+    title: '**PO-Accepted-Gate (Bearbeitungserlaubnis, TARA-0121)**: Der Uebergang Todo → PO Accepted darf NUR durch ein an die TARA-ID gebundenes `PO Accepted TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten ausgeloest werden (`po_approval_parser.extract_po_accepted_ids`); die alten losen Freigabe-Keywords (`akzeptiert`, `OK`, ...) autorisieren diesen Uebergang NICHT mehr. Der Dev-Agent darf erst nach nachgewiesenem Status „PO Accepted“ von Todo nach In Progress wechseln'
+    automation: '**GitHub Actions (Issue-Kommentar)** – `check-po-accepted`-Job in `po-approve.yml`, Vorbedingung fuer Todo → In Progress zusaetzlich in `process-guard.yml` geprueft'
+  P-27:
+    title: '**PO-Release-Gate (fachliche/releasebezogene Abnahme, TARA-0121)**: Der Uebergang Accepted → PO Release → Done darf NUR erfolgen, wenn (1) der Status bereits „Accepted“ ist (technische Abnahme + Merge abgeschlossen) UND (2) ein an die TARA-ID gebundenes `PO Release TARA-XXXX`-Kommando eines Nutzers mit Schreibrechten NACH Erreichen von „Accepted“ vorliegt (`po_release_gate.validate_release_gate`). Der Dev-Agent darf einen PO Release nur anfordern/vorbereiten, niemals selbst setzen (`set_story_status.py` weist `PO Accepted`/`PO Release` als Argumente explizit zurueck)'
+    automation: '**GitHub Actions (Issue-/PR-Kommentar)** – `check-po-release`-Job in `po-approve.yml`, setzt danach automatisch Done'
+
+# Review-Regeln R-01 bis R-36 (Review-Agent-Checkliste).
+review_rules:
+  R-01: { category: Korrektheit, description: 'Alle Akzeptanzkriterien der Story erfüllt' }
+  R-02:
+    {
+      category: Korrektheit,
+      description: 'Keine offensichtlichen Logikfehler, Edge Cases behandelt',
+    }
+  R-03:
+    { category: Architektur, description: 'IIFE-Pattern korrekt (nur Dateien mit internem State)' }
+  R-04: { category: Architektur, description: '`_`-Prefix für intern konzipierte Funktionen' }
+  R-05:
+    {
+      category: Architektur,
+      description: 'Nur `document.getElementById()`, kein `window.elementId`',
+    }
+  R-06: { category: Architektur, description: 'Script-Ladereihenfolge in `index.html` eingehalten' }
+  R-07: { category: Sicherheit, description: 'Keine neuen CDN-Abhängigkeiten ohne SRI-Hash' }
+  R-08: { category: Sicherheit, description: 'Kein `eval()`, keine unsichere DOM-Manipulation' }
+  R-09: { category: Tests, description: 'Alle bestehenden Tests weiterhin grün' }
+  R-10: { category: Tests, description: 'Neue Funktionalität durch Story-Tests abgedeckt (TDD)' }
+  R-11: { category: Qualität, description: 'Kein duplizierter Code (DRY)' }
+  R-12: { category: Qualität, description: 'Keine auskommentierten Code-Blöcke' }
+  R-13: { category: Runtime, description: 'Konsolen-Fehler und -Warnungen erfasst (TARA-0040)' }
+  R-14: { category: Runtime, description: 'Fehlgeschlagene Netzwerkaufrufe erkannt (TARA-0041)' }
+  R-15:
+    { category: Runtime, description: 'DOM-Zustand und Event-Listener-Leaks geprüft (TARA-0042)' }
+  R-16:
+    {
+      category: Runtime,
+      description: 'localStorage, sessionStorage, Cookies analysiert (TARA-0043)',
+    }
+  R-17:
+    {
+      category: Runtime,
+      description: 'Performance-Timing und Speicherentwicklung gemessen (TARA-0044)',
+    }
+  R-18:
+    {
+      category: Runtime,
+      description: 'Accessibility-Tree auf ARIA-Verletzungen geprüft (TARA-0045)',
+    }
+  R-19:
+    {
+      category: Runtime,
+      description: 'CSP-Verletzungen und unbehandelte Promise-Rejections erfasst (TARA-0046)',
+    }
+  R-20:
+    {
+      category: Runtime,
+      description: 'Service-Worker-Verhalten und Cross-Origin-Kommunikation überwacht (TARA-0047)',
+    }
+  R-21: { category: Runtime, description: 'Browser-Berechtigungen inventarisiert (TARA-0048)' }
+  R-22:
+    {
+      category: Sicherheit,
+      description: 'DOM-XSS-Sinks erkannt – innerHTML, document.write etc. (TARA-0050)',
+    }
+  R-23:
+    {
+      category: Sicherheit,
+      description: 'HTML-Injection in dynamisch gerenderte Inhalte geprüft (TARA-0051)',
+    }
+  R-24:
+    {
+      category: Sicherheit,
+      description: 'Ressourcen-Manipulation via script/link src geprüft (TARA-0051)',
+    }
+  R-25:
+    {
+      category: Sicherheit,
+      description: 'eval()/Function()-Aufrufe zur Laufzeit erkannt (TARA-0052)',
+    }
+  R-26:
+    {
+      category: Sicherheit,
+      description: 'CORS-Header auf Wildcard + Credentials geprüft (TARA-0053)',
+    }
+  R-27:
+    {
+      category: Sicherheit,
+      description: 'Clickjacking-Schutz (X-Frame-Options / CSP frame-ancestors) geprüft (TARA-0054)',
+    }
+  R-28:
+    {
+      category: Sicherheit,
+      description: 'Reverse-Tabnabbing – target=_blank ohne noopener erkannt (TARA-0054)',
+    }
+  R-29:
+    {
+      category: Sicherheit,
+      description: 'Storage-Deep-Scan: sensible Schlüssel in localStorage/sessionStorage (TARA-0055)',
+    }
+  R-30:
+    {
+      category: Sicherheit,
+      description: 'XSSI-Risiko: SRI-Hash auf externen Skripten geprüft (TARA-0055)',
+    }
+  R-31:
+    {
+      category: Sicherheit,
+      description: 'GitHub-Actions Script-Injection: keine `${{ github.event.*.body/title }}`-Interpolation direkt in `run:`-Blöcken, stattdessen `env:`',
+    }
+  R-32:
+    {
+      category: Qualität,
+      description: 'Fehlendes Error-Handling um externe API-/GraphQL-Aufrufe in Workflows/Skripten (kein unkontrollierter Crash/Abbruch)',
+    }
+  R-33:
+    {
+      category: Qualität,
+      description: 'Regex-/Parsing-Robustheit (Wortgrenzen, Gross-/Kleinschreibung, Vergangenheitsformen, Negation) bei Text-Verarbeitung in Automatisierung',
+    }
+  R-34:
+    {
+      category: Architektur,
+      description: 'Stille Bypässe: fehlende Felder/Werte dürfen nicht automatisch als "OK"/bestanden gewertet werden (sicherheitshalber FAIL statt stillem PASS)',
+    }
+  R-35:
+    {
+      category: Kompatibilität,
+      description: 'Datenmigration und Rückwärtskompatibilität: `localStorage`-Schemaänderungen dürfen bestehende gespeicherte Analysen nicht unlesbar machen (Migrationspfad oder Versionsfeld vorhanden)',
+    }
+  R-36:
+    {
+      category: Abhängigkeiten,
+      description: 'Neue/geänderte npm- oder pip-Abhängigkeiten: Lizenzkompatibilität geprüft, keine unerwarteten transitiven Abhängigkeiten mit inkompatibler Lizenz',
+    }
