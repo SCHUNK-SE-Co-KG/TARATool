@@ -22,8 +22,8 @@ WRAPPER_SCRIPT = os.path.join(SCRIPTS_DIR, "check_po_approval_keyword.sh")
 PARSER_MODULE_PATH = os.path.join(SCRIPTS_DIR, "po_approval_parser.py")
 PO_APPROVE_WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "po-approve.yml")
 COPILOT_INSTRUCTIONS = os.path.join(REPO_ROOT, ".github", "copilot-instructions.md")
-PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
-REVIEW_AGENT_DOC = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
+PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
+REVIEW_AGENT_DOC = os.path.join(REPO_ROOT, ".github", "agents", "reviewer.agent.md")
 
 
 def _to_bash_path(path):

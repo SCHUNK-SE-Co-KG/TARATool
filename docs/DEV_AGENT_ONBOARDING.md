@@ -1,6 +1,6 @@
 ﻿# Dev Agent Onboarding
 
-> **Diese Datei ist ein Verweis.** Die vollstaendige und massgebliche Version liegt unter:
-> [`agents/dev_agent/DEV_AGENT_ONBOARDING.md`](../agents/dev_agent/DEV_AGENT_ONBOARDING.md)
+> **Diese Datei ist ein Verweis.** Die vollstaendige und massgebliche Version liegt seit TARA-0120 unter:
+> [`.github/agents/developer.agent.md`](../.github/agents/developer.agent.md)
 
 Bitte dort weiterlesen.

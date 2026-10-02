@@ -185,7 +185,7 @@ def test_readme_documents_three_tiers_not_blanket_noconftest():
 
 @pytest.mark.TARA_0112
 def test_process_guard_agent_doc_references_test_tiers():
-    doc = (PROJECT_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AGENT.md").read_text(
+    doc = (PROJECT_ROOT / ".github" / "agents" / "process-guard.policy.md").read_text(
         encoding="utf-8"
     )
     assert "test:unit" in doc

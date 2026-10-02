@@ -6,7 +6,7 @@
 # workflow_dispatch/PR-/Merge-Events) - kein interaktiver/lokaler Aufruf
 # durch den Dev-Agenten. Der Dev-Agent loest einen Statuswechsel stattdessen
 # per `gh workflow run transition.yml -f story=... -f to=... -f head_sha=...`
-# aus (siehe agents/dev_agent/DEV_AGENT_ONBOARDING.md, Schritt 8).
+# aus (siehe .github/agents/developer.agent.md, Schritt 8).
 #
 # Usage:
 #   ./scripts/workflow/transition.sh --story TARA-0117 --to inReview \

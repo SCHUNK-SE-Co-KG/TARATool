@@ -36,8 +36,8 @@ SCRIPTS_DIR = os.path.join(REPO_ROOT, "scripts", "process_guard")
 SCRIPT = os.path.join(SCRIPTS_DIR, "check_review_agent_invoked.sh")
 PARSER_MODULE_PATH = os.path.join(SCRIPTS_DIR, "review_result_parser.py")
 WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "process-guard.yml")
-REVIEW_DOC = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
-PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+REVIEW_DOC = os.path.join(REPO_ROOT, ".github", "agents", "reviewer.agent.md")
+PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
 REPORT_BUILDER = os.path.join(REPO_ROOT, "agents", "review_agent", "report_builder.py")
 
 HEAD_SHA = "abc123def456abc123def456abc123def456abc"

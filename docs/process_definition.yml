@@ -6,9 +6,9 @@
 #   - Das gueltige Board-Status-Enum (Statusmodell C, TARA-0121)
 #
 # Die entsprechenden Markdown-Abschnitte in
-#   - agents/dev_agent/DEV_AGENT_ONBOARDING.md
-#   - agents/process_guard/PROCESS_GUARD_AGENT.md
-#   - agents/review_agent/REVIEW_AGENT_WORKFLOW.md
+#   - .github/agents/developer.agent.md
+#   - .github/agents/process-guard.policy.md
+#   - .github/agents/reviewer.agent.md
 #   - .github/copilot-instructions.md
 # werden aus dieser Datei durch
 #   scripts/process_guard/generate_process_docs.py
@@ -110,7 +110,7 @@ rules:
     title: '**Verbindliches Gate vor Commit/PR**: Checkliste in `.github/copilot-instructions.md` aktiv im Chat bestaetigen (Board-Status In Progress vor 1. Commit, Board-Status inReview vor `gh pr create`)'
     automation: Manuell (Dev-Agent-Pflicht, nicht ueberspringbar)
   P-22:
-    title: '**Review-Finding-Abschluss & Priorisierung**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story; vom PO akzeptierte Findings (Kommentar mit Freigabe-Schluesselwort) werden sofort auf "In Progress" gesetzt und **vor** anderen laufenden Stories priorisiert bearbeitet – siehe `agents/review_agent/REVIEW_AGENT_WORKFLOW.md` Abschnitt "Finding-Abschluss"'
+    title: '**Review-Finding-Abschluss & Priorisierung**: Finding-Issue nach direktem Fix sofort schliessbar (entkoppelt vom Source-Story-Status), bei struktureller Verbesserung erst nach Anlage einer Folge-Story; vom PO akzeptierte Findings (Kommentar mit Freigabe-Schluesselwort) werden sofort auf "In Progress" gesetzt und **vor** anderen laufenden Stories priorisiert bearbeitet – siehe `.github/agents/reviewer.agent.md` Abschnitt "Finding-Abschluss"'
     automation: Manuell (Dev-Agent-Pflicht)
   P-23:
     title: '**Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start**: Onboarding besteht ausschliesslich aus Lesen (Prozessdoku + Agenten-Doku), Board sichten, Vorschlagen; erst nach expliziter PO-/User-Freigabe darf Arbeit (Branch/Commit/Status-Wechsel) beginnen – siehe `.github/copilot-instructions.md` Abschnitt "`/init` und Session-Start"'

@@ -89,16 +89,16 @@ REQUIRED_DOCS = {
         "PVT_kwDOBu4dv84BfbaR",   # SCHUNK Project ID
         "PVTSSF_lADOBu4dv84BfbaRzhZuYME",  # SCHUNK Status field
     ],
-    "agents/process_guard/PROCESS_GUARD_AGENT.md": [
+    ".github/agents/process-guard.policy.md": [
         "P-16",
         "P-15",
     ],
-    "agents/review_agent/REVIEW_AGENT_WORKFLOW.md": [
+    ".github/agents/reviewer.agent.md": [
         "Scope-Entscheidung",
         "R-22",
         "R-30",
     ],
-    "agents/dev_agent/DEV_AGENT_ONBOARDING.md": [
+    ".github/agents/developer.agent.md": [
         "CONTRIBUTING.md",
         "feature/TARA-XXXX",
     ],

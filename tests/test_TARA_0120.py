@@ -56,6 +56,9 @@ REQUIRED_INSTRUCTION_STEMS = {
     "tests",
     "frontend",
     "security",
+    "scripts",
+    "docs",
+    "github-workflows",
 }
 
 MAX_CORE_RULE_WORDS = 1200

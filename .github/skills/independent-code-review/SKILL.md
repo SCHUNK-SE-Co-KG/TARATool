@@ -3,7 +3,7 @@
 ## Zweck
 
 Dieser Skill beschreibt die konkrete Vorgehensweise, mit der der
-**Review-Agent** (`agents/review_agent/REVIEW_AGENT_WORKFLOW.md`) eine
+**Review-Agent** (`.github/agents/reviewer.agent.md`) eine
 Story-Implementierung unabhaengig vom Dev-Agent prueft - inklusive der
 unabhaengigen Diff-Verifikation (TARA-0102), der Review-Rules R-01 bis
 R-36 und der dokumentierten Review-Agent-Unabhaengigkeit (TARA-0114,
@@ -12,7 +12,7 @@ Story-Workflows (`docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 4).
 
 Dieser Skill dupliziert nicht die vollstaendige R-01-bis-R-36-Liste; diese
 bleibt Single Source of Truth in `docs/process_definition.yml` bzw. dem
-generierten Abschnitt in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`.
+generierten Abschnitt in `.github/agents/reviewer.agent.md`.
 
 ## Voraussetzungen
 
@@ -48,7 +48,7 @@ generierten Abschnitt in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`.
 3. **Pruefkatalog R-01 bis R-36 anwenden.** Kategorien: Korrektheit,
    Architektur, Sicherheit, Tests, Qualitaet, Runtime (siehe
    `docs/process_definition.yml`, Abschnitt `review_rules`, und die
-   generierte Tabelle in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`).
+   generierte Tabelle in `.github/agents/reviewer.agent.md`).
    Fuer Browser-Laufzeitpruefungen (Runtime-Kategorie) zusaetzlich den
    Runtime-Scanner aktivieren:
 
@@ -65,7 +65,7 @@ generierten Abschnitt in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`.
 
 5. **Findings als GitHub Issues anlegen** (Label `review-finding`, **nicht**
    `process-violation` - das ist dem Prozess-Guard vorbehalten, siehe
-   Abgrenzung in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`).
+   Abgrenzung in `.github/agents/reviewer.agent.md`).
    Severity-Einstufung je Finding (Critical/High/Medium/Low) gemaess
    Review-Agent-Dokument.
 
@@ -106,7 +106,7 @@ generierten Abschnitt in `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`.
 
 ## Bezug zu Regeln/Stories
 
-- Rolle: `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`
+- Rolle: `.github/agents/reviewer.agent.md`
 - Prozessschritt: `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 4 (Schritt 5)
 - Review-Rules R-01 bis R-36: `docs/process_definition.yml`
   (Abschnitt `review_rules`)

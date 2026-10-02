@@ -2,13 +2,14 @@
 Commit/PR.
 
 Prueft (statische Inhaltspruefung, analog zu TARA-0083/0088):
-- .github/copilot-instructions.md enthaelt eine explizite, als Gate
+- .github/instructions/workflows.instructions.md (seit TARA-0120 ausgelagert
+  aus .github/copilot-instructions.md) enthaelt eine explizite, als Gate
   bezeichnete Checkliste mit den beiden Pflichtpunkten (Board-Status
   "In Progress" VOR erstem Commit, Board-Status "inReview" VOR
   'gh pr create').
-- agents/dev_agent/DEV_AGENT_ONBOARDING.md verweist auf dieses Gate an den
+- .github/agents/developer.agent.md verweist auf dieses Gate an den
   richtigen Stellen im Kurzworkflow (vor Schritt 3 und vor 'PR öffnen').
-- agents/process_guard/PROCESS_GUARD_AGENT.md dokumentiert die neue Regel
+- .github/agents/process-guard.policy.md dokumentiert die neue Regel
   P-21 als nicht automatisierbare, verbindliche Pflicht.
 """
 import os
@@ -18,19 +19,20 @@ import pytest
 INSTRUCTIONS = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     ".github",
-    "copilot-instructions.md",
+    "instructions",
+    "workflows.instructions.md",
 )
 ONBOARDING = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    ".github",
     "agents",
-    "dev_agent",
-    "DEV_AGENT_ONBOARDING.md",
+    "developer.agent.md",
 )
 PROCESS_GUARD_AGENT = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    ".github",
     "agents",
-    "process_guard",
-    "PROCESS_GUARD_AGENT.md",
+    "process-guard.policy.md",
 )
 
 

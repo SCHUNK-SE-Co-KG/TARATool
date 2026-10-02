@@ -1,6 +1,6 @@
-"""
+﻿"""
 [TARA-0034/0035/0036/0037] Tests: Workflow-Dokumentation & Onboarding
-TDD Red-Phase: Alle Tests müssen FEHLSCHLAGEN bevor die Dokumente erstellt sind.
+TDD Red-Phase: Alle Tests mÃ¼ssen FEHLSCHLAGEN bevor die Dokumente erstellt sind.
 """
 import os
 import pytest
@@ -8,7 +8,7 @@ import pytest
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 
-# ── TARA-0034: Freigabe-Status im Workflow ────────────────────────────────────
+# â”€â”€ TARA-0034: Freigabe-Status im Workflow â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.mark.TARA_0034
 def test_contributing_contains_freigabe_step():
@@ -20,7 +20,7 @@ def test_contributing_contains_freigabe_step():
 @pytest.mark.TARA_0034
 def test_process_guard_contains_p15():
     """PROCESS_GUARD_AGENT.md muss Regel P-15 (PO-Freigabe vor Done) enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'process-guard.policy.md'), encoding='utf-8').read()
     assert 'P-15' in content, 'Regel P-15 fehlt in PROCESS_GUARD_AGENT.md'
 
 
@@ -32,7 +32,7 @@ def test_process_guard_p11_references_freigabe():
     (statt vormals "Freigabe"), da die PO-Akzeptanz jetzt VOR dem Merge
     ueber P-25 erfolgt.
     """
-    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'process-guard.policy.md'), encoding='utf-8').read()
     # Find P-11 line and check it mentions the post-merge status
     p11_line = [l for l in content.splitlines() if 'P-11' in l and '|' in l]
     assert p11_line, 'P-11 nicht in Tabelle gefunden'
@@ -46,7 +46,7 @@ def test_pr_template_contains_freigabe_hint():
     assert 'Freigabe' in content, 'Freigabe-Hinweis fehlt im PR-Template'
 
 
-# ── TARA-0035: GitHub Board Dokumentation ────────────────────────────────────
+# â”€â”€ TARA-0035: GitHub Board Dokumentation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.mark.TARA_0035
 def test_github_board_doc_exists():
@@ -78,19 +78,19 @@ def test_github_board_doc_contains_graphql_example():
         'GraphQL-Beispiele fehlen in GITHUB_BOARD.md'
 
 
-# ── TARA-0036: Dev Agent Onboarding ──────────────────────────────────────────
+# â”€â”€ TARA-0036: Dev Agent Onboarding â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.mark.TARA_0036
 def test_onboarding_doc_exists():
     """docs/DEV_AGENT_ONBOARDING.md muss existieren."""
-    assert os.path.exists(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md')), \
+    assert os.path.exists(os.path.join(REPO_ROOT, '.github', 'agents', 'developer.agent.md')), \
         'docs/DEV_AGENT_ONBOARDING.md fehlt'
 
 
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_prerequisites():
     """Onboarding-Dok muss Voraussetzungen (git, gh, Node, Python) beschreiben."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'developer.agent.md'), encoding='utf-8').read()
     for tool in ['git', 'gh', 'node', 'python']:
         assert tool.lower() in content.lower(), f'Voraussetzung "{tool}" fehlt im Onboarding'
 
@@ -98,14 +98,14 @@ def test_onboarding_doc_contains_prerequisites():
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_npm_install():
     """Onboarding-Dok muss npm install Schritt enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'developer.agent.md'), encoding='utf-8').read()
     assert 'npm install' in content, 'npm install Schritt fehlt im Onboarding'
 
 
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_gh_auth():
     """Onboarding-Dok muss gh auth Login-Schritt mit Scopes enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'developer.agent.md'), encoding='utf-8').read()
     assert 'gh auth' in content, 'gh auth Schritt fehlt im Onboarding'
     assert 'project' in content, 'project-Scope fehlt im Onboarding'
 
@@ -113,16 +113,16 @@ def test_onboarding_doc_contains_gh_auth():
 @pytest.mark.TARA_0036
 def test_onboarding_doc_contains_smoke_test():
     """Onboarding-Dok muss einen Smoke-Test zur Umgebungsverifikation enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'dev_agent', 'DEV_AGENT_ONBOARDING.md'), encoding='utf-8').read()
-    assert 'smoke' in content.lower() or 'verifi' in content.lower() or 'prüf' in content.lower(), \
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'developer.agent.md'), encoding='utf-8').read()
+    assert 'smoke' in content.lower() or 'verifi' in content.lower() or 'prÃ¼f' in content.lower(), \
         'Smoke-Test fehlt im Onboarding'
 
 
-# ── TARA-0037: Tests README ───────────────────────────────────────────────────
+# â”€â”€ TARA-0037: Tests README â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @pytest.mark.TARA_0037
 def test_tests_readme_contains_noconftest():
-    """tests/README.md muss --noconftest erklären."""
+    """tests/README.md muss --noconftest erklÃ¤ren."""
     content = open(os.path.join(REPO_ROOT, 'tests', 'README.md'), encoding='utf-8').read()
     assert '--noconftest' in content, '--noconftest Workaround fehlt in tests/README.md'
 
@@ -136,7 +136,7 @@ def test_tests_readme_contains_tara_markers():
 
 @pytest.mark.TARA_0037
 def test_tests_readme_contains_venv_setup():
-    """tests/README.md muss venv-Setup für macOS/Linux enthalten."""
+    """tests/README.md muss venv-Setup fÃ¼r macOS/Linux enthalten."""
     content = open(os.path.join(REPO_ROOT, 'tests', 'README.md'), encoding='utf-8').read()
     assert '.venv' in content, 'venv-Setup fehlt in tests/README.md'
     assert 'macOS' in content or 'linux' in content.lower(), \

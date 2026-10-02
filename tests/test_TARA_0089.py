@@ -32,8 +32,8 @@ import pytest
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(REPO_ROOT, "scripts", "process_guard", "check_review_agent_invoked.sh")
 WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "process-guard.yml")
-REVIEW_DOC = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
-ONBOARDING_DOC = os.path.join(REPO_ROOT, "agents", "dev_agent", "DEV_AGENT_ONBOARDING.md")
+REVIEW_DOC = os.path.join(REPO_ROOT, ".github", "agents", "reviewer.agent.md")
+ONBOARDING_DOC = os.path.join(REPO_ROOT, ".github", "agents", "developer.agent.md")
 
 HEAD_SHA = "abc123def456abc123def456abc123def456abc"
 

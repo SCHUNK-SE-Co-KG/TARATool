@@ -12,11 +12,11 @@ import pytest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 PROCESS_GUARD_PATH = os.path.join(
-    REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md"
+    REPO_ROOT, ".github", "agents", "process-guard.policy.md"
 )
 ENTWICKLUNGSPROZESS_PATH = os.path.join(REPO_ROOT, "docs", "ENTWICKLUNGSPROZESS.md")
 ONBOARDING_PATH = os.path.join(
-    REPO_ROOT, "agents", "dev_agent", "DEV_AGENT_ONBOARDING.md"
+    REPO_ROOT, ".github", "agents", "developer.agent.md"
 )
 
 

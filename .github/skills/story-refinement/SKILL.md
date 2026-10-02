@@ -7,13 +7,13 @@ unstrukturierte Chat-Anforderung des PO in eine strukturierte, pruefbare
 Story (GitHub-Issue) uebersetzt wird - mit klar formulierten
 Akzeptanzkriterien, benanntem Scope/Nicht-Scope und benannten
 Abhaengigkeiten. Er ist das konkrete, wiederholbare "Wie" zur Rolle des
-**Requirements-Agent** (`agents/requirements_agent/REQUIREMENTS_AGENT.md`).
+**Requirements-Agent** (`.github/agents/requirements.agent.md`).
 
 Der Skill selbst trifft **keine fachliche Entscheidung** und setzt
 **keinen Board-Status** - er ist eine Schritt-fuer-Schritt-Anleitung, keine
 Regel und keine Rollenbeschreibung. Dauerhafte Regeln (z.B. wer freigeben
 darf) stehen ausschliesslich in `.github/copilot-instructions.md` und
-`agents/requirements_agent/REQUIREMENTS_AGENT.md`; dieser Skill verweist
+`.github/agents/requirements.agent.md`; dieser Skill verweist
 nur darauf.
 
 ## Voraussetzungen
@@ -22,7 +22,7 @@ nur darauf.
   erfassten Anforderung liegt vor.
 - Der Requirements-Agent wird als **separater Sub-Agent-Kontext**
   aktiviert (siehe Abschnitt "Unabhaengigkeit" in
-  `agents/requirements_agent/REQUIREMENTS_AGENT.md`) - nicht als
+  `.github/agents/requirements.agent.md`) - nicht als
   Moduswechsel im laufenden Dev-Agent-Kontext.
 - Das uebergeordnete Epic ist bereits angelegt und "In Progress"
   (siehe `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 3 "Epic-Completion-Regel").
@@ -54,7 +54,7 @@ nur darauf.
    - **Abhaengigkeiten**: Verweise auf andere Stories/Epics (`Bezug: #NNN`).
 
 3. **Definition-of-Ready-Checkliste pruefen** (identisch zur Tabelle in
-   `agents/requirements_agent/REQUIREMENTS_AGENT.md`):
+   `.github/agents/requirements.agent.md`):
 
    | Kriterium | Pruefung |
    |---|---|
@@ -96,14 +96,14 @@ nur darauf.
 - Der Requirements-Agent hat **keinen** Board-Status gesetzt und **keine**
   Freigabeformulierung ("freigegeben"/"akzeptiert") selbst in das Issue
   geschrieben (das waere eine Rollenverletzung, siehe Nicht-Scope in
-  `agents/requirements_agent/REQUIREMENTS_AGENT.md`).
+  `.github/agents/requirements.agent.md`).
 - Bestehende, bereits vollstaendige Stories koennen diesen Skill
   ueberspringen (siehe `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 4,
   "Optionaler Schritt -1").
 
 ## Bezug zu Regeln/Stories
 
-- Rolle: `agents/requirements_agent/REQUIREMENTS_AGENT.md`
+- Rolle: `.github/agents/requirements.agent.md`
 - Prozessschritt: `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 4
   ("Optionaler Schritt -1")
 - Definition of Ready: `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 3

@@ -75,7 +75,7 @@ Schritt 5 - Review
   * Status -> "inReview"  (TARA-0117, P-18: via
     `gh workflow run transition.yml -f story=TARA-XXXX -f to=inReview -f head_sha=<SHA>`)
   * PR auf Development oeffnen
-  * Review-Agent aktivieren (siehe agents/review_agent/REVIEW_AGENT_WORKFLOW.md)
+  * Review-Agent aktivieren (siehe .github/agents/reviewer.agent.md)
   * Findings beheben oder als Backlog-Items anlegen
 
         |
