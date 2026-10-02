@@ -198,8 +198,11 @@ def test_regression_scope_not_needed_for_test_file_only_change(temp_repo):
 
 @pytest.mark.TARA_0111
 def test_regression_scope_needed_for_shared_script_change(temp_repo):
-    """Zusaetzlich zur Story-Testdatei wurde gemeinsam genutzter Code unter
-    scripts/ veraendert -> volle Regression noetig."""
+    """Zusaetzlich zur Story-Testdatei wurde gemeinsam genutzter, aber NICHT
+    risikobehafteter Code veraendert (`scripts/shared_helper.py` ist kein
+    Risikopfad aus regression_risk_paths.txt) -> seit TARA-0125 wird die volle
+    Regression NICHT mehr sofort erzwungen, sondern auf Epic-Batch/Monatslauf
+    verschoben (SHARED_CODE_CHANGED=true, REGRESSION_NEEDED=false)."""
     base = _base_sha(temp_repo)
     testfile_rel = "tests/test_TARA_9106.py"
     _write(temp_repo, testfile_rel, "def test_ok():\n    assert True\n")
@@ -209,7 +212,8 @@ def test_regression_scope_needed_for_shared_script_change(temp_repo):
 
     result = _run_bash([CHECK_REGRESSION_SCOPE, base, testfile_rel], cwd=temp_repo)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "REGRESSION_NEEDED=true" in result.stdout
+    assert "SHARED_CODE_CHANGED=true" in result.stdout
+    assert "REGRESSION_NEEDED=false" in result.stdout
 
 
 @pytest.mark.TARA_0111
@@ -233,7 +237,9 @@ def test_regression_scope_not_fooled_by_readme_prefixed_code_filename(temp_repo)
     """Review-Finding (High, Code-Review PR #196): eine Code-Datei, deren Name
     lediglich mit 'README'/'CONTRIBUTING'/'CHANGELOG' BEGINNT (z.B. eine
     absichtlich so benannte Implementierungsdatei), darf NICHT faelschlich
-    als reine Doku-Datei durchgehen und die volle Regression umgehen."""
+    als reine Doku-Datei durchgehen (SHARED_CODE_CHANGED muss true bleiben).
+    Seit TARA-0125 ist diese Datei aber kein Risikopfad -> REGRESSION_NEEDED
+    bleibt false (volle Regression wird verschoben, nicht uebersprungen)."""
     base = _base_sha(temp_repo)
     testfile_rel = "tests/test_TARA_9108.py"
     _write(temp_repo, testfile_rel, "def test_ok():\n    assert True\n")
@@ -243,18 +249,19 @@ def test_regression_scope_not_fooled_by_readme_prefixed_code_filename(temp_repo)
 
     result = _run_bash([CHECK_REGRESSION_SCOPE, base, testfile_rel], cwd=temp_repo)
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "REGRESSION_NEEDED=true" in result.stdout
+    assert "SHARED_CODE_CHANGED=true" in result.stdout
+    assert "REGRESSION_NEEDED=false" in result.stdout
 
 
 @pytest.mark.TARA_0111
 def test_workflow_p06b_excludes_playwright_tests_like_ci_tests_yml():
-    """Review-Regression: der P-06b-Schritt in process-guard.yml lief zunaechst
-    OHNE Playwright-Ausschlussliste und schlug deshalb bei jeder ausgeloesten
-    vollen Regression fehl (Playwright ist in diesem Job nicht installiert).
-    Die Ignore-Liste muss dieselben Playwright-Testverzeichnisse ausschliessen
-    wie der 'test:unit'-Skript in package.json (TARA-0112: seit der
-    Verzeichnis-Umstellung auf tests/e2e/ und tests/integration/ statt
-    einzelner Dateinamen)."""
+    """Review-Regression: der (seit TARA-0125 in P-06c umbenannte) Schritt in
+    process-guard.yml lief zunaechst OHNE Playwright-Ausschlussliste und
+    schlug deshalb bei jeder ausgeloesten vollen Regression fehl (Playwright
+    ist in diesem Job nicht installiert). Die Ignore-Liste muss dieselben
+    Playwright-Testverzeichnisse ausschliessen wie der 'test:unit'-Skript in
+    package.json (TARA-0112: seit der Verzeichnis-Umstellung auf tests/e2e/
+    und tests/integration/ statt einzelner Dateinamen)."""
     package_json_path = os.path.join(REPO_ROOT, "package.json")
     process_guard_path = os.path.join(REPO_ROOT, ".github", "workflows", "process-guard.yml")
     with open(package_json_path, "r", encoding="utf-8") as f:
@@ -268,14 +275,14 @@ def test_workflow_p06b_excludes_playwright_tests_like_ci_tests_yml():
     unit_ignores = set(re.findall(r"--ignore=([^\s;\\]+)", unit_script))
     assert unit_ignores, "test:unit sollte eine Playwright-Ignore-Liste enthalten"
 
-    p06b_start = pg_content.index("P-06b – Regressionssuite")
+    p06b_start = pg_content.index("P-06c – Risikobasierte Sofort-Regression")
     p06b_section = pg_content[p06b_start : p06b_start + 4000]
     pg_ignores = set(re.findall(r"--ignore=([^\s;\\]+)", p06b_section))
 
     missing = unit_ignores - pg_ignores
     assert not missing, (
-        f"P-06b-Schritt fehlen Playwright-Ignores aus test:unit: {missing} "
-        "(P-06b wuerde sonst bei ausgeloester voller Regression an "
+        f"P-06c-Schritt fehlen Playwright-Ignores aus test:unit: {missing} "
+        "(P-06c wuerde sonst bei ausgeloester voller Regression an "
         "Playwright-Setup-Fehlern scheitern)"
     )
 

@@ -1,4 +1,4 @@
-name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-04b/P-06/P-06b/P-07/P-08/P-09/P-10/P-12/P-13/P-19/P-25/P-26)
+name: Process Guard – TDD & Compliance Check (P-02/P-03/P-04/P-04b/P-06/P-06b/P-06c/P-07/P-08/P-09/P-10/P-12/P-13/P-19/P-25/P-26)
 
 on:
   pull_request:
@@ -292,11 +292,11 @@ jobs:
             exit 1
           fi
 
-      - name: P-06b – Regressionssuite bei gemeinsam genutztem Code (TARA-0111)
+      - name: P-06c – Risikobasierte Sofort-Regression (TARA-0125)
         run: |
           BRANCH="${{ github.head_ref }}"
           if ! RESOLVED=$(bash scripts/process_guard/resolve_tara_testfile.sh "$BRANCH"); then
-            echo "INFO P-06b: Kein TARA-ID im Branch – P-06b uebersprungen"
+            echo "INFO P-06c: Kein TARA-ID im Branch – P-06c uebersprungen"
             exit 0
           fi
           eval "$RESOLVED"
@@ -311,13 +311,15 @@ jobs:
             if pytest tests/ --noconftest --timeout=90 -q \
               --ignore=tests/e2e \
               --ignore=tests/integration; then
-              echo "OK P-06b: Volle Regressionssuite gruen"
+              echo "OK P-06c: Volle Regressionssuite (Risikopfad) gruen"
             else
-              echo "FAIL P-06b: Regressionssuite fehlgeschlagen"
+              echo "FAIL P-06c: Regressionssuite fehlgeschlagen"
               exit 1
             fi
+          elif echo "$SCOPE_OUTPUT" | grep -q "SHARED_CODE_CHANGED=true"; then
+            echo "OK P-06c: Kein Risikopfad veraendert - volle Regression auf Epic-Batch/Monatslauf verschoben (Option B/C)"
           else
-            echo "OK P-06b: Volle Regressionssuite nicht erforderlich (nur Story-Testdatei/Doku veraendert)"
+            echo "OK P-06c: Volle Regressionssuite nicht erforderlich (nur Story-Testdatei/Doku veraendert)"
           fi
 
       - name: P-12 – Prettier (nur bei JS/HTML-Aenderungen)

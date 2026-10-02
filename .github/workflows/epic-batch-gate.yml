@@ -1,0 +1,95 @@
+name: Epic-Batch-Gate – Gebuendelte Vollregression pro Epic (P-17, TARA-0125)
+
+# TARA-0125 (Option B der neuen Regressionspolicy, Issue #208): Statt bei
+# JEDER einzelnen Story die volle Regressionssuite zu fahren (bisher >5 Min.
+# pro Story), wird nach jedem Merge einer Story nach `development` geprueft,
+# ob damit ALLE Sub-Issues des zugehoerigen Epics einen "bereit"-Status
+# (Accepted/PO Release/Done) erreicht haben. Ist das der Fall, laeuft EINMAL
+# die volle Suite fuer das gesamte Epic, und bei Gruen wird automatisch ein
+# Release-PR development -> main erstellt (bzw. ein bestehender aktualisiert).
+#
+# Ergaenzt (nicht ersetzt): P-06 (Story-Test), P-06c (Risikobasierte
+# Sofort-Regression bei kritischen Pfaden, siehe process-guard.yml) und
+# Option C (monatlicher Lauf auf main, siehe monthly-regression.yml).
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - development
+
+permissions:
+  contents: write
+  issues: read
+  pull-requests: write
+
+jobs:
+  epic-batch-gate:
+    name: Epic-Batch-Gate pruefen und ggf. Vollregression + Release-PR
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Story-Issue aus PR-Body ermitteln ("Bezug: #NNN")
+        id: story
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          BODY_FILE=$(mktemp)
+          printf '%s' "$PR_BODY" > "$BODY_FILE"
+          ISSUE_NUMBER=$(BODY_FILE="$BODY_FILE" python3 -c "import sys, os; sys.path.insert(0, 'scripts/process_guard'); from status_timing_check import extract_issue_number; body = open(os.environ['BODY_FILE'], encoding='utf-8').read(); n = extract_issue_number(body); print(n if n is not None else '')")
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "INFO P-17: Kein 'Bezug: #NNN' im PR-Body gefunden - kein Epic-Batch-Check moeglich."
+            echo "issue_number=" >> "$GITHUB_OUTPUT"
+          else
+            echo "issue_number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Epic-Batch-Gate pruefen
+        id: gate
+        if: steps.story.outputs.issue_number != ''
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          python3 scripts/workflow/epic_batch_gate.py \
+            --story-issue "${{ steps.story.outputs.issue_number }}" \
+            --repo "${{ github.repository }}" | tee gate_output.txt
+          if grep -q '^EPIC_BATCH_READY=true$' gate_output.txt; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+          EPIC_NUMBER=$(grep '^EPIC_NUMBER=' gate_output.txt | cut -d= -f2)
+          echo "epic_number=$EPIC_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Python-Umgebung einrichten
+        if: steps.gate.outputs.ready == 'true'
+        run: pip install --quiet pytest pytest-timeout
+
+      - name: Volle Regressionssuite (nur wenn Epic-Batch-Gate bereit)
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          # TARA-0112: E2E-/Integration-Tests benoetigen Playwright-Browser-
+          # Install (hier nicht vorhanden) - gleiches Ignore-Muster wie P-06c.
+          pytest tests/ --noconftest --timeout=90 -q \
+            --ignore=tests/e2e \
+            --ignore=tests/integration
+
+      - name: Release-PR development -> main erstellen/aktualisieren
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+        run: |
+          EPIC_NUMBER="${{ steps.gate.outputs.epic_number }}"
+          EXISTING=$(gh pr list --repo "${{ github.repository }}" --base main --head development --json number --jq '.[0].number')
+          if [ -n "$EXISTING" ]; then
+            echo "INFO P-17: Release-PR #$EXISTING existiert bereits - kein neuer PR noetig."
+          else
+            gh pr create --repo "${{ github.repository }}" \
+              --base main --head development \
+              --title "Release: Epic #$EPIC_NUMBER abgeschlossen (Vollregression gruen)" \
+              --body "Bezug: #$EPIC_NUMBER"$'\n\n'"Automatisch erstellt durch Epic-Batch-Gate (P-17, TARA-0125): alle Sub-Issues des Epics sind Accepted/PO Release/Done, die volle Regressionssuite lief erfolgreich."
+          fi

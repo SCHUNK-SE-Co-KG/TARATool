@@ -1,0 +1,60 @@
+# TARA-0125: Risikobasierte Pfade, die IMMER sofort eine volle
+# Regressionssuite auslösen - unabhängig davon, welche der Optionen A/B/C
+# (DoD-basiert / Epic-Batch / Monatslauf) für "normalen" gemeinsam genutzten
+# Code sonst greift (siehe docs/process_definition.yml, Regel P-06c).
+#
+# Ein Pfad pro Zeile als erweiterter regulärer Ausdruck (grep -E), geprüft
+# gegen die relative Pfadangabe aus `git diff --name-only`. Leerzeilen und
+# Zeilen, die mit '#' beginnen, werden ignoriert.
+#
+# Diese Datei ist die EINZIGE massgebliche Quelle für die Risikokategorien
+# (vgl. PO-Vorgabe in Issue #208) - wird von
+# scripts/process_guard/check_regression_scope.sh eingelesen.
+
+# Datenmodell
+^js/core/globals\.js$
+^js/modules/.*\.js$
+^config/
+
+# Import/Export
+^js/report/report_export\.js$
+^js/attack_tree/dot_export\.js$
+
+# Risikoberechnung
+^js/modules/risk_analysis\.js$
+^js/attack_tree/attack_tree_calc\.js$
+^js/residual_risk/residual_risk_data\.js$
+
+# Report-Generierung
+^js/report/.*\.js$
+
+# Zentrale State-Verwaltung
+^js/core/analysis_core\.js$
+^js/core/init\.js$
+^js/core/prefs\.js$
+
+# Authentifizierung oder Security (vorsorglich, aktuell kein Modul vorhanden)
+^js/auth/
+^js/security/
+
+# Gemeinsame Basiskomponenten
+^js/core/utils\.js$
+^js/core/config_loader\.js$
+^js/core/tab_dispatcher\.js$
+^js/core/bilingual\.js$
+^js/core/i18n\.js$
+^css/
+
+# Build- und Deployment-Konfiguration
+^package\.json$
+^package-lock\.json$
+^eslint\.config\.js$
+^\.prettierrc$
+^\.github/workflows/.*\.ya?ml$
+
+# Testinfrastruktur selbst
+^tests/requirements\.txt$
+^tests/conftest\.py$
+^tests/pytest\.ini$
+^scripts/process_guard/
+^scripts/workflow/

@@ -1,0 +1,159 @@
+# ──────────────────────────────────────────────────────────────
+# Monthly Regression – Monatliche Vollregression auf main
+# ──────────────────────────────────────────────────────────────
+# TARA-0125 (Option C der neuen Regressionspolicy, Issue #208): Zusaetzlich
+# zur risikobasierten Sofort-Regression (P-06c) und dem Epic-Batch-Gate
+# (P-17) laeuft einmal im Monat auf `main` die VOLLE Regressionssuite, um
+# schleichende Regressionen aufzudecken, die keiner einzelnen Story/keinem
+# einzelnen Epic zuzuordnen sind (z.B. durch Umgebungs-/Abhaengigkeits-
+# Drift). Ergebnis wird als GitHub Issue dokumentiert (gleiches Muster wie
+# cve-monthly-report.yml).
+#
+# Trigger: 1. Montag im Monat 08:00 UTC (= 09:00 MEZ)
+#          Manuell via workflow_dispatch
+# ──────────────────────────────────────────────────────────────
+
+name: Monthly Regression
+
+on:
+  schedule:
+    # Jeden Montag um 08:00 UTC (09:00 MEZ) – Step prüft ob 1. Montag
+    - cron: '0 8 * * 1'
+  workflow_dispatch: # Manueller Start über GitHub UI
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monthly-regression:
+    runs-on: ubuntu-latest
+    steps:
+      # ── 1. Prüfen ob 1. Montag im Monat (oder manuell) ──
+      - name: Prüfe ob 1. Montag im Monat
+        id: check
+        run: |
+          DAY=$(date -u +%d)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manueller Start – Regression wird ausgefuehrt."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          elif [ "$DAY" -le "7" ]; then
+            echo "1. Montag im Monat – Regression wird ausgefuehrt."
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "Nicht der 1. Montag – übersprungen."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout (main)
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Python-Umgebung einrichten
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Test-Abhaengigkeiten installieren
+        if: steps.check.outputs.skip != 'true'
+        run: pip install --quiet pytest pytest-timeout
+
+      - name: Volle Regressionssuite ausfuehren
+        if: steps.check.outputs.skip != 'true'
+        id: regression
+        continue-on-error: true
+        run: |
+          # TARA-0112: E2E-/Integration-Tests benoetigen Playwright-Browser-
+          # Install (hier nicht vorhanden) - gleiches Ignore-Muster wie P-06c.
+          pytest tests/ --noconftest --timeout=90 -q \
+            --ignore=tests/e2e \
+            --ignore=tests/integration 2>&1 | tee /tmp/regression_output.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Monthly-Regression Issue erstellen
+        if: steps.check.outputs.skip != 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO_FULL: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
+          EXIT_CODE: ${{ steps.regression.outputs.exit_code }}
+        run: |
+          MONTH=$(date -u +"%B %Y")
+          DATE=$(date -u +%Y-%m-%d)
+          if [ "$EXIT_CODE" = "0" ]; then
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="Gruen – alle Tests bestanden"
+          else
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="Fehlgeschlagen – siehe Log unten"
+          fi
+          TITLE="${STATUS_EMOJI} Monthly Regression – ${MONTH}"
+
+          gh label create "monthly-regression" \
+            --description "Monatliche Vollregression auf main (TARA-0125)" \
+            --color "0e8a16" 2>/dev/null || true
+
+          if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            YEAR_MONTH=$(date -u +"%Y-%m")
+            EXISTING=$(gh issue list \
+              --label "monthly-regression" \
+              --search "${YEAR_MONTH}" \
+              --state all \
+              --json number --jq 'length' 2>/dev/null || echo "0")
+            if [ "$EXISTING" -gt "0" ]; then
+              echo "Monthly Regression fuer ${MONTH} existiert bereits – uebersprungen."
+              exit 0
+            fi
+          else
+            echo "Manueller Start – Duplikat-Schutz uebersprungen."
+          fi
+
+          {
+            echo "# ${STATUS_EMOJI} Monatliche Vollregression"
+            echo ""
+            echo "**Berichtszeitraum:** ${MONTH}"
+            echo "**Erstellt am:** ${DATE}"
+            echo "**Branch:** main"
+            echo "**Status:** ${STATUS_TEXT}"
+            echo ""
+            echo "---"
+            echo ""
+            echo '```'
+            tail -n 100 /tmp/regression_output.txt 2>/dev/null || echo "Kein Log vorhanden."
+            echo '```'
+            echo ""
+            echo "---"
+            echo ""
+            echo "*Automatisch erstellt von GitHub Actions (Monthly-Regression-Workflow, TARA-0125, Option C der Regressionspolicy).*"
+          } > /tmp/issue_body.md
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            gh issue create \
+              --title "${TITLE}" \
+              --body-file /tmp/issue_body.md \
+              --label "monthly-regression" \
+              --assignee "NicoPeperSchunk" 2>/dev/null \
+            || gh issue create \
+              --title "${TITLE}" \
+              --body-file /tmp/issue_body.md \
+              --label "monthly-regression"
+          else
+            gh issue create \
+              --title "${TITLE}" \
+              --body-file /tmp/issue_body.md \
+              --label "monthly-regression" 2>/dev/null \
+            || gh issue create \
+              --title "${TITLE}" \
+              --body-file /tmp/issue_body.md \
+              --label "monthly-regression"
+          fi
+
+      - name: Fehlschlag an Job melden
+        if: steps.check.outputs.skip != 'true' && steps.regression.outputs.exit_code != '0'
+        run: |
+          echo "FAIL: Monatliche Vollregression ist fehlgeschlagen - siehe erstelltes Issue."
+          exit 1
