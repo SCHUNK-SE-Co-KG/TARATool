@@ -301,7 +301,7 @@ def test_workflow_wires_final_red_green_and_regression_scope_checks():
 def test_process_guard_doc_describes_red_green_refactor():
     """PROCESS_GUARD_AGENT.md beschreibt den finalen Red-Green-Nachweis
     (nicht mehr nur 'erster Commit war rot')."""
-    doc_path = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+    doc_path = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
     with open(doc_path, "r", encoding="utf-8") as f:
         content = f.read()
     assert "P-04b" in content

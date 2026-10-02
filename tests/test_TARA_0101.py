@@ -2,10 +2,13 @@
 [TARA-0101] Tests: Kein eigenstaendiger Arbeitsbeginn bei `/init`/Session-Start.
 
 TDD Red-Phase: Alle Tests muessen FEHLSCHLAGEN, bevor
-.github/copilot-instructions.md, agents/dev_agent/DEV_AGENT_ONBOARDING.md,
-agents/process_guard/PROCESS_GUARD_AGENT.md und docs/ENTWICKLUNGSPROZESS.md
+.github/copilot-instructions.md, .github/agents/developer.agent.md,
+.github/agents/process-guard.policy.md und docs/ENTWICKLUNGSPROZESS.md
 um die neue Regel P-23 (kein eigenstaendiger Arbeitsbeginn bei /init) ergaenzt
 wurden.
+
+(TARA-0120: Die Rollendateien liegen seit der Instructions/Agents-Restrukturierung
+unter `.github/agents/*` statt `agents/*/*.md` - Pfade hier entsprechend aktualisiert.)
 """
 import os
 
@@ -14,8 +17,8 @@ import pytest
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 INSTRUCTIONS_PATH = os.path.join(REPO_ROOT, ".github", "copilot-instructions.md")
-ONBOARDING_PATH = os.path.join(REPO_ROOT, "agents", "dev_agent", "DEV_AGENT_ONBOARDING.md")
-PROCESS_GUARD_PATH = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+ONBOARDING_PATH = os.path.join(REPO_ROOT, ".github", "agents", "developer.agent.md")
+PROCESS_GUARD_PATH = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
 ENTWICKLUNGSPROZESS_PATH = os.path.join(REPO_ROOT, "docs", "ENTWICKLUNGSPROZESS.md")
 
 

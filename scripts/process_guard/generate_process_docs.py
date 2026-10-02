@@ -27,9 +27,9 @@ except ImportError:  # pragma: no cover - Abhaengigkeit fehlt im Environment
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFINITION_PATH = REPO_ROOT / "docs" / "process_definition.yml"
 
-DEV_AGENT_ONBOARDING = REPO_ROOT / "agents" / "dev_agent" / "DEV_AGENT_ONBOARDING.md"
-PROCESS_GUARD_AGENT = REPO_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AGENT.md"
-REVIEW_AGENT_WORKFLOW = REPO_ROOT / "agents" / "review_agent" / "REVIEW_AGENT_WORKFLOW.md"
+DEV_AGENT_ONBOARDING = REPO_ROOT / ".github" / "agents" / "developer.agent.md"
+PROCESS_GUARD_AGENT = REPO_ROOT / ".github" / "agents" / "process-guard.policy.md"
+REVIEW_AGENT_WORKFLOW = REPO_ROOT / ".github" / "agents" / "reviewer.agent.md"
 COPILOT_INSTRUCTIONS = REPO_ROOT / ".github" / "copilot-instructions.md"
 
 # Pro Zieldatei die dort erwarteten Marker-Namen (R-34: fehlende/umbenannte

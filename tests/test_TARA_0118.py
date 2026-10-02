@@ -30,12 +30,12 @@ import os
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 REQUIREMENTS_AGENT_DOC = os.path.join(
-    REPO_ROOT, "agents", "requirements_agent", "REQUIREMENTS_AGENT.md"
+    REPO_ROOT, ".github", "agents", "requirements.agent.md"
 )
 ACCEPTANCE_AGENT_DOC = os.path.join(
-    REPO_ROOT, "agents", "acceptance_agent", "ACCEPTANCE_AGENT.md"
+    REPO_ROOT, ".github", "agents", "acceptance.agent.md"
 )
-PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
 ENTWICKLUNGSPROZESS_DOC = os.path.join(REPO_ROOT, "docs", "ENTWICKLUNGSPROZESS.md")
 AGENTS_README = os.path.join(REPO_ROOT, "agents", "README.md")
 COPILOT_INSTRUCTIONS = os.path.join(REPO_ROOT, ".github", "copilot-instructions.md")
@@ -118,25 +118,25 @@ class TestEntwicklungsprozessUpdated:
         assert "Requirements-Agent" in content
         # Workflow-Schritt muss vor dem Dev-Agent-Setup auftauchen bzw.
         # im Abschnitt 4 (Story-Workflow) referenziert sein
-        assert "REQUIREMENTS_AGENT.md" in content
+        assert "requirements.agent.md" in content
 
 
 class TestAgentsReadmeUpdated:
     def test_requirements_agent_listed(self):
         content = _read(AGENTS_README)
         assert "Requirements-Agent" in content
-        assert "requirements_agent/REQUIREMENTS_AGENT.md" in content
+        assert "requirements.agent.md" in content
 
     def test_acceptance_agent_listed(self):
         content = _read(AGENTS_README)
         assert "Acceptance-Agent" in content
-        assert "acceptance_agent/ACCEPTANCE_AGENT.md" in content
+        assert "acceptance.agent.md" in content
 
 
 class TestCopilotInstructionsUpdated:
     def test_requirements_agent_reference_present(self):
         content = _read(COPILOT_INSTRUCTIONS)
-        assert "requirements_agent/REQUIREMENTS_AGENT.md" in content
+        assert "requirements.agent.md" in content
 
 
 class TestConsistencyWithExistingRoles:
@@ -146,7 +146,7 @@ class TestConsistencyWithExistingRoles:
 
     def test_dev_agent_doc_still_has_no_requirements_scope_expansion(self):
         dev_agent_doc = os.path.join(
-            REPO_ROOT, "agents", "dev_agent", "DEV_AGENT_ONBOARDING.md"
+            REPO_ROOT, ".github", "agents", "developer.agent.md"
         )
         content = _read(dev_agent_doc)
         # Dev-Agent-Dokument darf weiterhin existieren/unveraendert referenzierbar sein
@@ -154,7 +154,7 @@ class TestConsistencyWithExistingRoles:
 
     def test_review_agent_independence_still_documented(self):
         review_agent_doc = os.path.join(
-            REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md"
+            REPO_ROOT, ".github", "agents", "reviewer.agent.md"
         )
         content = _read(review_agent_doc)
         assert "Unabhaengig" in content or "unabhaengig" in content.lower()
@@ -195,7 +195,7 @@ class TestConsistencyWithExistingRoles:
         for doc_path in (ENTWICKLUNGSPROZESS_DOC, AGENTS_README, COPILOT_INSTRUCTIONS):
             content = _read(doc_path)
             well_formed = (
-                "`agents/requirements_agent/REQUIREMENTS_AGENT.md`" in content
-                or "requirements_agent/REQUIREMENTS_AGENT.md)" in content
+                "`.github/agents/requirements.agent.md`" in content
+                or "requirements.agent.md)" in content
             )
             assert well_formed, "Kein wohlgeformter Link/Codeblock in " + doc_path

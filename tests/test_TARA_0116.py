@@ -30,9 +30,9 @@ PROCESS_DEFINITION = REPO_ROOT / "docs" / "process_definition.yml"
 GENERATOR_SCRIPT = REPO_ROOT / "scripts" / "process_guard" / "generate_process_docs.py"
 
 TARGET_DOCS = [
-    REPO_ROOT / "agents" / "dev_agent" / "DEV_AGENT_ONBOARDING.md",
-    REPO_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AGENT.md",
-    REPO_ROOT / "agents" / "review_agent" / "REVIEW_AGENT_WORKFLOW.md",
+    REPO_ROOT / ".github" / "agents" / "developer.agent.md",
+    REPO_ROOT / ".github" / "agents" / "process-guard.policy.md",
+    REPO_ROOT / ".github" / "agents" / "reviewer.agent.md",
     REPO_ROOT / ".github" / "copilot-instructions.md",
 ]
 
@@ -119,7 +119,7 @@ def test_audit_trail_example_and_p01_unchanged():
     assert "Status Todo -> In Progress" in instructions
     assert "P-01" in instructions
 
-    process_guard_doc = (REPO_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AGENT.md").read_text(
+    process_guard_doc = (REPO_ROOT / ".github" / "agents" / "process-guard.policy.md").read_text(
         encoding="utf-8"
     )
     assert "TARA-ID in jeder Chat-Antwort" in process_guard_doc
@@ -167,10 +167,10 @@ def test_process_violation_and_review_finding_labels_documented_distinctly():
     """PO-Entscheidung Frage 2: 'process-violation' (Process Guard) und
     'review-finding' (Review-Agent) muessen in beiden Agenten-Dokumenten klar
     voneinander abgegrenzt referenziert sein."""
-    process_guard_doc = (REPO_ROOT / "agents" / "process_guard" / "PROCESS_GUARD_AGENT.md").read_text(
+    process_guard_doc = (REPO_ROOT / ".github" / "agents" / "process-guard.policy.md").read_text(
         encoding="utf-8"
     )
-    review_doc = (REPO_ROOT / "agents" / "review_agent" / "REVIEW_AGENT_WORKFLOW.md").read_text(encoding="utf-8")
+    review_doc = (REPO_ROOT / ".github" / "agents" / "reviewer.agent.md").read_text(encoding="utf-8")
     assert "process-violation" in process_guard_doc
     assert "process-violation" in review_doc
     assert "review-finding" in review_doc

@@ -9,7 +9,7 @@ Testergebnisse gegen die im Issue formulierten Akzeptanzkriterien, Stand
 des Reviews (offene Critical/High-Findings?) und Status des
 Prozess-Guards. Er ist das konkrete, **heute manuell vom Dev-Agent
 durchgefuehrte** "Wie" zu dem konzeptionell beschriebenen
-**Acceptance-Agent** (`agents/acceptance_agent/ACCEPTANCE_AGENT.md`).
+**Acceptance-Agent** (`.github/agents/acceptance.agent.md`).
 
 **Wichtig (PO-Entscheidung TARA-0118):** Der Acceptance-Agent selbst ist
 in diesem Epic **nicht implementiert** - dieser Skill beschreibt daher die
@@ -76,7 +76,7 @@ eigenstaendigen Agenten.
 
 ## Bezug zu Regeln/Stories
 
-- Konzeptionelle Rolle: `agents/acceptance_agent/ACCEPTANCE_AGENT.md`
+- Konzeptionelle Rolle: `.github/agents/acceptance.agent.md`
   (nicht implementiert, nur Dokumentation)
 - Prozessschritt: `docs/ENTWICKLUNGSPROZESS.md`, Abschnitt 4 (Schritt 7)
 - PO-Akzeptanz-Gate: P-25,

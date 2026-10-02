@@ -218,7 +218,7 @@ def test_post_merge_workflow_deletes_branch():
 
 
 def test_onboarding_references_transition_workflow():
-    text = (REPO_ROOT / "agents" / "dev_agent" / "DEV_AGENT_ONBOARDING.md").read_text(encoding="utf-8")
+    text = (REPO_ROOT / ".github" / "agents" / "developer.agent.md").read_text(encoding="utf-8")
     assert "transition.yml" in text
 
 

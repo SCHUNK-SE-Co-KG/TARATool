@@ -57,16 +57,16 @@ def test_contributing_eslint_before_tests():
 
 @pytest.mark.TARA_0022
 def test_process_guard_contains_p12():
-    """PROCESS_GUARD_AGENT.md muss Regel P-12 (Prettier) enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
-    assert 'P-12' in content, 'Regel P-12 (Prettier) fehlt in PROCESS_GUARD_AGENT.md'
+    """process-guard.policy.md muss Regel P-12 (Prettier) enthalten."""
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'process-guard.policy.md'), encoding='utf-8').read()
+    assert 'P-12' in content, 'Regel P-12 (Prettier) fehlt in process-guard.policy.md'
 
 
 @pytest.mark.TARA_0022
 def test_process_guard_contains_p13():
-    """PROCESS_GUARD_AGENT.md muss Regel P-13 (ESLint) enthalten."""
-    content = open(os.path.join(REPO_ROOT, 'agents', 'process_guard', 'PROCESS_GUARD_AGENT.md'), encoding='utf-8').read()
-    assert 'P-13' in content, 'Regel P-13 (ESLint) fehlt in PROCESS_GUARD_AGENT.md'
+    """process-guard.policy.md muss Regel P-13 (ESLint) enthalten."""
+    content = open(os.path.join(REPO_ROOT, '.github', 'agents', 'process-guard.policy.md'), encoding='utf-8').read()
+    assert 'P-13' in content, 'Regel P-13 (ESLint) fehlt in process-guard.policy.md'
 
 
 @pytest.mark.TARA_0022

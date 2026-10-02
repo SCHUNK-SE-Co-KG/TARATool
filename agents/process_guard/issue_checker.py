@@ -133,7 +133,7 @@ def check_nomenclature(title: str, issue_type: str | None) -> list[Finding]:
             ),
             action=(
                 'Bitte Titel entsprechend dem Nomenklatur-Schema anpassen.\n'
-                'Referenz: `agents/process_guard/PROCESS_GUARD_AGENT.md`'
+                'Referenz: `.github/agents/process-guard.policy.md`'
             ),
         ))
 
@@ -243,7 +243,7 @@ def build_comment(
         "---",
         "",
         "> Dieser Kommentar wurde automatisch vom **Prozess-Guard** generiert.",
-        "> Referenz: `agents/process_guard/PROCESS_GUARD_AGENT.md`",
+        "> Referenz: `.github/agents/process-guard.policy.md`",
     ]
     return "\n".join(lines)
 

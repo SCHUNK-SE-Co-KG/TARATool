@@ -33,7 +33,7 @@ TIMING_MODULE_PATH = os.path.join(SCRIPTS_DIR, "status_timing_check.py")
 AUTO_FREIGABE_MODULE_PATH = os.path.join(SCRIPTS_DIR, "auto_set_freigabe_after_merge.py")
 WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "process-guard.yml")
 POST_MERGE_WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "post-merge-status.yml")
-PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
 
 
 def _to_bash_path(path):
@@ -314,9 +314,9 @@ def test_process_guard_doc_automation_matrix_updated():
         content = f.read()
     # P-02 und P-11 muessen nun als automatisiert (GitHub Actions) gefuehrt werden,
     # nicht mehr als "Manuell" (Regressionsschutz gegen Story #177/TARA-0107s P-10-Migration).
-    assert "| P-02  |" in content
-    assert "| P-11  |" in content
-    p02_line = next(line for line in content.splitlines() if line.startswith("| P-02  |"))
-    p11_line = next(line for line in content.splitlines() if line.startswith("| P-11  |"))
+    assert "| P-02 |" in content
+    assert "| P-11 |" in content
+    p02_line = next(line for line in content.splitlines() if line.startswith("| P-02 |"))
+    p11_line = next(line for line in content.splitlines() if line.startswith("| P-11 |"))
     assert "GitHub Actions" in p02_line
     assert "GitHub Actions" in p11_line

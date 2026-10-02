@@ -33,8 +33,8 @@ from unittest import mock
 import pytest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-REVIEW_AGENT_PATH = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
-PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, "agents", "process_guard", "PROCESS_GUARD_AGENT.md")
+REVIEW_AGENT_PATH = os.path.join(REPO_ROOT, ".github", "agents", "reviewer.agent.md")
+PROCESS_GUARD_DOC = os.path.join(REPO_ROOT, ".github", "agents", "process-guard.policy.md")
 REPORT_BUILDER_DIR = os.path.join(REPO_ROOT, "agents", "review_agent")
 
 

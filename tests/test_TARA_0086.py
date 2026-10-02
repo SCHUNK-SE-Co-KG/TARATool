@@ -28,7 +28,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCRIPT = os.path.join(REPO_ROOT, "scripts", "process_guard", "check_po_approval_keyword.sh")
 PARSER_MODULE = os.path.join(REPO_ROOT, "scripts", "process_guard", "po_approval_parser.py")
 WORKFLOW = os.path.join(REPO_ROOT, ".github", "workflows", "po-approve.yml")
-INSTRUCTIONS = os.path.join(REPO_ROOT, ".github", "copilot-instructions.md")
+# TARA-0120: Die vollstaendige Freigabe-Keyword-Liste wurde aus
+# copilot-instructions.md in die operative Instructions-Datei ausgelagert.
+INSTRUCTIONS = os.path.join(REPO_ROOT, ".github", "instructions", "workflows.instructions.md")
 
 
 def _to_bash_path(path):

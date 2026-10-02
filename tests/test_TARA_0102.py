@@ -12,7 +12,7 @@ import os
 import pytest
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-REVIEW_AGENT_PATH = os.path.join(REPO_ROOT, "agents", "review_agent", "REVIEW_AGENT_WORKFLOW.md")
+REVIEW_AGENT_PATH = os.path.join(REPO_ROOT, ".github", "agents", "reviewer.agent.md")
 
 
 def _read(path):

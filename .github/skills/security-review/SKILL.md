@@ -85,6 +85,6 @@ Review-Workflow ein.
 
 - CLI-Subagent: Agent-Typ `security-review` (read-only Tool-Zugriff)
 - Uebergeordneter Review-Prozess: Skill `independent-code-review`,
-  `agents/review_agent/REVIEW_AGENT_WORKFLOW.md`
+  `.github/agents/reviewer.agent.md`
 - Review-Rules Sicherheit (R-07, R-08): `docs/process_definition.yml`
 - Risikobasierte Vollregression bei Security-Aenderungen: TARA-0125
