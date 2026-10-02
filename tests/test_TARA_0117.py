@@ -185,6 +185,42 @@ def test_no_other_python_script_calls_the_mutation_directly():
     assert not offenders, f"Direkte Board-Mutation ausserhalb transition_engine.py in: {offenders}"
 
 
+# ---------------------------------------------------------------------------
+# TARA-0133-Vorarbeit: fetch_item_via_gh() nutzt GraphQL statt
+# "gh project item-list --owner <org>" (Bugfix: Owner-Aufloesung scheiterte
+# in CI mit "unknown owner type" mangels read:org-Token-Scope).
+# ---------------------------------------------------------------------------
+
+
+def test_fetch_item_via_gh_does_not_use_owner_flag(monkeypatch):
+    captured_args = []
+
+    def fake_run(args, timeout=30):
+        captured_args.append(args)
+        payload = (
+            '{"data":{"node":{"items":{"pageInfo":{"hasNextPage":false,"endCursor":null},'
+            '"nodes":[{"id":"ITEM1","content":{"number":221,"title":"[TARA-0133] STORY: X"},'
+            '"fieldValueByName":{"name":"PO Accepted"}}]}}}}'
+        )
+        return subprocess.CompletedProcess(args, 0, stdout=payload, stderr="")
+
+    monkeypatch.setattr(te, "_run_gh", fake_run)
+    item = te.fetch_item_via_gh("TARA-0133")
+
+    assert item == {"id": "ITEM1", "status": "PO Accepted", "issue_number": 221}
+    joined = " ".join(" ".join(a) for a in captured_args)
+    assert "--owner" not in joined, "fetch_item_via_gh darf 'gh project item-list --owner' nicht mehr nutzen"
+    assert "graphql" in joined
+
+
+def test_fetch_item_via_gh_returns_none_on_gh_error(monkeypatch):
+    def fake_run(args, timeout=30):
+        return subprocess.CompletedProcess(args, 1, stdout="", stderr="unknown owner type")
+
+    monkeypatch.setattr(te, "_run_gh", fake_run)
+    assert te.fetch_item_via_gh("TARA-0133") is None
+
+
 def test_set_story_status_still_rejects_protected_statuses():
     result = subprocess.run(
         [sys.executable, str(SET_STORY_STATUS), "0117", "PO Accepted"],
