@@ -1,5 +1,5 @@
 ---
-applyTo: "scripts/**"
+applyTo: "scripts/**,agents/*/*.py"
 ---
 
 # Instructions: Scripts (`scripts/**`, `agents/*/*.py`)

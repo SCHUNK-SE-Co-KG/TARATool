@@ -100,7 +100,7 @@ print(f"[OK] {ep_path} updated")
 
 
 # ── PROCESS_GUARD_AGENT.md ─────────────────────────────────────────────────
-pg_path = Path("agents/process_guard/PROCESS_GUARD_AGENT.md")
+pg_path = Path(".github/agents/process-guard.policy.md")
 pg = pg_path.read_text(encoding="utf-8")
 
 if "P-16" not in pg:
@@ -121,7 +121,7 @@ print(f"[OK] {pg_path} updated")
 
 
 # ── REVIEW_AGENT_WORKFLOW.md ───────────────────────────────────────────────
-ra_path = Path("agents/review_agent/REVIEW_AGENT_WORKFLOW.md")
+ra_path = Path(".github/agents/reviewer.agent.md")
 ra = ra_path.read_text(encoding="utf-8")
 
 if "## Scope-Entscheidung" not in ra:
