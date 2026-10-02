@@ -1,0 +1,35 @@
+# TARA-0134: Risikopfade, bei deren Aenderung die Playwright-UI-Tests
+# (ci-tests.yml, Job "playwright-tests") SOFORT bei jedem PR ausgefuehrt
+# werden muessen - unabhaengig von der sonstigen Python-Regressionspolitik
+# (siehe regression_risk_paths.txt / P-06c).
+#
+# Hintergrund (Issue #230): Der Playwright-Job lief bisher unconditioneel bei
+# JEDEM PR (~9,7 Minuten), auch wenn gar keine UI-/Browser-relevanten
+# Dateien veraendert wurden. Diese Datei definiert, welche Aenderungen
+# tatsaechlich UI-/Browser-relevant sind.
+#
+# Ein Pfad pro Zeile als erweiterter regulärer Ausdruck (grep -E), geprüft
+# gegen die relative Pfadangabe aus `git diff --name-only`. Leerzeilen und
+# Zeilen, die mit '#' beginnen, werden ignoriert.
+#
+# Wird eingelesen von scripts/process_guard/check_playwright_scope.sh.
+
+# Markup/Einstiegspunkt der Anwendung
+^index\.html$
+
+# Jeglicher Frontend-Code
+^js/.*\.js$
+^css/
+
+# Playwright-/UI-Testinfrastruktur selbst
+^tests/integration/
+^tests/e2e/
+^tests/conftest\.py$
+
+# Build-/Toolchain-Konfiguration, die Playwright/Browser-Setup beeinflusst
+^package\.json$
+^package-lock\.json$
+^playwright\.config\.js$
+
+# Der CI-Workflow selbst (z.B. Aenderung der Scope-Logik oder des Jobs)
+^\.github/workflows/ci-tests\.yml$

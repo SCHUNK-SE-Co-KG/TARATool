@@ -78,29 +78,65 @@ jobs:
     # TARA-0112: Laeuft jetzt auch bei PRs nach development/main (nicht nur
     # bei push) - test:e2e ist gemaess Ausfuehrungs-Policy (Issue #182)
     # Pflichtstufe vor Merge/Release, nicht optional.
+    #
+    # TARA-0134/P-06d: Bei PRs wird der Job nur dann tatsaechlich ausgefuehrt,
+    # wenn UI-/Browser-relevante Pfade veraendert wurden (siehe
+    # check_playwright_scope.sh / regression_risk_paths_ui.txt) - das war
+    # bisher der groesste Zeitfresser in der CI (~9,7 Min. bei JEDEM PR,
+    # unabhaengig vom Inhalt). Bei push (z.B. nach Merge nach development)
+    # laeuft der Job IMMER als Sicherheitsnetz, unabhaengig vom Scope-Check.
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: P-06d – Playwright-Scope ermitteln (TARA-0134)
+        id: scope
+        # Sicherheitsnetz: nur bei pull_request wird uebersprungen, sonst
+        # (github.event_name != 'pull_request', z.B. push) immer "needed=true".
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE="${{ github.event.pull_request.base.sha }}"
+            SCOPE_OUTPUT=$(bash scripts/process_guard/check_playwright_scope.sh "$BASE")
+            echo "$SCOPE_OUTPUT"
+            if echo "$SCOPE_OUTPUT" | grep -q "PLAYWRIGHT_NEEDED=true"; then
+              echo "needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            # Sicherheitsnetz: bei push (z.B. nach Merge nach development)
+            # bleibt der Playwright-Job IMMER aktiv, unabhaengig vom Scope.
+            echo "INFO P-06d: event_name=${{ github.event_name }} (kein pull_request) -"
+            echo "  Playwright-UI-Tests laufen als Sicherheitsnetz immer."
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Python 3.12 einrichten
+        if: steps.scope.outputs.needed == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
       - name: Node.js einrichten (fuer npm test:integration/test:e2e-Skripte)
+        if: steps.scope.outputs.needed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: npm install
+        if: steps.scope.outputs.needed == 'true'
         run: npm install --silent
 
       - name: Abhängigkeiten installieren
+        if: steps.scope.outputs.needed == 'true'
         run: |
           pip install pytest pytest-playwright pytest-timeout --quiet
           [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet || true
           playwright install chromium --with-deps
 
       - name: test:integration ausführen (Review-Agent Runtime-Scanner, TARA-0039-0055)
+        if: steps.scope.outputs.needed == 'true'
         run: |
           npm run test:integration -- --timeout=60 2>&1 | tee /tmp/integration_results.txt
           EXIT_CODE=${PIPESTATUS[0]}
@@ -109,9 +145,16 @@ jobs:
           exit $EXIT_CODE
 
       - name: test:e2e ausführen (volle Browser-Interaktion mit conftest-Fixtures)
+        if: steps.scope.outputs.needed == 'true'
         run: |
           npm run test:e2e -- --timeout=60 2>&1 | tee /tmp/playwright_results.txt
           EXIT_CODE=${PIPESTATUS[0]}
           echo "## 🎭 E2E-Test Ergebnis" >> $GITHUB_STEP_SUMMARY
           tail -20 /tmp/playwright_results.txt >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
+
+      - name: Übersprungen (kein UI-relevanter Scope, P-06d)
+        if: steps.scope.outputs.needed != 'true'
+        run: |
+          echo "## 🎭 Playwright UI Tests übersprungen" >> $GITHUB_STEP_SUMMARY
+          echo "Keine UI-/Browser-relevanten Pfade veraendert (P-06d) - Tests laufen als Sicherheitsnetz bei push/Epic-Batch/Monatslauf." >> $GITHUB_STEP_SUMMARY

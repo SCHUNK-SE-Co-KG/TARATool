@@ -57,20 +57,45 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Node.js einrichten (fuer npm test:integration/test:e2e-Skripte)
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm install
+        if: steps.check.outputs.skip != 'true'
+        run: npm install --silent
+
       - name: Test-Abhaengigkeiten installieren
         if: steps.check.outputs.skip != 'true'
-        run: pip install --quiet pytest pytest-timeout
+        run: |
+          pip install --quiet pytest pytest-playwright pytest-timeout
+          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet || true
+          playwright install chromium --with-deps
 
-      - name: Volle Regressionssuite ausfuehren
+      - name: Volle Regressionssuite inkl. Playwright-UI-Tests ausfuehren
         if: steps.check.outputs.skip != 'true'
         id: regression
         continue-on-error: true
         run: |
-          # TARA-0112: E2E-/Integration-Tests benoetigen Playwright-Browser-
-          # Install (hier nicht vorhanden) - gleiches Ignore-Muster wie P-06c.
-          pytest tests/ --noconftest --timeout=90 -q \
-            --ignore=tests/e2e \
-            --ignore=tests/integration 2>&1 | tee /tmp/regression_output.txt
+          # TARA-0134: Monthly-Regression ist das zweite Sicherheitsnetz
+          # (neben epic-batch-gate.yml), das die Playwright-Suite garantiert
+          # ausfuehrt - auch wenn sie bei einzelnen PRs (P-06d, ci-tests.yml)
+          # uebersprungen wurde.
+          {
+            pytest tests/ --noconftest --timeout=90 -q \
+              --ignore=tests/e2e \
+              --ignore=tests/integration
+            PY_EXIT=$?
+            npm run test:integration -- --timeout=60
+            INT_EXIT=$?
+            npm run test:e2e -- --timeout=60
+            E2E_EXIT=$?
+            if [ "$PY_EXIT" -ne 0 ] || [ "$INT_EXIT" -ne 0 ] || [ "$E2E_EXIT" -ne 0 ]; then
+              exit 1
+            fi
+          } 2>&1 | tee /tmp/regression_output.txt
           echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Monthly-Regression Issue erstellen

@@ -67,16 +67,40 @@ jobs:
 
       - name: Python-Umgebung einrichten
         if: steps.gate.outputs.ready == 'true'
-        run: pip install --quiet pytest pytest-timeout
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
-      - name: Volle Regressionssuite (nur wenn Epic-Batch-Gate bereit)
+      - name: Node.js einrichten (fuer npm test:integration/test:e2e-Skripte)
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: npm install
+        if: steps.gate.outputs.ready == 'true'
+        run: npm install --silent
+
+      - name: Python-Abhaengigkeiten + Playwright-Browser installieren
         if: steps.gate.outputs.ready == 'true'
         run: |
-          # TARA-0112: E2E-/Integration-Tests benoetigen Playwright-Browser-
-          # Install (hier nicht vorhanden) - gleiches Ignore-Muster wie P-06c.
+          pip install --quiet pytest pytest-playwright pytest-timeout
+          [ -f tests/requirements.txt ] && pip install -r tests/requirements.txt --quiet || true
+          playwright install chromium --with-deps
+
+      - name: Volle Regressionssuite inkl. Playwright-UI-Tests (nur wenn Epic-Batch-Gate bereit)
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          # TARA-0134: Epic-Batch-Gate ist eines der beiden Sicherheitsnetze
+          # (neben monthly-regression.yml), die die Playwright-Suite
+          # garantiert ausfuehren - auch wenn sie bei einzelnen PRs (P-06d,
+          # ci-tests.yml) uebersprungen wurde, weil kein UI-relevanter Pfad
+          # veraendert war.
           pytest tests/ --noconftest --timeout=90 -q \
             --ignore=tests/e2e \
             --ignore=tests/integration
+          npm run test:integration -- --timeout=60
+          npm run test:e2e -- --timeout=60
 
       - name: Release-PR development -> main erstellen/aktualisieren
         if: steps.gate.outputs.ready == 'true'
