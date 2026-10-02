@@ -49,10 +49,14 @@ def test_entwicklungsprozess_documents_p24():
 
 @pytest.mark.TARA_0105
 def test_onboarding_mentions_epic_body_update_step():
-    """DEV_AGENT_ONBOARDING.md muss den Pflicht-Teilschritt "Epic-Body
-    aktualisieren" bei der Story-Anlage dokumentieren."""
+    """developer.agent.md (ehemals DEV_AGENT_ONBOARDING.md) muss bei der
+    Story-Anlage ausschliesslich die native Sub-Issue-Verknuepfung per
+    Skript beschreiben (seit TARA-0113/TARA-0123) - NICHT mehr die alte
+    manuelle Epic-Body-Text-Checkliste ("Enthaltene Stories")."""
     content = _read(ONBOARDING_PATH)
-    assert "P-24" in content or "Epic-Body" in content
+    assert "P-24" in content
+    assert "link_epic_subissue.sh" in content
+    assert "Enthaltene Stories" not in content
 
 
 @pytest.mark.TARA_0105
