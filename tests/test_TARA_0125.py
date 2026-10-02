@@ -132,7 +132,7 @@ def test_risk_paths_file_exists():
         ".github/workflows/ci-tests.yml",  # Build/Deploy
         "scripts/process_guard/check_regression_scope.sh",  # Testinfrastruktur
         "scripts/workflow/transition_engine.py",  # Testinfrastruktur
-        "pytest.ini",  # Testinfrastruktur
+        "tests/pytest.ini",  # Testinfrastruktur (liegt real in tests/, nicht im Repo-Root)
     ],
 )
 def test_risk_paths_cover_all_po_categories(example_path):

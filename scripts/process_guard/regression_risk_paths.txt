@@ -55,6 +55,6 @@
 # Testinfrastruktur selbst
 ^tests/requirements\.txt$
 ^tests/conftest\.py$
-^pytest\.ini$
+^tests/pytest\.ini$
 ^scripts/process_guard/
 ^scripts/workflow/
