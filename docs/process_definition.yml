@@ -67,6 +67,9 @@ rules:
   P-06c:
     title: '**Risikobasierte Sofort-Regression (TARA-0125)**: betrifft die Aenderung einen der definierten Risikopfade (Datenmodell, Import/Export, Risikoberechnung, Report-Generierung, zentrale State-Verwaltung, Authentifizierung/Security, gemeinsame Basiskomponenten, Build-/Deployment-Konfiguration, Testinfrastruktur selbst – siehe `scripts/process_guard/regression_risk_paths.txt`), MUSS die volle Regressionssuite sofort (ohne Aufschub) gruen sein, unabhaengig vom Epic-Batch-/Monats-Rhythmus'
     automation: '**GitHub Actions (PR)** – `check_regression_scope.sh` (liefert `REGRESSION_NEEDED`)'
+  P-06d:
+    title: '**Risikobasierte Playwright-UI-Tests (TARA-0134)**: der Playwright-Job (`test:integration`/`test:e2e`, ci-tests.yml) laeuft bei PRs nur noch, wenn UI-/Browser-relevante Pfade veraendert wurden (siehe `scripts/process_guard/regression_risk_paths_ui.txt`) – andernfalls wird er uebersprungen, um unnoetige Laufzeit (~9,7 Min./PR) zu vermeiden. Als Sicherheitsnetz laufen die Playwright-Tests weiterhin IMMER bei push auf development/main sowie im Epic-Batch-Gate (P-17) und Monatslauf (P-17b)'
+    automation: '**GitHub Actions (PR)** – `check_playwright_scope.sh` (liefert `PLAYWRIGHT_NEEDED`)'
   P-07:
     title: Branch-Name folgt `feature/TARA-XXXX-*` Schema
     automation: '**GitHub Actions (PR)**'

@@ -112,6 +112,7 @@ Story-Workflow").
 | P-06  | Story-Testdatei gruen vor PR (Teilmenge von `test:unit`, TARA-0112)                                                      |
 | P-06b | Regressionsschutz bei gemeinsam genutztem Code (redefiniert TARA-0125: Deferral auf Epic-Batch/Monatslauf)               |
 | P-06c | Risikobasierte Sofort-Regression bei kritischen Pfaden (TARA-0125)                                                       |
+| P-06d | Risikobasierte Playwright-UI-Tests bei PRs, Sicherheitsnetz bei push/Epic-Batch/Monatslauf (TARA-0134)                   |
 | P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                           |
 | P-08  | Commit-Messages referenzieren TARA-ID                                                                                    |
 | P-09  | Item auf „inReview" gesetzt vor PR-Erstellung                                                                            |
