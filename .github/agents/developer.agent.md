@@ -168,10 +168,15 @@ gh api graphql -f query='{
    â›” GATE 1 (P-21): Vor Schritt 3 aktiv im Chat bestaetigen, siehe
    .github/copilot-instructions.md ("VERBINDLICHES GATE vor Commit/PR")
 3. git checkout -b feature/TARA-XXXX-kurzbeschreibung
-   ⚠️ **P-24 (Epic-Sync-Pflicht):** Wird diese Story ueber `Bezug: #<Epic-Nr>`
-   einem Epic zugeordnet, MUSS im gleichen Arbeitsschritt das Epic-Issue-Body
-   (Checkliste "Enthaltene Stories") um die neue Story ergaenzt werden - nicht
-   erst nachtraeglich.
+   ⚠️ **P-24 (Epic-Sync-Pflicht, seit TARA-0113 native Sub-Issues):** Wird
+   diese Story ueber `Bezug: #<Epic-Nr>` einem Epic zugeordnet, MUSS im
+   gleichen Arbeitsschritt
+   `scripts/workflow/link_epic_subissue.sh --owner <owner> --repo <repo>
+   --epic <Epic-Nr> --story <Story-Nr>` ausgefuehrt werden, um die Story als
+   native GitHub-Sub-Issue mit dem Epic zu verknuepfen - nicht erst
+   nachtraeglich, und keine manuelle Epic-Body-Text-Checkliste mehr fuer neue
+   Epics/Stories (Bestandsschutz fuer bereits bestehende Epics siehe
+   Kurzuebersicht P-24 unten).
 4. tests/test_TARA_XXXX.py schreiben → RED (müssen FEHLSCHLAGEN)
 5. Implementierung → GREEN
 6. npm run format:check  (Prettier)
