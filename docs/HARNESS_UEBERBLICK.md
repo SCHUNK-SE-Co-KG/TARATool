@@ -110,7 +110,8 @@ Story-Workflow").
 | P-04b | Finaler Red-Green-Nachweis (TARA-0111): PR-Head-Stand rot auf Basis, gruen auf Head                                      |
 | P-05  | Story-spezifische Tests vor Commit ausgefuehrt → alle gruen                                                              |
 | P-06  | Story-Testdatei gruen vor PR (Teilmenge von `test:unit`, TARA-0112)                                                      |
-| P-06b | Regressionsschutz bei gemeinsam genutztem Code (TARA-0111)                                                               |
+| P-06b | Regressionsschutz bei gemeinsam genutztem Code (redefiniert TARA-0125: Deferral auf Epic-Batch/Monatslauf)               |
+| P-06c | Risikobasierte Sofort-Regression bei kritischen Pfaden (TARA-0125)                                                       |
 | P-07  | Branch-Name folgt `feature/TARA-XXXX-*` Schema                                                                           |
 | P-08  | Commit-Messages referenzieren TARA-ID                                                                                    |
 | P-09  | Item auf „inReview" gesetzt vor PR-Erstellung                                                                            |
@@ -121,7 +122,8 @@ Story-Workflow").
 | P-14  | TARA-IDs sind atomar und unveraenderlich – keine ID mehrfach vergeben                                                    |
 | P-15  | Done NUR nach vorherigem „Accepted" (Statusmodell B, seit TARA-0110)                                                     |
 | P-16  | Feature-Branch nach Merge loeschen                                                                                       |
-| P-17  | Epic-Batch-Testing: PO informieren wenn alle Stories auf Freigabe                                                        |
+| P-17  | Epic-Batch-Testing (automatisiert TARA-0125): volle Suite + Release-PR nach Epic-Abschluss                               |
+| P-17b | Monatliche Vollregression auf `main` (TARA-0125)                                                                         |
 | P-18  | Pre-Transition Check: Vorbedingungen vor jedem Status-Wechsel                                                            |
 | P-19  | Kein `Closes/Fixes/Resolves #NNN` im PR-Body (unterlaeuft P-11/P-15)                                                     |
 | P-20  | Audit-Trail-Kommentar bei jedem Board-Status-Wechsel                                                                     |
