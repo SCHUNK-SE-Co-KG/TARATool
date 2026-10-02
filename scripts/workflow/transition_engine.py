@@ -39,8 +39,6 @@ import argparse
 import json
 import subprocess
 import sys
-import tempfile
-from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Tuple
 
 PROJECT_ID = "PVT_kwDOBu4dv84BfbaR"
@@ -199,37 +197,65 @@ def _run_gh(args: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
     )
 
 
+# Bugfix (TARA-0133): "gh project item-list --owner <org>" scheitert in
+# GitHub Actions zuverlaessig mit "unknown owner type", weil gh dafuer den
+# Owner-Typ (User vs. Organisation) per zusaetzlicher API-Anfrage aufloesen
+# muss, was eine "read:org"-Scope auf dem verwendeten Token voraussetzt -
+# diese fehlte bei dem fuer Projekt-Mutationen genutzten PROJECT_TOKEN. Der
+# Fehler wurde zuvor durch fehlende Returncode-Pruefung verschluckt (leerer
+# stdout wurde als "{}"/keine Items interpretiert statt als Fehler). Die
+# robuste Alternative: Items direkt per GraphQL ueber die bekannte
+# PROJECT_ID abfragen (node(id: ...)) - das benoetigt keine Owner-Aufloesung
+# und somit auch keine zusaetzliche Token-Scope.
+_ITEMS_QUERY = (
+    "query($p:ID!,$cursor:String){node(id:$p){... on ProjectV2{items(first:100,after:$cursor){"
+    "pageInfo{hasNextPage endCursor}"
+    "nodes{id content{... on Issue{number title}}"
+    "fieldValueByName(name:\"Status\"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}"
+)
+
+
 def fetch_item_via_gh(tara_id: str) -> Optional[Dict[str, Any]]:
     """Sucht das Board-Item, dessen Titel die TARA-ID enthaelt (gleiches
     Suchmuster wie scripts/set_story_status.py), und liefert dessen ID,
-    aktuellen Status sowie die verknuepfte Issue-Nummer."""
-    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as fh:
-        tmp = fh.name
-    try:
-        result = _run_gh(
-            [
-                "project", "item-list", PROJECT_NUMBER,
-                "--owner", PROJECT_OWNER,
-                "--format", "json",
-                "--limit", "200",
-            ]
-        )
-        Path(tmp).write_text(result.stdout, encoding="utf-8")
-        data = json.loads(Path(tmp).read_text(encoding="utf-8") or "{}")
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
-        return None
-    finally:
-        Path(tmp).unlink(missing_ok=True)
+    aktuellen Status sowie die verknuepfte Issue-Nummer.
 
-    items = data.get("items", [])
-    match = next((i for i in items if tara_id in i.get("title", "")), None)
-    if match is None:
+    Fragt die Items direkt per GraphQL ueber PROJECT_ID ab (siehe Bugfix-
+    Kommentar oben), statt "gh project item-list --owner ...".
+    """
+    cursor: Optional[str] = None
+    while True:
+        args = ["api", "graphql", "-f", f"query={_ITEMS_QUERY}", "-f", f"p={PROJECT_ID}"]
+        if cursor:
+            args += ["-f", f"cursor={cursor}"]
+        result = _run_gh(args)
+        if result.returncode != 0:
+            print(f"FEHLER: gh api graphql (Items-Abfrage) fehlgeschlagen: {result.stderr.strip()}", file=sys.stderr)
+            return None
+        try:
+            data = json.loads(result.stdout or "{}")
+        except json.JSONDecodeError as exc:
+            print(f"FEHLER: Items-Antwort nicht als JSON lesbar: {exc!r}", file=sys.stderr)
+            return None
+
+        items_block = (data.get("data") or {}).get("node") or {}
+        items = (items_block.get("items") or {}).get("nodes") or []
+        for item in items:
+            content = item.get("content") or {}
+            title = content.get("title") or ""
+            if tara_id in title:
+                status_value = item.get("fieldValueByName") or {}
+                return {
+                    "id": item.get("id"),
+                    "status": status_value.get("name"),
+                    "issue_number": content.get("number"),
+                }
+
+        page_info = (items_block.get("items") or {}).get("pageInfo") or {}
+        if page_info.get("hasNextPage"):
+            cursor = page_info.get("endCursor")
+            continue
         return None
-    return {
-        "id": match.get("id"),
-        "status": match.get("status"),
-        "issue_number": (match.get("content") or {}).get("number"),
-    }
 
 
 def mutate_status_via_gh(item_id: str, option_id: str) -> bool:
@@ -253,6 +279,8 @@ def mutate_status_via_gh(item_id: str, option_id: str) -> bool:
 
 def _post_issue_comment(issue_number: int, body: str, repo: str) -> bool:
     result = _run_gh(["issue", "comment", str(issue_number), "--repo", repo, "--body", body])
+    if result.returncode != 0:
+        print(f"FEHLER: Audit-Kommentar auf #{issue_number} fehlgeschlagen: {result.stderr.strip()}", file=sys.stderr)
     return result.returncode == 0
 
 
