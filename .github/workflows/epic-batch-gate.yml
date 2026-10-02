@@ -33,7 +33,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Story-Issue aus PR-Body ermitteln ("Bezug: #NNN")
+      - name: 'Story-Issue aus PR-Body ermitteln ("Bezug: #NNN")'
         id: story
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
