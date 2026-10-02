@@ -480,16 +480,17 @@ dauerhaften Regeltexte duplizieren, sondern verweisen darauf.
 
 ## 9. Dokumente auf einen Blick
 
-| Dokument                    | Pfad                                     | Für wen             | Inhalt                                                      |
-| --------------------------- | ---------------------------------------- | ------------------- | ----------------------------------------------------------- |
-| **Dieser Prozess**          | `docs/ENTWICKLUNGSPROZESS.md`            | PO + Agent          | Gesamtüberblick                                             |
-| **Dev-Agent Einrichtung**   | `.github/agents/developer.agent.md`      | Neuer Agent         | Setup, Smoke-Test, Kurzreferenz                             |
-| **TDD-Workflow (Detail)**   | `CONTRIBUTING.md`                        | Dev-Agent           | Branch-Strategie, alle Schritte, Commit-Format              |
-| **Prozess-Guard Regeln**    | `.github/agents/process-guard.policy.md` | Dev-Agent + Guard   | P-01–P-27, Finding-Format                                   |
-| **Review-Agent**            | `.github/agents/reviewer.agent.md`       | Dev-Agent + Review  | R-01–R-30, Finding-Format                                   |
-| **Requirements-Agent**      | `.github/agents/requirements.agent.md`   | Requirements-Agent  | DoR-Prüfung, Story-Erstellung                               |
-| **Acceptance-Agent**        | `.github/agents/acceptance.agent.md`     | Acceptance-Agent    | Entscheidungsgrundlage fuer PO-Abnahme                      |
-| **Board-IDs**               | `docs/GITHUB_BOARD.md`                   | Dev-Agent           | GraphQL-IDs, Statusübergänge, Beispiele                     |
-| **Test-Framework**          | `tests/README.md`                        | Dev-Agent           | --noconftest, Marker, venv-Setup                            |
-| **PR-Checkliste**           | `.github/pull_request_template.md`       | Dev-Agent           | TDD, Prettier, ESLint, Review, Freigabe                     |
-| **Path-spezifische Regeln** | `.github/instructions/*.instructions.md` | Agent (automatisch) | Operative Ablaeufe (Session-Start, Gates), applyTo-gescoped |
+| Dokument                          | Pfad                                     | Für wen             | Inhalt                                                                                                    |
+| --------------------------------- | ---------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Dieser Prozess**                | `docs/ENTWICKLUNGSPROZESS.md`            | PO + Agent          | Gesamtüberblick                                                                                           |
+| **Dev-Agent Einrichtung**         | `.github/agents/developer.agent.md`      | Neuer Agent         | Setup, Smoke-Test, Kurzreferenz                                                                           |
+| **TDD-Workflow (Detail)**         | `CONTRIBUTING.md`                        | Dev-Agent           | Branch-Strategie, alle Schritte, Commit-Format                                                            |
+| **Prozess-Guard Regeln**          | `.github/agents/process-guard.policy.md` | Dev-Agent + Guard   | P-01–P-27, Finding-Format                                                                                 |
+| **Review-Agent**                  | `.github/agents/reviewer.agent.md`       | Dev-Agent + Review  | R-01–R-30, Finding-Format                                                                                 |
+| **Requirements-Agent**            | `.github/agents/requirements.agent.md`   | Requirements-Agent  | DoR-Prüfung, Story-Erstellung                                                                             |
+| **Acceptance-Agent**              | `.github/agents/acceptance.agent.md`     | Acceptance-Agent    | Entscheidungsgrundlage fuer PO-Abnahme                                                                    |
+| **Board-IDs**                     | `docs/GITHUB_BOARD.md`                   | Dev-Agent           | GraphQL-IDs, Statusübergänge, Beispiele                                                                   |
+| **Harness-Überblick (TARA-0124)** | `docs/HARNESS_UEBERBLICK.md`             | PO + neuer Agent    | Kompakter Gesamtüberblick: Agent-Rollen, Board-Status-Diagramm, Story-Lebenszyklus, P-01–P-27-Kurztabelle |
+| **Test-Framework**                | `tests/README.md`                        | Dev-Agent           | --noconftest, Marker, venv-Setup                                                                          |
+| **PR-Checkliste**                 | `.github/pull_request_template.md`       | Dev-Agent           | TDD, Prettier, ESLint, Review, Freigabe                                                                   |
+| **Path-spezifische Regeln**       | `.github/instructions/*.instructions.md` | Agent (automatisch) | Operative Ablaeufe (Session-Start, Gates), applyTo-gescoped                                               |

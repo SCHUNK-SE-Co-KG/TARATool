@@ -34,8 +34,11 @@ dupliziert den Inhalt einer anderen Ebene:
 | **Agents** | `.github/agents/*.agent.md` + `.github/agents/process-guard.policy.md` | Rolle, Rechte, Verantwortungsgrenzen je Agent (Dev, Review, Requirements, Acceptance, Process-Guard) |
 | **Actions/Skripte** | `.github/workflows/*`, `scripts/*` | Erzwingen Fakten und Zustandsuebergaenge (deterministisch, nicht LLM-basiert) |
 
-Massgebliche Einstiegsdokumente: `docs/ENTWICKLUNGSPROZESS.md` (vollstaendiger
-Prozess, Regeln P-01-P-27/R-01-R-36), `docs/GITHUB_BOARD.md` (Board-IDs/GraphQL),
+Massgebliche Einstiegsdokumente: `docs/HARNESS_UEBERBLICK.md` (TARA-0124,
+kompakter Gesamtueberblick: Agent-Rollen, Board-Statusautomat,
+Story-Lebenszyklus, P-01-P-27-Kurztabelle), `docs/ENTWICKLUNGSPROZESS.md`
+(vollstaendiger Prozess, Regeln P-01-P-27/R-01-R-36), `docs/GITHUB_BOARD.md`
+(Board-IDs/GraphQL),
 `.github/agents/developer.agent.md` (Setup/Kurzreferenz),
 `.github/agents/process-guard.policy.md` (volle Regeltabelle, Pre-Transition-Checks),
 `.github/agents/reviewer.agent.md` (Pruefkatalog), `.github/agents/requirements.agent.md`
