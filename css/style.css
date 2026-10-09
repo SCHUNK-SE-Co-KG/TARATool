@@ -1218,6 +1218,11 @@ html[data-theme='dark'] .close-button:hover {
   min-height: 70px;
   resize: vertical;
 }
+.rr-textarea.rr-auto-grow {
+  max-height: 45vh;
+  resize: none;
+  box-sizing: border-box;
+}
 .rr-textarea:disabled {
   background: #f2f2f2;
   color: #7f8c8d;
