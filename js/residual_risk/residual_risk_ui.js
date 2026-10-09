@@ -314,6 +314,15 @@
     return { path, text: leafText };
   }
 
+  function rrAutoSizeTextarea(textarea) {
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const maxHeight = Math.max(120, Math.floor(window.innerHeight * 0.45));
+    const contentHeight = textarea.scrollHeight;
+    textarea.style.height = `${Math.min(contentHeight, maxHeight)}px`;
+    textarea.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
+  }
+
   function rrOpenModalForTree(residualEntry) {
     rrEnsureModalWiring();
 
@@ -432,10 +441,10 @@
                                         <div class="rr-mitigate-placeholder ${isMit ? 'rr-hidden' : ''}" style="color:#7f8c8d;">-</div>
                                     </td>
                                     <td>
-                                        <textarea class="rr-note rr-textarea" placeholder="${_t('rr.notePh')}">${note}</textarea>
+                                        <textarea class="rr-note rr-textarea rr-auto-grow" placeholder="${_t('rr.notePh')}">${note}</textarea>
                                     </td>
                                     <td>
-                                        <textarea class="rr-security rr-textarea" placeholder="${_t('rr.secPh')}">${sec}</textarea>
+                                        <textarea class="rr-security rr-textarea rr-auto-grow" placeholder="${_t('rr.secPh')}">${sec}</textarea>
                                     </td>
                                 </tr>
                             `;
@@ -499,6 +508,7 @@
         }
 
         if (taNote) {
+          taNote.addEventListener('input', () => rrAutoSizeTextarea(taNote));
           taNote.addEventListener('input', () => {
             setLocalizedField(leaf.rr, 'note', taNote.value);
             rrUpdateRowUI(tr, leaf);
@@ -507,6 +517,7 @@
         }
 
         if (taSec) {
+          taSec.addEventListener('input', () => rrAutoSizeTextarea(taSec));
           taSec.addEventListener('input', () => {
             setLocalizedField(leaf.rr, 'securityConcept', taSec.value);
             rrUpdateRowUI(tr, leaf);
@@ -529,12 +540,17 @@
         });
 
         // initial
+        rrAutoSizeTextarea(taNote);
+        rrAutoSizeTextarea(taSec);
         rrUpdateRowUI(tr, leaf);
       });
     }
 
     modal.dataset.rrEditingUid = liveEntry?.uid || '';
     modal.style.display = 'block';
+    window.requestAnimationFrame(() => {
+      body.querySelectorAll('textarea.rr-auto-grow').forEach(rrAutoSizeTextarea);
+    });
   }
 
   // -----------------------------

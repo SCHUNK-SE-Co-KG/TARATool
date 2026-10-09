@@ -90,23 +90,28 @@
     return entries
       .map((e) => {
         const id = e.id || '';
-        const name =
-          typeof getLocalizedField === 'function'
-            ? getLocalizedField(
-                { title: e.rootName || '', title_en: e.rootName_en || '' },
-                'title'
-              ) ||
-              e.rootName ||
-              ''
-            : e.rootName || '';
-        const label = `${id}: ${name}`;
+        const localizedRoot = { title: e.rootName || '', title_en: e.rootName_en || '' };
+        const name = _localizedField(localizedRoot, 'title');
+        const nameHtml = _localizedFieldHtml(localizedRoot, 'title');
+        const label = name ? `${escapeHtml(id)}: ${nameHtml}` : escapeHtml(id);
         const checked = selectedSet.has(id) ? 'checked' : '';
         return `<label class="sg-root-ref-item">
                     <input type="checkbox" value="${escapeHtml(id)}" ${checked}>
-                    <span>${escapeHtml(label)}</span>
+                    <span>${label}</span>
                 </label>`;
       })
       .join('');
+  }
+
+  function _localizedField(obj, field, options) {
+    return typeof getLocalizedField === 'function'
+      ? getLocalizedField(obj, field, undefined, options)
+      : obj?.[field] || '';
+  }
+
+  function _localizedFieldHtml(obj, field) {
+    const value = _localizedField(obj, field);
+    return typeof localizeParenHtml === 'function' ? localizeParenHtml(value) : escapeHtml(value);
   }
 
   function renderRootRefsSelect(analysis, selectedIds) {
@@ -145,14 +150,22 @@
             ? tf('sg.modal.edit', { id: goal.id })
             : `Security Ziel ${goal.id} bearbeiten`;
       if (idField) idField.value = goal.id;
-      if (nameField) nameField.value = goal.name || '';
-      if (descField) descField.value = goal.description || '';
+      if (nameField) nameField.value = _localizedField(goal, 'name', { raw: true });
+      if (descField) descField.value = _localizedField(goal, 'description', { raw: true });
+      if (typeof syncLocalizedInputHint === 'function') {
+        syncLocalizedInputHint(nameField, goal, 'name', '');
+        syncLocalizedInputHint(descField, goal, 'description', '');
+      }
       renderRootRefsSelect(a, goal.rootRefs || []);
     } else {
       if (titleEl)
         titleEl.textContent = typeof t === 'function' ? t('sg.modal.new') : 'Neues Security Ziel';
       form.reset();
       if (idField) idField.value = '';
+      if (typeof syncLocalizedInputHint === 'function') {
+        syncLocalizedInputHint(nameField, {}, 'name', '');
+        syncLocalizedInputHint(descField, {}, 'description', '');
+      }
       renderRootRefsSelect(a, []);
     }
 
@@ -204,8 +217,13 @@
           );
         return;
       }
-      existing.name = name;
-      existing.description = description;
+      if (typeof setLocalizedField === 'function') {
+        setLocalizedField(existing, 'name', name);
+        setLocalizedField(existing, 'description', description);
+      } else {
+        existing.name = name;
+        existing.description = description;
+      }
       existing.rootRefs = rootRefs;
       if (typeof showToast === 'function')
         showToast(
@@ -216,12 +234,20 @@
         );
     } else {
       const newId = nextSecurityGoalId(analysis);
-      analysis.securityGoals.push({
+      const created = {
         id: newId,
-        name,
-        description,
+        name: '',
+        description: '',
         rootRefs,
-      });
+      };
+      if (typeof setLocalizedField === 'function') {
+        setLocalizedField(created, 'name', name);
+        setLocalizedField(created, 'description', description);
+      } else {
+        created.name = name;
+        created.description = description;
+      }
+      analysis.securityGoals.push(created);
       if (typeof showToast === 'function')
         showToast(
           typeof tf === 'function'
@@ -258,34 +284,28 @@
     container.innerHTML = goals
       .map((g) => {
         const refs = Array.isArray(g.rootRefs) ? g.rootRefs : [];
+        const description = _localizedField(g, 'description');
         const refLabels = refs
           .map((id) => {
             const r = riskById.get(id);
-            const name =
-              r && typeof getLocalizedField === 'function'
-                ? getLocalizedField(
-                    { title: r.rootName || '', title_en: r.rootName_en || '' },
-                    'title'
-                  ) ||
-                  r.rootName ||
-                  ''
-                : r && r.rootName
-                  ? r.rootName
-                  : '';
-            return name ? `${id}: ${name}` : `${id}`;
+            const localizedRoot = { title: r?.rootName || '', title_en: r?.rootName_en || '' };
+            const name = _localizedField(localizedRoot, 'title');
+            return name
+              ? `${escapeHtml(id)}: ${_localizedFieldHtml(localizedRoot, 'title')}`
+              : escapeHtml(id);
           })
           .filter(Boolean);
 
         const refsMarkup = refLabels.length
           ? `<div style="margin-top:6px;">
-                        ${refLabels.map((lbl) => `<div style="margin:2px 0;">${escapeHtml(lbl)}</div>`).join('')}
+                        ${refLabels.map((lbl) => `<div style="margin:2px 0;">${lbl}</div>`).join('')}
                    </div>`
           : `<div style="color:#999; margin-top:6px;">${typeof t === 'function' ? t('sg.noRef') : '— keine Referenz —'}</div>`;
 
         return `
                 <div class="asset-card" style="border-top-color:#8e44ad;">
-                    <div class="asset-card-header">${escapeHtml(g.id)}: ${escapeHtml(g.name)}</div>
-                    <div class="asset-description-area">${g.description ? escapeHtml(g.description) : `<span style="color:#999;">${typeof t === 'function' ? t('sg.noDesc') : '— Keine Beschreibung —'}</span>`}</div>
+                    <div class="asset-card-header">${escapeHtml(g.id)}: ${_localizedFieldHtml(g, 'name')}</div>
+                    <div class="asset-description-area">${description ? _localizedFieldHtml(g, 'description') : `<span style="color:#999;">${typeof t === 'function' ? t('sg.noDesc') : '— Keine Beschreibung —'}</span>`}</div>
 
                     <div style="margin-bottom:12px;">
                         <div style="font-weight:600; font-size:0.9em;">${typeof t === 'function' ? t('sg.refsTitle') : 'Referenzierte Angriffsziele (Root)'}</div>
